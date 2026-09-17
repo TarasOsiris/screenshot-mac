@@ -212,6 +212,7 @@
       }
     },
     "(detected)" : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -5485,6 +5486,9 @@
         }
       }
     },
+    "**Next** checks the package before going on, so a typo or a service account without access is caught here instead of halfway through an upload." : {
+
+    },
     "**Open export folder on success** — auto-reveal results in Finder." : {
       "extractionState" : "stale",
       "localizations" : {
@@ -10295,6 +10299,12 @@
         }
       }
     },
+    "%@ · %lld screenshots" : {
+
+    },
+    "%@ · 1 screenshot" : {
+
+    },
     "%@ (%@)" : {
       "localizations" : {
         "de" : {
@@ -10410,6 +10420,15 @@
           }
         }
       }
+    },
+    "%@ across %@." : {
+
+    },
+    "%@ all upload to the %@ App Store localization." : {
+
+    },
+    "%@ both upload to the %@ App Store localization." : {
+
     },
     "%@ can't be uploaded to a %@ version." : {
       "localizations" : {
@@ -10729,6 +10748,9 @@
           }
         }
       }
+    },
+    "%@ is reachable by this service account." : {
+
     },
     "%@ text" : {
       "extractionState" : "stale",
@@ -11057,6 +11079,7 @@
       }
     },
     "%@×%@ · %lld screenshots" : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -11115,6 +11138,7 @@
       }
     },
     "%@×%@ · 1 screenshot" : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -12543,6 +12567,9 @@
           }
         }
       }
+    },
+    "%lld languages" : {
+
     },
     "%lld locale%@" : {
       "extractionState" : "stale",
@@ -14317,6 +14344,7 @@
       }
     },
     "%lld screenshots to upload" : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -15131,6 +15159,7 @@
       }
     },
     "%lld×%lld · %lld screenshots" : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -15189,6 +15218,7 @@
       }
     },
     "%lld×%lld · 1 screenshot" : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -16145,6 +16175,9 @@
           }
         }
       }
+    },
+    "1 language" : {
+
     },
     "1 locale" : {
       "localizations" : {
@@ -17147,6 +17180,7 @@
       }
     },
     "1 screenshot to upload" : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -18449,9 +18483,7 @@
       }
     },
     "A section header shows an amber count when properties inside it are overridden — so a collapsed section still tells you something is there." : {
-      "localizations" : {
 
-      }
     },
     "A showcase arranges a row's screenshots side by side on a styled background and renders them as a single image — for a product page, a launch post, a README, or an ad. It doesn't replace store screenshots; it's the picture you post *about* them." : {
       "localizations" : {
@@ -28372,6 +28404,9 @@
         }
       }
     },
+    "Checking access…" : {
+
+    },
     "Choose **Blank** to set up rows and screenshot sizes manually, or **From Template** to start with a pre-designed layout." : {
       "localizations" : {
         "de" : {
@@ -28997,6 +29032,9 @@
         }
       }
     },
+    "Choose the app to upload to" : {
+
+    },
     "Choose what to upload" : {
       "localizations" : {
         "de" : {
@@ -29048,6 +29086,9 @@
           }
         }
       }
+    },
+    "Choose which versions to update" : {
+
     },
     "Choose…" : {
       "localizations" : {
@@ -30248,6 +30289,9 @@
         }
       }
     },
+    "Collapse section" : {
+
+    },
     "Collapse, edit, preview" : {
       "localizations" : {
         "de" : {
@@ -30299,6 +30343,9 @@
           }
         }
       }
+    },
+    "Collapsed" : {
+
     },
     "Color" : {
       "localizations" : {
@@ -31085,6 +31132,7 @@
       }
     },
     "Connect a Google service account first." : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -42059,6 +42107,12 @@
         }
       }
     },
+    "Each project language is matched to the Google Play listing language shown beside it. Play keeps one set of screenshots per language, so when two project languages match the same one — **English** and **English (US)** both reach `en-US` — only one can be checked. A language Play doesn't publish in reads **Not on Play** and is skipped." : {
+
+    },
+    "Each row has an include switch, an **Upload as** image type (auto-detected from the row's size — the ⓘ button shows the sizes Play accepts), and a checkbox per language." : {
+
+    },
     "Each row has an include toggle, so you can leave one out for this upload only. To exclude a row from *every* upload, use the inspector's **Exclude when uploading to App Store Connect** instead." : {
       "localizations" : {
         "de" : {
@@ -42112,9 +42166,7 @@
       }
     },
     "Each row header shows an amber count of the shapes that language overrides; click it to select them." : {
-      "localizations" : {
 
-      }
     },
     "Easiest: paste the agent prompt into your AI assistant and let it connect. Or add the server by hand with the URL and access token, or the JSON configuration. Keep the token private — anyone with it can control the app while the server is running." : {
       "localizations" : {
@@ -43785,6 +43837,7 @@
       }
     },
     "Enter your app's **package name** (for example `com.example.myapp`), then review which screenshots go to which language before confirming." : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -43835,6 +43888,12 @@
           }
         }
       }
+    },
+    "Enter your app's **package name** (for example `com.example.myapp`). Google Play has no way to list your apps, so the name is typed rather than picked — the clock button offers the ones you used before." : {
+
+    },
+    "Every screenshot currently on the listing for the selected languages and image types is deleted and replaced." : {
+
     },
     "Every version on this app is already live. Create a new version in App Store Connect, then refresh this wizard." : {
       "extractionState" : "stale",
@@ -44521,6 +44580,12 @@
           }
         }
       }
+    },
+    "Expand section" : {
+
+    },
+    "Expanded" : {
+
     },
     "Expires" : {
       "localizations" : {
@@ -50168,6 +50233,9 @@
         }
       }
     },
+    "Google Play service account required" : {
+
+    },
     "Google Play won't hold this app's listing changes as an un-reviewed draft via the API (the Play Console's \"Save draft\" has no API equivalent for a published app). Committing would send the changes to review instead." : {
       "localizations" : {
         "de" : {
@@ -51424,9 +51492,7 @@
       }
     },
     "Hovering a shape the current language overrides outlines it in amber instead of the usual accent color." : {
-      "localizations" : {
 
-      }
     },
     "How conflicts are resolved" : {
       "localizations" : {
@@ -53153,6 +53219,9 @@
         }
       }
     },
+    "Image Type" : {
+
+    },
     "Image-based vs programmatic frames" : {
       "localizations" : {
         "de" : {
@@ -53725,6 +53794,9 @@
           }
         }
       }
+    },
+    "Import your service account JSON key in Settings → Google Play." : {
+
     },
     "Imported" : {
       "localizations" : {
@@ -54301,9 +54373,7 @@
       }
     },
     "In the inspector, every control this language overrides is tinted amber, so you can see at a glance what differs from the base language. The properties bar tints the position, size and image controls the same way." : {
-      "localizations" : {
 
-      }
     },
     "Include" : {
       "localizations" : {
@@ -56394,7 +56464,6 @@
       }
     },
     "languages" : {
-      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -57335,9 +57404,7 @@
       }
     },
     "Line Height" : {
-      "localizations" : {
 
-      }
     },
     "Line Spacing" : {
       "localizations" : {
@@ -61315,6 +61382,9 @@
         }
       }
     },
+    "No app with that package name is reachable by this service account." : {
+
+    },
     "No changes to save." : {
       "localizations" : {
         "de" : {
@@ -62823,6 +62893,9 @@
           }
         }
       }
+    },
+    "Not on Play" : {
+
     },
     "Not running" : {
       "localizations" : {
@@ -64647,6 +64720,7 @@
       }
     },
     "Open in Play Console" : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -64855,6 +64929,7 @@
       }
     },
     "Open Settings → Google Play and import your service account JSON key, or turn on demo mode." : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -66796,6 +66871,9 @@
         }
       }
     },
+    "Pick a different App Store locale for one of them, or turn one off." : {
+
+    },
     "Pick a different display type." : {
       "localizations" : {
         "de" : {
@@ -68100,6 +68178,9 @@
         }
       }
     },
+    "Play value" : {
+
+    },
     "PNG" : {
       "localizations" : {
         "de" : {
@@ -68465,9 +68546,7 @@
       }
     },
     "Prefer a sidebar? Turn on **Edit selected shapes in the inspector** in Settings ▸ General. The same controls then move into the inspector as collapsible sections (hide the inspector and the bar comes back), a multi-selection gets align and distribute buttons, and the **Insert** menu in the toolbar adds shapes." : {
-      "localizations" : {
 
-      }
     },
     "Prefer a sidebar? Turn on **Edit selected shapes in the inspector** in Settings ▸ General. The same controls then move into the inspector as collapsible sections, a multi-selection gets align and distribute buttons, and the **Insert** menu in the toolbar adds shapes." : {
       "extractionState" : "stale",
@@ -71906,6 +71985,9 @@
         }
       }
     },
+    "Recent package names" : {
+
+    },
     "Recognized screenshot dimensions are used to pick an appropriate device category or frame when possible." : {
       "localizations" : {
         "de" : {
@@ -72741,6 +72823,7 @@
       }
     },
     "Remove Credentials…" : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -74878,9 +74961,7 @@
       }
     },
     "Reset All" : {
-      "localizations" : {
 
-      }
     },
     "Reset all %@ text and image overrides?" : {
       "localizations" : {
@@ -74987,9 +75068,7 @@
       }
     },
     "Reset all overrides for this language" : {
-      "localizations" : {
 
-      }
     },
     "Reset All Translations" : {
       "localizations" : {
@@ -75149,9 +75228,7 @@
       }
     },
     "Reset for this language" : {
-      "localizations" : {
 
-      }
     },
     "Reset Image" : {
       "localizations" : {
@@ -75311,9 +75388,7 @@
       }
     },
     "Reset overrides for this language" : {
-      "localizations" : {
 
-      }
     },
     "Reset Project" : {
       "localizations" : {
@@ -77138,6 +77213,12 @@
         }
       }
     },
+    "Review the store text" : {
+
+    },
+    "Review what will change" : {
+
+    },
     "Right" : {
       "localizations" : {
         "de" : {
@@ -77872,6 +77953,9 @@
           }
         }
       }
+    },
+    "rows" : {
+
     },
     "Rows" : {
       "localizations" : {
@@ -80848,9 +80932,7 @@
       }
     },
     "Seeing what a language overrides" : {
-      "localizations" : {
 
-      }
     },
     "Select" : {
       "localizations" : {
@@ -83255,9 +83337,7 @@
       }
     },
     "Shape properties move from the bar below the canvas into the sidebar, and come back to the bar while the sidebar is hidden. Click the row name or press Esc to return to row settings." : {
-      "localizations" : {
 
-      }
     },
     "Shape properties move from the bar below the canvas into the sidebar. Click the row name or press Esc to return to row settings." : {
       "extractionState" : "stale",
@@ -88445,6 +88525,9 @@
         }
       }
     },
+    "Syncing screenshots…" : {
+
+    },
     "Syncing via iCloud" : {
       "localizations" : {
         "de" : {
@@ -89749,6 +89832,9 @@
         }
       }
     },
+    "That isn't a valid package name. It looks like com.example.myapp." : {
+
+    },
     "That SVG couldn't be rendered." : {
       "localizations" : {
         "de" : {
@@ -90584,6 +90670,12 @@
         }
       }
     },
+    "The changes are saved as an un-reviewed draft. Send them for review from the Play Console." : {
+
+    },
+    "The changes are sent to Google Play review when the edit is committed." : {
+
+    },
     "The dots stand in for your access token — the copied text carries the real one." : {
       "localizations" : {
         "de" : {
@@ -90896,6 +90988,9 @@
           }
         }
       }
+    },
+    "The inspector's controls are grouped into collapsible sections. Click anywhere on a section's header to open or close it; hold **⌥** while clicking to open or close every section at once. How you leave them is remembered." : {
+
     },
     "The interface language will switch the next time Screenshot Bro launches." : {
       "localizations" : {
@@ -91628,9 +91723,7 @@
       }
     },
     "The selected shape's summary sits beside its name at the top of the inspector: the language and how many properties it overrides. Its **reset** button opens a menu listing each overridden property, so you can put one back to the base language or reset them all." : {
-      "localizations" : {
 
-      }
     },
     "The server requires an **access token**: every request must present it, so another app on your Mac can't quietly drive Screenshot Bro." : {
       "localizations" : {
@@ -91787,6 +91880,9 @@
           }
         }
       }
+    },
+    "The service account was rejected. Check the key in Settings → Google Play." : {
+
     },
     "The sheet previews the result live as you change settings." : {
       "localizations" : {
@@ -93365,6 +93461,9 @@
           }
         }
       }
+    },
+    "This service account can't edit that app. Grant it access in the Play Console." : {
+
     },
     "This set cannot be included because required App Store data is unavailable." : {
       "localizations" : {
@@ -97961,6 +98060,9 @@
         }
       }
     },
+    "Uploading **replaces** what is already on the listing: for every language and image type you selected, the existing screenshots are deleted and the new ones uploaded. The confirmation says so before anything is sent." : {
+
+    },
     "Uploading %lld%%" : {
       "localizations" : {
         "de" : {
@@ -98533,7 +98635,11 @@
         }
       }
     },
+    "Use it to walk through the whole upload flow before you have credentials set up. While demo mode is on, the imported service account is ignored, the package field starts on a sample name, and the package check always passes." : {
+
+    },
     "Use it to walk through the whole upload flow before you have credentials set up. While demo mode is on, the imported service account is ignored." : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -102726,181 +102832,6 @@
             "value" : "缩小"
           }
         }
-      }
-    },
-    "Collapse section" : {
-      "localizations" : {
-
-      }
-    },
-    "The inspector's controls are grouped into collapsible sections. Click anywhere on a section's header to open or close it; hold **⌥** while clicking to open or close every section at once. How you leave them is remembered." : {
-      "localizations" : {
-
-      }
-    },
-    "Expand section" : {
-      "localizations" : {
-
-      }
-    },
-    "Expanded" : {
-      "localizations" : {
-
-      }
-    },
-    "Collapsed" : {
-      "localizations" : {
-
-      }
-    },
-    "Google Play service account required" : {
-      "localizations" : {
-
-      }
-    },
-    "The changes are saved as an un-reviewed draft. Send them for review from the Play Console." : {
-      "localizations" : {
-
-      }
-    },
-    "The changes are sent to Google Play review when the edit is committed." : {
-      "localizations" : {
-
-      }
-    },
-    "Each row has an include switch, an **Upload as** image type (auto-detected from the row's size — the ⓘ button shows the sizes Play accepts), and a checkbox per language." : {
-      "localizations" : {
-
-      }
-    },
-    "Syncing screenshots…" : {
-      "localizations" : {
-
-      }
-    },
-    "%@ across %@." : {
-      "localizations" : {
-
-      }
-    },
-    "Image Type" : {
-      "localizations" : {
-
-      }
-    },
-    "Choose the app to upload to" : {
-      "localizations" : {
-
-      }
-    },
-    "**Next** checks the package before going on, so a typo or a service account without access is caught here instead of halfway through an upload." : {
-      "localizations" : {
-
-      }
-    },
-    "rows" : {
-      "localizations" : {
-
-      }
-    },
-    "Play value" : {
-      "localizations" : {
-
-      }
-    },
-    "This service account can't edit that app. Grant it access in the Play Console." : {
-      "localizations" : {
-
-      }
-    },
-    "%@ · %lld screenshots" : {
-      "localizations" : {
-
-      }
-    },
-    "Review the store text" : {
-      "localizations" : {
-
-      }
-    },
-    "1 language" : {
-      "localizations" : {
-
-      }
-    },
-    "Choose which versions to update" : {
-      "localizations" : {
-
-      }
-    },
-    "That isn't a valid package name. It looks like com.example.myapp." : {
-      "localizations" : {
-
-      }
-    },
-    "%@ · 1 screenshot" : {
-      "localizations" : {
-
-      }
-    },
-    "Recent package names" : {
-      "localizations" : {
-
-      }
-    },
-    "Import your service account JSON key in Settings → Google Play." : {
-      "localizations" : {
-
-      }
-    },
-    "Review what will change" : {
-      "localizations" : {
-
-      }
-    },
-    "%lld languages" : {
-      "localizations" : {
-
-      }
-    },
-    "Every screenshot currently on the listing for the selected languages and image types is deleted and replaced." : {
-      "localizations" : {
-
-      }
-    },
-    "Use it to walk through the whole upload flow before you have credentials set up. While demo mode is on, the imported service account is ignored, the package field starts on a sample name, and the package check always passes." : {
-      "localizations" : {
-
-      }
-    },
-    "No app with that package name is reachable by this service account." : {
-      "localizations" : {
-
-      }
-    },
-    "Enter your app's **package name** (for example `com.example.myapp`). Google Play has no way to list your apps, so the name is typed rather than picked — the clock button offers the ones you used before." : {
-      "localizations" : {
-
-      }
-    },
-    "Uploading **replaces** what is already on the listing: for every language and image type you selected, the existing screenshots are deleted and the new ones uploaded. The confirmation says so before anything is sent." : {
-      "localizations" : {
-
-      }
-    },
-    "%@ is reachable by this service account." : {
-      "localizations" : {
-
-      }
-    },
-    "The service account was rejected. Check the key in Settings → Google Play." : {
-      "localizations" : {
-
-      }
-    },
-    "Checking access…" : {
-      "localizations" : {
-
       }
     }
   },
