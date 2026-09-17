@@ -92,6 +92,10 @@ nonisolated struct GPUploadFailureContext {
     let httpStatus: Int?
     let apiMessage: String?
     let originalMessage: String
+    /// Set when the request failed in transit. Google Play never saw it, so the message must not
+    /// blame what the request contained. Typed `URLError` rather than `Error` to keep this struct
+    /// implicitly Sendable — it is thrown out of a `@MainActor` service.
+    let transportError: URLError?
 
     init(operation: String, target: GPUploadTarget, language: GPUploadLanguage, underlyingError: Error) {
         self.operation = operation
@@ -106,20 +110,34 @@ nonisolated struct GPUploadFailureContext {
                 self.httpStatus = status
                 self.apiMessage = message
                 self.originalMessage = "Google Play returned \(status): \(message)"
+                self.transportError = nil
             case .transport(let error):
                 self.httpStatus = nil
                 self.apiMessage = nil
                 self.originalMessage = String(localized: "Network request failed: \(error.localizedDescription)")
+                self.transportError = error as? URLError
             default:
                 self.httpStatus = nil
                 self.apiMessage = nil
                 self.originalMessage = apiError.localizedDescription
+                self.transportError = nil
             }
         } else {
             self.httpStatus = nil
             self.apiMessage = nil
             self.originalMessage = underlyingError.localizedDescription
+            self.transportError = nil
         }
+    }
+
+    var isConnectionFailure: Bool { transportError != nil }
+
+    /// `repeatable: true` because the only caller clears the whole screenshot set before it
+    /// uploads, so whatever a failed attempt left behind is wiped before the next one starts.
+    func isWorthRetrying(under policy: StoreRetryPolicy) -> Bool {
+        if let httpStatus { return policy.allowsRetry(status: httpStatus, repeatable: true) }
+        guard let transportError else { return false }
+        return policy.allowsRetry(transportError: transportError, repeatable: true)
     }
 
     private var isReviewFlagRejected: Bool {
@@ -133,7 +151,23 @@ nonisolated struct GPUploadFailureContext {
         if let httpStatus {
             return String(localized: "Google Play returned \(httpStatus) while trying to \(operation).")
         }
+        if transportError?.code == .notConnectedToInternet {
+            return String(localized: "No internet connection while trying to \(operation).")
+        }
+        if isConnectionFailure {
+            return String(localized: "The connection failed while trying to \(operation).")
+        }
         return String(localized: "Upload failed while trying to \(operation).")
+    }
+
+    /// Every branch below is the same three parts: what failed, what to do about it, and what
+    /// Google Play (or the transport) actually said.
+    private func detail(_ advice: String) -> String {
+        [
+            String(localized: "Could not \(operation) for \(rowLabel) (\(imageTypeLabel)) in \(languageLabel)."),
+            advice,
+            String(localized: "Original response: \(originalMessage)")
+        ].joined(separator: "\n\n")
     }
 
     var detailedMessage: String {
@@ -146,24 +180,18 @@ nonisolated struct GPUploadFailureContext {
             ].joined(separator: "\n\n")
         }
         if httpStatus == 401 || httpStatus == 403 {
-            return [
-                String(localized: "Could not \(operation) for \(rowLabel) (\(imageTypeLabel)) in \(languageLabel)."),
-                String(localized: "Google Play rejected the request because the service account is not authorized for this app. In the Play Console, invite the service account under Users and permissions and grant it access to edit this app's store listing."),
-                String(localized: "Original response: \(originalMessage)")
-            ].joined(separator: "\n\n")
+            return detail(String(localized: "Google Play rejected the request because the service account is not authorized for this app. In the Play Console, invite the service account under Users and permissions and grant it access to edit this app's store listing."))
+        }
+        if transportError?.code == .notConnectedToInternet {
+            return detail(String(localized: "Your Mac lost its internet connection, so the request never reached Google Play. Nothing was published — the edit was discarded and your listing is unchanged. Reconnect and upload again."))
+        }
+        if isConnectionFailure {
+            return detail(String(localized: "The request never completed, so Google Play never saw it. This is a connection problem, not something wrong with the package name, image type or language. Nothing was published — the edit was discarded and your listing is unchanged. Upload again when the connection is steady."))
         }
         if httpStatus == 404 {
-            return [
-                String(localized: "Could not \(operation) for \(rowLabel) (\(imageTypeLabel)) in \(languageLabel)."),
-                String(localized: "Google Play could not find the target. Check that the package name is correct and that \(languageCode) is an active store-listing language for this app."),
-                String(localized: "Original response: \(originalMessage)")
-            ].joined(separator: "\n\n")
+            return detail(String(localized: "Google Play could not find the target. Check that the package name is correct and that \(languageCode) is an active store-listing language for this app."))
         }
-        return [
-            String(localized: "Could not \(operation) for \(rowLabel) (\(imageTypeLabel)) in \(languageLabel)."),
-            String(localized: "Google Play did not accept the request. Check the package name, image type, and language, then retry."),
-            String(localized: "Original response: \(originalMessage)")
-        ].joined(separator: "\n\n")
+        return detail(String(localized: "Google Play did not accept the request. Check the package name, image type, and language, then retry."))
     }
 
     var technicalMessage: String {
@@ -189,8 +217,33 @@ final class GooglePlayUploadService {
         let data: Data
     }
 
+    /// Everything one language's publish needs. A struct because the sequence is attempted more
+    /// than once, and threading six arguments through both halves of the retry obscured it.
+    private struct LanguagePublish {
+        let rendered: [RenderedScreenshot]
+        let packageName: String
+        let editId: String
+        let target: GPUploadTarget
+        let language: GPUploadLanguage
+
+        var planLabel: String { "\(target.rowLabel) · \(language.label) · \(target.imageType.label)" }
+    }
+
+    /// Longer than the transport's own backoff: this waits out a connection that just dropped,
+    /// and every attempt re-sends one language's screenshots, so a tight loop would be wasteful.
+    static let defaultRetryPolicy = StoreRetryPolicy(
+        maxAttempts: 3,
+        baseDelay: .seconds(2),
+        maxDelay: .seconds(20)
+    )
+
     private let api: GooglePlayAPIService
-    init(api: GooglePlayAPIService? = nil) { self.api = api ?? .shared }
+    private let retryPolicy: StoreRetryPolicy
+
+    init(api: GooglePlayAPIService? = nil, retryPolicy: StoreRetryPolicy = defaultRetryPolicy) {
+        self.api = api ?? .shared
+        self.retryPolicy = retryPolicy
+    }
 
     /// Returns whether the committed changes were sent for review (`true`) or held as a draft (`false`).
     @discardableResult
@@ -208,11 +261,13 @@ final class GooglePlayUploadService {
         var completedSteps = 0
         var imageCache: [String: NSImage] = [:]
 
-        func emit(_ label: String) {
-            progress(UploadProgress(totalSteps: totalSteps, completedSteps: completedSteps, currentLabel: label))
+        // Takes the count rather than reading a captured one: the publish loop reports progress
+        // while it advances, and a shared `var` read through a capture cannot be passed `inout`.
+        func emit(_ completed: Int, _ label: String) {
+            progress(UploadProgress(totalSteps: totalSteps, completedSteps: completed, currentLabel: label))
         }
 
-        emit("Starting…")
+        emit(completedSteps, "Starting…")
         let edit = try await performStep("open a Play Console edit", target: targets[0], language: targets[0].languages.first) {
             try await api.insertEdit(packageName: packageName)
         }
@@ -227,7 +282,6 @@ final class GooglePlayUploadService {
 
                 for language in target.languages {
                     try Task.checkCancellation()
-                    let planLabel = "\(target.rowLabel) · \(language.label) · \(target.imageType.label)"
                     let rowContext = RowRenderContext.load(
                         row: row,
                         localeCode: language.projectCode,
@@ -246,49 +300,33 @@ final class GooglePlayUploadService {
                             fileNames: rowContext.unrenderableImageFileNames
                         )
                     }
+                    let steps = completedSteps
                     let rendered = try await renderScreenshots(
                         context: rowContext,
                         target: target,
                         language: language,
-                        emit: emit
+                        emit: { emit(steps, $0) }
                     )
 
-                    // Replace mode: clear the existing set for this language+type, then re-upload.
-                    emit("Clearing existing screenshots · \(planLabel)")
-                    try await performStep("clear existing \(target.imageType.label) screenshots", target: target, language: language) {
-                        try await api.deleteAllImages(
+                    completedSteps = try await publishScreenshots(
+                        LanguagePublish(
+                            rendered: rendered,
                             packageName: packageName,
                             editId: edit.id,
-                            language: language.playCode,
-                            imageType: target.imageType.apiValue
-                        )
-                    }
-
-                    for screenshot in rendered {
-                        try Task.checkCancellation()
-                        let label = "\(target.rowLabel) · \(language.label) · \(screenshot.templateIndex + 1)/\(target.templateCount)"
-                        emit("Uploading \(label)")
-                        _ = try await performStep("upload screenshot \(screenshot.templateIndex + 1)", target: target, language: language) {
-                            try await api.uploadImage(
-                                packageName: packageName,
-                                editId: edit.id,
-                                language: language.playCode,
-                                imageType: target.imageType.apiValue,
-                                fileName: screenshot.fileName,
-                                png: screenshot.data
-                            )
-                        }
-                        completedSteps += 1
-                        emit(label)
-                    }
+                            target: target,
+                            language: language
+                        ),
+                        baseStep: completedSteps,
+                        emit: emit
+                    )
                 }
             }
 
-            emit(sendForReview ? "Submitting for review…" : "Saving draft…")
+            emit(completedSteps, sendForReview ? "Submitting for review…" : "Saving draft…")
             let didSendForReview = try await performStep("commit the Play Console edit", target: targets[0], language: targets[0].languages.first) {
                 try await api.commitEdit(packageName: packageName, editId: edit.id, sendForReview: sendForReview)
             }
-            emit("Done")
+            emit(completedSteps, "Done")
             return didSendForReview
         } catch {
             // Abandon the half-finished edit so it doesn't linger in the Play Console.
@@ -336,6 +374,70 @@ final class GooglePlayUploadService {
             await Task.yield()
         }
         return screenshots
+    }
+
+    /// One language's screenshots, published as a unit. The sequence clears the set before it
+    /// uploads, so re-running it lands the same result however far a failed attempt got — which
+    /// is what makes the image POST, not idempotent on its own, safe to repeat here. A single
+    /// timed-out request used to discard the whole run and every language already uploaded.
+    ///
+    /// `baseStep` in, new total out, rather than a shared counter: `upload`'s `emit` reads its
+    /// own `completedSteps`, and passing that `inout` past a closure that reads it is an
+    /// exclusivity violation that traps at runtime.
+    private func publishScreenshots(
+        _ job: LanguagePublish,
+        baseStep: Int,
+        emit: (Int, String) -> Void
+    ) async throws -> Int {
+        try await retryPolicy.attempting {
+            do {
+                return try await publishOnce(job, baseStep: baseStep, emit: emit)
+            } catch let error as GooglePlayUploadError {
+                guard case .requestFailed(let context) = error,
+                      context.isWorthRetrying(under: retryPolicy)
+                else { throw error }
+
+                CrashReportingService.breadcrumb(.upload, "Play: retrying a language", level: .warning)
+                // Progress rewinds to where the language started, because the work is being redone.
+                emit(baseStep, "Connection problem — retrying \(job.planLabel)")
+                throw StoreRetryPolicy.Retryable(underlying: error)
+            }
+        }
+    }
+
+    private func publishOnce(
+        _ job: LanguagePublish,
+        baseStep: Int,
+        emit: (Int, String) -> Void
+    ) async throws -> Int {
+        // Replace mode: clear the existing set for this language+type, then re-upload.
+        emit(baseStep, "Clearing existing screenshots · \(job.planLabel)")
+        try await performStep("clear existing \(job.target.imageType.label) screenshots", target: job.target, language: job.language) {
+            try await api.deleteAllImages(
+                packageName: job.packageName,
+                editId: job.editId,
+                language: job.language.playCode,
+                imageType: job.target.imageType.apiValue
+            )
+        }
+
+        for (offset, screenshot) in job.rendered.enumerated() {
+            try Task.checkCancellation()
+            let label = "\(job.target.rowLabel) · \(job.language.label) · \(screenshot.templateIndex + 1)/\(job.target.templateCount)"
+            emit(baseStep + offset, "Uploading \(label)")
+            _ = try await performStep("upload screenshot \(screenshot.templateIndex + 1)", target: job.target, language: job.language) {
+                try await api.uploadImage(
+                    packageName: job.packageName,
+                    editId: job.editId,
+                    language: job.language.playCode,
+                    imageType: job.target.imageType.apiValue,
+                    fileName: screenshot.fileName,
+                    png: screenshot.data
+                )
+            }
+            emit(baseStep + offset + 1, label)
+        }
+        return baseStep + job.rendered.count
     }
 
     private func performStep<T>(

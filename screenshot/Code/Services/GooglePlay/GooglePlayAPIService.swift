@@ -12,6 +12,12 @@ enum GooglePlayAPIError: Error, LocalizedError {
         return nil
     }
 
+    /// Mirrors `AppStoreConnectAPIError.transportError` so both stores read the same way.
+    var transportError: Error? {
+        if case let .transport(underlying) = self { return underlying }
+        return nil
+    }
+
     var isDecodingFailure: Bool {
         if case .decodingFailed = self { return true }
         return false
