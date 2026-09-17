@@ -3531,7 +3531,7 @@
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "**選択した図形をインスペクタで編集** — 選択した図形のプロパティを、キャンバス下のバーではなくサイドバーに表示します。"
+            "value" : "**選択した図形をインスペクターで編集** — 選択した図形のプロパティを、キャンバス下のバーではなくサイドバーに表示します。"
           }
         },
         "ko" : {
@@ -5487,7 +5487,56 @@
       }
     },
     "**Next** checks the package before going on, so a typo or a service account without access is caught here instead of halfway through an upload." : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Nächste** prüft das Paket, bevor es weitergeht, sodass ein Tippfehler oder ein Dienstkonto ohne Zugriff hier auffällt statt mitten in einem Upload."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Siguiente** comprueba el paquete antes de continuar, de modo que un error tipográfico o una cuenta de servicio sin acceso se detecta aquí y no a mitad de un envío."
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**بعدی** بسته را پیش از ادامه بررسی می‌کند، بنابراین یک اشتباه تایپی یا حساب خدماتی بدون دسترسی همین‌جا گرفته می‌شود، نه در میانه‌ی یک آپلود."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Suivant** vérifie le package avant de continuer, de sorte qu'une faute de frappe ou un compte de service sans accès est détecté ici plutôt qu'au milieu d'un téléchargement."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**次** は、先に進む前にパッケージを確認します。そのため、入力ミスやアクセス権のないサービスアカウントは、アップロードの途中ではなくここで見つかります。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**다음**은 계속하기 전에 패키지를 확인하므로, 오타나 액세스 권한이 없는 서비스 계정을 업로드 도중이 아니라 여기에서 잡아냅니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Próximo** verifica o pacote antes de continuar, então um erro de digitação ou uma conta de serviço sem acesso é detectado aqui, em vez de no meio de um carregamento."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**下一个**会在继续之前检查包名称，因此拼写错误或没有访问权限的服务帐号会在此处被发现，而不是在上传进行到一半时才暴露。"
+          }
+        }
+      }
     },
     "**Open export folder on success** — auto-reveal results in Finder." : {
       "extractionState" : "stale",
@@ -10300,10 +10349,108 @@
       }
     },
     "%@ · %lld screenshots" : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ · %2$lld Screenshots"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ · %2$lld capturas"
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ · %2$lld اسکرین‌شات"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ · %2$lld captures d'écran"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ · %2$lld 件のスクリーンショット"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ · 스크린샷 %2$lld개"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ · %2$lld capturas de tela"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ · %2$lld 张截图"
+          }
+        }
+      }
     },
     "%@ · 1 screenshot" : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ · 1 Screenshot"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ · 1 captura"
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ · 1 اسکرین‌شات"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ · 1 capture d'écran"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ · 1 件のスクリーンショット"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ · 스크린샷 1개"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ · 1 captura de tela"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ · 1 张截图"
+          }
+        }
+      }
     },
     "%@ (%@)" : {
       "localizations" : {
@@ -10422,13 +10569,160 @@
       }
     },
     "%@ across %@." : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ in %2$@."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ en %2$@."
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ در %2$@."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ dans %2$@."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%2$@にわたる%1$@。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%2$@에 걸친 %1$@."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ em %2$@."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@，涵盖 %2$@。"
+          }
+        }
+      }
     },
     "%@ all upload to the %@ App Store localization." : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ werden alle in die App Store-Lokalisierung %2$@ hochgeladen."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ se envían todas a la localización %2$@ de App Store."
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ همگی در بومی‌سازی %2$@ در App Store آپلود می‌شوند."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ sont toutes téléchargées vers la localisation App Store %2$@."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@はすべて %2$@ の App Store ローカリゼーションにアップロードされます。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ 모두 %2$@ App Store 현지화에 업로드됩니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ são todos carregados para a localização %2$@ da App Store."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ 都会上传到 %2$@ 这个 App Store 本地化。"
+          }
+        }
+      }
     },
     "%@ both upload to the %@ App Store localization." : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ werden beide in die App Store-Lokalisierung %2$@ hochgeladen."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ se envían ambas a la localización %2$@ de App Store."
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ هر دو در بومی‌سازی %2$@ در App Store آپلود می‌شوند."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ sont toutes les deux téléchargées vers la localisation App Store %2$@."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@はどちらも %2$@ の App Store ローカリゼーションにアップロードされます。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ 둘 다 %2$@ App Store 현지화에 업로드됩니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ são ambos carregados para a localização %2$@ da App Store."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ 两者都会上传到 %2$@ 这个 App Store 本地化。"
+          }
+        }
+      }
     },
     "%@ can't be uploaded to a %@ version." : {
       "localizations" : {
@@ -10750,7 +11044,56 @@
       }
     },
     "%@ is reachable by this service account." : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ ist für dieses Dienstkonto erreichbar."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Esta cuenta de servicio puede acceder a %1$@."
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ برای این حساب خدمات در دسترس است."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ est accessible par ce compte de service."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ にはこのサービスアカウントからアクセスできます。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "이 서비스 계정으로 %1$@에 접근할 수 있습니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ está acessível por esta conta de serviço."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "此服务帐号可以访问 %1$@。"
+          }
+        }
+      }
     },
     "%@ text" : {
       "extractionState" : "stale",
@@ -12569,7 +12912,56 @@
       }
     },
     "%lld languages" : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld Sprachen"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld idiomas"
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld زبان"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld langues"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld 言語"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "언어 %1$lld개"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld idiomas"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld 种语言"
+          }
+        }
+      }
     },
     "%lld locale%@" : {
       "extractionState" : "stale",
@@ -16177,7 +16569,56 @@
       }
     },
     "1 language" : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1 Sprache"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1 idioma"
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1 زبان"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1 langue"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1 言語"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "언어 1개"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1 idioma"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1 种语言"
+          }
+        }
+      }
     },
     "1 locale" : {
       "localizations" : {
@@ -18483,7 +18924,56 @@
       }
     },
     "A section header shows an amber count when properties inside it are overridden — so a collapsed section still tells you something is there." : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Eine Abschnittsüberschrift zeigt eine bernsteinfarbene Anzahl, wenn Eigenschaften darin überschrieben sind – so verrät ein ausgeblendeter Abschnitt weiterhin, dass dort etwas ist."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "El encabezado de una sección muestra un recuento en ámbar cuando hay propiedades anuladas dentro de ella — así, una sección contraída sigue indicando que hay algo ahí."
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "وقتی خواص درون یک بخش نادیده گرفته شده باشند، سربرگ آن بخش یک شمارش کهربایی نشان می‌دهد — بنابراین یک بخش جمع‌شده هم به شما می‌گوید چیزی آنجا هست."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "L'en-tête d'une section affiche un compteur ambre lorsque des propriétés qu'elle contient sont remplacées — ainsi, une section réduite vous indique quand même que quelque chose s'y trouve."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "セクション内のプロパティが上書きされている場合、セクションのヘッダーに琥珀色のカウントが表示されます。折りたたまれたセクションでも、そこに何かがあることがわかります。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "섹션 안의 속성이 재정의되면 섹션 헤더에 호박색 개수가 표시되므로, 접힌 섹션에서도 무언가 있다는 것을 알 수 있습니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O cabeçalho de uma seção mostra uma contagem em âmbar quando as propriedades dentro dela são substituídas — assim, uma seção recolhida ainda informa que há algo ali."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "当某个分区内的属性被覆盖时，分区标题会显示琥珀色计数 — 这样即使分区已折叠，也仍然会告诉您其中有内容。"
+          }
+        }
+      }
     },
     "A showcase arranges a row's screenshots side by side on a styled background and renders them as a single image — for a product page, a launch post, a README, or an ad. It doesn't replace store screenshots; it's the picture you post *about* them." : {
       "localizations" : {
@@ -28405,7 +28895,56 @@
       }
     },
     "Checking access…" : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zugriff wird geprüft…"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Comprobando el acceso…"
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "در حال بررسی دسترسی…"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vérification de l'accès…"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "アクセスを確認中…"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "액세스 확인 중…"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Verificando acesso…"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "正在检查访问权限…"
+          }
+        }
+      }
     },
     "Choose **Blank** to set up rows and screenshot sizes manually, or **From Template** to start with a pre-designed layout." : {
       "localizations" : {
@@ -29033,7 +29572,56 @@
       }
     },
     "Choose the app to upload to" : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wählen Sie die App, in die hochgeladen wird"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Elige la aplicación a la que enviar"
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "برنامه‌ای را که می‌خواهید در آن آپلود کنید انتخاب کنید"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Choisissez l'application vers laquelle télécharger"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "アップロード先のアプリを選択"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "업로드할 앱을 선택하세요"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Escolha o aplicativo para o qual carregar"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "选择要上传到的应用"
+          }
+        }
+      }
     },
     "Choose what to upload" : {
       "localizations" : {
@@ -29088,7 +29676,56 @@
       }
     },
     "Choose which versions to update" : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wählen Sie die Versionen, die aktualisiert werden"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Elige qué versiones actualizar"
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "انتخاب کنید کدام نسخه‌ها به‌روزرسانی شوند"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Choisissez les versions à mettre à jour"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "更新するバージョンを選択"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "업데이트할 버전을 선택하세요"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Escolha quais versões atualizar"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "选择要更新的版本"
+          }
+        }
+      }
     },
     "Choose…" : {
       "localizations" : {
@@ -30290,7 +30927,56 @@
       }
     },
     "Collapse section" : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abschnitt ausblenden"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Contraer sección"
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "جمع کردن بخش"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Réduire la section"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "セクションを折りたたむ"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "섹션 접기"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Recolher seção"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "折叠分区"
+          }
+        }
+      }
     },
     "Collapse, edit, preview" : {
       "localizations" : {
@@ -30345,7 +31031,56 @@
       }
     },
     "Collapsed" : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ausgeblendet"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Contraída"
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "جمع‌شده"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Réduite"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "折りたたみ済み"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "접힘"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Recolhida"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已折叠"
+          }
+        }
+      }
     },
     "Color" : {
       "localizations" : {
@@ -42108,10 +42843,108 @@
       }
     },
     "Each project language is matched to the Google Play listing language shown beside it. Play keeps one set of screenshots per language, so when two project languages match the same one — **English** and **English (US)** both reach `en-US` — only one can be checked. A language Play doesn't publish in reads **Not on Play** and is skipped." : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Jede Projektsprache wird der daneben angezeigten Google Play-Eintragssprache zugeordnet. Play behält pro Sprache einen Satz Screenshots, sodass bei zwei Projektsprachen, die derselben entsprechen – **English** und **English (US)** erreichen beide `en-US` –, nur eine ausgewählt werden kann. Eine Sprache, in der Play nicht veröffentlicht, wird als **Nicht bei Play** angezeigt und übersprungen."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cada idioma del proyecto se corresponde con el idioma de la ficha de Google Play que aparece a su lado. Play guarda un único conjunto de capturas por idioma, así que cuando dos idiomas del proyecto coinciden con el mismo — **English** y **English (US)** llegan ambos a `en-US` — solo se puede marcar uno. Un idioma en el que Play no publica aparece como **No está en Play** y se omite."
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "هر زبان پروژه با زبان فهرست Google Play که کنار آن نشان داده شده است تطبیق داده می‌شود. Play برای هر زبان تنها یک مجموعه اسکرین‌شات نگه می‌دارد، بنابراین وقتی دو زبان پروژه با یک زبان یکسان تطبیق پیدا کنند — **English** و **English (US)** هر دو به `en-US` می‌رسند — تنها یکی می‌تواند علامت بخورد. زبانی که Play در آن منتشر نمی‌کند **در Play نیست** را نشان می‌دهد و از آن صرف‌نظر می‌شود."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chaque langue du projet est associée à la langue de fiche Google Play affichée à côté d'elle. Play conserve un seul jeu de captures d'écran par langue : lorsque deux langues du projet correspondent à la même — **English** et **English (US)** aboutissent toutes deux à `en-US` — une seule peut être cochée. Une langue dans laquelle Play ne publie pas affiche **Pas sur Play** et est ignorée."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "各プロジェクト言語は、その横に表示される Google Play の掲載言語に対応付けられます。Play は言語ごとに 1 組のスクリーンショットしか保持しないため、2 つのプロジェクト言語が同じ言語に一致する場合 — **English** と **English (US)** はどちらも `en-US` になります — チェックできるのは 1 つだけです。Play が公開していない言語は **Play にありません** と表示され、スキップされます。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "각 프로젝트 언어는 옆에 표시된 Google Play 스토어 목록 언어와 연결됩니다. Play는 언어당 하나의 스크린샷 세트만 유지하므로 두 프로젝트 언어가 같은 언어에 연결되면 — **English**와 **English (US)**는 둘 다 `en-US`에 도달합니다 — 하나만 선택할 수 있습니다. Play에서 게시하지 않는 언어는 **Play에 없음**으로 표시되며 건너뜁니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cada idioma do projeto é associado ao idioma da ficha da loja do Google Play exibido ao lado dele. O Play mantém um conjunto de capturas de tela por idioma, então, quando dois idiomas do projeto correspondem ao mesmo — **English** e **English (US)** chegam ambos a `en-US` — apenas um pode ser marcado. Um idioma em que o Play não publica aparece como **Não está no Play** e é ignorado."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "每种项目语言都会与旁边显示的 Google Play 商品详情语言相匹配。Play 为每种语言只保留一组截图，因此当两种项目语言匹配到同一种语言时 — **English** 和 **English (US)** 都对应 `en-US` — 只能勾选其中一种。Play 未发布的语言会显示为**不在 Play 上**，并会被跳过。"
+          }
+        }
+      }
     },
     "Each row has an include switch, an **Upload as** image type (auto-detected from the row's size — the ⓘ button shows the sizes Play accepts), and a checkbox per language." : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Jede Reihe hat einen Schalter zum Einschließen, einen Bildtyp unter **Hochladen als** (automatisch anhand der Größe der Reihe erkannt – die Schaltfläche ⓘ zeigt die von Play akzeptierten Größen) und ein Kontrollkästchen pro Sprache."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cada fila tiene un interruptor de inclusión, un tipo de imagen **Enviar como** (detectado automáticamente a partir del tamaño de la fila — el botón ⓘ muestra los tamaños que Play acepta) y una casilla por idioma."
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "هر ردیف یک کلید برای گنجاندن، یک نوع تصویر **آپلود به عنوان** (که به‌طور خودکار از اندازه‌ی ردیف تشخیص داده می‌شود — دکمه‌ی ⓘ اندازه‌هایی را که Play می‌پذیرد نشان می‌دهد) و یک کادر انتخاب برای هر زبان دارد."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chaque ligne dispose d'un interrupteur d'inclusion, d'un type d'image **Télécharger en tant que** (détecté automatiquement d'après la taille de la ligne — le bouton ⓘ affiche les tailles acceptées par Play) et d'une case à cocher par langue."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "各行には、含めるかどうかのスイッチ、**としてアップロード** の画像タイプ (行のサイズから自動検出されます — ⓘ ボタンで Play が受け入れるサイズを確認できます)、および言語ごとのチェックボックスがあります。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "각 행에는 포함 스위치, **다음으로 업로드** 이미지 유형(행 크기에서 자동 감지되며, ⓘ 버튼을 누르면 Play에서 허용하는 크기가 표시됩니다), 언어별 체크상자가 있습니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cada linha tem um interruptor de inclusão, um tipo de imagem **Carregar como** (detectado automaticamente pelo tamanho da linha — o botão ⓘ mostra os tamanhos que o Play aceita) e uma caixa de seleção por idioma."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "每行都有一个包含开关、一个**上传为**图像类型（根据该行的尺寸自动检测 — ⓘ 按钮会显示 Play 接受的尺寸），以及每种语言的一个复选框。"
+          }
+        }
+      }
     },
     "Each row has an include toggle, so you can leave one out for this upload only. To exclude a row from *every* upload, use the inspector's **Exclude when uploading to App Store Connect** instead." : {
       "localizations" : {
@@ -42166,7 +42999,56 @@
       }
     },
     "Each row header shows an amber count of the shapes that language overrides; click it to select them." : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Jede Reihenkopfzeile zeigt eine bernsteinfarbene Anzahl der Formen, die diese Sprache überschreibt; klicken Sie darauf, um sie auszuwählen."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "El encabezado de cada fila muestra en ámbar el número de formas que ese idioma anula; haga clic en él para seleccionarlas."
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "سربرگ هر ردیف شمارشی کهربایی از اشکالی که آن زبان نادیده می‌گیرد نشان می‌دهد؛ برای انتخاب آن‌ها روی آن کلیک کنید."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "L'en-tête de chaque ligne affiche un compteur ambre des formes que cette langue remplace ; cliquez dessus pour les sélectionner."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "各行のヘッダーには、その言語が上書きする形状の数が琥珀色で表示されます。クリックするとそれらを選択できます。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "각 행 헤더에는 해당 언어가 재정의하는 모양의 개수가 호박색으로 표시됩니다. 클릭하면 해당 모양이 선택됩니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O cabeçalho de cada linha mostra uma contagem em âmbar das formas que esse idioma substitui; clique nela para selecioná-las."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "每个行标题都会显示该语言所覆盖形状的琥珀色计数；单击它即可选中这些形状。"
+          }
+        }
+      }
     },
     "Easiest: paste the agent prompt into your AI assistant and let it connect. Or add the server by hand with the URL and access token, or the JSON configuration. Keep the token private — anyone with it can control the app while the server is running." : {
       "localizations" : {
@@ -42458,7 +43340,7 @@
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "選択した図形をインスペクタで編集"
+            "value" : "選択した図形をインスペクターで編集"
           }
         },
         "ko" : {
@@ -43890,10 +44772,108 @@
       }
     },
     "Enter your app's **package name** (for example `com.example.myapp`). Google Play has no way to list your apps, so the name is typed rather than picked — the clock button offers the ones you used before." : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Geben Sie den **Paketnamen** Ihrer App ein (zum Beispiel `com.example.myapp`). Google Play bietet keine Möglichkeit, Ihre Apps aufzulisten, daher wird der Name eingetippt statt ausgewählt – die Uhr-Schaltfläche bietet die zuvor verwendeten an."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ingresa el **nombre del paquete** de tu aplicación (por ejemplo, `com.example.myapp`). Google Play no tiene forma de listar tus aplicaciones, así que el nombre se escribe en lugar de elegirse — el botón del reloj ofrece los que ya has usado."
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**نام بسته** برنامه خود را وارد کنید (به عنوان مثال `com.example.myapp`). Google Play راهی برای فهرست کردن برنامه‌های شما ندارد، بنابراین نام به جای انتخاب شدن تایپ می‌شود — دکمه‌ی ساعت نام‌هایی را که پیش‌تر استفاده کرده‌اید پیشنهاد می‌دهد."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Saisissez le **nom du package** de votre application (par exemple `com.example.myapp`). Google Play ne permet pas de lister vos applications : le nom se saisit au lieu d'être choisi — le bouton en forme d'horloge propose ceux que vous avez déjà utilisés."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "アプリの **パッケージ名** (例: `com.example.myapp`) を入力します。Google Play にはアプリを一覧表示する手段がないため、名前は選ぶのではなく入力します。時計ボタンから、以前に使用した名前を選べます。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "앱의 **패키지 이름**(예: `com.example.myapp`)을 입력하세요. Google Play에는 앱 목록을 가져올 방법이 없으므로 이름은 선택하는 대신 직접 입력합니다. 시계 버튼을 누르면 이전에 사용한 이름이 표시됩니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Insira o **nome do pacote** do seu aplicativo (por exemplo `com.example.myapp`). O Google Play não tem como listar seus aplicativos, então o nome é digitado em vez de escolhido — o botão de relógio oferece os que você já usou."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "输入您的应用的**包名称**（例如 `com.example.myapp`）。Google Play 无法列出您的应用，因此名称需要手动输入而不是选取 — 时钟按钮会提供您之前用过的名称。"
+          }
+        }
+      }
     },
     "Every screenshot currently on the listing for the selected languages and image types is deleted and replaced." : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Jeder Screenshot, der derzeit für die ausgewählten Sprachen und Bildtypen im Eintrag liegt, wird gelöscht und ersetzt."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Todas las capturas que haya actualmente en la ficha para los idiomas y tipos de imagen seleccionados se eliminan y se reemplazan."
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "هر اسکرین‌شاتی که هم‌اکنون برای زبان‌ها و نوع‌های تصویر انتخاب‌شده در فهرست فروشگاه است حذف و جایگزین می‌شود."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Toutes les captures d'écran actuellement présentes sur la fiche pour les langues et les types d'image sélectionnés sont supprimées et remplacées."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "選択した言語と画像タイプについて、現在掲載情報にあるスクリーンショットはすべて削除され、置き換えられます。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "선택한 언어와 이미지 유형에 대해 현재 스토어 목록에 있는 모든 스크린샷이 삭제되고 교체됩니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Todas as capturas de tela que estão atualmente na ficha da loja para os idiomas e tipos de imagem selecionados são excluídas e substituídas."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "所选语言和图像类型在商品详情中现有的每张截图都会被删除并替换。"
+          }
+        }
+      }
     },
     "Every version on this app is already live. Create a new version in App Store Connect, then refresh this wizard." : {
       "extractionState" : "stale",
@@ -44582,10 +45562,108 @@
       }
     },
     "Expand section" : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abschnitt einblenden"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Expandir sección"
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "گسترش بخش"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Développer la section"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "セクションを展開"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "섹션 펼치기"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Expandir seção"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "展开分区"
+          }
+        }
+      }
     },
     "Expanded" : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Eingeblendet"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Expandida"
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "گسترش‌یافته"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Développée"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "展開済み"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "펼쳐짐"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Expandida"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已展开"
+          }
+        }
+      }
     },
     "Expires" : {
       "localizations" : {
@@ -49561,7 +50639,7 @@
         "fa" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "ژنرال"
+            "value" : "عمومی"
           }
         },
         "fr" : {
@@ -49573,13 +50651,13 @@
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "一般的な"
+            "value" : "一般"
           }
         },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "일반적인"
+            "value" : "일반"
           }
         },
         "pt-BR" : {
@@ -49591,7 +50669,7 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "一般的"
+            "value" : "常规"
           }
         }
       }
@@ -50234,7 +51312,56 @@
       }
     },
     "Google Play service account required" : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Google Play-Dienstkonto erforderlich"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Se requiere una cuenta de servicio de Google Play"
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "حساب خدمات Google Play لازم است"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Compte de service Google Play requis"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Google Play のサービスアカウントが必要です"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Google Play 서비스 계정 필요"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Conta de serviço do Google Play necessária"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "需要 Google Play 服务帐号"
+          }
+        }
+      }
     },
     "Google Play won't hold this app's listing changes as an un-reviewed draft via the API (the Play Console's \"Save draft\" has no API equivalent for a published app). Committing would send the changes to review instead." : {
       "localizations" : {
@@ -50843,13 +51970,13 @@
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "検査官を隠す"
+            "value" : "インスペクターを隠す"
           }
         },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "검사관 숨기기"
+            "value" : "검사기 숨기기"
           }
         },
         "pt-BR" : {
@@ -51492,7 +52619,56 @@
       }
     },
     "Hovering a shape the current language overrides outlines it in amber instead of the usual accent color." : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wenn Sie mit dem Zeiger über eine Form fahren, die die aktuelle Sprache überschreibt, wird sie bernsteinfarben statt in der üblichen Akzentfarbe umrandet."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Al pasar el cursor sobre una forma que el idioma actual anula, se resalta en ámbar en lugar del color de acento habitual."
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "نگه داشتن نشانگر روی شکلی که زبان کنونی آن را نادیده می‌گیرد، خط دور آن را به جای رنگ تأکید همیشگی، کهربایی می‌کند."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Le survol d'une forme que la langue actuelle remplace l'entoure en ambre au lieu de la couleur d'accentuation habituelle."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "現在の言語が上書きしている形状にカーソルを合わせると、通常のアクセントカラーではなく琥珀色の輪郭で表示されます。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "현재 언어가 재정의하는 모양 위에 마우스를 올리면 평소의 강조 색상 대신 호박색 윤곽선이 표시됩니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ao passar o mouse sobre uma forma que o idioma atual substitui, o contorno dela fica âmbar em vez da cor de destaque habitual."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "将鼠标悬停在当前语言覆盖的形状上时，其轮廓会显示为琥珀色，而不是通常的强调色。"
+          }
+        }
+      }
     },
     "How conflicts are resolved" : {
       "localizations" : {
@@ -53220,7 +54396,56 @@
       }
     },
     "Image Type" : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bildtyp"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tipo de imagen"
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "نوع تصویر"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Type d'image"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "画像タイプ"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "이미지 유형"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tipo de imagem"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "图像类型"
+          }
+        }
+      }
     },
     "Image-based vs programmatic frames" : {
       "localizations" : {
@@ -53796,7 +55021,56 @@
       }
     },
     "Import your service account JSON key in Settings → Google Play." : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Importieren Sie den JSON-Schlüssel Ihres Dienstkontos unter Einstellungen → Google Play."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Importa tu clave JSON de cuenta de servicio en Configuración → Google Play."
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "کلید JSON حساب خدمات خود را در تنظیمات → Google Play وارد کنید."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Importez votre clé JSON de compte de service dans Paramètres → Google Play."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "設定 → Google Play でサービスアカウントの JSON キーをインポートしてください。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "설정 → Google Play에서 서비스 계정 JSON 키를 가져오세요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Importe sua chave JSON da conta de serviço em Configurações → Google Play."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在设置 → Google Play 中导入您的服务帐号 JSON 密钥。"
+          }
+        }
+      }
     },
     "Imported" : {
       "localizations" : {
@@ -54373,7 +55647,56 @@
       }
     },
     "In the inspector, every control this language overrides is tinted amber, so you can see at a glance what differs from the base language. The properties bar tints the position, size and image controls the same way." : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Im Inspektor ist jedes Steuerelement, das diese Sprache überschreibt, bernsteinfarben eingefärbt, sodass Sie auf einen Blick sehen, was sich von der Basissprache unterscheidet. Die Eigenschaftenleiste färbt die Steuerelemente für Position, Größe und Bild auf dieselbe Weise ein."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "En el inspector, todos los controles que este idioma anula se tiñen de ámbar, de modo que se ve de un vistazo qué difiere del idioma base. La barra de propiedades tiñe igual los controles de posición, tamaño e imagen."
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "در بازرس، هر کنترلی که این زبان آن را نادیده می‌گیرد کهربایی رنگ می‌شود، تا در یک نگاه ببینید چه چیزی با زبان پایه فرق دارد. نوار خواص هم کنترل‌های موقعیت، اندازه و تصویر را به همین شکل رنگ می‌کند."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dans l'inspecteur, chaque contrôle que cette langue remplace est teinté en ambre, ce qui vous permet de voir d'un coup d'œil ce qui diffère de la langue de base. La barre de propriétés teinte de la même manière les contrôles de position, de taille et d'image."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "インスペクターでは、この言語が上書きするすべてのコントロールが琥珀色で表示されるため、基本言語との違いが一目でわかります。プロパティ バーも、位置、サイズ、画像のコントロールを同じように色付けします。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "검사기에서는 이 언어가 재정의하는 모든 컨트롤이 호박색으로 표시되므로 기본 언어와 무엇이 다른지 한눈에 알 수 있습니다. 속성 표시줄도 같은 방식으로 위치, 크기, 이미지 컨트롤에 색을 입힙니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No inspetor, todos os controles que este idioma substitui ficam tingidos de âmbar, para que você veja rapidamente o que difere do idioma base. A barra de propriedades tinge os controles de posição, tamanho e imagem da mesma forma."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在检查器中，此语言覆盖的每个控件都会染成琥珀色，因此您可以一眼看出与基础语言的差异。属性栏也会以同样的方式为位置、尺寸和图像控件着色。"
+          }
+        }
+      }
     },
     "Include" : {
       "localizations" : {
@@ -54820,13 +56143,13 @@
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "検査官"
+            "value" : "インスペクター"
           }
         },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "검사관"
+            "value" : "검사기"
           }
         },
         "pt-BR" : {
@@ -54838,7 +56161,7 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "督察"
+            "value" : "检查器"
           }
         }
       }
@@ -56348,7 +57671,7 @@
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Linguagem"
+            "value" : "Idioma"
           }
         },
         "zh-Hans" : {
@@ -57404,7 +58727,56 @@
       }
     },
     "Line Height" : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zeilenhöhe"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Interlineado"
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ارتفاع خط"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hauteur de ligne"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "行の高さ"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "줄 높이"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Altura da linha"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "行高"
+          }
+        }
+      }
     },
     "Line Spacing" : {
       "localizations" : {
@@ -61383,7 +62755,56 @@
       }
     },
     "No app with that package name is reachable by this service account." : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Für dieses Dienstkonto ist keine App mit diesem Paketnamen erreichbar."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Esta cuenta de servicio no puede acceder a ninguna aplicación con ese nombre de paquete."
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "هیچ برنامه‌ای با آن نام بسته برای این حساب خدمات در دسترس نیست."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aucune application portant ce nom de package n'est accessible par ce compte de service."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "そのパッケージ名のアプリには、このサービスアカウントからアクセスできません。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "이 서비스 계정으로 접근할 수 있는 해당 패키지 이름의 앱이 없습니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nenhum aplicativo com esse nome de pacote está acessível por esta conta de serviço."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "此服务帐号无法访问使用该包名称的任何应用。"
+          }
+        }
+      }
     },
     "No changes to save." : {
       "localizations" : {
@@ -62895,7 +64316,56 @@
       }
     },
     "Not on Play" : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nicht bei Play"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No está en Play"
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "در Play نیست"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pas sur Play"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Play にありません"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Play에 없음"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Não está no Play"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "不在 Play 上"
+          }
+        }
+      }
     },
     "Not running" : {
       "localizations" : {
@@ -66137,7 +67607,7 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "套餐名称"
+            "value" : "包名称"
           }
         }
       }
@@ -66872,7 +68342,56 @@
       }
     },
     "Pick a different App Store locale for one of them, or turn one off." : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wählen Sie für eine davon ein anderes App Store-Gebietsschema oder schalten Sie eine aus."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Elige otro idioma de App Store para uno de ellos o desactiva uno."
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "برای یکی از آن‌ها محلی App Store دیگری انتخاب کنید یا یکی را خاموش کنید."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Choisissez une autre localisation App Store pour l'une d'elles, ou désactivez-en une."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "どちらか一方に別の App Store ロケールを選ぶか、一方をオフにしてください。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "둘 중 하나에 다른 App Store 로케일을 선택하거나 하나를 끄세요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Escolha uma localidade da App Store diferente para um deles ou desative um."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "为其中一个选择不同的 App Store 语言环境，或者关闭其中一个。"
+          }
+        }
+      }
     },
     "Pick a different display type." : {
       "localizations" : {
@@ -68179,7 +69698,56 @@
       }
     },
     "Play value" : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Play-Wert"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Valor de Play"
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "مقدار Play"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Valeur Play"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Play の値"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Play 값"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Valor do Play"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Play 值"
+          }
+        }
+      }
     },
     "PNG" : {
       "localizations" : {
@@ -68546,7 +70114,56 @@
       }
     },
     "Prefer a sidebar? Turn on **Edit selected shapes in the inspector** in Settings ▸ General. The same controls then move into the inspector as collapsible sections (hide the inspector and the bar comes back), a multi-selection gets align and distribute buttons, and the **Insert** menu in the toolbar adds shapes." : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lieber eine Seitenleiste? Aktivieren Sie **Ausgewählte Formen im Inspektor bearbeiten** unter Einstellungen ▸ Allgemein. Dieselben Steuerelemente wandern dann als einklappbare Abschnitte in den Inspektor (blenden Sie den Inspektor aus, und die Leiste kommt zurück), eine Mehrfachauswahl erhält Schaltflächen zum Ausrichten und Verteilen, und das Menü **Einfügen** in der Symbolleiste fügt Formen hinzu."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "¿Prefiere una barra lateral? Active **Editar las formas seleccionadas en el inspector** en Configuración ▸ General. Los mismos controles pasan entonces al inspector como secciones plegables (oculte el inspector y la barra vuelve), una selección múltiple obtiene botones para alinear y distribuir, y el menú **Insertar** de la barra de herramientas añade formas."
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "نوار کناری را ترجیح می‌دهید؟ **ویرایش شکل‌های انتخاب‌شده در بازرس** را در تنظیمات ▸ عمومی روشن کنید. آن‌گاه همان کنترل‌ها به صورت بخش‌های جمع‌شدنی به بازرس منتقل می‌شوند (بازرس را پنهان کنید و نوار بازمی‌گردد)، انتخاب چندتایی دکمه‌های تراز و توزیع می‌گیرد، و منوی **درج** در نوار ابزار اشکال را اضافه می‌کند."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vous préférez une barre latérale ? Activez **Modifier les formes sélectionnées dans l’inspecteur** dans Paramètres ▸ Général. Les mêmes contrôles passent alors dans l'inspecteur sous forme de sections repliables (masquez l'inspecteur et la barre revient), une sélection multiple obtient des boutons d'alignement et de répartition, et le menu **Insérer** de la barre d'outils ajoute des formes."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "サイドバーの方がお好みですか? 設定 ▸ 一般 で **選択した図形をインスペクターで編集** をオンにします。すると同じコントロールが折りたたみ可能なセクションとしてインスペクターに移動し (インスペクターを非表示にするとバーが戻ります)、複数選択では整列と均等配置のボタンが使え、ツールバーの **挿入** メニューから形状を追加できます。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "사이드바가 더 편하다면 설정 ▸ 일반에서 **선택한 도형을 검사기에서 편집**을 켜세요. 같은 컨트롤이 접을 수 있는 섹션으로 검사기에 이동하고(검사기를 숨기면 막대가 다시 나타납니다), 다중 선택에는 정렬 및 분배 버튼이 생기며, 도구 막대의 **삽입** 메뉴로 도형을 추가합니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Prefere uma barra lateral? Ative **Editar formas selecionadas no inspetor** em Configurações ▸ Em geral. Os mesmos controles passam então para o inspetor como seções recolhíveis (oculte o inspetor e a barra volta), uma seleção múltipla ganha botões de alinhar e distribuir, e o menu **Inserir** na barra de ferramentas adiciona formas."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "更喜欢侧边栏？在设置 ▸ 常规中打开**在检查器中编辑所选形状**。相同的控件随后会以可折叠分区的形式移入检查器（隐藏检查器，属性栏就会回来），多选时会出现对齐和分布按钮，工具栏中的**插入**菜单可以添加形状。"
+          }
+        }
+      }
     },
     "Prefer a sidebar? Turn on **Edit selected shapes in the inspector** in Settings ▸ General. The same controls then move into the inspector as collapsible sections, a multi-selection gets align and distribute buttons, and the **Insert** menu in the toolbar adds shapes." : {
       "extractionState" : "stale",
@@ -68578,7 +70195,7 @@
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "サイドバーがよい場合は、設定 ▸ 一般で**選択した図形をインスペクタで編集**をオンにします。同じコントロールが折りたたみ可能なセクションとしてインスペクタに移動し、複数選択では整列と分布のボタンが使え、ツールバーの**挿入**メニューから図形を追加できます。"
+            "value" : "サイドバーがよい場合は、設定 ▸ 一般で**選択した図形をインスペクターで編集**をオンにします。同じコントロールが折りたたみ可能なセクションとしてインスペクターに移動し、複数選択では整列と分布のボタンが使え、ツールバーの**挿入**メニューから図形を追加できます。"
           }
         },
         "ko" : {
@@ -68596,7 +70213,7 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "更喜欢侧边栏？在设置 ▸ 通用中打开**在检查器中编辑所选形状**。相同控件会以可折叠分区移动到检查器中，多选时会显示对齐和分布按钮，工具栏中的**插入**菜单可添加形状。"
+            "value" : "更喜欢侧边栏？在设置 ▸ 常规中打开**在检查器中编辑所选形状**。相同控件会以可折叠分区移动到检查器中，多选时会显示对齐和分布按钮，工具栏中的**插入**菜单可添加形状。"
           }
         }
       }
@@ -71986,7 +73603,56 @@
       }
     },
     "Recent package names" : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zuletzt verwendete Paketnamen"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nombres de paquete recientes"
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "نام‌های بسته اخیر"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Noms de package récents"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "最近のパッケージ名"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "최근 패키지 이름"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nomes de pacote recentes"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "最近使用的包名称"
+          }
+        }
+      }
     },
     "Recognized screenshot dimensions are used to pick an appropriate device category or frame when possible." : {
       "localizations" : {
@@ -74786,7 +76452,7 @@
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "다시 놓기"
+            "value" : "재설정"
           }
         },
         "pt-BR" : {
@@ -74961,7 +76627,56 @@
       }
     },
     "Reset All" : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alle zurücksetzen"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Restablecer todo"
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "بازنشانی همه"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tout réinitialiser"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "すべてリセット"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "모두 재설정"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reiniciar tudo"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "全部重置"
+          }
+        }
+      }
     },
     "Reset all %@ text and image overrides?" : {
       "localizations" : {
@@ -75068,7 +76783,56 @@
       }
     },
     "Reset all overrides for this language" : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alle Überschreibungen für diese Sprache zurücksetzen"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Restablecer todas las anulaciones de este idioma"
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "بازنشانی همه‌ی موارد نادیده‌گرفته‌شده برای این زبان"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Réinitialiser tous les remplacements pour cette langue"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "この言語のすべての上書きをリセット"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "이 언어의 모든 재정의 재설정"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reiniciar todas as substituições para este idioma"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "重置此语言的所有覆盖"
+          }
+        }
+      }
     },
     "Reset All Translations" : {
       "localizations" : {
@@ -75228,7 +76992,56 @@
       }
     },
     "Reset for this language" : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Für diese Sprache zurücksetzen"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Restablecer para este idioma"
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "بازنشانی برای این زبان"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Réinitialiser pour cette langue"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "この言語をリセット"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "이 언어에 대해 재설정"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reiniciar para este idioma"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "重置此语言"
+          }
+        }
+      }
     },
     "Reset Image" : {
       "localizations" : {
@@ -75388,7 +77201,56 @@
       }
     },
     "Reset overrides for this language" : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Überschreibungen für diese Sprache zurücksetzen"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Restablecer las anulaciones de este idioma"
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "بازنشانی موارد نادیده‌گرفته‌شده برای این زبان"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Réinitialiser les remplacements pour cette langue"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "この言語の上書きをリセット"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "이 언어의 재정의 재설정"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reiniciar substituições para este idioma"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "重置此语言的覆盖"
+          }
+        }
+      }
     },
     "Reset Project" : {
       "localizations" : {
@@ -77214,10 +79076,108 @@
       }
     },
     "Review the store text" : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Den Store-Text überprüfen"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Revisa el texto de la tienda"
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "بررسی متن فروشگاه"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vérifiez le texte de la fiche"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ストアのテキストを確認"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "스토어 텍스트 검토"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Revise o texto da loja"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "查看商店文本"
+          }
+        }
+      }
     },
     "Review what will change" : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Überprüfen, was sich ändert"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Revisa lo que va a cambiar"
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "بررسی آنچه تغییر خواهد کرد"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vérifiez ce qui va changer"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "変更内容を確認"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "변경될 내용 검토"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Revise o que vai mudar"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "查看将要更改的内容"
+          }
+        }
+      }
     },
     "Right" : {
       "localizations" : {
@@ -77769,7 +79729,7 @@
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "行インスペクタ"
+            "value" : "行インスペクター"
           }
         },
         "ko" : {
@@ -77955,7 +79915,56 @@
       }
     },
     "rows" : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reihen"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "filas"
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ردیف‌ها"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "lignes"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "行"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "행"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "linhas"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "行"
+          }
+        }
+      }
     },
     "Rows" : {
       "localizations" : {
@@ -80932,7 +82941,56 @@
       }
     },
     "Seeing what a language overrides" : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sehen, was eine Sprache überschreibt"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ver qué anula un idioma"
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "دیدن آنچه یک زبان نادیده می‌گیرد"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Voir ce qu'une langue remplace"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "言語が何を上書きしているかを確認する"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "언어가 재정의한 항목 확인하기"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ver o que um idioma substitui"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "查看某种语言覆盖了哪些内容"
+          }
+        }
+      }
     },
     "Select" : {
       "localizations" : {
@@ -83337,7 +85395,56 @@
       }
     },
     "Shape properties move from the bar below the canvas into the sidebar, and come back to the bar while the sidebar is hidden. Click the row name or press Esc to return to row settings." : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Formeigenschaften wandern von der Leiste unter der Leinwand in die Seitenleiste und kehren zur Leiste zurück, solange die Seitenleiste ausgeblendet ist. Klicken Sie auf den Namen der Reihe oder drücken Sie Esc, um zu den Reiheneinstellungen zurückzukehren."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Las propiedades de la forma pasan de la barra situada bajo el lienzo a la barra lateral, y vuelven a la barra mientras la barra lateral está oculta. Haga clic en el nombre de la fila o pulse Esc para volver a los ajustes de la fila."
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "خواص شکل از نوار زیر بوم به نوار کناری منتقل می‌شوند و تا زمانی که نوار کناری پنهان است به نوار بازمی‌گردند. برای بازگشت به تنظیمات ردیف، روی نام ردیف کلیک کنید یا Esc را بزنید."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Les propriétés de forme passent de la barre située sous la toile à la barre latérale, et reviennent dans la barre tant que la barre latérale est masquée. Cliquez sur le nom de la ligne ou appuyez sur Échap pour revenir aux paramètres de la ligne."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "形状のプロパティは、キャンバス下のバーからサイドバーに移動し、サイドバーを非表示にしている間はバーに戻ります。行名をクリックするか Esc キーを押すと、行の設定に戻ります。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "모양 속성이 캔버스 아래 막대에서 사이드바로 이동하며, 사이드바를 숨기는 동안에는 다시 막대로 돌아옵니다. 행 설정으로 돌아가려면 행 이름을 클릭하거나 Esc를 누르세요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "As propriedades da forma passam da barra abaixo da tela para a barra lateral e voltam para a barra enquanto a barra lateral está oculta. Clique no nome da linha ou pressione Esc para voltar às configurações da linha."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "形状属性会从画布下方的栏移入侧边栏，而在侧边栏隐藏时又回到该栏。单击行名称或按 Esc 即可返回行设置。"
+          }
+        }
+      }
     },
     "Shape properties move from the bar below the canvas into the sidebar. Click the row name or press Esc to return to row settings." : {
       "extractionState" : "stale",
@@ -84115,7 +86222,7 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "显示检验员"
+            "value" : "显示检查器"
           }
         }
       }
@@ -88526,7 +90633,56 @@
       }
     },
     "Syncing screenshots…" : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Screenshots werden synchronisiert…"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sincronizando capturas…"
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "در حال همگام‌سازی اسکرین‌شات‌ها…"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Synchronisation des captures d'écran…"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "スクリーンショットを同期中…"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "스크린샷 동기화 중…"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sincronizando capturas de tela…"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "正在同步截图…"
+          }
+        }
+      }
     },
     "Syncing via iCloud" : {
       "localizations" : {
@@ -89833,7 +91989,56 @@
       }
     },
     "That isn't a valid package name. It looks like com.example.myapp." : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Das ist kein gültiger Paketname. Er sieht aus wie com.example.myapp."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ese no es un nombre de paquete válido. Tiene el formato com.example.myapp."
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "این یک نام بسته معتبر نیست. نام بسته چیزی شبیه com.example.myapp است."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ce n'est pas un nom de package valide. Il se présente sous la forme com.example.myapp."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "有効なパッケージ名ではありません。com.example.myapp のような形式です。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "유효한 패키지 이름이 아닙니다. com.example.myapp과 같은 형식이어야 합니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Esse não é um nome de pacote válido. O formato é parecido com com.example.myapp."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "这不是有效的包名称。有效的名称形如 com.example.myapp。"
+          }
+        }
+      }
     },
     "That SVG couldn't be rendered." : {
       "localizations" : {
@@ -90671,10 +92876,108 @@
       }
     },
     "The changes are saved as an un-reviewed draft. Send them for review from the Play Console." : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Änderungen werden als ungeprüfter Entwurf gespeichert. Senden Sie sie in der Play Console zur Überprüfung."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Los cambios se guardan como un borrador sin revisar. Envíalos para revisar desde Play Console."
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تغییرات به صورت پیش‌نویس بررسی‌نشده ذخیره می‌شوند. آن‌ها را از Play Console برای بررسی ارسال کنید."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Les modifications sont enregistrées en tant que brouillon non examiné. Envoyez-les pour examen depuis la Play Console."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "変更は未審査の下書きとして保存されます。Play Console からレビューに送信してください。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "변경사항은 검토되지 않은 초안으로 저장됩니다. Play Console에서 검토를 위해 전송하세요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "As alterações são salvas como um rascunho não revisado. Envie-as para revisão no Play Console."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "更改会保存为未经审核的草稿。请从 Play 管理中心发送它们以供审核。"
+          }
+        }
+      }
     },
     "The changes are sent to Google Play review when the edit is committed." : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Änderungen werden zur Überprüfung an Google Play gesendet, sobald die Bearbeitung übernommen wird."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Los cambios se envían a la revisión de Google Play cuando se confirma la edición."
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "وقتی ویرایش ثبت شود، تغییرات برای بررسی به Google Play ارسال می‌شوند."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Les modifications sont envoyées à l'examen Google Play lorsque la modification est validée."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "編集が確定されると、変更は Google Play のレビューに送信されます。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "수정 사항을 커밋하면 변경사항이 Google Play 검토로 전송됩니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "As alterações são enviadas para a revisão do Google Play quando a edição é confirmada."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "提交编辑后，更改会发送给 Google Play 审核。"
+          }
+        }
+      }
     },
     "The dots stand in for your access token — the copied text carries the real one." : {
       "localizations" : {
@@ -90990,7 +93293,56 @@
       }
     },
     "The inspector's controls are grouped into collapsible sections. Click anywhere on a section's header to open or close it; hold **⌥** while clicking to open or close every section at once. How you leave them is remembered." : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Steuerelemente des Inspektors sind in einklappbare Abschnitte gruppiert. Klicken Sie an beliebiger Stelle auf die Überschrift eines Abschnitts, um ihn zu öffnen oder zu schließen; halten Sie beim Klicken **⌥** gedrückt, um alle Abschnitte auf einmal zu öffnen oder zu schließen. Wie Sie sie hinterlassen, wird gemerkt."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Los controles del inspector están agrupados en secciones plegables. Haga clic en cualquier punto del encabezado de una sección para abrirla o cerrarla; mantenga pulsada **⌥** al hacer clic para abrir o cerrar todas las secciones a la vez. Se recuerda cómo las deja."
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "کنترل‌های بازرس در بخش‌های جمع‌شدنی گروه‌بندی شده‌اند. برای باز یا بسته کردن یک بخش، هر جای سربرگ آن کلیک کنید؛ برای باز یا بستن همه‌ی بخش‌ها به‌یک‌باره، هنگام کلیک **⌥** را نگه دارید. وضعیتی که آن‌ها را در آن رها می‌کنید به خاطر سپرده می‌شود."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Les contrôles de l'inspecteur sont regroupés en sections repliables. Cliquez n'importe où sur l'en-tête d'une section pour l'ouvrir ou la fermer ; maintenez **⌥** enfoncé en cliquant pour ouvrir ou fermer toutes les sections à la fois. L'état dans lequel vous les laissez est mémorisé."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "インスペクターのコントロールは、折りたたみ可能なセクションにまとめられています。セクションのヘッダーのどこかをクリックすると開閉できます。**⌥** を押しながらクリックすると、すべてのセクションを一度に開閉できます。最後の開閉状態は記憶されます。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "검사기의 컨트롤은 접을 수 있는 섹션으로 묶여 있습니다. 섹션 헤더의 아무 곳이나 클릭하면 열거나 닫을 수 있고, **⌥**를 누른 채 클릭하면 모든 섹션을 한 번에 열거나 닫습니다. 마지막으로 둔 상태가 기억됩니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Os controles do inspetor são agrupados em seções recolhíveis. Clique em qualquer lugar do cabeçalho de uma seção para abri-la ou fechá-la; mantenha **⌥** pressionado ao clicar para abrir ou fechar todas as seções de uma vez. O estado em que você as deixa é lembrado."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "检查器的控件会分组为可折叠的分区。单击分区标题的任意位置即可打开或关闭它；单击时按住 **⌥** 可一次性打开或关闭所有分区。它们的开合状态会被记住。"
+          }
+        }
+      }
     },
     "The interface language will switch the next time Screenshot Bro launches." : {
       "localizations" : {
@@ -91723,7 +94075,56 @@
       }
     },
     "The selected shape's summary sits beside its name at the top of the inspector: the language and how many properties it overrides. Its **reset** button opens a menu listing each overridden property, so you can put one back to the base language or reset them all." : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Zusammenfassung der ausgewählten Form steht neben ihrem Namen oben im Inspektor: die Sprache und wie viele Eigenschaften sie überschreibt. Ihre Schaltfläche **Zurücksetzen** öffnet ein Menü mit jeder überschriebenen Eigenschaft, sodass Sie eine einzelne auf die Basissprache zurücksetzen können oder alle."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "El resumen de la forma seleccionada aparece junto a su nombre en la parte superior del inspector: el idioma y cuántas propiedades anula. Su botón **Restablecer** abre un menú con cada propiedad anulada, de modo que puede devolver una al idioma base o restablecerlas todas."
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "خلاصه‌ی شکل انتخاب‌شده در بالای بازرس کنار نام آن قرار می‌گیرد: زبان و تعداد خواصی که نادیده می‌گیرد. دکمه‌ی **بازنشانی** آن منویی باز می‌کند که هر خاصیت نادیده‌گرفته‌شده را فهرست می‌کند، تا بتوانید یکی را به زبان پایه برگردانید یا همه را بازنشانی کنید."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Le résumé de la forme sélectionnée se trouve à côté de son nom en haut de l'inspecteur : la langue et le nombre de propriétés qu'elle remplace. Son bouton **Réinitialiser** ouvre un menu répertoriant chaque propriété remplacée, ce qui vous permet d'en rétablir une à la langue de base ou de toutes les réinitialiser."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "選択した形状の概要は、インスペクターの上部にある名前の横に表示されます。言語と、上書きされているプロパティの数です。**リセット** ボタンを押すと、上書きされた各プロパティを一覧するメニューが開き、個別に基本言語へ戻したり、すべてをリセットしたりできます。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "선택한 모양의 요약은 검사기 상단의 이름 옆에 표시됩니다. 언어와 재정의된 속성 개수입니다. **재설정** 버튼을 누르면 재정의된 각 속성이 나열된 메뉴가 열리므로 하나를 기본 언어로 되돌리거나 모두 재설정할 수 있습니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O resumo da forma selecionada fica ao lado do nome dela, no topo do inspetor: o idioma e quantas propriedades ela substitui. O botão **reiniciar** abre um menu que lista cada propriedade substituída, para que você possa voltar uma delas ao idioma base ou reiniciar todas."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "所选形状的摘要位于检查器顶部其名称的旁边：语言以及它覆盖了多少个属性。其**重置**按钮会打开一个菜单，列出每个被覆盖的属性，因此您可以将其中一个恢复为基础语言，或者将它们全部重置。"
+          }
+        }
+      }
     },
     "The server requires an **access token**: every request must present it, so another app on your Mac can't quietly drive Screenshot Bro." : {
       "localizations" : {
@@ -91882,7 +94283,56 @@
       }
     },
     "The service account was rejected. Check the key in Settings → Google Play." : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Das Dienstkonto wurde abgelehnt. Prüfen Sie den Schlüssel unter Einstellungen → Google Play."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Se rechazó la cuenta de servicio. Revisa la clave en Configuración → Google Play."
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "حساب خدمات رد شد. کلید را در تنظیمات → Google Play بررسی کنید."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Le compte de service a été rejeté. Vérifiez la clé dans Paramètres → Google Play."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "サービスアカウントが拒否されました。設定 → Google Play でキーを確認してください。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "서비스 계정이 거부되었습니다. 설정 → Google Play에서 키를 확인하세요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A conta de serviço foi rejeitada. Verifique a chave em Configurações → Google Play."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "服务帐号被拒绝。请在设置 → Google Play 中检查密钥。"
+          }
+        }
+      }
     },
     "The sheet previews the result live as you change settings." : {
       "localizations" : {
@@ -93463,7 +95913,56 @@
       }
     },
     "This service account can't edit that app. Grant it access in the Play Console." : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dieses Dienstkonto kann diese App nicht bearbeiten. Gewähren Sie ihm Zugriff in der Play Console."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Esta cuenta de servicio no puede editar esa aplicación. Concédele acceso en Play Console."
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "این حساب خدمات نمی‌تواند آن برنامه را ویرایش کند. در Play Console به آن دسترسی بدهید."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ce compte de service ne peut pas modifier cette application. Accordez-lui l'accès dans la Play Console."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "このサービスアカウントではそのアプリを編集できません。Play Console でアクセス権を付与してください。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "이 서비스 계정은 해당 앱을 편집할 수 없습니다. Play Console에서 액세스 권한을 부여하세요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Esta conta de serviço não pode editar esse aplicativo. Conceda acesso a ela no Play Console."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "此服务帐号无法编辑该应用。请在 Play 管理中心中授予其访问权限。"
+          }
+        }
+      }
     },
     "This set cannot be included because required App Store data is unavailable." : {
       "localizations" : {
@@ -98061,7 +100560,56 @@
       }
     },
     "Uploading **replaces** what is already on the listing: for every language and image type you selected, the existing screenshots are deleted and the new ones uploaded. The confirmation says so before anything is sent." : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Das Hochladen **ersetzt**, was bereits im Eintrag liegt: Für jede ausgewählte Sprache und jeden ausgewählten Bildtyp werden die vorhandenen Screenshots gelöscht und die neuen hochgeladen. Die Bestätigung weist darauf hin, bevor etwas gesendet wird."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Enviar **reemplaza** lo que ya hay en la ficha: para cada idioma y tipo de imagen que hayas seleccionado, las capturas existentes se eliminan y se envían las nuevas. La confirmación lo advierte antes de enviar nada."
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "آپلود آنچه را از پیش در فهرست فروشگاه است **جایگزین** می‌کند: برای هر زبان و نوع تصویری که انتخاب کرده‌اید، اسکرین‌شات‌های موجود حذف و اسکرین‌شات‌های جدید آپلود می‌شوند. پیام تأیید پیش از ارسال هر چیزی این را می‌گوید."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Le téléchargement **remplace** ce qui se trouve déjà sur la fiche : pour chaque langue et chaque type d'image que vous avez sélectionnés, les captures d'écran existantes sont supprimées et les nouvelles téléchargées. La confirmation vous le signale avant tout envoi."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "アップロードは、掲載情報にすでにあるものを **置き換えます**。選択したすべての言語と画像タイプについて、既存のスクリーンショットは削除され、新しいものがアップロードされます。送信前の確認画面にもその旨が表示されます。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "업로드는 스토어 목록에 이미 있는 항목을 **대체**합니다. 선택한 모든 언어와 이미지 유형에 대해 기존 스크린샷이 삭제되고 새 스크린샷이 업로드됩니다. 전송 전에 확인 창에서 이를 알려줍니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O carregamento **substitui** o que já está na ficha da loja: para cada idioma e tipo de imagem que você selecionou, as capturas de tela existentes são excluídas e as novas são carregadas. A confirmação avisa isso antes de qualquer coisa ser enviada."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "上传会**替换**商品详情中已有的内容：对于您选择的每种语言和图像类型，现有的截图都会被删除，新的截图会被上传。在发送任何内容之前，确认提示会说明这一点。"
+          }
+        }
+      }
     },
     "Uploading %lld%%" : {
       "localizations" : {
@@ -98636,7 +101184,56 @@
       }
     },
     "Use it to walk through the whole upload flow before you have credentials set up. While demo mode is on, the imported service account is ignored, the package field starts on a sample name, and the package check always passes." : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nutzen Sie ihn, um den gesamten Upload-Ablauf durchzugehen, bevor Sie Anmeldedaten eingerichtet haben. Solange der Demo-Modus aktiv ist, wird das importierte Dienstkonto ignoriert, das Paketfeld beginnt mit einem Beispielnamen, und die Paketprüfung ist immer erfolgreich."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Úsalo para recorrer todo el flujo de envío antes de tener credenciales configuradas. Mientras el modo de demostración está activado, se ignora la cuenta de servicio importada, el campo del paquete empieza con un nombre de ejemplo y la comprobación del paquete siempre se supera."
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "از آن استفاده کنید تا پیش از آنکه اعتبارنامه‌ها را تنظیم کنید، کل روند آپلود را مرور کنید. تا زمانی که حالت نمایشی روشن است، حساب خدمات وارد‌شده در نظر گرفته نمی‌شود، فیلد نام بسته با یک نام نمونه آغاز می‌شود و بررسی بسته همیشه با موفقیت انجام می‌شود."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Utilisez-le pour parcourir tout le processus de téléchargement avant d'avoir configuré des identifiants. Tant que le mode démo est activé, le compte de service importé est ignoré, le champ du package démarre sur un nom d'exemple et la vérification du package réussit toujours."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "認証情報を設定する前に、アップロードの流れ全体を試すために使用します。デモモードがオンの間は、インポートしたサービスアカウントは無視され、パッケージのフィールドには最初からサンプル名が入力され、パッケージの確認は常に成功します。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "자격 증명을 설정하기 전에 전체 업로드 과정을 미리 살펴보는 데 사용하세요. 데모 모드가 켜져 있는 동안에는 가져온 서비스 계정이 무시되고, 패키지 필드는 샘플 이름으로 시작하며, 패키지 확인은 항상 통과합니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Use-o para percorrer todo o fluxo de carregamento antes de ter as credenciais configuradas. Enquanto o modo de demonstração está ativo, a conta de serviço importada é ignorada, o campo de pacote começa com um nome de exemplo e a verificação do pacote sempre passa."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在您设置好凭据之前，可以用它来完整走一遍上传流程。演示模式开启时，导入的服务帐号会被忽略，包名称字段会以示例名称开始，并且包名称检查始终通过。"
+          }
+        }
+      }
     },
     "Use it to walk through the whole upload flow before you have credentials set up. While demo mode is on, the imported service account is ignored." : {
       "extractionState" : "stale",
@@ -101197,7 +103794,7 @@
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "設定で**選択した図形をインスペクタで編集**をオンにすると、図形を選択したときにこれらのコントロールがその図形用のものに切り替わります。戻るには、インスペクタ上部の行名をクリックするか、**Esc**を押します。"
+            "value" : "設定で**選択した図形をインスペクターで編集**をオンにすると、図形を選択したときにこれらのコントロールがその図形用のものに切り替わります。戻るには、インスペクター上部の行名をクリックするか、**Esc**を押します。"
           }
         },
         "ko" : {
