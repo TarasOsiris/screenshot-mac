@@ -690,6 +690,30 @@ struct MCPToolExecutorTests {
         }
     }
 
+    /// A client-cancelled export (the agent dropped the connection, or the app quit mid-export)
+    /// must surface as `CancellationError`, not get wrapped into `MCPToolError.failed` — wrapping
+    /// it made `MCPToolExecutor.call`'s `isClientError` check blind to it, so every cancellation
+    /// opened a Sentry report (SCREENSHOT-BRO-G).
+    @Test func exportProjectCancellationIsNotWrapped() async throws {
+        let (executor, state, tempDir) = makeExecutor()
+        defer { cleanupTestState(tempDir) }
+        let projectId = try #require(state.activeProject?.id)
+
+        let task = Task {
+            try await executor.exportProject(MCPArguments(["project_id": .string(projectId.uuidString)]))
+        }
+        task.cancel()
+
+        do {
+            _ = try await task.value
+            Issue.record("expected a cancelled export to throw")
+        } catch is CancellationError {
+            // Expected.
+        } catch {
+            Issue.record("expected CancellationError, got \(error)")
+        }
+    }
+
     // MARK: - Project binding
     //
     // In this suite rather than their own: they share `SCREENSHOT_DATA_DIR` and the demo-mode

@@ -58,6 +58,8 @@ extension MCPToolExecutor {
                 files: result.fileURLs.map(\.path).sorted(),
                 unrenderable: result.unrenderable
             ))
+        } catch is CancellationError {
+            throw CancellationError()
         } catch {
             throw MCPToolError.failed("Export failed: \(error.localizedDescription)")
         }

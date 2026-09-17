@@ -44,7 +44,9 @@ final class MCPToolExecutor {
             return result
         } catch {
             let message = (error as? LocalizedError)?.errorDescription ?? "\(error)"
-            if let toolError = error as? MCPToolError, toolError.isClientError {
+            if error is CancellationError {
+                CrashReportingService.breadcrumb(.mcp, "Tool \(name) cancelled")
+            } else if let toolError = error as? MCPToolError, toolError.isClientError {
                 CrashReportingService.breadcrumb(.mcp, "Tool \(name) rejected the request", level: .warning)
             } else {
                 CrashReportingService.report(.mcpToolFailed, error: error, extra: ["tool": name], level: .warning)
