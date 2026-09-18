@@ -19,7 +19,12 @@ final class AppNavigationRouter {
 
     func openStoreSettings(_ destination: iPadSettingsDestination) {
         selectedTab = .settings
-        settingsPath = [destination]
+        // Seeding settingsPath in the same tick as first-mounting the Settings tab's
+        // NavigationStack loses the pushed destination's content (title renders, body doesn't) —
+        // give the stack a runloop turn to mount before pushing onto it.
+        Task { @MainActor in
+            settingsPath = [destination]
+        }
     }
 
     func openAppStoreConnectSettings() {
