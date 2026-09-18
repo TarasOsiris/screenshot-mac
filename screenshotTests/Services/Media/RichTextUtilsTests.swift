@@ -35,6 +35,72 @@ struct RichTextUtilsTests {
         #expect(abs((actual?.3 ?? 0) - (expected?.3 ?? 0)) < 0.05)
     }
 
+    private func mixedColorRichText() -> String {
+        let attributed = NSMutableAttributedString(string: "Hello", attributes: [
+            .font: NSFont.systemFont(ofSize: 24, weight: .regular),
+            .foregroundColor: NSColor.systemBlue
+        ])
+        attributed.addAttribute(.foregroundColor, value: NSColor.systemGreen, range: NSRange(location: 3, length: 2))
+        return RichTextUtils.encode(attributed) ?? ""
+    }
+
+    private func runColors(_ base64RTF: String?) -> [(CGFloat, CGFloat, CGFloat, CGFloat)] {
+        guard let decoded = RichTextUtils.decode(base64RTF ?? "") else { return [] }
+        var colors: [(CGFloat, CGFloat, CGFloat, CGFloat)] = []
+        decoded.enumerateAttribute(.foregroundColor, in: NSRange(location: 0, length: decoded.length)) { value, _, _ in
+            if let components = rgbaComponents(value as? NSColor) { colors.append(components) }
+        }
+        return colors
+    }
+
+    @Test func applyColorUpdateRecolorsEveryRun() {
+        var shape = CanvasShapeModel(type: .text, text: "Hello")
+        shape.color = .blue
+        shape.richText = mixedColorRichText()
+
+        RichTextUtils.applyColorUpdate(to: &shape, color: .red)
+
+        #expect(shape.colorData == CodableColor(.red))
+        let colors = runColors(shape.richText)
+        #expect(colors.count == 1, "Every run collapses onto the new shape color")
+        let expected = rgbaComponents(NSColor(Color.red))
+        #expect(abs((colors.first?.0 ?? 0) - (expected?.0 ?? 0)) < 0.05)
+        #expect(abs((colors.first?.1 ?? 0) - (expected?.1 ?? 0)) < 0.05)
+        #expect(abs((colors.first?.2 ?? 0) - (expected?.2 ?? 0)) < 0.05)
+    }
+
+    /// The regression the guard exists for: a ColorPicker handing back the value it just read
+    /// must not run the sync, which would flatten the per-run colors it never meant to touch.
+    @Test func applyColorUpdateSkipsTheSyncForANoOpWrite() {
+        var shape = CanvasShapeModel(type: .text, text: "Hello")
+        shape.color = .red
+        shape.richText = mixedColorRichText()
+        let before = shape.richText
+
+        RichTextUtils.applyColorUpdate(to: &shape, color: shape.color)
+
+        #expect(shape.richText == before)
+        #expect(runColors(shape.richText).count == 2, "Mixed runs survive a no-op write")
+    }
+
+    /// What the ColorPicker actually does: read `colorData.color`, hand it straight back. If the
+    /// sRGB round trip ever stops being exact, the no-op guard silently dies.
+    @Test func codableColorSurvivesAColorRoundTrip() {
+        for color in [Color.red, Color.black, Color(red: 0.13, green: 0.47, blue: 0.82)] {
+            let stored = CodableColor(color)
+            #expect(CodableColor(stored.color) == stored)
+        }
+    }
+
+    @Test func applyColorUpdateLeavesAPlainTextShapeWithoutRichText() {
+        var shape = CanvasShapeModel(type: .text, text: "Hello")
+
+        RichTextUtils.applyColorUpdate(to: &shape, color: .green)
+
+        #expect(shape.colorData == CodableColor(.green))
+        #expect(shape.richText == nil)
+    }
+
     @Test func syncShapeStyleUpdatesFontSizeWithoutDroppingBoldTrait() {
         let boldFont = NSFontManager.shared.convert(
             NSFont.systemFont(ofSize: 24, weight: .regular),

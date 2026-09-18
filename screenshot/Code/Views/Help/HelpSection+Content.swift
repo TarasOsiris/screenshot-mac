@@ -237,7 +237,7 @@ extension HelpSection {
                 .bullet("Z-order: **⌘⇧]** brings forward, **⌘⇧[** sends back."),
                 .heading("Editing several shapes at once"),
                 .bullet("Select more than one shape and the properties bar switches to a multi-selection bar showing how many are selected."),
-                .bullet("When they are all the same kind it offers that kind's controls too, and applies each change to every shape: **Change Device** for devices, font / weight / alignment / Italic / Uppercase for text, corner radius, star points, SVG custom color, outline, shadow, opacity, rotation, and **Clip to Frame**."),
+                .bullet("When they are all the same kind it offers that kind's controls too, and applies each change to every shape: **Change Device** for devices, font / weight / color / alignment / Italic / Uppercase for text, corner radius, star points, SVG custom color, outline, shadow, opacity, rotation, and **Clip to Frame**."),
                 .bullet("Z-order, duplicate, and delete act on the whole selection."),
             ],
             seeAlso: [.editing, .devices, .backgrounds, .locales]

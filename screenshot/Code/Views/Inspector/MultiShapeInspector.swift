@@ -97,6 +97,11 @@ struct MultiShapeInspector: View, MultiShapeEditing {
                 }
             }
 
+            EditorLabeledContent("Color") {
+                ColorPicker("Color", selection: multiTextColorBinding(), supportsOpacity: false)
+                    .labelsHidden()
+            }
+
             EditorLabeledContent("Align") {
                 TextAlignPicker(selection: multiShapeOptionalBinding(\.textAlign, default: .center))
                     .fixedSize()

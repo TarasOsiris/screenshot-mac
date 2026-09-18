@@ -114,6 +114,14 @@ struct ShapePropertiesMultiSelectionBar: View, MultiShapeEditing {
             let italicBinding = multiItalicBinding(controlState: primaryControlState)
 
             ShapePropertiesSection {
+                ColorPicker("Text color", selection: multiTextColorBinding(), supportsOpacity: false)
+                    .labelsHidden()
+                    .frame(width: UIMetrics.ColorSwatch.inline)
+                    .help("Text color")
+                    .accessibilityLabel("Text color")
+            }
+
+            ShapePropertiesSection {
                 FontPicker(
                     selection: multiFontNameBinding(),
                     fontWeight: weightBinding,

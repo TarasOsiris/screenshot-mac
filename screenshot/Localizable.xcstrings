@@ -105430,6 +105430,31 @@
           }
         }
       }
+    },
+    "Your Mac lost its internet connection, so the request never reached Google Play. Nothing was published — the edit was discarded and your listing is unchanged. Reconnect and upload again." : {
+      "localizations" : {
+
+      }
+    },
+    "When they are all the same kind it offers that kind's controls too, and applies each change to every shape: **Change Device** for devices, font / weight / color / alignment / Italic / Uppercase for text, corner radius, star points, SVG custom color, outline, shadow, opacity, rotation, and **Clip to Frame**." : {
+      "localizations" : {
+
+      }
+    },
+    "The connection failed while trying to %@." : {
+      "localizations" : {
+
+      }
+    },
+    "The request never completed, so Google Play never saw it. This is a connection problem, not something wrong with the package name, image type or language. Nothing was published — the edit was discarded and your listing is unchanged. Upload again when the connection is steady." : {
+      "localizations" : {
+
+      }
+    },
+    "No internet connection while trying to %@." : {
+      "localizations" : {
+
+      }
     }
   },
   "version" : "1.0"

@@ -210,6 +210,15 @@ enum RichTextUtils {
         }
     }
 
+    static func applyColorUpdate(to shape: inout CanvasShapeModel, color: Color) {
+        let newColor = CodableColor(color)
+        // A no-op write must not reach syncShapeStyle(.color): it flattens mixed per-run colors,
+        // and outside the base locale it mints a richText override that didn't exist before.
+        guard shape.colorData != newColor else { return }
+        shape.colorData = newColor
+        syncShapeStyleIfNeeded(in: &shape, property: .color)
+    }
+
     static func syncShapeStyle(in shape: inout CanvasShapeModel, property: ShapeStyleProperty) {
         guard let richText = shape.richText,
               let decoded = decode(richText)?.mutableCopy() as? NSMutableAttributedString

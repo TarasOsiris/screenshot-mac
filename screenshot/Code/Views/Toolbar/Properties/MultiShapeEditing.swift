@@ -117,6 +117,17 @@ extension MultiShapeEditing {
         )
     }
 
+    func multiTextColorBinding() -> Binding<Color> {
+        Binding(
+            get: { firstTextShape?.color ?? CanvasShapeModel.placeholder.color },
+            set: { newValue in
+                state.updateShapes(state.selectedShapeIds) { shape in
+                    RichTextUtils.applyColorUpdate(to: &shape, color: newValue)
+                }
+            }
+        )
+    }
+
     /// Shared shadow binding for the selected devices: reads the first device's shadow
     /// and writes the edited config to all of them (clearing to nil when empty, matching
     /// the single-selection behavior).
