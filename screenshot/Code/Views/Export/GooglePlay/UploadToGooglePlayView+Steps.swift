@@ -121,9 +121,6 @@ extension UploadToGooglePlayView {
         ScrollView {
             LazyVStack(alignment: .leading, spacing: 16) {
                 preflightPanel
-                // Outside the panel, like App Store Connect: collapsing the preflight must not
-                // hide the errors that are blocking the upload.
-                UploadIssuesPanel(issues: model.validationIssues)
                 if model.rowPlans.isEmpty {
                     Text("This project has no rows to upload.")
                         .foregroundStyle(.secondary)

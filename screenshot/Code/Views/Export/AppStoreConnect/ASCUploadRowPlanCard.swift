@@ -319,13 +319,11 @@ private struct ASCLocaleTargetRow: View {
         }
     }
 
-    @ViewBuilder
     private var selectedLocaleLabel: some View {
         let selected = target.selectedCandidates.map(\.attributes.locale)
-        if !selected.isEmpty {
-            Text("-> \(selected.joined(separator: ", "))")
-                .font(.caption)
-                .foregroundStyle(.secondary)
-        }
+        return Text(selected.isEmpty ? " " : "-> \(selected.joined(separator: ", "))")
+            .font(.caption)
+            .foregroundStyle(.secondary)
+            .opacity(selected.isEmpty ? 0 : 1)
     }
 }

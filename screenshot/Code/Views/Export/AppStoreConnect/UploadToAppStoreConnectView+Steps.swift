@@ -13,13 +13,18 @@ extension UploadToAppStoreConnectView {
         if !model.credentials.isConfigured {
             missingCredentialsView
         } else {
-            switch model.step {
-            case .pickingApp: pickAppView
-            case .pickingVersion: pickVersionView
-            case .editingMetadata: editMetadataView
-            case .configuringPlan: configurePlanView
-            case .reviewingChanges: reviewChangesView
-            case .uploading, .done: uploadProgressView
+            VStack(spacing: 0) {
+                if model.step == .configuringPlan {
+                    UploadIssuesPanel(issues: model.validationIssues)
+                }
+                switch model.step {
+                case .pickingApp: pickAppView
+                case .pickingVersion: pickVersionView
+                case .editingMetadata: editMetadataView
+                case .configuringPlan: configurePlanView
+                case .reviewingChanges: reviewChangesView
+                case .uploading, .done: uploadProgressView
+                }
             }
         }
     }
@@ -419,8 +424,6 @@ extension UploadToAppStoreConnectView {
 
                 uploadSummaryPanel
 
-                issuesPanel
-
                 ForEach(model.destinationPlansBinding) { $destination in
                     ASCDestinationPlanSection(
                         destination: $destination,
@@ -449,11 +452,6 @@ extension UploadToAppStoreConnectView {
             coordinator: model.screenshotSync,
             refresh: { model.startScreenshotReviewRefresh() }
         )
-    }
-
-    @ViewBuilder
-    var issuesPanel: some View {
-        UploadIssuesPanel(issues: model.validationIssues)
     }
 
     private func refreshAppStoreData() {

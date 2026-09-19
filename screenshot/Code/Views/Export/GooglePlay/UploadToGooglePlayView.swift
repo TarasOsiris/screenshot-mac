@@ -148,10 +148,15 @@ struct UploadToGooglePlayView: View {
         if !model.credentials.isConfigured {
             missingCredentialsView
         } else {
-            switch step {
-            case .enteringPackage: packageStep
-            case .configuringPlan: planStep
-            case .uploading, .done: uploadProgressStep
+            VStack(spacing: 0) {
+                if step == .configuringPlan {
+                    UploadIssuesPanel(issues: model.validationIssues)
+                }
+                switch step {
+                case .enteringPackage: packageStep
+                case .configuringPlan: planStep
+                case .uploading, .done: uploadProgressStep
+                }
             }
         }
     }
