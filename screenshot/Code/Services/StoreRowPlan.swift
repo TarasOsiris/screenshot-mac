@@ -65,10 +65,9 @@ nonisolated struct StoreRowPlan<AssetType, LocaleTarget: LocaleUploadTarget>: Id
         hasToggleableLocaleTargets && localeTargets.allSatisfy { !$0.isToggleable || $0.isEnabled }
     }
 
-    mutating func toggleAllLocaleTargets() {
-        let newValue = !allToggleableLocalesEnabled
+    mutating func setAllLocaleTargets(enabled: Bool) {
         for index in localeTargets.indices where localeTargets[index].isToggleable {
-            localeTargets[index].isEnabled = newValue
+            localeTargets[index].isEnabled = enabled
         }
     }
 }

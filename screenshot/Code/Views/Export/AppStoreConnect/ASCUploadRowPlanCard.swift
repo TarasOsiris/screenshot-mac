@@ -59,10 +59,11 @@ struct ASCUploadRowPlanCard: View {
                     .font(.caption)
                     .foregroundStyle(.secondary)
                 Spacer()
-                Button(plan.allToggleableLocalesEnabled ? "None" : "All") {
-                    plan.toggleAllLocaleTargets()
-                }
-                .buttonStyle(.borderless)
+                Toggle("Select All", isOn: Binding(
+                    get: { plan.allToggleableLocalesEnabled },
+                    set: { plan.setAllLocaleTargets(enabled: $0) }
+                ))
+                .storeSelectionToggleStyle()
                 .font(.caption)
                 .disabled(!plan.hasToggleableLocaleTargets)
             }

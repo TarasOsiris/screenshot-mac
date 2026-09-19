@@ -187,10 +187,11 @@ extension UploadToGooglePlayView {
                     .font(.caption)
                     .foregroundStyle(.secondary)
                 Spacer()
-                Button(plan.wrappedValue.allToggleableLocalesEnabled ? "None" : "All") {
-                    plan.wrappedValue.toggleAllLocaleTargets()
-                }
-                .buttonStyle(.borderless)
+                Toggle("Select All", isOn: Binding(
+                    get: { plan.wrappedValue.allToggleableLocalesEnabled },
+                    set: { plan.wrappedValue.setAllLocaleTargets(enabled: $0) }
+                ))
+                .storeSelectionToggleStyle()
                 .font(.caption)
                 .disabled(!plan.wrappedValue.hasToggleableLocaleTargets)
             }
