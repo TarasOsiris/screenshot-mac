@@ -252,3 +252,75 @@ final class FakeASCUploadAPI: ASCUploadAPI {
 
     func updateAppStoreVersion(id: String, attributes: [String: AnyEncodable]) async throws {}
 }
+
+/// Scripted screenshot reads for the plan step's "no screenshots yet" indicator. Conforms to the
+/// full `ASCScreenshotSyncAPI`; everything the presence sweep never calls throws, so a stray call
+/// fails the test loudly instead of returning a plausible empty value.
+@MainActor
+final class FakeASCScreenshotPresenceAPI: ASCScreenshotSyncAPI {
+    var retryPolicy = StoreRetryPolicy.singleAttempt
+    var screenshotSetsByLocalizationId: [String: [ASCAppScreenshotSet]] = [:]
+    var screenshotOrderBySetId: [String: [String]] = [:]
+    /// Localization ids whose `listScreenshotSets` call should throw instead of returning data.
+    var failingLocalizationIds: Set<String> = []
+    /// Set ids whose `listScreenshotOrder` call should throw instead of returning data.
+    var failingSetIds: Set<String> = []
+    /// Called as each `listScreenshotSets` arrives, so a test can observe what the sweep has
+    /// published so far without racing it on wall-clock time.
+    var onListScreenshotSets: ((String) -> Void)?
+
+    private var unsupported: AppStoreConnectAPIError {
+        .httpError(status: 500, message: "not part of the screenshot presence sweep")
+    }
+
+    func listScreenshotSets(localizationId: String, limit: Int) async throws -> [ASCAppScreenshotSet] {
+        onListScreenshotSets?(localizationId)
+        if failingLocalizationIds.contains(localizationId) {
+            throw AppStoreConnectAPIError.httpError(status: 500, message: "fake failure")
+        }
+        return screenshotSetsByLocalizationId[localizationId] ?? []
+    }
+
+    func listScreenshotOrder(setId: String) async throws -> [String] {
+        if failingSetIds.contains(setId) {
+            throw AppStoreConnectAPIError.httpError(status: 500, message: "fake failure")
+        }
+        return screenshotOrderBySetId[setId] ?? []
+    }
+
+    func createScreenshotSet(localizationId: String, displayType: String) async throws -> ASCAppScreenshotSet {
+        throw unsupported
+    }
+
+    func listScreenshots(setId: String, limit: Int, retryPolicy: StoreRetryPolicy?) async throws -> [ASCAppScreenshot] {
+        throw unsupported
+    }
+
+    func screenshot(id: String, retryPolicy: StoreRetryPolicy?) async throws -> ASCAppScreenshot {
+        throw unsupported
+    }
+
+    func setScreenshotOrder(setId: String, screenshotIds: [String]) async throws {
+        throw unsupported
+    }
+
+    func downloadScreenshotData(_ screenshot: ASCAppScreenshot, maxDimension: Int?) async throws -> Data {
+        throw unsupported
+    }
+
+    func deleteScreenshot(id: String) async throws {
+        throw unsupported
+    }
+
+    func reserveScreenshot(setId: String, fileName: String, fileSize: Int) async throws -> ASCAppScreenshot {
+        throw unsupported
+    }
+
+    func uploadChunk(operation: ASCUploadOperation, from fileData: Data) async throws {
+        throw unsupported
+    }
+
+    func commitScreenshot(id: String, md5Checksum: String) async throws {
+        throw unsupported
+    }
+}

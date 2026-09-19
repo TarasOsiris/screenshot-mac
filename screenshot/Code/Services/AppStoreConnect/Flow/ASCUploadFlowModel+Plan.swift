@@ -23,6 +23,7 @@ extension ASCUploadFlowModel {
             try await loadSelectedVersionLocalizations()
             updateDestinationPlans(buildDestinationPlans(preserving: destinationPlans))
             advance(to: .configuringPlan)
+            startScreenshotPresenceLoad()
         } catch {
             errorMessage = String(localized: "Could not load App Store data: \(error.localizedDescription)")
         }
@@ -38,11 +39,15 @@ extension ASCUploadFlowModel {
         do {
             try await loadSelectedVersionLocalizations()
             updateDestinationPlans(buildDestinationPlans(preserving: destinationPlans))
+            startScreenshotPresenceLoad()
         } catch {
             errorMessage = String(localized: "Could not refresh locales: \(error.localizedDescription)")
         }
     }
 
+    /// Deliberately does *not* start the screenshot-presence sweep: the metadata step calls this
+    /// too, and starting there only to cancel and restart on the way to the plan step threw away
+    /// every result the first sweep had collected. The two plan-step entry points start it.
     func loadSelectedVersionLocalizations() async throws {
         for version in selectedVersions {
             let fetched = try await api.listLocalizations(versionId: version.id)

@@ -22,6 +22,14 @@ final class ASCUploadFlowModel {
     var versions: [ASCAppStoreVersion] = []
     var selectedVersionIds: Set<String> = []
     var localizationsByVersionId: [String: [ASCAppStoreVersionLocalization]] = [:]
+    /// Per version-localization, the ASC display-type raw values that hold at least one uploaded
+    /// screenshot. Filled in the background, one localization at a time.
+    ///
+    /// **An absent key means "not checked yet", never "has none"** — that distinction is the whole
+    /// reason this is a map rather than a set of ids, and it is what lets a row say "Checking…"
+    /// instead of silently claiming a locale is fine. A key present but empty means checked and
+    /// genuinely empty.
+    var screenshotDisplayTypesByLocalizationId: [String: Set<String>] = [:]
 
     var versionDrafts: [ASCVersionLocaleDraft] = []
     var appInfoDrafts: [ASCAppInfoLocaleDraft] = []
@@ -67,8 +75,10 @@ final class ASCUploadFlowModel {
     let screenshotSync: ASCScreenshotSyncCoordinator
 
     @ObservationIgnored let api: any ASCUploadAPI
+    @ObservationIgnored let screenshotPresenceAPI: any ASCScreenshotSyncAPI
     @ObservationIgnored private(set) weak var document: (any ASCUploadDocument)?
     @ObservationIgnored var uploadTask: Task<Void, Never>?
+    @ObservationIgnored var presenceTask: Task<Void, Never>?
 
     /// Called after `step` advances. iPad pushes onto its `NavigationStack` path here; macOS does
     /// nothing. Injected for the same reason `ExportFlowModel.requestReview` is: the model cannot
@@ -80,11 +90,13 @@ final class ASCUploadFlowModel {
     init(
         mode: ASCFlowMode = .screenshots,
         api: any ASCUploadAPI = AppStoreConnectAPIService.shared,
+        screenshotPresenceAPI: any ASCScreenshotSyncAPI = AppStoreConnectAPIService.shared,
         credentials: AppStoreConnectCredentialsStore = .shared,
         screenshotSync: ASCScreenshotSyncCoordinator = ASCScreenshotSyncCoordinator()
     ) {
         self.mode = mode
         self.api = api
+        self.screenshotPresenceAPI = screenshotPresenceAPI
         self.credentials = credentials
         self.screenshotSync = screenshotSync
     }
@@ -187,6 +199,8 @@ final class ASCUploadFlowModel {
     func tearDown() {
         uploadTask?.cancel()
         uploadTask = nil
+        presenceTask?.cancel()
+        presenceTask = nil
         screenshotSync.discard()
         // Belt and braces against the capture hazard documented where these are assigned.
         navigationDidAdvance = { _ in }

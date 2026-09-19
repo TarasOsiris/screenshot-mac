@@ -53,6 +53,58 @@
         }
       }
     },
+    " " : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " "
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " "
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " "
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " "
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " "
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " "
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " "
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " "
+          }
+        }
+      }
+    },
     " · " : {
       "extractionState" : "stale",
       "localizations" : {
@@ -107,6 +159,7 @@
       }
     },
     "-> %@" : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -28945,6 +28998,9 @@
           }
         }
       }
+    },
+    "Checking…" : {
+
     },
     "Choose **Blank** to set up rows and screenshot sizes manually, or **From Template** to start with a pre-designed layout." : {
       "localizations" : {
@@ -63274,6 +63330,9 @@
         }
       }
     },
+    "No internet connection while trying to %@." : {
+
+    },
     "No iOS Simulator is running. Open a device in the Simulator app and try again." : {
       "extractionState" : "stale",
       "localizations" : {
@@ -63846,6 +63905,9 @@
           }
         }
       }
+    },
+    "No screenshots yet" : {
+
     },
     "No Selection" : {
       "localizations" : {
@@ -92979,6 +93041,9 @@
         }
       }
     },
+    "The connection failed while trying to %@." : {
+
+    },
     "The dots stand in for your access token — the copied text carries the real one." : {
       "localizations" : {
         "de" : {
@@ -93656,6 +93721,9 @@
           }
         }
       }
+    },
+    "The request never completed, so Google Play never saw it. This is a connection problem, not something wrong with the package name, image type or language. Nothing was published — the edit was discarded and your listing is unchanged. Upload again when the connection is steady." : {
+
     },
     "The required languages are not downloaded on your Mac.\n\nTo download them, go to:\nSystem Settings → General → Language & Region → Translation Languages\n\nThen download the languages you need and try again." : {
       "extractionState" : "stale",
@@ -103454,6 +103522,7 @@
       }
     },
     "When they are all the same kind it offers that kind's controls too, and applies each change to every shape: **Change Device** for devices, font / weight / alignment / Italic / Uppercase for text, corner radius, star points, SVG custom color, outline, shadow, opacity, rotation, and **Clip to Frame**." : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -103504,6 +103573,9 @@
           }
         }
       }
+    },
+    "When they are all the same kind it offers that kind's controls too, and applies each change to every shape: **Change Device** for devices, font / weight / color / alignment / Italic / Uppercase for text, corner radius, star points, SVG custom color, outline, shadow, opacity, rotation, and **Clip to Frame**." : {
+
     },
     "Where projects live on disk" : {
       "localizations" : {
@@ -104703,6 +104775,9 @@
         }
       }
     },
+    "Your Mac lost its internet connection, so the request never reached Google Play. Nothing was published — the edit was discarded and your listing is unchanged. Reconnect and upload again." : {
+
+    },
     "Your project list couldn't be read, so syncing was stopped to avoid losing projects. Check your internet connection and try again." : {
       "localizations" : {
         "de" : {
@@ -105429,31 +105504,6 @@
             "value" : "缩小"
           }
         }
-      }
-    },
-    "Your Mac lost its internet connection, so the request never reached Google Play. Nothing was published — the edit was discarded and your listing is unchanged. Reconnect and upload again." : {
-      "localizations" : {
-
-      }
-    },
-    "When they are all the same kind it offers that kind's controls too, and applies each change to every shape: **Change Device** for devices, font / weight / color / alignment / Italic / Uppercase for text, corner radius, star points, SVG custom color, outline, shadow, opacity, rotation, and **Clip to Frame**." : {
-      "localizations" : {
-
-      }
-    },
-    "The connection failed while trying to %@." : {
-      "localizations" : {
-
-      }
-    },
-    "The request never completed, so Google Play never saw it. This is a connection problem, not something wrong with the package name, image type or language. Nothing was published — the edit was discarded and your listing is unchanged. Upload again when the connection is steady." : {
-      "localizations" : {
-
-      }
-    },
-    "No internet connection while trying to %@." : {
-      "localizations" : {
-
       }
     }
   },
