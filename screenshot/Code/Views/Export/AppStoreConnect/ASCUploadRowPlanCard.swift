@@ -54,9 +54,18 @@ struct ASCUploadRowPlanCard: View {
                 displayTypeDetailsPlanId: $displayTypeDetailsPlanId
             )
 
-            Text("Locales")
+            HStack {
+                Text("Locales")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                Spacer()
+                Button(plan.allToggleableLocalesEnabled ? "None" : "All") {
+                    plan.toggleAllLocaleTargets()
+                }
+                .buttonStyle(.borderless)
                 .font(.caption)
-                .foregroundStyle(.secondary)
+                .disabled(!plan.hasToggleableLocaleTargets)
+            }
             ForEach($plan.localeTargets) { $target in
                 ASCLocaleTargetRow(target: $target, creation: localeCreation)
             }

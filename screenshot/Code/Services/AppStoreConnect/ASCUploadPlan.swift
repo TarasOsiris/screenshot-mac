@@ -24,13 +24,15 @@ nonisolated struct ASCDestinationPlan: Identifiable {
     }
 }
 
-nonisolated struct ASCLocaleTarget: Identifiable {
+nonisolated struct ASCLocaleTarget: LocaleUploadTarget {
     let id = UUID()
     var appLocaleCode: String
     var appLocaleLabel: String
     var selectedASCLocalizationIds: Set<String>
     var candidates: [ASCAppStoreVersionLocalization]
     var isEnabled: Bool
+
+    var isToggleable: Bool { !candidates.isEmpty }
 
     var selectedCandidates: [ASCAppStoreVersionLocalization] {
         candidates.filter { selectedASCLocalizationIds.contains($0.id) }

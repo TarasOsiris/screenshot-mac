@@ -182,9 +182,18 @@ extension UploadToGooglePlayView {
         ) {
             imageTypePicker(plan)
 
-            Text("Languages")
+            HStack {
+                Text("Languages")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                Spacer()
+                Button(plan.wrappedValue.allToggleableLocalesEnabled ? "None" : "All") {
+                    plan.wrappedValue.toggleAllLocaleTargets()
+                }
+                .buttonStyle(.borderless)
                 .font(.caption)
-                .foregroundStyle(.secondary)
+                .disabled(!plan.wrappedValue.hasToggleableLocaleTargets)
+            }
             ForEach(plan.localeTargets) { $target in
                 languageRow($target)
             }

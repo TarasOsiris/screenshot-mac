@@ -17,7 +17,15 @@ nonisolated struct DocumentStamp: Equatable {
     let modifiedAt: Date?
 }
 
-nonisolated struct StoreRowPlan<AssetType, LocaleTarget: Identifiable>: Identifiable {
+/// A per-row locale/language target in a store upload plan. `isToggleable` is whatever makes a
+/// locale a real candidate for that store (ASC candidates, a Play language match) — a locale
+/// that isn't toggleable can't be flipped on regardless of `isEnabled`.
+nonisolated protocol LocaleUploadTarget: Identifiable {
+    var isEnabled: Bool { get set }
+    var isToggleable: Bool { get }
+}
+
+nonisolated struct StoreRowPlan<AssetType, LocaleTarget: LocaleUploadTarget>: Identifiable {
     let id: UUID
     var rowLabel: String
     var rowSize: CGSize
@@ -45,5 +53,22 @@ nonisolated struct StoreRowPlan<AssetType, LocaleTarget: Identifiable>: Identifi
         templateCount == 1
             ? String(localized: "\(sizeLabel) · 1 screenshot")
             : String(localized: "\(sizeLabel) · \(templateCount) screenshots")
+    }
+
+    var hasToggleableLocaleTargets: Bool {
+        localeTargets.contains { $0.isToggleable }
+    }
+
+    /// Whether every toggleable locale target is enabled — the state a row-plan card's All/None
+    /// button reflects and flips.
+    var allToggleableLocalesEnabled: Bool {
+        hasToggleableLocaleTargets && localeTargets.allSatisfy { !$0.isToggleable || $0.isEnabled }
+    }
+
+    mutating func toggleAllLocaleTargets() {
+        let newValue = !allToggleableLocalesEnabled
+        for index in localeTargets.indices where localeTargets[index].isToggleable {
+            localeTargets[index].isEnabled = newValue
+        }
     }
 }
