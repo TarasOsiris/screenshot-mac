@@ -15,6 +15,33 @@ extension ASCUploadFlowModel {
     var canStartUpload: Bool {
         !validationIssues.hasErrors
     }
+
+    /// Apply the one-click fix an issue offers. Re-resolves the plan by id rather than trusting
+    /// the issue to still describe the current state — the panel is rebuilt from the plans on
+    /// every change, but a fix can be tapped against a plan a refresh has already replaced.
+    func apply(_ fix: UploadIssueFix) {
+        guard let destinationIndex = destinationPlans.firstIndex(where: { $0.id == fix.destinationId }),
+              let rowIndex = destinationPlans[destinationIndex].rowPlans.firstIndex(where: { $0.id == fix.rowId })
+        else { return }
+
+        var plans = destinationPlans
+        switch fix.action {
+        case .useDetectedAssetType:
+            guard let detected = plans[destinationIndex].rowPlans[rowIndex].detectedAssetType else { return }
+            plans[destinationIndex].rowPlans[rowIndex].selectedAssetType = detected
+        case .selectMatchingStoreLocales:
+            let targets = plans[destinationIndex].rowPlans[rowIndex].localeTargets
+            for index in targets.indices
+            where fix.appLocaleCodes.contains(targets[index].appLocaleCode) && !targets[index].candidates.isEmpty {
+                plans[destinationIndex].rowPlans[rowIndex].localeTargets[index].isEnabled = true
+                plans[destinationIndex].rowPlans[rowIndex].localeTargets[index].selectedASCLocalizationIds =
+                    Set(targets[index].candidates.map(\.id))
+            }
+        }
+        CrashReportingService.breadcrumb(.upload, "asc apply plan fix", data: ["action": "\(fix.action)"])
+        updateDestinationPlans(plans)
+    }
+
     func moveToPlan() async {
         isBusy = true
         errorMessage = nil
@@ -23,7 +50,6 @@ extension ASCUploadFlowModel {
             try await loadSelectedVersionLocalizations()
             updateDestinationPlans(buildDestinationPlans(preserving: destinationPlans))
             advance(to: .configuringPlan)
-            startScreenshotPresenceLoad()
         } catch {
             errorMessage = String(localized: "Could not load App Store data: \(error.localizedDescription)")
         }
@@ -39,15 +65,11 @@ extension ASCUploadFlowModel {
         do {
             try await loadSelectedVersionLocalizations()
             updateDestinationPlans(buildDestinationPlans(preserving: destinationPlans))
-            startScreenshotPresenceLoad()
         } catch {
             errorMessage = String(localized: "Could not refresh locales: \(error.localizedDescription)")
         }
     }
 
-    /// Deliberately does *not* start the screenshot-presence sweep: the metadata step calls this
-    /// too, and starting there only to cancel and restart on the way to the plan step threw away
-    /// every result the first sweep had collected. The two plan-step entry points start it.
     func loadSelectedVersionLocalizations() async throws {
         for version in selectedVersions {
             let fetched = try await api.listLocalizations(versionId: version.id)

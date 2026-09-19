@@ -28999,9 +28999,6 @@
         }
       }
     },
-    "Checking…" : {
-
-    },
     "Choose **Blank** to set up rows and screenshot sizes manually, or **From Template** to start with a pre-designed layout." : {
       "localizations" : {
         "de" : {
@@ -63331,7 +63328,9 @@
       }
     },
     "No internet connection while trying to %@." : {
+      "localizations" : {
 
+      }
     },
     "No iOS Simulator is running. Open a device in the Simulator app and try again." : {
       "extractionState" : "stale",
@@ -63905,9 +63904,6 @@
           }
         }
       }
-    },
-    "No screenshots yet" : {
-
     },
     "No Selection" : {
       "localizations" : {
@@ -93042,7 +93038,9 @@
       }
     },
     "The connection failed while trying to %@." : {
+      "localizations" : {
 
+      }
     },
     "The dots stand in for your access token — the copied text carries the real one." : {
       "localizations" : {
@@ -93723,7 +93721,9 @@
       }
     },
     "The request never completed, so Google Play never saw it. This is a connection problem, not something wrong with the package name, image type or language. Nothing was published — the edit was discarded and your listing is unchanged. Upload again when the connection is steady." : {
+      "localizations" : {
 
+      }
     },
     "The required languages are not downloaded on your Mac.\n\nTo download them, go to:\nSystem Settings → General → Language & Region → Translation Languages\n\nThen download the languages you need and try again." : {
       "extractionState" : "stale",
@@ -103575,7 +103575,9 @@
       }
     },
     "When they are all the same kind it offers that kind's controls too, and applies each change to every shape: **Change Device** for devices, font / weight / color / alignment / Italic / Uppercase for text, corner radius, star points, SVG custom color, outline, shadow, opacity, rotation, and **Clip to Frame**." : {
+      "localizations" : {
 
+      }
     },
     "Where projects live on disk" : {
       "localizations" : {
@@ -104776,7 +104778,9 @@
       }
     },
     "Your Mac lost its internet connection, so the request never reached Google Play. Nothing was published — the edit was discarded and your listing is unchanged. Reconnect and upload again." : {
+      "localizations" : {
 
+      }
     },
     "Your project list couldn't be read, so syncing was stopped to avoid losing projects. Check your internet connection and try again." : {
       "localizations" : {
@@ -105502,6 +105506,266 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "缩小"
+          }
+        }
+      }
+    },
+    "Choose App Store locales for %@." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wähle die App Store-Locales für %@."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Elige los idiomas de App Store para %@."
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "زبان‌های App Store را برای %@ انتخاب کنید."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Choisissez les langues App Store pour %@."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@のApp Storeロケールを選択してください。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@의 App Store 로케일을 선택하세요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Escolha as localidades da App Store para %@."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "请选择 %@ 的 App Store 语言区域。"
+          }
+        }
+      }
+    },
+    "Fix" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Beheben"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Corregir"
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "رفع"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Corriger"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "修正"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "수정"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Corrigir"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "修复"
+          }
+        }
+      }
+    },
+    "Use the locale pickers in this row, or disable these locales." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Verwende die Locale-Auswahl in dieser Zeile oder deaktiviere diese Locales."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Usa los selectores de idioma de esta fila o desactiva estos idiomas."
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "از انتخابگرهای زبان در این ردیف استفاده کنید یا این زبان‌ها را غیرفعال کنید."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Utilisez les sélecteurs de langue dans cette ligne, ou désactivez ces langues."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "この行のロケールピッカーを使うか、これらのロケールを無効にしてください。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "이 행의 로케일 선택기를 사용하거나 이 로케일들을 비활성화하세요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Use os seletores de localidade nesta linha ou desative estas localidades."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "使用此行中的语言区域选择器，或停用这些语言区域。"
+          }
+        }
+      }
+    },
+    "Add the locales in App Store Connect, or disable them here." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Füge die Locales in App Store Connect hinzu oder deaktiviere sie hier."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Añade los idiomas en App Store Connect o desactívalos aquí."
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "زبان‌ها را در App Store Connect اضافه کنید یا آن‌ها را اینجا غیرفعال کنید."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ajoutez les langues dans App Store Connect, ou désactivez-les ici."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "App Store Connectでロケールを追加するか、ここでこれらのロケールを無効にしてください。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "App Store Connect에서 로케일을 추가하거나 여기서 비활성화하세요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Adicione as localidades no App Store Connect ou desative-as aqui."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "请在 App Store Connect 中添加这些语言区域，或在此处停用它们。"
+          }
+        }
+      }
+    },
+    "Anything that would block the upload is listed in a banner above the plan, one line per row — every language still missing an App Store locale is named on that one line, not repeated. Where a single change would settle it, the line carries a **Fix** button that makes it: ticking the App Store locales the row already matches, or switching the row to the detected display type." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alles, was den Upload blockieren würde, steht in einem Banner über dem Plan – eine Meldung pro Zeile; jede Sprache, der noch eine App Store-Locale fehlt, wird darin genannt statt einzeln wiederholt. Wo eine einzige Änderung genügt, trägt die Meldung eine Schaltfläche **Beheben**, die sie vornimmt: die passenden App Store-Locales der Zeile ankreuzen oder die Zeile auf den erkannten Anzeigetyp umstellen."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Todo lo que impediría la carga aparece en un aviso encima del plan, una línea por fila: cada idioma del proyecto que todavía no tiene un idioma de App Store se nombra en esa misma línea, sin repetirse. Cuando un solo cambio lo resolvería, la línea incluye un botón **Corregir** que lo aplica: marcar los idiomas de App Store que la fila ya coincide, o cambiar la fila al tipo de pantalla detectado."
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "هر چیزی که مانع آپلود شود در نواری بالای برنامه فهرست می‌شود، برای هر ردیف یک خط — هر زبانی که هنوز زبان App Store ندارد در همان یک خط نام برده می‌شود و تکرار نمی‌شود. جایی که یک تغییر کافی باشد، آن خط دکمهٔ **رفع** را دارد که همان کار را انجام می‌دهد: علامت زدن زبان‌های App Store که ردیف با آن‌ها مطابقت دارد، یا تغییر ردیف به نوع نمایش شناسایی‌شده."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tout ce qui empêcherait l'envoi est listé dans un bandeau au-dessus du plan, un message par ligne : chaque langue à laquelle il manque encore une langue App Store y est nommée, sans être répétée. Lorsqu'une seule modification suffit, le message comporte un bouton **Corriger** qui l'applique : cocher les langues App Store correspondant déjà à la ligne, ou basculer la ligne sur le type d'affichage détecté."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "アップロードを妨げる問題は、プランの上のバナーに行ごとに1件ずつ表示されます。App Store ロケールがまだ決まっていない言語は、その1行にまとめて示され、繰り返されません。1つの変更で解決できる場合、その行には**修正**ボタンが付きます。一致する App Store ロケールにチェックを入れるか、行を検出された表示タイプに切り替えます。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "업로드를 막는 문제는 계획 위의 배너에 행마다 한 줄씩 표시됩니다. App Store 로케일이 아직 없는 언어는 모두 그 한 줄에 나열되며 반복되지 않습니다. 한 번의 변경으로 해결되는 경우 그 줄에 **수정** 버튼이 나타나, 행이 이미 일치하는 App Store 로케일을 선택하거나 감지된 표시 유형으로 행을 전환합니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tudo o que impediria o upload é listado em um aviso acima do plano, um item por linha: cada idioma que ainda está sem uma localidade da App Store é citado nesse mesmo item, sem repetições. Quando uma única mudança resolve, o item traz um botão **Corrigir** que a aplica: marcar as localidades da App Store que a linha já corresponde, ou mudar a linha para o tipo de exibição detectado."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "会阻碍上传的问题都列在方案上方的横幅中，每行一条：尚未匹配 App Store 语言区域的语言都会写在同一条里，而不会重复列出。若一次更改即可解决，该条右侧会有**修复**按钮：勾选该行已匹配的 App Store 语言区域，或将该行切换为检测到的显示类型。"
           }
         }
       }

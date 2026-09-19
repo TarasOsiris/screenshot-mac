@@ -148,15 +148,27 @@ struct UploadToGooglePlayView: View {
         if !model.credentials.isConfigured {
             missingCredentialsView
         } else {
-            VStack(spacing: 0) {
-                if step == .configuringPlan {
-                    UploadIssuesPanel(issues: model.validationIssues)
-                }
+            Group {
                 switch step {
                 case .enteringPackage: packageStep
                 case .configuringPlan: planStep
                 case .uploading, .done: uploadProgressStep
                 }
+            }
+            .safeAreaInset(edge: .top, spacing: 0) { issuesBanner(for: step) }
+        }
+    }
+
+    /// See the App Store Connect wizard's `issuesBanner` for why this is an inset and not a sibling.
+    @ViewBuilder
+    private func issuesBanner(for step: GPUploadStep) -> some View {
+        if step == .configuringPlan, !model.validationIssues.isEmpty {
+            VStack(spacing: 0) {
+                UploadIssuesPanel(issues: model.validationIssues)
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 8)
+                    .background(.background)
+                Divider()
             }
         }
     }

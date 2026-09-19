@@ -13,10 +13,7 @@ extension UploadToAppStoreConnectView {
         if !model.credentials.isConfigured {
             missingCredentialsView
         } else {
-            VStack(spacing: 0) {
-                if model.step == .configuringPlan {
-                    UploadIssuesPanel(issues: model.validationIssues)
-                }
+            Group {
                 switch model.step {
                 case .pickingApp: pickAppView
                 case .pickingVersion: pickVersionView
@@ -25,6 +22,24 @@ extension UploadToAppStoreConnectView {
                 case .reviewingChanges: reviewChangesView
                 case .uploading, .done: uploadProgressView
                 }
+            }
+            .safeAreaInset(edge: .top, spacing: 0) { issuesBanner }
+        }
+    }
+
+    /// A safe-area inset rather than a sibling above the scroll view: the sheet is a fixed height,
+    /// so a sibling appearing shortens the viewport and the scroll offset re-clamps — the jump this
+    /// banner's previous two placements both had. An inset leaves the frame alone and moves the
+    /// content inset instead. The opaque background is load-bearing; `CalloutBox` is translucent.
+    @ViewBuilder
+    private var issuesBanner: some View {
+        if model.step == .configuringPlan, !model.validationIssues.isEmpty {
+            VStack(spacing: 0) {
+                UploadIssuesPanel(issues: model.validationIssues) { model.apply($0) }
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 8)
+                    .background(.background)
+                Divider()
             }
         }
     }
@@ -470,9 +485,9 @@ extension UploadToAppStoreConnectView {
         )
     }
 
-    private func localeCreation(for destination: ASCDestinationPlan) -> ASCLocaleRowContext {
+    private func localeCreation(for destination: ASCDestinationPlan) -> ASCLocaleCreationContext {
         let versionId = destination.id
-        return ASCLocaleRowContext(
+        return ASCLocaleCreationContext(
             versionId: versionId,
             // The same predicate version selection uses: a localization we can't then upload
             // screenshots to is worth nothing here.
@@ -480,7 +495,6 @@ extension UploadToAppStoreConnectView {
             existingStoreLocaleCodes: model.existingStoreLocaleCodes(versionId: versionId),
             inFlightKeys: model.creatingLocaleKeys,
             errors: model.localeCreationErrors,
-            screenshotDisplayTypesByLocalizationId: model.screenshotDisplayTypesByLocalizationId,
             create: { projectLocaleCode in
                 Task {
                     await model.createAppStoreLocalization(

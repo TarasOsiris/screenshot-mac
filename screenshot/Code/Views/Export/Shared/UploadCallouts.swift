@@ -6,13 +6,15 @@ import SwiftUI
 
 struct UploadIssuesPanel: View {
     let issues: [UploadIssue]
+    /// Supplied by the store that knows how to apply a fix; without it the Fix buttons stay hidden.
+    var onFix: ((UploadIssueFix) -> Void)?
 
     var body: some View {
         if !issues.isEmpty {
             CalloutBox(tint: issues.hasErrors ? .red : .orange) {
                 VStack(alignment: .leading, spacing: 6) {
                     ForEach(issues) { issue in
-                        UploadIssueRow(issue: issue)
+                        UploadIssueRow(issue: issue, onFix: onFix)
                     }
                 }
             }
@@ -22,6 +24,7 @@ struct UploadIssuesPanel: View {
 
 private struct UploadIssueRow: View {
     let issue: UploadIssue
+    let onFix: ((UploadIssueFix) -> Void)?
 
     var body: some View {
         HStack(alignment: .top, spacing: 8) {
@@ -38,6 +41,13 @@ private struct UploadIssueRow: View {
                         .foregroundStyle(.secondary)
                         .fixedSize(horizontal: false, vertical: true)
                 }
+            }
+            if let fix = issue.fix, let onFix {
+                Spacer(minLength: 8)
+                Button("Fix") { onFix(fix) }
+                    .buttonStyle(.bordered)
+                    .controlSize(.small)
+                    .font(.caption)
             }
         }
     }

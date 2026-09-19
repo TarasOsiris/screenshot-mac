@@ -4,7 +4,7 @@ struct ASCDestinationPlanSection: View {
     @Binding var destination: ASCDestinationPlan
     @Binding var expandedRowPlanIds: Set<String>
     @Binding var displayTypeDetailsPlanId: String?
-    let localeCreation: ASCLocaleRowContext
+    let localeCreation: ASCLocaleCreationContext
 
     private var platform: ASCPlatform? {
         destination.version.attributes.ascPlatform

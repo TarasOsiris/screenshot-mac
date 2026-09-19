@@ -1,17 +1,8 @@
 import SwiftUI
 
-/// What one locale row can say about the screenshots App Store Connect already holds for it.
-enum ASCLocalePresenceState {
-    /// At least one matched candidate hasn't been checked yet.
-    case checking
-    case hasScreenshots
-    case missing
-}
-
-/// Everything the locale rows need that a row can't derive from its own target: the "Create in
-/// App Store Connect" action, and what App Store Connect already holds. One value rather than a
-/// parameter each because it passes through two container views untouched.
-struct ASCLocaleRowContext {
+/// Everything the locale rows need for the "Create in App Store Connect" action. One value
+/// rather than a parameter each because it passes through two container views untouched.
+struct ASCLocaleCreationContext {
     let versionId: String
     /// App Store Connect rejects a new localization on a version it won't take screenshots for,
     /// so a locked version keeps the plain hint instead of a button that can only 409.
@@ -20,38 +11,10 @@ struct ASCLocaleRowContext {
     let existingStoreLocaleCodes: Set<String>
     let inFlightKeys: Set<String>
     let errors: [String: String]
-    /// Per version-localization, the display types holding screenshots. An absent key means
-    /// "not checked yet", which is why this can't collapse to a set of ids.
-    let screenshotDisplayTypesByLocalizationId: [String: Set<String>]
     let create: (String) -> Void
 
     func key(projectLocaleCode: String) -> String {
         ASCUploadFlowModel.localeCreationKey(versionId: versionId, projectLocaleCode: projectLocaleCode)
-    }
-
-    /// Scoped to the display type the row will actually upload: App Store Connect carries
-    /// screenshots over between versions and keeps sets for device families a row isn't targeting,
-    /// and counting those made a locale with nothing for the selected size look fine. Falls back
-    /// to "any display type" only while the row has no upload target chosen.
-    func presenceState(
-        candidates: [ASCAppStoreVersionLocalization],
-        displayType: ASCDisplayType?
-    ) -> ASCLocalePresenceState {
-        // An unmatched locale has nothing on App Store Connect to be missing screenshots *from*,
-        // and `allSatisfy` below is vacuously true — which would accuse it. The row renders a
-        // different branch entirely for this case; the guard is here so the answer can't be wrong
-        // if anything else ever asks.
-        guard !candidates.isEmpty else { return .hasScreenshots }
-        var populatedPerCandidate: [Set<String>] = []
-        for candidate in candidates {
-            guard let populated = screenshotDisplayTypesByLocalizationId[candidate.id] else { return .checking }
-            populatedPerCandidate.append(populated)
-        }
-        let isEmptyForRow: (Set<String>) -> Bool = { populated in
-            guard let displayType else { return populated.isEmpty }
-            return !populated.contains(displayType.appStoreConnectValue)
-        }
-        return populatedPerCandidate.allSatisfy(isEmptyForRow) ? .missing : .hasScreenshots
     }
 
     /// The App Store locale a project locale would be created as, or nil when there is nothing
@@ -72,7 +35,7 @@ struct ASCUploadRowPlanCard: View {
     let expanded: Bool
     let availableDisplayTypes: [ASCDisplayType]
     @Binding var displayTypeDetailsPlanId: String?
-    let localeCreation: ASCLocaleRowContext
+    let localeCreation: ASCLocaleCreationContext
     let onToggleExpanded: () -> Void
 
     var body: some View {
@@ -109,11 +72,7 @@ struct ASCUploadRowPlanCard: View {
             // "English (Australia) (EN-AU)" against.
             Grid(alignment: .leading, horizontalSpacing: 8, verticalSpacing: 4) {
                 ForEach($plan.localeTargets) { $target in
-                    ASCLocaleTargetRow(
-                        target: $target,
-                        creation: localeCreation,
-                        displayType: plan.selectedAssetType
-                    )
+                    ASCLocaleTargetRow(target: $target, creation: localeCreation)
                 }
             }
         }
@@ -283,9 +242,7 @@ private struct ASCDisplayTypeDetailsPopover: View {
 
 private struct ASCLocaleTargetRow: View {
     @Binding var target: ASCLocaleTarget
-    let creation: ASCLocaleRowContext
-    /// What this row plan uploads, which is what "has screenshots" has to be measured against.
-    let displayType: ASCDisplayType?
+    let creation: ASCLocaleCreationContext
 
     /// Exactly two cells: anything else here becomes its own Grid column and breaks the alignment
     /// the Grid exists to provide.
@@ -339,26 +296,7 @@ private struct ASCLocaleTargetRow: View {
                     }
                 }
                 selectedLocaleLabel
-                presenceLabel
             }
-        }
-    }
-
-    @ViewBuilder
-    private var presenceLabel: some View {
-        switch creation.presenceState(candidates: target.candidates, displayType: displayType) {
-        case .missing:
-            Text("No screenshots yet")
-                .font(.caption)
-                .foregroundStyle(.orange)
-        case .checking:
-            // Named rather than silent: "no badge" would otherwise mean both "App Store Connect
-            // has screenshots" and "we haven't looked yet", and the sweep takes a while.
-            Text("Checking…")
-                .font(.caption)
-                .foregroundStyle(.tertiary)
-        case .hasScreenshots:
-            EmptyView()
         }
     }
 

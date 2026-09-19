@@ -55,6 +55,7 @@ enum AppStoreConnectUploadValidator {
         for plan in enabledPlans {
             let rowName = StoreUploadChecks.rowName(plan.rowLabel)
             let sizeLabel = StoreUploadChecks.sizeLabel(plan.rowSize)
+            let detectedTypeFix = detectedAssetTypeFix(for: plan, version: version)
 
             guard let displayType = plan.selectedAssetType else {
                 issues.append(UploadIssue(
@@ -62,7 +63,8 @@ enum AppStoreConnectUploadValidator {
                     scope: rowName,
                     message: String(localized: "Pick a display type for this row (\(sizeLabel))."),
                     hint: String(localized: "Use the \"Display Type\" picker above."),
-                    demoDowngradable: true
+                    demoDowngradable: true,
+                    fix: detectedTypeFix
                 ))
                 continue
             }
@@ -78,7 +80,8 @@ enum AppStoreConnectUploadValidator {
                     hint: accepted.isEmpty
                         ? String(localized: "Pick a different display type.")
                         : String(localized: "Resize the row to one of: \(accepted), or pick a matching display type."),
-                    demoDowngradable: true
+                    demoDowngradable: true,
+                    fix: detectedTypeFix
                 ))
             }
 
@@ -89,7 +92,8 @@ enum AppStoreConnectUploadValidator {
                     scope: rowName,
                     message: String(localized: "\(displayType.label) can't be uploaded to a \(platform.displayName) version."),
                     hint: String(localized: "Pick a display type that matches the app's platform."),
-                    demoDowngradable: true
+                    demoDowngradable: true,
+                    fix: detectedTypeFix
                 ))
             }
 
@@ -121,6 +125,7 @@ enum AppStoreConnectUploadValidator {
                 ))
             }
 
+            let matchable = plan.localeTargets.filter { !$0.candidates.isEmpty }
             let activeLocaleCount = plan.localeTargets.count { $0.isEnabled && !$0.selectedASCLocalizationIds.isEmpty }
             if activeLocaleCount == 0 {
                 issues.append(UploadIssue(
@@ -128,7 +133,13 @@ enum AppStoreConnectUploadValidator {
                     scope: rowName,
                     message: String(localized: "Pick at least one App Store locale to upload to."),
                     hint: String(localized: "Enable a locale checkbox and choose an App Store locale."),
-                    demoDowngradable: true
+                    demoDowngradable: true,
+                    fix: matchable.isEmpty ? nil : UploadIssueFix(
+                        .selectMatchingStoreLocales,
+                        destinationId: version.id,
+                        rowId: plan.id,
+                        appLocaleCodes: matchable.map(\.appLocaleCode)
+                    )
                 ))
             }
 
@@ -146,23 +157,37 @@ enum AppStoreConnectUploadValidator {
             }
 
             let missingSelection = plan.localeTargets.filter { $0.isEnabled && !$0.candidates.isEmpty && $0.selectedASCLocalizationIds.isEmpty }
-            for target in missingSelection {
+            if !missingSelection.isEmpty {
+                let names = missingSelection.map(\.appLocaleLabel).formatted(.list(type: .and))
                 issues.append(UploadIssue(
                     severity: .error,
                     scope: rowName,
-                    message: String(localized: "Choose the App Store locale for \(target.appLocaleLabel)."),
-                    hint: String(localized: "Use the locale picker in this row, or disable this locale."),
-                    demoDowngradable: true
+                    message: missingSelection.count == 1
+                        ? String(localized: "Choose the App Store locale for \(names).")
+                        : String(localized: "Choose App Store locales for \(names)."),
+                    hint: missingSelection.count == 1
+                        ? String(localized: "Use the locale picker in this row, or disable this locale.")
+                        : String(localized: "Use the locale pickers in this row, or disable these locales."),
+                    demoDowngradable: true,
+                    fix: UploadIssueFix(
+                        .selectMatchingStoreLocales,
+                        destinationId: version.id,
+                        rowId: plan.id,
+                        appLocaleCodes: missingSelection.map(\.appLocaleCode)
+                    )
                 ))
             }
 
             let unmatched = plan.localeTargets.filter { $0.isEnabled && $0.candidates.isEmpty }
-            for target in unmatched {
+            if !unmatched.isEmpty {
+                let names = unmatched.map(\.appLocaleLabel).formatted(.list(type: .and))
                 issues.append(UploadIssue(
                     severity: .error,
                     scope: rowName,
-                    message: String(localized: "No App Store locale matches \(target.appLocaleLabel) on this version."),
-                    hint: String(localized: "Add the locale in App Store Connect, or disable this locale here."),
+                    message: String(localized: "No App Store locale matches \(names) on this version."),
+                    hint: unmatched.count == 1
+                        ? String(localized: "Add the locale in App Store Connect, or disable this locale here.")
+                        : String(localized: "Add the locales in App Store Connect, or disable them here."),
                     demoDowngradable: true
                 ))
             }
@@ -194,5 +219,19 @@ enum AppStoreConnectUploadValidator {
         ))
 
         return issues
+    }
+
+    /// Offered only when the detected type is something the row could actually upload as — a
+    /// detection that fails the same size/platform checks would swap one error for another.
+    private static func detectedAssetTypeFix(
+        for plan: ASCRowPlan,
+        version: ASCAppStoreVersion
+    ) -> UploadIssueFix? {
+        guard let detected = plan.detectedAssetType,
+              detected != plan.selectedAssetType,
+              detected.accepts(width: plan.rowSize.width, height: plan.rowSize.height),
+              version.attributes.ascPlatform.map({ detected.accepts(platform: $0) }) ?? true
+        else { return nil }
+        return UploadIssueFix(.useDetectedAssetType, destinationId: version.id, rowId: plan.id)
     }
 }

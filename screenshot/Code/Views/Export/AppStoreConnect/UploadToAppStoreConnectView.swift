@@ -26,7 +26,10 @@ struct UploadToAppStoreConnectView: View {
     // View-local presentation state: disclosure, sheet and confirmation-dialog flags with no
     // flow meaning, plus the one preference an @Observable class can't host.
     @AppStorage("uploadHideNonUploadable") var hideNonUploadable: Bool = true
-    @State var isPreflightExpanded = true
+    /// Collapsed by default, unlike Google Play's: this panel's details (selected uploads, skipped
+    /// items) sit above every row card and re-measure on every locale tick, which moved the card
+    /// under the user's cursor. Collapsed, its header is a fixed height. Play's `details` is empty.
+    @State var isPreflightExpanded = false
     @State var expandedRowPlanIds: Set<String> = []   // absent = collapsed (default)
     @State var presentedErrorDetails: UploadFailureDetail?
     @State var displayTypeDetailsPlanId: String?
