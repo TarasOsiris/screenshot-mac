@@ -43,6 +43,16 @@ final class MCPToolExecutor {
             AnalyticsService.capture(.mcpToolCalled, [.tool: tool.rawValue, .ok: true, .mcpSessionId: sessionId])
             return result
         } catch {
+            if error is CancellationError {
+                // The client disconnected or the app quit mid-call — expected, not our bug.
+                CrashReportingService.breadcrumb(.mcp, "Tool \(name) cancelled", level: .warning)
+                AnalyticsService.capture(.mcpToolCalled, [
+                    .tool: tool?.rawValue ?? "unknown",
+                    .ok: false,
+                    .mcpSessionId: sessionId,
+                ])
+                return CallTool.Result(content: [.text("Error: Cancelled")], isError: true)
+            }
             let message = (error as? LocalizedError)?.errorDescription ?? "\(error)"
             if let toolError = error as? MCPToolError, toolError.isClientError {
                 CrashReportingService.breadcrumb(.mcp, "Tool \(name) rejected the request", level: .warning)

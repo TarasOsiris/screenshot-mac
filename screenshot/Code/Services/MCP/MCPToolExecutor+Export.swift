@@ -58,6 +58,10 @@ extension MCPToolExecutor {
                 files: result.fileURLs.map(\.path).sorted(),
                 unrenderable: result.unrenderable
             ))
+        } catch is CancellationError {
+            // Expected — the client disconnected or the app quit mid-export. Rethrown as-is so
+            // `call(name:arguments:)` treats it like a client-driven condition, not our bug.
+            throw CancellationError()
         } catch {
             throw MCPToolError.failed("Export failed: \(error.localizedDescription)")
         }
