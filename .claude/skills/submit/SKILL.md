@@ -32,7 +32,7 @@ treat an argument as a marketing version if it looks like one (`4.8`, `4.8.1`).
 
 ## Step 1: Resolve the version and the build
 
-Version = the argument if given, else `MARKETING_VERSION` from `screenshot.xcodeproj/project.pbxproj`.
+Version = the argument if given, else `MARKETING_VERSION` from `screenshot.xcodeproj/project.xcproj`.
 
 ```bash
 asc builds info --app 6760177675 --latest --platform MAC_OS --version "<MV>"

@@ -36,7 +36,7 @@ answer or from a previous ship. Skip it only if the invocation says so outright
 
 ## Step 2: Determine version bump
 
-Read the current version from `project.pbxproj`:
+Read the current version from `screenshot.xcodeproj/project.xcproj`:
 - `MARKETING_VERSION` (e.g. `2.0`) — the user-facing version
 - `CURRENT_PROJECT_VERSION` (e.g. `2`) — the build number
 
@@ -46,7 +46,7 @@ If a marketing version is provided as an argument, use it as the new `MARKETING_
 If no version argument, keep `MARKETING_VERSION` unchanged and only bump the build number.
 
 `MARKETING_VERSION`/`CURRENT_PROJECT_VERSION` are shared by both platforms in
-`project.pbxproj`, so one bump covers whichever platforms are selected.
+`project.xcproj`, so one bump covers whichever platforms are selected.
 
 ### Step 2b: Verify the marketing version against App Store Connect FIRST
 
@@ -62,7 +62,7 @@ asc versions list --app 6760177675 --platform IOS --limit 5
 (`6760177675` is Screenshot Bro's App Store Connect app id. `asc` authenticates on its own —
 see `asc doctor` if it errors.) Read `attributes.versionString` and `attributes.appStoreState`
 of the newest entry for **each selected platform** — the two platforms have independent
-version trains, but share one `MARKETING_VERSION` in `project.pbxproj`, so the chosen version
+version trains, but share one `MARKETING_VERSION` in `project.xcproj`, so the chosen version
 must be free on *all* of them:
 
 - Newest version **equals** the intended `MARKETING_VERSION` and is in an editable state
@@ -78,12 +78,11 @@ This is the same rejection Step 7 would otherwise return as error `90186`
 (`CFBundleShortVersionString` must be higher). Step 7 keeps its recovery path as a fallback,
 but with this check it should rarely fire.
 
-## Step 3: Update versions in project.pbxproj
+## Step 3: Update versions in project.xcproj
 
 Use the Edit tool to update ALL occurrences of both `MARKETING_VERSION` and
-`CURRENT_PROJECT_VERSION` in `screenshot.xcodeproj/project.pbxproj`. There are multiple
-occurrences (Debug/Release for main target and UI tests target) — update them all using
-`replace_all`.
+`CURRENT_PROJECT_VERSION` in `screenshot.xcodeproj/project.xcproj`. Each appears twice
+(app target + test target; Debug and Release share the value) — update both occurrences.
 
 ## Step 4: Verify the build compiles
 
@@ -164,7 +163,7 @@ platform you re-archived before re-uploading.
 Stage and commit the version changes, create a git tag, then push both the commit and
 the tag:
 ```
-git add screenshot.xcodeproj/project.pbxproj
+git add screenshot.xcodeproj/project.xcproj
 git commit -m "Bump version to <MARKETING_VERSION> (<CURRENT_PROJECT_VERSION>)"
 git tag v<MARKETING_VERSION>-<CURRENT_PROJECT_VERSION>
 git push && git push --tags

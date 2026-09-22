@@ -16,7 +16,7 @@ Sketch is the main reference project. UX patterns (cursors, handles, interaction
 
 ## Build
 
-Project: `screenshot.xcodeproj` (no workspace). Scheme: `screenshot`. Targets: `screenshot` (app), `screenshotTests` (unit tests). `SUPPORTED_PLATFORMS = iphoneos iphonesimulator macosx`, `TARGETED_DEVICE_FAMILY = 1,2`; macOS deployment 15.0, iOS deployment 18.0. Dependencies via Xcode-managed SPM: RevenueCat `purchases-ios-spm` (5.0+), SwiftDraw (0.27+), `modelcontextprotocol/swift-sdk` (0.12.x, the `MCP` product), `getsentry/sentry-cocoa` (9.26+) and `PostHog/posthog-ios` (3.56+). `Package.resolved` is tracked in git — commit it alongside any `project.pbxproj` package change.
+Project: `screenshot.xcodeproj` (no workspace), using Xcode's JSON `project.xcproj` format (Xcode 27+). Scheme: `screenshot`. Targets: `screenshot` (app), `screenshotTests` (unit tests). `SUPPORTED_PLATFORMS = iphoneos iphonesimulator macosx`, `TARGETED_DEVICE_FAMILY = 1,2`; macOS deployment 15.0, iOS deployment 18.0. Dependencies via Xcode-managed SPM: RevenueCat `purchases-ios-spm` (5.0+), SwiftDraw (0.27+), `modelcontextprotocol/swift-sdk` (0.12.x, the `MCP` product), `getsentry/sentry-cocoa` (9.26+) and `PostHog/posthog-ios` (3.56+). `Package.resolved` is tracked in git — commit it alongside any `project.xcproj` package change.
 
 Build (macOS is the primary dev target):
 ```
@@ -50,7 +50,7 @@ xcodebuild -scheme "screenshot Profiling" -destination 'platform=macOS' build
 
 **SourceKit per-file diagnostics are unreliable here** — it routinely reports phantom `Cannot find type … in scope` / `Cannot find 'UIMetrics' in scope` for symbols defined in sibling files. Trust the result of `xcodebuild`, not the editor diagnostics; only act on errors a full build actually reports.
 
-Shipping (via the `ship` skill) targets both platforms from the one `ExportOptions.plist` (`method: app-store-connect`): archive macOS with `-destination 'platform=macOS,arch=arm64'` and iOS with `-destination 'generic/platform=iOS'`, then `-exportArchive` with the plist's `destination` flipped from `export` to `upload` and reverted after. `MARKETING_VERSION`/`CURRENT_PROJECT_VERSION` appear 4× each in `project.pbxproj` (Debug/Release × app/tests) — bump all with `replace_all`. Uploading is only half a release: the `submit` skill then creates the App Store version record, writes "What's New", attaches the build and submits for review — `ship` runs it as its Step 10.
+Shipping (via the `ship` skill) targets both platforms from the one `ExportOptions.plist` (`method: app-store-connect`): archive macOS with `-destination 'platform=macOS,arch=arm64'` and iOS with `-destination 'generic/platform=iOS'`, then `-exportArchive` with the plist's `destination` flipped from `export` to `upload` and reverted after. `MARKETING_VERSION`/`CURRENT_PROJECT_VERSION` appear 2× each in `project.xcproj` (app + tests; Debug/Release share each value) — bump both occurrences. Uploading is only half a release: the `submit` skill then creates the App Store version record, writes "What's New", attaches the build and submits for review — `ship` runs it as its Step 10.
 
 ## Skills, Agents & Harness
 
