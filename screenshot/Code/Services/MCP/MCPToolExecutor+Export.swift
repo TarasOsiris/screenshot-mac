@@ -58,6 +58,9 @@ extension MCPToolExecutor {
                 files: result.fileURLs.map(\.path).sorted(),
                 unrenderable: result.unrenderable
             ))
+        } catch is CancellationError {
+            // Rethrown as-is (not wrapped in .failed) so `call()` can keep it off Sentry.
+            throw CancellationError()
         } catch {
             throw MCPToolError.failed("Export failed: \(error.localizedDescription)")
         }

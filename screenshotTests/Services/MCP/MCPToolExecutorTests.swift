@@ -690,6 +690,29 @@ struct MCPToolExecutorTests {
         }
     }
 
+    /// A client cancelling a long-running export (e.g. closing the MCP connection mid-render) must
+    /// reach `call()` as a bare `CancellationError`, not get wrapped into `MCPToolError.failed` —
+    /// wrapping it lost the type and made every cancelled export open an `mcpToolFailed` Sentry
+    /// report for expected, not-our-bug behavior (SCREENSHOT-BRO-G).
+    @Test func exportProjectCancellationIsNotWrappedAsFailure() async throws {
+        let (executor, state, tempDir) = makeExecutor()
+        defer { cleanupTestState(tempDir) }
+
+        let projectId = try #require(state.activeProject?.id)
+        let exportTask = Task { @MainActor in
+            try await executor.exportProject(MCPArguments([
+                "project_id": .string(projectId.uuidString),
+            ]))
+        }
+
+        await Task.yield()
+        exportTask.cancel()
+
+        await #expect(throws: CancellationError.self) {
+            _ = try await exportTask.value
+        }
+    }
+
     // MARK: - Project binding
     //
     // In this suite rather than their own: they share `SCREENSHOT_DATA_DIR` and the demo-mode
