@@ -9,7 +9,7 @@ disable-model-invocation: true
 Take a build that is already uploaded to App Store Connect and turn it into a submitted release:
 create the version record, write "What's New" for every locale, attach the build, validate, submit.
 
-`/ship` runs this automatically as its Step 11. Run it standalone when a build was uploaded earlier
+`/ship` runs this automatically as its Step 10. Run it standalone when a build was uploaded earlier
 without being submitted, when a submission was rejected and needs re-sending, or when a `/ship` run
 uploaded fine but its submit step failed.
 

@@ -9,10 +9,11 @@ disable-model-invocation: true
 Bump the app version, build archives, and upload to App Store Connect. The app is
 multiplatform (macOS + iOS), so each ship targets one or both platforms.
 
-`xcode-select` points at CommandLineTools on this machine, so **every `xcodebuild` below needs
-`DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer`** — without it the command dies with
-"tool 'xcodebuild' requires Xcode". Archiving also needs `-allowProvisioningUpdates` plus the
-Step 7 API key, or signing fails on a device the Mac Team Provisioning Profile doesn't list.
+Use Xcode 27 or newer for this project's JSON `project.xcproj`. If `xcode-select -p` points at
+CommandLineTools, prefix each `xcodebuild` command with
+`DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer`. Archiving also needs
+`-allowProvisioningUpdates` plus the Step 7 API key, or signing can fail when the provisioning
+profile does not list the device.
 
 ## Step 1: Ask what to ship
 
@@ -80,9 +81,15 @@ but with this check it should rarely fire.
 
 ## Step 3: Update versions in project.xcproj
 
-Use the Edit tool to update ALL occurrences of both `MARKETING_VERSION` and
-`CURRENT_PROJECT_VERSION` in `screenshot.xcodeproj/project.xcproj`. Each appears twice
-(app target + test target; Debug and Release share the value) — update both occurrences.
+Edit the quoted JSON values for `MARKETING_VERSION` and `CURRENT_PROJECT_VERSION` in
+`screenshot.xcodeproj/project.xcproj`. Each key appears twice (app target + test target;
+Debug and Release share the value). Keep the two targets in sync. Before archiving,
+check that both occurrences of each key have the intended value and that the app target's
+resolved Release build settings report the same versions:
+
+```bash
+xcodebuild -project screenshot.xcodeproj -target screenshot -configuration Release -showBuildSettings | rg ' (MARKETING_VERSION|CURRENT_PROJECT_VERSION) = '
+```
 
 ## Step 4: Verify the build compiles
 
@@ -90,9 +97,9 @@ Verify each selected platform compiles before archiving:
 
 ```bash
 # macOS
-xcodebuild -scheme screenshot -destination 'platform=macOS' build
+xcodebuild -project screenshot.xcodeproj -scheme screenshot -destination 'platform=macOS' build
 # iOS
-xcodebuild -scheme screenshot -destination 'generic/platform=iOS' build
+xcodebuild -project screenshot.xcodeproj -scheme screenshot -destination 'generic/platform=iOS' build
 ```
 
 If a build fails, stop and report the error. Do not proceed.
@@ -103,9 +110,9 @@ Archive each selected platform to its own archive path:
 
 ```bash
 # macOS
-xcodebuild -scheme screenshot -destination 'platform=macOS' -archivePath build/screenshot-macos.xcarchive archive
+xcodebuild -project screenshot.xcodeproj -scheme screenshot -destination 'platform=macOS' -archivePath build/screenshot-macos.xcarchive -allowProvisioningUpdates -authenticationKeyPath "$HOME/Library/Mobile Documents/com~apple~CloudDocs/Files/AuthKey_4KK2B86XC6_BRO.p8" -authenticationKeyID 4KK2B86XC6 -authenticationKeyIssuerID 69a6de84-a676-47e3-e053-5b8c7c11a4d1 archive
 # iOS
-xcodebuild -scheme screenshot -destination 'generic/platform=iOS' -archivePath build/screenshot-ios.xcarchive archive
+xcodebuild -project screenshot.xcodeproj -scheme screenshot -destination 'generic/platform=iOS' -archivePath build/screenshot-ios.xcarchive -allowProvisioningUpdates -authenticationKeyPath "$HOME/Library/Mobile Documents/com~apple~CloudDocs/Files/AuthKey_4KK2B86XC6_BRO.p8" -authenticationKeyID 4KK2B86XC6 -authenticationKeyIssuerID 69a6de84-a676-47e3-e053-5b8c7c11a4d1 archive
 ```
 
 ## Step 6: Upload dSYMs to Sentry
@@ -131,7 +138,7 @@ sentry-cli debug-files upload -o nineva-studios -p screenshot-bro build/screensh
 `destination: export`. Authenticate with the App Store Connect API key (the
 signed-in-Xcode-account path fails with "Failed to Use Accounts" in automated/
 headless contexts — always pass the key):
-- Key file: `/Users/nineva/Library/Mobile Documents/com~apple~CloudDocs/Files/AuthKey_4KK2B86XC6_BRO.p8`
+- Key file: `$HOME/Library/Mobile Documents/com~apple~CloudDocs/Files/AuthKey_4KK2B86XC6_BRO.p8`
 - Key ID: `4KK2B86XC6`
 - Issuer ID: `69a6de84-a676-47e3-e053-5b8c7c11a4d1`
 
@@ -141,9 +148,9 @@ The `.p8` lives in iCloud (outside the repo) — never copy it into the repo.
 2. Run the upload for each selected platform (its own `-exportPath`), passing the API key:
 ```bash
 # macOS
-xcodebuild -exportArchive -archivePath build/screenshot-macos.xcarchive -exportPath build/upload-macos -exportOptionsPlist ExportOptions.plist -allowProvisioningUpdates -authenticationKeyPath "/Users/nineva/Library/Mobile Documents/com~apple~CloudDocs/Files/AuthKey_4KK2B86XC6_BRO.p8" -authenticationKeyID 4KK2B86XC6 -authenticationKeyIssuerID 69a6de84-a676-47e3-e053-5b8c7c11a4d1
+xcodebuild -exportArchive -archivePath build/screenshot-macos.xcarchive -exportPath build/upload-macos -exportOptionsPlist ExportOptions.plist -allowProvisioningUpdates -authenticationKeyPath "$HOME/Library/Mobile Documents/com~apple~CloudDocs/Files/AuthKey_4KK2B86XC6_BRO.p8" -authenticationKeyID 4KK2B86XC6 -authenticationKeyIssuerID 69a6de84-a676-47e3-e053-5b8c7c11a4d1
 # iOS
-xcodebuild -exportArchive -archivePath build/screenshot-ios.xcarchive -exportPath build/upload-ios -exportOptionsPlist ExportOptions.plist -allowProvisioningUpdates -authenticationKeyPath "/Users/nineva/Library/Mobile Documents/com~apple~CloudDocs/Files/AuthKey_4KK2B86XC6_BRO.p8" -authenticationKeyID 4KK2B86XC6 -authenticationKeyIssuerID 69a6de84-a676-47e3-e053-5b8c7c11a4d1
+xcodebuild -exportArchive -archivePath build/screenshot-ios.xcarchive -exportPath build/upload-ios -exportOptionsPlist ExportOptions.plist -allowProvisioningUpdates -authenticationKeyPath "$HOME/Library/Mobile Documents/com~apple~CloudDocs/Files/AuthKey_4KK2B86XC6_BRO.p8" -authenticationKeyID 4KK2B86XC6 -authenticationKeyIssuerID 69a6de84-a676-47e3-e053-5b8c7c11a4d1
 ```
 3. Revert `ExportOptions.plist` back to `destination: export`
 
