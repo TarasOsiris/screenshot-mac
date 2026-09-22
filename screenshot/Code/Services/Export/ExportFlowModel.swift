@@ -51,18 +51,28 @@ final class ExportFlowModel {
     /// picks the folder up front).
     var pendingExport: PendingExport?
 
+    /// Set when `DeveloperRatingPromptPolicy` fires — the personal, one-time ask, separate from
+    /// the native review prompt below.
+    var showDeveloperRatingSheet = false
+
     @ObservationIgnored private var successTimer: Task<Void, Never>?
     @ObservationIgnored private var task: Task<Void, Never>?
     @ObservationIgnored private let defaults: UserDefaults
     @ObservationIgnored private let review: ReviewPromptPolicy
+    @ObservationIgnored private let developerRating: DeveloperRatingPromptPolicy
 
     /// Presents the system review prompt. Injected because it comes from a SwiftUI environment
     /// value the model can't read, and because a test must be able to observe it without one.
     @ObservationIgnored var requestReview: () -> Void = {}
 
-    init(defaults: UserDefaults = .standard, review: ReviewPromptPolicy? = nil) {
+    init(
+        defaults: UserDefaults = .standard,
+        review: ReviewPromptPolicy? = nil,
+        developerRating: DeveloperRatingPromptPolicy? = nil
+    ) {
         self.defaults = defaults
         self.review = review ?? ReviewPromptPolicy(defaults: defaults)
+        self.developerRating = developerRating ?? DeveloperRatingPromptPolicy(defaults: defaults)
     }
 
     // MARK: - Settings
@@ -145,9 +155,26 @@ final class ExportFlowModel {
                                        body: unreadableExportNotificationBody(count))
         }
 
-        if review.recordExportAndCheck() {
+        // Both policies count every export — `recordExportAndCheck` is what advances their
+        // counters, so short-circuiting either one would permanently skew its threshold.
+        let wantsDeveloperAsk = developerRating.recordExportAndCheck()
+        let wantsSystemPrompt = review.recordExportAndCheck()
+
+        // The developer's personal ask takes priority when both land on the same export — asking
+        // twice in one moment is worse than spending the system prompt's turn on nothing.
+        if wantsDeveloperAsk {
+            Task.delayed(2.5) { [weak self] in self?.showDeveloperRatingSheet = true }
+        } else if wantsSystemPrompt {
             Task.delayed(2.5) { [requestReview] in requestReview() }
         }
+    }
+
+    /// Spends the one-time developer ask, at the moment its sheet actually appears rather than
+    /// when it was scheduled. A window closed inside the 2.5s delay — or a sheet SwiftUI declined
+    /// to present over an open cover — must leave the ask for the next export.
+    func markDeveloperRatingShown() {
+        guard developerRating.markShown() else { return }
+        AnalyticsService.capture(.developerRatingShown)
     }
 
     private func exportCompleteBody(_ screenshotCount: Int) -> String {

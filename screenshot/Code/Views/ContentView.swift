@@ -53,6 +53,7 @@ struct ContentView: View {
     @Environment(\.openWindow) var openWindow
     #endif
     @Environment(\.requestReview) var requestReview
+    @Environment(\.openURL) var openURL
     @AppStorage(AppSettingsKeys.exportFormat) var exportFormat = AppSettingsKeys.Default.exportFormat
     @AppStorage(AppSettingsKeys.exportCustomSuffix) var exportCustomSuffix = ""
     @AppStorage(AppSettingsKeys.openExportFolderOnSuccess) var openExportFolderOnSuccess = AppSettingsKeys.Default.openExportFolderOnSuccess
@@ -101,6 +102,8 @@ struct ContentView: View {
     @State var showingASCMetadataSheet = false
     @State var showingGooglePlayUploadSheet = false
     @State var showcasePresentation: ShowcasePresentation?
+    /// Which way the developer rating sheet was left, read once by `reportDeveloperRatingOutcome`.
+    @State private var didRateFromDeveloperSheet = false
     @State var projectNamePrompt: ProjectNamePrompt?
 
     var body: some View {
@@ -483,6 +486,11 @@ struct ContentView: View {
         base
         .exportFailedAlert($exportFlow.errorMessage)
         .exportIncompleteAlert($exportFlow.incompleteMessage)
+        .sheet(isPresented: developerRatingPresented, onDismiss: reportDeveloperRatingOutcome) {
+            DeveloperRatingSheet(onMaybeLater: dismissDeveloperRatingSheet, onRate: rateOnAppStore)
+                .screenView(.developerRating, restoring: .editor)
+                .onAppear { exportFlow.markDeveloperRatingShown() }
+        }
         #if os(iOS)
         .sheet(item: $exportFlow.pendingExport, onDismiss: { discardPendingExport() }) { _ in
             ExportDestinationSheet(title: pendingExportTitle) { destination in
@@ -586,6 +594,32 @@ struct ContentView: View {
         .onDisappear {
             scrollWheelZoom.remove()
         }
+    }
+
+    /// Held back while the showcase cover owns the window: on iPad that cover deliberately stays
+    /// up across the export's success, and SwiftUI presents one modal at a time, so asking now
+    /// would drop the sheet silently. The getter re-opens it once the cover closes.
+    private var developerRatingPresented: Binding<Bool> {
+        Binding(get: { exportFlow.showDeveloperRatingSheet && showcasePresentation == nil },
+                set: { if !$0 { exportFlow.showDeveloperRatingSheet = false } })
+    }
+
+    private func dismissDeveloperRatingSheet() {
+        exportFlow.showDeveloperRatingSheet = false
+    }
+
+    private func rateOnAppStore() {
+        didRateFromDeveloperSheet = true
+        exportFlow.showDeveloperRatingSheet = false
+        openURL(StoreService.rateOnAppStoreURL)
+    }
+
+    /// Reported from `onDismiss` rather than the buttons so every way out of the sheet is counted
+    /// — Esc, a click outside, and the iPad swipe-down all leave by this path and none of them
+    /// touch a button.
+    private func reportDeveloperRatingOutcome() {
+        AnalyticsService.capture(didRateFromDeveloperSheet ? .developerRatingAccepted : .developerRatingDismissed)
+        didRateFromDeveloperSheet = false
     }
 
     private func openInspectorIfCoachNeedsIt(_ step: OnboardingCoachStep?) {

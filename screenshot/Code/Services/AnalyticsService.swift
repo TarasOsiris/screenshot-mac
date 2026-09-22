@@ -75,6 +75,10 @@ nonisolated enum AnalyticsService {
         case purchaseFailed = "purchase_failed"
         case purchaseRestored = "purchase_restored"
 
+        case developerRatingShown = "developer_rating_shown"
+        case developerRatingDismissed = "developer_rating_dismissed"
+        case developerRatingAccepted = "developer_rating_accepted"
+
         case mcpServerToggled = "mcp_server_toggled"
         case mcpServerStarted = "mcp_server_started"
         case mcpServerStartFailed = "mcp_server_start_failed"
@@ -101,6 +105,7 @@ nonisolated enum AnalyticsService {
         case onboarding
         case paywall
         case purchaseCelebration = "purchase_celebration"
+        case developerRating = "developer_rating"
 
         case exportDestination = "export_destination"
         case showcaseExport = "showcase_export"
