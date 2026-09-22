@@ -122,6 +122,14 @@ characters. If nothing user-visible changed, use the literal fallback:
 New features and bug fixes
 ```
 
+**Never name a non-Apple store.** Apple rejected 4.16 (142) on iOS under guideline 2.3.10 — *Accurate
+Metadata* — for the bullet "Google Play uploads match the App Store Connect flow…". The app really
+does upload to Google Play, and the App Store *description* may say so; what 2.3.10 forbids is
+release notes that point App Store users at a third-party platform. So drop the bullet or describe
+the change platform-neutrally ("an automatic retry when a language fails to upload"), and grep the
+draft for `google|android|play store` before writing it to any locale. The same goes for the git log
+you draft from: a commit subject naming Google Play is fine, the customer-facing line is not.
+
 Apply the same English text to every locale the version carries — read them, don't hardcode:
 
 ```bash

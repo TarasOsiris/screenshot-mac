@@ -42,7 +42,8 @@
       "mcp__plugin_sentry_sentry__execute_sentry_tool",
       "mcp__posthog__exec",
       "mcp__screenshot-bro__list_projects",
-      "mcp__screenshot-bro__get_project"
+      "mcp__screenshot-bro__get_project",
+      "Bash(find /tmp /private/tmp -iname \"*.png\" -newer /Users/nineva/repo/screenshot-mac/CLAUDE.md -mmin -30 2>/dev/null | grep -v claude-501/-Users-nineva-repo-screenshot-mac/92737610 | head -20)"
     ]
   },
   "enabledMcpjsonServers": [
