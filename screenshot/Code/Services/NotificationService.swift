@@ -11,6 +11,7 @@ enum NotificationService {
     /// No-ops when the app is frontmost — the in-app UI is already telling the user.
     /// Authorization is requested lazily the first time a notification would be shown.
     static func notify(title: String, body: String) {
+        guard !PersistenceService.isRunningUnderXCTest else { return }
         #if os(macOS)
         guard !NSApp.isActive else { return }
         #else
