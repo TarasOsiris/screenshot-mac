@@ -225,11 +225,12 @@ extension EditorRowView {
         Task {
             if let message = await ExportService.saveRowImageViaPanel(defaultName: row.label, render: {
                 let images = state.loadFullResolutionImages(forRow: row, localeCode: localeCode)
-                return RowRenderer.renderRowImage(
-                    row: row, screenshotImages: images,
+                return await RowRenderContext(
+                    row: row, images: images,
                     localeCode: localeCode, localeState: state.localeState,
-                    availableFontFamilies: state.availableFontFamilySet
-                )
+                    availableFontFamilies: state.availableFontFamilySet,
+                    label: "row image export"
+                ).stitchedRowImage()
             }) {
                 activeAlert = .exportFailed(String(localized: "Could not export row image: \(message)"))
             }

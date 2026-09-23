@@ -165,6 +165,7 @@ struct ExportService {
                     )
                     context = rowContext
                     unrenderable.formUnion(rowContext.unrenderableImageFileNames)
+                    await rowContext.prepareBackground()
 
                     // Encode all templates of this group concurrently, then await
                     // before the next group to bound memory usage.

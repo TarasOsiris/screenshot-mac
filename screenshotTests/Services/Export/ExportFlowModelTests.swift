@@ -72,7 +72,7 @@ struct ExportFlowModelTests {
             into: base,
             folderName: "rows",
             delivery: .revealInPlace
-        ) { context in context.rowImage() }
+        ) { context in await context.stitchedRowImage() }
 
         try await waitForIdle(model)
 
@@ -106,7 +106,7 @@ struct ExportFlowModelTests {
             into: base,
             folderName: "rows",
             delivery: .stageDestination
-        ) { context in context.rowImage() }
+        ) { context in await context.stitchedRowImage() }
 
         try await waitForIdle(model)
 
@@ -122,7 +122,7 @@ struct ExportFlowModelTests {
         defer { try? FileManager.default.removeItem(at: base) }
 
         model.exportRows(document: document, into: base, folderName: "rows", delivery: .revealInPlace) {
-            context in context.rowImage()
+            context in await context.stitchedRowImage()
         }
 
         #expect(!model.isExporting)
@@ -165,7 +165,7 @@ struct ExportFlowModelTests {
             into: base,
             folderName: "holes",
             delivery: .revealInPlace
-        ) { context in context.rowImage() }
+        ) { context in await context.stitchedRowImage() }
 
         try await waitForIdle(model)
 
@@ -187,7 +187,7 @@ struct ExportFlowModelTests {
             into: base,
             folderName: "clean",
             delivery: .revealInPlace
-        ) { context in context.rowImage() }
+        ) { context in await context.stitchedRowImage() }
         try await waitForIdle(model)
 
         #expect(model.incompleteMessage == nil, "the previous run's alert must not survive a clean one")

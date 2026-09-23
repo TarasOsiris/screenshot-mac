@@ -104,7 +104,7 @@ extension ContentView {
 
     func exportRowImages() {
         exportRowLevel(folderName: "rows") { context in
-            context.rowImage()
+            await context.stitchedRowImage()
         }
     }
 

@@ -981,6 +981,7 @@ final class AppStoreConnectScreenshotSyncService {
     ) async throws -> [ASCScreenshotLocalAsset] {
         try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
         var assets: [ASCScreenshotLocalAsset] = []
+        await context.prepareBackground()
         for index in 0..<target.templateCount {
             try Task.checkCancellation()
             // Rendering needs the main actor (ImageRenderer); everything after it does not.

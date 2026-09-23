@@ -52,13 +52,16 @@ extension RowRenderer {
         #endif
     }
 
-    private static let ciContext = CIContext()
+    // CIContext is documented thread-safe; the off-main blur shares it with the main-actor one.
+    nonisolated(unsafe) private static let ciContext = CIContext()
 
-    /// Applies CIGaussianBlur and crops the result back to the original image bounds.
-    /// Uses CIAffineClamp to extend edge pixels so the blur kernel doesn't sample transparent pixels.
-    private static func applyGaussianBlur(to image: NSImage, radius: Double) -> NSImage {
-        guard radius > 0,
-              let cgImage = image.cgImage(forProposedRect: nil, context: nil, hints: nil) else { return image }
+    /// `renderBlurredViewToImage`'s blur, off the main actor.
+    @concurrent nonisolated static func gaussianBlurredOffMain(_ image: CGImage, radius: Double) async -> CGImage? {
+        gaussianBlurred(image, radius: radius)
+    }
+
+    /// CIGaussianBlur cropped to the source bounds; CIAffineClamp keeps the kernel off transparent pixels.
+    private nonisolated static func gaussianBlurred(_ cgImage: CGImage, radius: Double) -> CGImage? {
         let span = PerfSignpost.begin("ViewRasterizer.gaussianBlur", "radius=\(radius)")
         defer { PerfSignpost.end("ViewRasterizer.gaussianBlur", span) }
 
@@ -66,20 +69,19 @@ extension RowRenderer {
         let originalExtent = ciImage.extent
 
         guard let clamp = CIFilter(name: "CIAffineClamp"),
-              let blur = CIFilter(name: "CIGaussianBlur") else { return image }
+              let blur = CIFilter(name: "CIGaussianBlur") else { return nil }
         clamp.setValue(ciImage, forKey: kCIInputImageKey)
         clamp.setValue(CGAffineTransform.identity, forKey: kCIInputTransformKey)
 
         blur.setValue(clamp.outputImage, forKey: kCIInputImageKey)
         blur.setValue(radius, forKey: kCIInputRadiusKey)
 
-        guard let output = blur.outputImage else { return image }
+        guard let output = blur.outputImage else { return nil }
 
         let cropped = output.cropped(to: originalExtent)
         // CoreImage's intermediates are autoreleased and a full-row blur allocates megabytes.
-        return autoreleasepool { () -> NSImage in
-            guard let blurredCG = ciContext.createCGImage(cropped, from: originalExtent) else { return image }
-            return NSImage(cgImage: blurredCG, size: image.size)
+        return autoreleasepool {
+            ciContext.createCGImage(cropped, from: originalExtent)
         }
     }
 
@@ -111,8 +113,10 @@ extension RowRenderer {
     @MainActor
     static func renderBlurredViewToImage<V: View>(_ view: V, width: CGFloat, height: CGFloat, radius: Double, label: String) -> NSImage {
         let rendered = renderViewToImage(view, width: width, height: height, label: label)
-        guard radius > 0 else { return rendered }
-        let blurred = applyGaussianBlur(to: rendered, radius: radius)
+        guard radius > 0,
+              let cgImage = rendered.cgImage(forProposedRect: nil, context: nil, hints: nil),
+              let blurredCG = gaussianBlurred(cgImage, radius: radius) else { return rendered }
+        let blurred = NSImage(cgImage: blurredCG, size: rendered.size)
         return flattenImage(blurred, over: rendered, width: width, height: height)
     }
 
@@ -249,4 +253,50 @@ extension RowRenderer {
         PlatformImageRenderer.image(size: size, draw)
     }
     #endif
+}
+
+/// A row-sized bitmap filled one slot at a time, so no job ever rasterizes the whole row.
+nonisolated final class RowImageStitcher {
+    private let context: CGContext?
+    private let slotWidth: CGFloat
+    private let height: CGFloat
+    private let size: CGSize
+
+    init(slotWidth: CGFloat, height: CGFloat, slots: Int) {
+        self.slotWidth = slotWidth
+        self.height = height
+        size = CGSize(width: slotWidth * CGFloat(slots), height: height)
+        // Same DeviceRGB premultiplied RGBA8 layout as `RowRenderer.bitmapRep`, so bytes pass through.
+        context = CGContext(
+            data: nil,
+            width: max(Int(ceil(size.width)), 1),
+            height: max(Int(ceil(height)), 1),
+            bitsPerComponent: 8,
+            bytesPerRow: 0,
+            space: CGColorSpaceCreateDeviceRGB(),
+            bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue
+        )
+    }
+
+    func place(_ image: NSImage, at index: Int, blendMode: CGBlendMode = .copy) {
+        guard let cgImage = image.cgImage(forProposedRect: nil, context: nil, hints: nil) else { return }
+        draw(cgImage, in: CGRect(x: CGFloat(index) * slotWidth, y: 0, width: slotWidth, height: height), blendMode: blendMode)
+    }
+
+    /// Draws `image` over the whole canvas, e.g. a blurred copy of what it already holds.
+    func drawOver(_ image: CGImage) {
+        draw(image, in: CGRect(origin: .zero, size: size), blendMode: .normal)
+    }
+
+    private func draw(_ image: CGImage, in rect: CGRect, blendMode: CGBlendMode) {
+        context?.setBlendMode(blendMode)
+        context?.draw(image, in: rect)
+    }
+
+    func makeCGImage() -> CGImage? { context?.makeImage() }
+
+    func makeImage() -> NSImage {
+        guard let cgImage = makeCGImage() else { return NSImage(size: size) }
+        return NSImage(cgImage: cgImage, size: size)
+    }
 }

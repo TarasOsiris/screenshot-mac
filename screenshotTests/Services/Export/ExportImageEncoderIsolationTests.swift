@@ -27,6 +27,14 @@ struct ExportImageEncoderIsolationTests {
         }
     }
 
+    @Test func rowBackgroundBlurSuspendsTheMainActor() async throws {
+        let image = makeTestImage(width: 600, height: 400)
+        let cgImage = try #require(image.cgImage(forProposedRect: nil, context: nil, hints: nil))
+        await expectSuspendsMainActor {
+            _ = await RowRenderer.gaussianBlurredOffMain(cgImage, radius: 12)
+        }
+    }
+
     @Test func downsampleSuspendsTheMainActor() async throws {
         let image = makeTestImage(width: 2400, height: 1600)
         let data = try #require(ExportService.pngData(from: image))

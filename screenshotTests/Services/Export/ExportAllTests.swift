@@ -169,10 +169,19 @@ struct ExportAllTests {
         )
         #expect(export.fileURLs.count == 2)
 
+        // exportAll builds the blurred strip slot by slot (SCREENSHOT-BRO-1V); a gradient rendered
+        // offset into a slot differs from the one-pass strip by at most 1 LSB, so compare pixels.
         for (index, url) in export.fileURLs.sorted(by: { $0.lastPathComponent < $1.lastPathComponent }).enumerated() {
-            let exported = try Data(contentsOf: url)
-            let direct = try #require(RowRenderer.renderTemplateData(index: index, row: row, format: .png))
-            #expect(exported == direct, "template \(index) diverges from renderTemplateData")
+            let exported = try #require(NSBitmapImageRep(data: Data(contentsOf: url)))
+            let directData = try #require(RowRenderer.renderTemplateData(index: index, row: row, format: .png))
+            let direct = try #require(NSBitmapImageRep(data: directData))
+            #expect(exported.pixelsWide == direct.pixelsWide && exported.pixelsHigh == direct.pixelsHigh)
+            let exportedBytes = try #require(exported.bitmapData)
+            let directBytes = try #require(direct.bitmapData)
+            let maxDelta = (0..<(exported.bytesPerRow * exported.pixelsHigh))
+                .map { abs(Int(exportedBytes[$0]) - Int(directBytes[$0])) }
+                .max() ?? 0
+            #expect(maxDelta <= 2, "template \(index) diverges from renderTemplateData by \(maxDelta)")
         }
     }
 }

@@ -196,7 +196,8 @@ enum DebugTemplateService {
         let rowImage = RowRenderer.renderRowImage(
             row: row,
             screenshotImages: screenshotImages,
-            localeState: localeState
+            localeState: localeState,
+            displayScale: previewHeight / row.templateHeight
         )
 
         // NSBitmapImageRep ensures 1x pixel output (lockFocus produces 2x on Retina)

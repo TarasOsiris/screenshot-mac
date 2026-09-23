@@ -22,7 +22,8 @@ enum RowRenderer {
         localeCode: String? = nil,
         localeState: LocaleState = .default,
         availableFontFamilies: Set<String> = PlatformFonts.familyNameSet,
-        config: ShowcaseExportConfig = .init()
+        config: ShowcaseExportConfig = .init(),
+        preRenderedRowBackground: NSImage? = nil
     ) async -> NSImage {
         let count = row.templates.count
         guard count > 0 else {
@@ -31,7 +32,7 @@ enum RowRenderer {
 
         let layout = ShowcaseLayout(row: row, config: config)
 
-        let rowBackground = precomposedRowBackgroundIfNeeded(
+        let rowBackground = preRenderedRowBackground ?? precomposedRowBackgroundIfNeeded(
             row: row,
             screenshotImages: screenshotImages,
             displayScale: 1.0,
@@ -127,6 +128,111 @@ enum RowRenderer {
         )
     }
 
+    /// Renders `count` equal slots into one canvas, one main-actor job per slot.
+    @MainActor
+    static func stitchSlots(
+        count: Int, slotWidth: CGFloat, height: CGFloat, render: (Int) -> NSImage
+    ) async -> RowImageStitcher {
+        let stitcher = RowImageStitcher(slotWidth: slotWidth, height: height, slots: count)
+        for index in 0..<count {
+            stitcher.place(render(index), at: index)
+            await Task.yield()
+        }
+        return stitcher
+    }
+
+    /// `precomposedRowBackgroundIfNeeded`, built by `renderComposedBackgroundInSlices`.
+    @MainActor
+    static func precomposedRowBackgroundInSlices(
+        row: ScreenshotRow,
+        screenshotImages: [String: NSImage],
+        displayScale: CGFloat,
+        labelPrefix: String
+    ) async -> NSImage? {
+        guard row.backgroundBlur > 0 else { return nil }
+        return await renderComposedBackgroundInSlices(
+            row: row, screenshotImages: screenshotImages, displayScale: displayScale, labelPrefix: labelPrefix
+        )
+    }
+
+    /// `renderComposedBackgroundImage` rasterized one slot per main-actor job, blurred off-main.
+    @MainActor
+    static func renderComposedBackgroundInSlices(
+        row: ScreenshotRow,
+        screenshotImages: [String: NSImage],
+        displayScale: CGFloat,
+        labelPrefix: String
+    ) async -> NSImage {
+        let pxWidth = row.templateWidth * displayScale
+        let pxHeight = row.templateHeight * displayScale
+        // Slices only tile on whole pixels; a fractional (preview) scale is small enough for one pass.
+        guard !row.templates.isEmpty, pxWidth == pxWidth.rounded(), pxHeight == pxHeight.rounded() else {
+            return renderComposedBackgroundImage(
+                row: row, screenshotImages: screenshotImages, displayScale: displayScale, labelPrefix: labelPrefix
+            )
+        }
+        let span = PerfSignpost.begin("RowRenderer.composedBackgroundInSlices", "templates=\(row.templates.count)")
+        defer { PerfSignpost.end("RowRenderer.composedBackgroundInSlices", span) }
+        let count = row.templates.count
+        let canvas = await stitchSlots(count: count, slotWidth: pxWidth, height: pxHeight) { index in
+            renderViewToImage(
+                sliced(
+                    RowCanvasBaseBackgroundView(row: row, screenshotImages: screenshotImages, displayScale: displayScale),
+                    index: index, slotWidth: pxWidth, fullWidth: pxWidth * CGFloat(count), height: pxHeight
+                ),
+                width: pxWidth,
+                height: pxHeight,
+                label: "\(labelPrefix) base background slice '\(row.label)' [\(index)]"
+            )
+        }
+        // Blurred over its own unblurred original, as `renderBlurredViewToImage` flattens it.
+        if row.backgroundBlur > 0, let base = canvas.makeCGImage(),
+           let blurred = await gaussianBlurredOffMain(base, radius: row.backgroundBlur * displayScale) {
+            canvas.drawOver(blurred)
+        }
+        for (index, template) in row.templates.enumerated() where template.overrideBackground {
+            canvas.place(
+                renderOverrideTile(template, index: index, row: row, screenshotImages: screenshotImages,
+                                   displayScale: displayScale, labelPrefix: labelPrefix),
+                at: index,
+                blendMode: .normal
+            )
+            await Task.yield()
+        }
+        return canvas.makeImage()
+    }
+
+    private static func sliced<V: View>(
+        _ view: V, index: Int, slotWidth: CGFloat, fullWidth: CGFloat, height: CGFloat
+    ) -> some View {
+        view
+            .frame(width: fullWidth, height: height, alignment: .topLeading)
+            .offset(x: -CGFloat(index) * slotWidth)
+            .frame(width: slotWidth, height: height, alignment: .topLeading)
+            .clipped()
+    }
+
+    @MainActor
+    private static func renderOverrideTile(
+        _ template: ScreenshotTemplate,
+        index: Int,
+        row: ScreenshotRow,
+        screenshotImages: [String: NSImage],
+        displayScale: CGFloat,
+        labelPrefix: String
+    ) -> NSImage {
+        let pxWidth = row.templateWidth * displayScale
+        let pxHeight = row.templateHeight * displayScale
+        return renderBlurredViewToImage(
+            template.resolvedBackgroundView(screenshotImages: screenshotImages, modelSize: row.templateSize)
+                .frame(width: pxWidth, height: pxHeight),
+            width: pxWidth,
+            height: pxHeight,
+            radius: template.backgroundBlur * displayScale,
+            label: "\(labelPrefix) override background '\(row.label)' [\(index)]"
+        )
+    }
+
     // MARK: - Shared Rendering
 
     @MainActor
@@ -179,17 +285,12 @@ enum RowRenderer {
         let templateWidth = row.templateWidth * displayScale
         let templateHeight = row.templateHeight * displayScale
         let totalWidth = templateWidth * CGFloat(row.templates.count)
-        let templateModelSize = row.templateSize
         var composited = backgroundImage
 
         for (index, template) in row.templates.enumerated() where template.overrideBackground {
-            let overrideImage = renderBlurredViewToImage(
-                template.resolvedBackgroundView(screenshotImages: screenshotImages, modelSize: templateModelSize)
-                    .frame(width: templateWidth, height: templateHeight),
-                width: templateWidth,
-                height: templateHeight,
-                radius: template.backgroundBlur * displayScale,
-                label: "\(labelPrefix) override background '\(row.label)' [\(index)]"
+            let overrideImage = renderOverrideTile(
+                template, index: index, row: row, screenshotImages: screenshotImages,
+                displayScale: displayScale, labelPrefix: labelPrefix
             )
 
             composited = drawImage(
@@ -259,7 +360,8 @@ enum RowRenderer {
         localeState: LocaleState = .default,
         availableFontFamilies: Set<String> = PlatformFonts.familyNameSet,
         displayScale: CGFloat = 1.0,
-        preRenderedRowBackground: NSImage? = nil
+        preRenderedRowBackground: NSImage? = nil,
+        resolvedShapes: [CanvasShapeModel]? = nil
     ) -> NSImage {
         let span = PerfSignpost.begin(
             "RowRenderer.renderSingleTemplateImage",
@@ -270,7 +372,7 @@ enum RowRenderer {
         let templateHeight = row.templateHeight
         let pxWidth = templateWidth * displayScale
         let pxHeight = templateHeight * displayScale
-        let resolvedShapes = resolvedExportShapes(row: row, localeCode: localeCode, localeState: localeState)
+        let resolvedShapes = resolvedShapes ?? resolvedExportShapes(row: row, localeCode: localeCode, localeState: localeState)
         let backgroundImage = renderTemplateBackgroundImage(
             index: index,
             row: row,
@@ -383,11 +485,10 @@ enum RowRenderer {
             let spanModelSize = CGSize(width: row.templateWidth * CGFloat(count), height: row.templateHeight)
             let fullWidth = pxWidth * CGFloat(count)
             base = renderViewToImage(
-                row.resolvedBackgroundView(screenshotImages: screenshotImages, modelSize: spanModelSize)
-                    .frame(width: fullWidth, height: pxHeight)
-                    .offset(x: -CGFloat(index) * pxWidth)
-                    .frame(width: pxWidth, height: pxHeight, alignment: .topLeading)
-                    .clipped(),
+                sliced(
+                    row.resolvedBackgroundView(screenshotImages: screenshotImages, modelSize: spanModelSize),
+                    index: index, slotWidth: pxWidth, fullWidth: fullWidth, height: pxHeight
+                ),
                 width: pxWidth,
                 height: pxHeight,
                 label: "\(labelPrefix) span background '\(row.label)' [\(index)]"
@@ -407,19 +508,15 @@ enum RowRenderer {
         let template = row.templates[index]
         guard template.overrideBackground else { return base }
 
-        let overrideImage = renderBlurredViewToImage(
-            template.resolvedBackgroundView(screenshotImages: screenshotImages, modelSize: row.templateSize)
-                .frame(width: pxWidth, height: pxHeight),
-            width: pxWidth,
-            height: pxHeight,
-            radius: template.backgroundBlur * displayScale,
-            label: "\(labelPrefix) override background '\(row.label)' [\(index)]"
+        let overrideImage = renderOverrideTile(
+            template, index: index, row: row, screenshotImages: screenshotImages,
+            displayScale: displayScale, labelPrefix: labelPrefix
         )
         return flattenImage(overrideImage, over: base, width: pxWidth, height: pxHeight)
     }
 
     @MainActor
-    private static func resolvedExportShapes(row: ScreenshotRow, localeCode: String?, localeState: LocaleState) -> [CanvasShapeModel] {
+    static func resolvedExportShapes(row: ScreenshotRow, localeCode: String?, localeState: LocaleState) -> [CanvasShapeModel] {
         let resolvedShapes: [CanvasShapeModel]
         if let localeCode {
             resolvedShapes = row.activeShapes.map {

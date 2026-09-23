@@ -39,8 +39,26 @@ struct RowRenderContext {
     let label: String
     /// nil unless `row.backgroundBlur > 0` — blur has to sample across template boundaries, so
     /// only then is the oversized strip worth building. Locale-independent, so `withLocale`
-    /// carries it forward rather than re-rendering it per locale.
-    let precomposedRowBackground: NSImage?
+    /// carries it forward rather than re-rendering it per locale. Async callers `prepareBackground()`
+    /// first; this sync fallback builds it in one pass.
+    var precomposedRowBackground: NSImage? {
+        if let cached = backgroundCache.image { return cached }
+        let built = RowRenderer.precomposedRowBackgroundIfNeeded(
+            row: row, screenshotImages: images, displayScale: displayScale, labelPrefix: label
+        )
+        backgroundCache.image = .some(built)
+        return built
+    }
+
+    /// Builds `precomposedRowBackground` one slot per main-actor job instead of in one pass.
+    func prepareBackground() async {
+        guard backgroundCache.image == nil else { return }
+        let built = await RowRenderer.precomposedRowBackgroundInSlices(
+            row: row, screenshotImages: images, displayScale: displayScale, labelPrefix: label
+        )
+        backgroundCache.image = .some(built)
+    }
+    private let backgroundCache: PrecomposedBackgroundCache
     /// Resources the model references that disk couldn't produce. Rendering degrades silently to
     /// a hole, so upload paths should refuse a context with a non-empty set.
     let missingImageFileNames: [String]
@@ -75,12 +93,7 @@ struct RowRenderContext {
         self.label = label
         self.missingImageFileNames = missingImageFileNames
         self.unusableImageFileNames = unusableImageFileNames
-        self.precomposedRowBackground = RowRenderer.precomposedRowBackgroundIfNeeded(
-            row: row,
-            screenshotImages: images,
-            displayScale: displayScale,
-            labelPrefix: label
-        )
+        self.backgroundCache = PrecomposedBackgroundCache()
     }
 
     private init(
@@ -98,7 +111,7 @@ struct RowRenderContext {
         self.availableFontFamilies = other.availableFontFamilies
         self.displayScale = other.displayScale
         self.label = other.label
-        self.precomposedRowBackground = other.precomposedRowBackground
+        self.backgroundCache = other.backgroundCache
         self.missingImageFileNames = missingImageFileNames
         self.unusableImageFileNames = unusableImageFileNames
     }
@@ -127,6 +140,10 @@ struct RowRenderContext {
     var templateIndices: Range<Int> { row.templates.indices }
 
     func templateImage(at index: Int) -> NSImage {
+        templateImage(at: index, resolvedShapes: nil)
+    }
+
+    private func templateImage(at index: Int, resolvedShapes: [CanvasShapeModel]?) -> NSImage {
         resolveFonts {
             RowRenderer.renderSingleTemplateImage(
                 index: index,
@@ -136,7 +153,8 @@ struct RowRenderContext {
                 localeState: localeState,
                 availableFontFamilies: availableFontFamilies,
                 displayScale: displayScale,
-                preRenderedRowBackground: precomposedRowBackground
+                preRenderedRowBackground: precomposedRowBackground,
+                resolvedShapes: resolvedShapes
             )
         }
     }
@@ -158,14 +176,33 @@ struct RowRenderContext {
         }
     }
 
+    /// `rowImage()` one template-wide slot per main-actor job (Sentry SCREENSHOT-BRO-1V).
+    func stitchedRowImage() async -> NSImage {
+        let slotWidth = row.templateWidth * displayScale
+        let height = row.templateHeight * displayScale
+        // Slots only tile exactly on whole pixels; a fractional (preview) scale is small anyway.
+        guard !row.templates.isEmpty, slotWidth == slotWidth.rounded(), height == height.rounded() else {
+            return rowImage()
+        }
+        await prepareBackground()
+        let shapes = RowRenderer.resolvedExportShapes(row: row, localeCode: localeCode, localeState: localeState)
+        return await RowRenderer.stitchSlots(count: row.templates.count, slotWidth: slotWidth, height: height) { index in
+            templateImage(at: index, resolvedShapes: shapes)
+        }.makeImage()
+    }
+
     func showcaseImage(config: ShowcaseExportConfig) async -> NSImage {
-        await RowRenderer.renderShowcaseRowImage(
+        // The showcase renders its templates at model scale, so only a 1× background is reusable.
+        let reusesBackground = displayScale == 1
+        if reusesBackground { await prepareBackground() }
+        return await RowRenderer.renderShowcaseRowImage(
             row: row,
             screenshotImages: images,
             localeCode: localeCode,
             localeState: localeState,
             availableFontFamilies: availableFontFamilies,
-            config: config
+            config: config,
+            preRenderedRowBackground: reusesBackground ? precomposedRowBackground : nil
         )
     }
 
@@ -173,6 +210,7 @@ struct RowRenderContext {
     /// long row renders as one uninterrupted main-actor job, which is the shape of the multi-second
     /// hang that shipped in 4.0 (108) (Sentry SCREENSHOT-BRO-2/-3).
     func forEachTemplate(_ body: (_ index: Int, _ image: NSImage) async throws -> Void) async rethrows {
+        await prepareBackground()
         for index in templateIndices {
             try await body(index, templateImage(at: index))
             await Task.yield()
@@ -227,4 +265,11 @@ extension RowRenderContext {
             resolveFonts: { render in source.withResolvedFonts(render) }
         )
     }
+}
+
+/// Shared with `withLocale` copies, so the background is built at most once per row.
+@MainActor
+private final class PrecomposedBackgroundCache {
+    /// Outer nil = not built yet; inner nil = the row needs no precomposed background.
+    var image: NSImage??
 }

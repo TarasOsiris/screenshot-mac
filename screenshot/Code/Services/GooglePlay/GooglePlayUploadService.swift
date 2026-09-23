@@ -348,6 +348,7 @@ final class GooglePlayUploadService {
     ) async throws -> [RenderedScreenshot] {
         var screenshots: [RenderedScreenshot] = []
         screenshots.reserveCapacity(target.templateCount)
+        await context.prepareBackground()
 
         for templateIndex in 0..<target.templateCount {
             try Task.checkCancellation()
