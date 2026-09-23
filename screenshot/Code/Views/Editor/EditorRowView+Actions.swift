@@ -208,7 +208,7 @@ extension EditorRowView {
                     try? FileManager.default.removeItem(at: folder)
                 }
                 #else
-                NSWorkspace.shared.activateFileViewerSelecting([folder])
+                PlatformReveal.inFileViewer([folder])
                 #endif
             } catch {
                 activeAlert = .exportFailed(String(localized: "Could not export row screenshots: \(error.localizedDescription)"))

@@ -28,10 +28,20 @@ enum PlatformModifiers {
     }
 }
 
+enum PlatformProcess {
+    nonisolated static var isRunningUnderXCTest: Bool {
+        let env = ProcessInfo.processInfo.environment
+        return env["XCTestConfigurationFilePath"] != nil
+            || env["XCTestSessionIdentifier"] != nil
+            || NSClassFromString("XCTestCase") != nil
+    }
+}
+
 enum PlatformReveal {
     /// Reveal files in Finder (macOS). No-op on iPad for this foundation pass.
     static func inFileViewer(_ urls: [URL]) {
         #if os(macOS)
+        guard !PlatformProcess.isRunningUnderXCTest else { return }
         NSWorkspace.shared.activateFileViewerSelecting(urls)
         #endif
     }
