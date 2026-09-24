@@ -5,7 +5,7 @@ extension AppState {
     // MARK: - Shapes
 
     func shapeCenter(for row: ScreenshotRow) -> CGPoint {
-        let rawX = visibleCanvasModelCenterX ?? row.templateWidth / 2
+        let rawX = canvasHints.visibleModelCenterX ?? row.templateWidth / 2
         let templateIndex = min(Int(floor(rawX / row.templateWidth)), max(row.templates.count - 1, 0))
         return CGPoint(
             x: row.templateCenterX(at: templateIndex),
@@ -18,7 +18,7 @@ extension AppState {
         withRowUndo("Add Shape", rowId: rows[idx].id) {
             rows[idx].shapes.append(shape)
             selectShape(shape.id, in: rows[idx].id)
-            justAddedShapeId = shape.id
+            canvasHints.justAddedShapeId = shape.id
         }
     }
 
@@ -473,7 +473,7 @@ extension AppState {
         if pasteboardChanged,
            let image = NSImage(pasteboard: NSPasteboard.general), image.isValid {
             let row = rows[rowIdx]
-            let center = canvasMouseModelPosition ?? CGPoint(x: row.templateWidth / 2, y: row.templateHeight / 2)
+            let center = canvasHints.mouseModelPosition ?? CGPoint(x: row.templateWidth / 2, y: row.templateHeight / 2)
             addImageShape(image: image, centerX: center.x, centerY: center.y, source: .paste)
             return
         }
@@ -492,11 +492,11 @@ extension AppState {
 
             for source in clipboard {
                 var pasted: CanvasShapeModel
-                if let mousePos = canvasMouseModelPosition, clipboard.count == 1 {
+                if let mousePos = canvasHints.mouseModelPosition, clipboard.count == 1 {
                     pasted = source.duplicated()
                     pasted.x = mousePos.x - pasted.width / 2
                     pasted.y = mousePos.y - pasted.height / 2
-                } else if let mousePos = canvasMouseModelPosition {
+                } else if let mousePos = canvasHints.mouseModelPosition {
                     pasted = source.duplicated()
                     pasted.x = mousePos.x + (source.x - groupCenterX)
                     pasted.y = mousePos.y + (source.y - groupCenterY)

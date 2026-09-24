@@ -495,7 +495,7 @@ extension AppState {
             let shapeIndex = rows[rowIdx].shapes.count
             rows[rowIdx].shapes.append(shape)
             selectShape(shape.id, in: rows[rowIdx].id)
-            justAddedShapeId = shape.id
+            canvasHints.justAddedShapeId = shape.id
             let saved = performSaveImage(
                 image,
                 for: shape.id,
@@ -505,7 +505,7 @@ extension AppState {
             if !saved {
                 rows[rowIdx].shapes.removeAll { $0.id == shape.id }
                 selectedShapeIds = []
-                justAddedShapeId = nil
+                canvasHints.justAddedShapeId = nil
             }
             return saved
         }

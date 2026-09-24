@@ -23,12 +23,8 @@ final class AppState {
     /// Preview mode and the iPad view mode. Session-only — see EditorViewModeController.
     let viewMode: EditorViewModeController
 
-    @ObservationIgnored var canvasMouseModelPosition: CGPoint?
-    /// Model-space x of the centre of the selected row's *horizontal* canvas viewport, so a newly
-    /// added shape lands where the user is looking. A scalar rather than a point: the y was always
-    /// derived from the row, and only the x is ever read.
-    @ObservationIgnored var visibleCanvasModelCenterX: CGFloat?
-    @ObservationIgnored var justAddedShapeId: UUID?
+    /// Pointer and viewport position, so added and pasted shapes land in view. See CanvasPlacementHints.
+    let canvasHints = CanvasPlacementHints()
     @ObservationIgnored var templateMoveContinuation: TemplateMoveContinuation?
     /// View-to-view signals for the locale menu. See LocaleMenuCoordinator.
     let localeMenu = LocaleMenuCoordinator()
