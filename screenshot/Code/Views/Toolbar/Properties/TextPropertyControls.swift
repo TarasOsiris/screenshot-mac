@@ -194,6 +194,16 @@ struct TextLetterSpacingControl: View, ShapeEditing {
                 #else
                 .help("Double-tap to reset")
                 #endif
+
+            // Disabled rather than hidden, so dragging off zero doesn't shift the slider.
+            ActionButton(
+                icon: "arrow.counterclockwise",
+                tooltip: "Reset letter spacing",
+                frameSize: UIMetrics.IconButton.frameSize,
+                disabled: trackingBinding.wrappedValue == 0
+            ) {
+                trackingBinding.wrappedValue = 0
+            }
         }
     }
 }

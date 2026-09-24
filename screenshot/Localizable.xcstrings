@@ -105769,6 +105769,11 @@
           }
         }
       }
+    },
+    "Reset letter spacing" : {
+      "localizations" : {
+
+      }
     }
   },
   "version" : "1.0"
