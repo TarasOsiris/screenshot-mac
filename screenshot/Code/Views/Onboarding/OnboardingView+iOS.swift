@@ -1,0 +1,441 @@
+#if os(iOS)
+import SwiftUI
+
+extension OnboardingView {
+    // Index of the trailing Pro/paywall page (after the workflow step pages).
+    private var proPageIndex: Int { Self.stepData.count }
+
+    /// Buying on the Pro page outranks how the user got there — otherwise someone who skipped
+    /// the tour and then purchased would be counted as an abandonment.
+    var welcomeOutcome: OnboardingOutcome {
+        if store.isProUnlocked { return .pro }
+        return skippedFromPage == nil ? .finished : .skipped
+    }
+
+    // True only on an iPhone in landscape (iPad is always regular-height, macOS uses macOSContent).
+    private var isLandscapePhone: Bool { verticalSizeClass == .compact }
+
+    func pageAnalyticsName(_ index: Int) -> String {
+        index == proPageIndex ? "pro" : Self.stepData[index].analyticsName
+    }
+
+    var iOSContent: some View {
+        ZStack {
+            Color.platformWindowBackground.ignoresSafeArea()
+
+            if isLandscapePhone {
+                iOSLandscapeContent
+            } else {
+                iOSPortraitContent
+            }
+        }
+        .onAppear(perform: reportStarted)
+        .onChange(of: pageIndex) {
+            guard persistCompletion else { return }
+            AnalyticsService.capture(
+                .onboardingStepViewed,
+                [.source: "welcome", .step: pageAnalyticsName(pageIndex)]
+            )
+        }
+        .task {
+            // The bundle scan runs off the main actor so the cover never hitches on first launch.
+            if templatePreviews.isEmpty {
+                templatePreviews = Array(
+                    await TemplateService.availableTemplatesAsync()
+                        .compactMap(\.previewImage)
+                        .prefix(16)
+                )
+            }
+        }
+        .sheet(isPresented: Binding(
+            get: { store.showPaywall },
+            set: { if !$0 { store.dismissPaywall() } }
+        )) {
+            PaywallSheetContent(store: store)
+                .screenView(.paywall, restoring: .onboarding)
+        }
+    }
+
+    // MARK: - iOS layouts
+
+    // Portrait: full-height paged content above one fixed control bar.
+    private var iOSPortraitContent: some View {
+        VStack(spacing: 0) {
+            TabView(selection: $pageIndex) {
+                ForEach(Array(Self.stepData.enumerated()), id: \.offset) { index, step in
+                    Group {
+                        if index == 0 {
+                            iOSTemplatesPage(index: index, step: step)
+                        } else {
+                            iOSWorkflowPage(index: index, step: step)
+                        }
+                    }
+                    .tag(index)
+                }
+
+                iOSProPage
+                    .tag(proPageIndex)
+            }
+            .tabViewStyle(.page(indexDisplayMode: .never))
+            .animation(.easeInOut, value: pageIndex)
+
+            iOSControlBar
+        }
+    }
+
+    // Landscape: showcase pages on the left, text + actions in a fixed column on the right. Only the
+    // left showcase slides on swipe; the right text reacts to pageIndex while the buttons stay put.
+    private var iOSLandscapeContent: some View {
+        HStack(spacing: 0) {
+            TabView(selection: $pageIndex) {
+                ForEach(Array(Self.stepData.enumerated()), id: \.offset) { index, step in
+                    iOSShowcase(index: index, step: step)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                        .padding(.vertical, 16)
+                        .tag(index)
+                }
+
+                iOSShowcase(index: proPageIndex, step: nil)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .padding(.vertical, 16)
+                    .tag(proPageIndex)
+            }
+            .tabViewStyle(.page(indexDisplayMode: .never))
+            .animation(.easeInOut, value: pageIndex)
+
+            iOSLandscapeTextColumn
+                .frame(width: 340)
+        }
+    }
+
+    private var iOSLandscapeTextColumn: some View {
+        VStack(spacing: 0) {
+            ScrollView {
+                Group {
+                    if pageIndex < proPageIndex {
+                        iOSPageHeader(index: pageIndex, step: Self.stepData[pageIndex], alignment: .leading)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                    } else {
+                        VStack(spacing: 20) {
+                            if store.isProUnlocked {
+                                proSuccessContent
+                            } else {
+                                proPitchContent
+                            }
+                        }
+                        .frame(maxWidth: .infinity)
+                    }
+                }
+                .padding(.horizontal, 28)
+                .padding(.top, 28)
+                .padding(.bottom, 12)
+                .animation(.easeInOut, value: pageIndex)
+            }
+
+            iOSControlBar
+        }
+    }
+
+    // The showcase (marquee or animated illustration) for a page, without any surrounding header.
+    @ViewBuilder
+    private func iOSShowcase(index: Int, step: StepInfo?) -> some View {
+        if index == proPageIndex {
+            if templatePreviews.isEmpty {
+                Color.clear
+            } else {
+                OnboardingTemplateMarquee(images: templatePreviews,
+                                          reduceMotion: reduceMotion,
+                                          isActive: pageIndex == index)
+            }
+        } else if index == 0 {
+            if templatePreviews.isEmpty {
+                iOSStepIcon(step: step!, side: horizontalSizeClass == .compact ? 88 : 112)
+            } else {
+                OnboardingTemplateMarquee(images: templatePreviews,
+                                          reduceMotion: reduceMotion,
+                                          isActive: pageIndex == index)
+            }
+        } else {
+            iOSStepIllustration(index: index, step: step!)
+        }
+    }
+
+    // MARK: - iOS control bar
+
+    // Every page shares one fixed-height action bar so paging only animates the centered
+    // illustration — the dots and buttons never move (no jump when reaching the Pro page).
+    private var iOSControlBar: some View {
+        VStack(spacing: 16) {
+            iOSPageDots
+
+            VStack(spacing: 10) {
+                Button(action: primaryAction) {
+                    Text(primaryActionTitle)
+                        .font(.headline)
+                        .contentTransition(.opacity)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 4)
+                }
+                .buttonStyle(.borderedProminent)
+                .controlSize(.large)
+
+                Button(action: secondaryAction) {
+                    // verbatim placeholder keeps the row's height without extracting a " " string.
+                    Group {
+                        if let secondaryActionTitle {
+                            Text(secondaryActionTitle)
+                        } else {
+                            Text(verbatim: " ")
+                        }
+                    }
+                    .font(.subheadline.weight(.medium))
+                    .foregroundStyle(.secondary)
+                    .contentTransition(.opacity)
+                }
+                .buttonStyle(.plain)
+                .opacity(secondaryActionTitle == nil ? 0 : 1)
+                .disabled(secondaryActionTitle == nil)
+            }
+            .frame(maxWidth: 360)
+            .animation(.easeInOut, value: pageIndex)
+            .animation(.easeInOut, value: store.isProUnlocked)
+        }
+        .padding(.horizontal, 32)
+        .padding(.bottom, 24)
+        .frame(maxWidth: .infinity)
+    }
+
+    private var primaryActionTitle: LocalizedStringKey {
+        if pageIndex < proPageIndex { return "Continue" }
+        return store.isProUnlocked ? "Start Creating" : "Unlock Pro"
+    }
+
+    private func primaryAction() {
+        if pageIndex < proPageIndex {
+            withAnimation { pageIndex += 1 }
+        } else if store.isProUnlocked {
+            complete()
+        } else {
+            store.presentPaywall(for: .general)
+        }
+    }
+
+    private var secondaryActionTitle: LocalizedStringKey? {
+        if pageIndex < proPageIndex { return "Skip" }
+        return store.isProUnlocked ? nil : "Continue with Free"
+    }
+
+    private func secondaryAction() {
+        if pageIndex < proPageIndex {
+            skippedFromPage = pageIndex
+            withAnimation { pageIndex = proPageIndex }
+        } else {
+            complete()
+        }
+    }
+
+    private var iOSPageDots: some View {
+        HStack(spacing: 8) {
+            ForEach(0...proPageIndex, id: \.self) { i in
+                Circle()
+                    .fill(i == pageIndex ? Color.accentColor : Color.secondary.opacity(0.3))
+                    .frame(width: 7, height: 7)
+            }
+        }
+        .animation(.easeInOut, value: pageIndex)
+    }
+
+    // MARK: - iOS pages
+
+    private func iOSPageHeader(index: Int, step: StepInfo, alignment: HorizontalAlignment = .center) -> some View {
+        let textAlignment: TextAlignment = alignment == .leading ? .leading : .center
+        return VStack(alignment: alignment, spacing: 12) {
+            Text("Step \(index + 1)")
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(step.color)
+                .textCase(.uppercase)
+
+            Text(step.title)
+                .font(.title.weight(.bold))
+                .multilineTextAlignment(textAlignment)
+
+            Text(step.iosDescription ?? step.description)
+                .font(.body)
+                .foregroundStyle(.secondary)
+                .multilineTextAlignment(textAlignment)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+    }
+
+    private func iOSStepIcon(step: StepInfo, side: CGFloat) -> some View {
+        ZStack {
+            RoundedRectangle(cornerRadius: 28, style: .continuous)
+                .fill(step.color.opacity(0.14))
+
+            Image(systemName: step.icon)
+                .font(.system(size: side < 100 ? 40 : 52, weight: .semibold))
+                .foregroundStyle(step.color)
+        }
+        .frame(width: side, height: side)
+        .accessibilityHidden(true)
+    }
+
+    // The "Pick a template" step leads with the text, then a live marquee of real template
+    // previews. Until they load (or if none decode) it falls back to the standard step icon.
+    @ViewBuilder
+    private func iOSTemplatesPage(index: Int, step: StepInfo) -> some View {
+        VStack(spacing: 20) {
+            iOSPageHeader(index: index, step: step)
+                .padding(.horizontal, 40)
+                .padding(.top, 24)
+
+            // Fills the remaining height; the marquee adapts its row count to fit, so the title
+            // above can never be pushed off-screen.
+            if templatePreviews.isEmpty {
+                iOSStepIcon(step: step, side: horizontalSizeClass == .compact ? 88 : 112)
+                    .frame(maxHeight: .infinity)
+            } else {
+                OnboardingTemplateMarquee(images: templatePreviews,
+                                          reduceMotion: reduceMotion,
+                                          isActive: pageIndex == index)
+                    .transition(.opacity)
+            }
+        }
+        .animation(.easeOut(duration: 0.4), value: templatePreviews.isEmpty)
+        .frame(maxWidth: 600)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+    }
+
+    @ViewBuilder
+    private func iOSWorkflowPage(index: Int, step: StepInfo) -> some View {
+        // Header pinned to the top exactly like the templates page, so the title/description
+        // never shift position between steps; the illustration fills (and centers within) the rest.
+        VStack(spacing: 20) {
+            iOSPageHeader(index: index, step: step)
+                .padding(.horizontal, 40)
+                .padding(.top, 24)
+
+            iOSStepIllustration(index: index, step: step)
+                .frame(maxHeight: .infinity)
+        }
+        .frame(maxWidth: 600)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+    }
+
+    @ViewBuilder
+    private func iOSStepIllustration(index: Int, step: StepInfo) -> some View {
+        let active = pageIndex == index
+        switch step.illustration {
+        case .addContent:
+            OnboardingAddContentIllustration(images: templatePreviews, accentColor: step.color,
+                                             reduceMotion: reduceMotion, isActive: active)
+        case .style:
+            OnboardingStyleIllustration(images: templatePreviews, accentColor: step.color,
+                                        reduceMotion: reduceMotion, isActive: active)
+        case .export:
+            // Only Export needs real previews; the others degrade gracefully without them.
+            if templatePreviews.isEmpty {
+                iOSStepIcon(step: step, side: horizontalSizeClass == .compact ? 88 : 112)
+            } else {
+                OnboardingExportIllustration(images: templatePreviews,
+                                             reduceMotion: reduceMotion, isActive: active)
+            }
+        case .none:
+            iOSStepIcon(step: step, side: horizontalSizeClass == .compact ? 88 : 112)
+        }
+    }
+
+    private var iOSProPage: some View {
+        let compact = horizontalSizeClass == .compact
+
+        return VStack(spacing: compact ? 18 : 24) {
+            if templatePreviews.isEmpty {
+                Spacer()
+            } else {
+                OnboardingTemplateMarquee(images: templatePreviews,
+                                          reduceMotion: reduceMotion,
+                                          isActive: pageIndex == proPageIndex)
+                    .frame(maxHeight: .infinity)
+            }
+
+            VStack(spacing: compact ? 20 : 28) {
+                if store.isProUnlocked {
+                    proSuccessContent
+                } else {
+                    proPitchContent
+                }
+            }
+            .padding(.horizontal, 40)
+            .padding(.bottom, 8)
+        }
+        .frame(maxWidth: 600)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+
+    @ViewBuilder
+    private var proPitchContent: some View {
+        ZStack {
+            Circle().fill(Color.accentColor.opacity(0.14))
+
+            Image(systemName: "lock.open.fill")
+                .font(.system(size: 44, weight: .semibold))
+                .foregroundStyle(Color.accentColor)
+        }
+        .frame(width: 100, height: 100)
+        .accessibilityHidden(true)
+
+        VStack(spacing: 12) {
+            Text("Unlock Screenshot Bro Pro")
+                .font(.title.weight(.bold))
+                .multilineTextAlignment(.center)
+
+            Text("Go unlimited and create as many screenshots as your apps need.")
+                .font(.body)
+                .foregroundStyle(.secondary)
+                .multilineTextAlignment(.center)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+
+        VStack(alignment: .leading, spacing: 12) {
+            proFeatureBullet("Unlimited projects")
+            proFeatureBullet("Unlimited rows per project")
+            proFeatureBullet("Unlimited screenshots per row")
+        }
+        .padding(.vertical, 4)
+    }
+
+    @ViewBuilder
+    private var proSuccessContent: some View {
+        ZStack {
+            Circle().fill(Color.green.opacity(0.14))
+
+            Image(systemName: "checkmark.seal.fill")
+                .font(.system(size: 44, weight: .semibold))
+                .foregroundStyle(.green)
+        }
+        .frame(width: 100, height: 100)
+        .accessibilityHidden(true)
+
+        VStack(spacing: 12) {
+            Text("You’re Pro!")
+                .font(.title.weight(.bold))
+
+            Text("Everything is unlocked. Enjoy unlimited projects, rows, and screenshots.")
+                .font(.body)
+                .foregroundStyle(.secondary)
+                .multilineTextAlignment(.center)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+    }
+
+    private func proFeatureBullet(_ text: LocalizedStringKey) -> some View {
+        HStack(spacing: 10) {
+            Image(systemName: "checkmark.circle.fill")
+                .foregroundStyle(.green)
+            Text(text)
+            Spacer(minLength: 0)
+        }
+        .font(.body)
+    }
+}
+#endif
