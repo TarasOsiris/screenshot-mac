@@ -25,7 +25,7 @@ Decide which bucket the change falls into. Multiple may apply.
 | Model | `Models/**`, anything `Codable` |
 | Device frames | `DeviceFrames/**`, `DeviceFrameView`, `DeviceModelFrameView`, `ProgrammaticDeviceFrameView` |
 | Locale | `Models/LocaleModels.swift`, `LocaleService`, `LocaleToolbarMenu`, `Localizable.xcstrings` |
-| Persistence | `Services/PersistenceService.swift`, `AppState+Persistence.swift`, `ICloudSyncService`, `ICloudMonitor` |
+| Persistence | `Services/Document/PersistenceService.swift`, `AppState+Save.swift`, `AppState+Load.swift`, `ICloudSyncService`, `ICloudMonitor` |
 
 ## Phase 2 — Run the checks
 

@@ -37,22 +37,8 @@ extension UploadToAppStoreConnectView {
 
     @ViewBuilder
     private var iosErrorBanner: some View {
-        if let errorMessage = model.errorMessage {
-            HStack(alignment: .top, spacing: 8) {
-                Image(systemName: "exclamationmark.triangle.fill")
-                    .foregroundStyle(.red)
-                Text(errorMessage)
-                    .font(.caption)
-                    .foregroundStyle(.red)
-                    .fixedSize(horizontal: false, vertical: true)
-                Spacer()
-                Button("Details") { presentErrorDetails(fallback: errorMessage) }
-                    .font(.caption)
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(.horizontal, 16)
-            .padding(.vertical, 8)
-            .background(Color.red.opacity(0.08))
+        if let errorSlot {
+            UploadWizardErrorBanner(error: errorSlot)
         }
     }
 

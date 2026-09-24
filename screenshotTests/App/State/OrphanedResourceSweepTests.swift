@@ -49,8 +49,8 @@ struct OrphanedResourceSweepTests {
         #expect(CanvasResourceState(nil, in: state) == .satisfied)
         #expect(CanvasResourceState("here.png", in: state) == .satisfied)
 
-        state.missingImageFileNames = ["gone.png", "both.png"]
-        state.pendingDownloadImageFileNames = ["later.png", "both.png"]
+        state.imageStore.missing = ["gone.png", "both.png"]
+        state.imageStore.pending = ["later.png", "both.png"]
 
         #expect(CanvasResourceState("gone.png", in: state) == .missing)
         #expect(CanvasResourceState("later.png", in: state) == .downloading)
@@ -102,12 +102,12 @@ struct OrphanedResourceSweepTests {
         state.rows[0].templates[0].overrideBackground = true
 
         state.loadScreenshotImages()
-        for _ in 0..<40 where state.missingImageFileNames.isEmpty {
+        for _ in 0..<40 where state.imageStore.missing.isEmpty {
             try await Task.sleep(for: .milliseconds(50))
         }
 
-        #expect(state.missingImageFileNames == ["gone.png"])
-        #expect(state.pendingDownloadImageFileNames.isEmpty)
+        #expect(state.imageStore.missing == ["gone.png"])
+        #expect(state.imageStore.pending.isEmpty)
         #expect(CanvasResourceState("gone.png", in: state) == .missing)
     }
 
@@ -121,12 +121,12 @@ struct OrphanedResourceSweepTests {
         state.rows[0].backgroundStyle = .image
 
         state.loadScreenshotImages()
-        for _ in 0..<40 where state.pendingDownloadImageFileNames.isEmpty {
+        for _ in 0..<40 where state.imageStore.pending.isEmpty {
             try await Task.sleep(for: .milliseconds(50))
         }
 
-        #expect(state.pendingDownloadImageFileNames == ["later.png"])
-        #expect(state.missingImageFileNames.isEmpty)
+        #expect(state.imageStore.pending == ["later.png"])
+        #expect(state.imageStore.missing.isEmpty)
         #expect(CanvasResourceState("later.png", in: state) == .downloading)
     }
 
@@ -141,10 +141,10 @@ struct OrphanedResourceSweepTests {
         state.rows[0].backgroundStyle = .image
 
         state.loadScreenshotImages()
-        for _ in 0..<40 where state.pendingDownloadImageFileNames.isEmpty {
+        for _ in 0..<40 where state.imageStore.pending.isEmpty {
             try await Task.sleep(for: .milliseconds(50))
         }
-        #expect(state.pendingDownloadImageFileNames == ["later.png"])
+        #expect(state.imageStore.pending == ["later.png"])
 
         try FileManager.default.removeItem(at: placeholder)
         try seedImageResource(named: "later.png", in: projectId)
@@ -154,7 +154,7 @@ struct OrphanedResourceSweepTests {
         }
 
         #expect(state.screenshotImages["later.png"] != nil)
-        #expect(state.pendingDownloadImageFileNames.isEmpty)
+        #expect(state.imageStore.pending.isEmpty)
         #expect(CanvasResourceState("later.png", in: state) == .satisfied)
     }
 
@@ -169,10 +169,10 @@ struct OrphanedResourceSweepTests {
         state.rows[0].backgroundStyle = .image
 
         state.loadScreenshotImages()
-        for _ in 0..<40 where state.missingImageFileNames.isEmpty {
+        for _ in 0..<40 where state.imageStore.missing.isEmpty {
             try await Task.sleep(for: .milliseconds(50))
         }
-        #expect(state.missingImageFileNames == ["arrives.png"])
+        #expect(state.imageStore.missing == ["arrives.png"])
 
         try seedImageResource(named: "arrives.png", in: projectId)
         state.reloadUnresolvedScreenshotImages()
@@ -181,7 +181,7 @@ struct OrphanedResourceSweepTests {
         }
 
         #expect(state.screenshotImages["arrives.png"] != nil)
-        #expect(state.missingImageFileNames.isEmpty)
+        #expect(state.imageStore.missing.isEmpty)
     }
 
     /// iCloud delivers a large project in bursts. Restarting the decode on each one cancels the
@@ -191,13 +191,13 @@ struct OrphanedResourceSweepTests {
         defer { cleanupTestState(tempDir) }
         state.rows[0].backgroundImageConfig.fileName = "gone.png"
         state.rows[0].backgroundStyle = .image
-        state.missingImageFileNames = ["gone.png"]
-        state.isLoadingScreenshotImages = true
+        state.imageStore.missing = ["gone.png"]
+        state.imageStore.isLoading = true
 
         state.reloadUnresolvedScreenshotImages()
 
-        #expect(state.needsScreenshotImageReload)
-        #expect(state.isLoadingScreenshotImages, "The pass in flight must not have been cancelled")
+        #expect(state.imageStore.needsReload)
+        #expect(state.imageStore.isLoading, "The pass in flight must not have been cancelled")
     }
 
     /// Creating a project used to move `activeProjectId` without a teardown, so a decode pass in
@@ -206,13 +206,13 @@ struct OrphanedResourceSweepTests {
     @Test func creatingAProjectMidLoadDoesNotStrandTheLoadingFlag() throws {
         let (state, tempDir) = makeTestState()
         defer { cleanupTestState(tempDir) }
-        state.isLoadingScreenshotImages = true
-        state.needsScreenshotImageReload = true
+        state.imageStore.isLoading = true
+        state.imageStore.needsReload = true
 
         state.createProject(name: "Second")
 
-        #expect(!state.isLoadingScreenshotImages)
-        #expect(!state.needsScreenshotImageReload)
+        #expect(!state.imageStore.isLoading)
+        #expect(!state.imageStore.needsReload)
     }
 
     @discardableResult

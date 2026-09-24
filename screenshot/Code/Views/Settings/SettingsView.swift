@@ -18,9 +18,8 @@ final class SettingsWindowNavigation {
 struct SettingsView: View {
     static let windowID = "settings"
 
-    @Environment(StoreService.self) private var store
+    @Environment(PurchaseService.self) private var store
     @Environment(AppState.self) private var appState
-    @Environment(ICloudSyncStatusModel.self) private var iCloudStatus
     @Environment(MCPServerService.self) private var mcpServer
     @AppStorage(AppSettingsKeys.appearance) private var appearance = AppSettingsKeys.Default.appearance
     @AppStorage(AppSettingsKeys.appLanguageOverride) private var languageOverride = ""
@@ -196,52 +195,8 @@ struct SettingsView: View {
                     .foregroundStyle(.secondary)
             }
             Section("iCloud Sync") {
-                if !iCloud.isAvailable {
-                    Label("iCloud is not available. Sign in to iCloud in System Settings.",
-                          systemImage: "exclamationmark.triangle")
-                        .foregroundStyle(.secondary)
-                } else {
-                    Toggle("Sync with iCloud", isOn: Binding(
-                        get: { iCloud.isEnabled },
-                        set: { newValue in
-                            if newValue {
-                                showEnableConfirmation = true
-                            } else {
-                                showDisableConfirmation = true
-                            }
-                        }
-                    ))
-                    .disabled(iCloud.isMigrating)
-
-                    if let progress = iCloud.migrationProgress {
-                        HStack(spacing: 8) {
-                            ProgressView(value: progress)
-                            Text("\(Int(progress * 100))%")
-                                .monospacedDigit()
-                                .foregroundStyle(.secondary)
-                        }
-                    }
-
-                    if iCloud.isEnabled {
-                        // Plain HStack rather than LabeledContent: LabeledContent gives its trailing
-                        // content a flexible frame, which made this (conditional Label) row balloon
-                        // to a huge height.
-                        HStack {
-                            Text("Status")
-                            Spacer()
-                            ICloudStatusLabel(syncStatus: iCloudStatus.status)
-                        }
-                    }
-
-                    if let error = iCloud.errorMessage {
-                        Text(error)
-                            .foregroundStyle(.red)
-                            .font(.caption)
-                    }
-
-                    Text("Syncing may take a while if you have a lot of projects.")
-                        .font(.caption)
-                        .foregroundStyle(.orange)
+                ICloudSyncSettingsRows(iCloud: iCloud) { enable in
+                    if enable { showEnableConfirmation = true } else { showDisableConfirmation = true }
                 }
             }
             .confirmationDialog(
@@ -660,7 +615,7 @@ struct SettingsView: View {
 #Preview {
     let state = AppState()
     SettingsView()
-        .environment(StoreService())
+        .environment(PurchaseService())
         .environment(state)
         .environment(state.iCloudStatus)
         .environment(MCPServerService())

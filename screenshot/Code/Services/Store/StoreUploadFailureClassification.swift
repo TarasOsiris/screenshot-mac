@@ -57,7 +57,6 @@ nonisolated struct StoreUploadFailure: Equatable {
             switch error {
             case .renderFailed: return StoreUploadFailure(kind: .renderFailed, errorCode: nil)
             case .noRowsSelected: return StoreUploadFailure(kind: .nothingSelected, errorCode: nil)
-            case .requestFailed(let context): return requestFailure(status: context.httpStatus)
             }
         case let error as ASCScreenshotSyncError:
             switch error {
@@ -67,9 +66,7 @@ nonisolated struct StoreUploadFailure: Equatable {
             case .noSetsSelected: return StoreUploadFailure(kind: .nothingSelected, errorCode: nil)
             case .unreadableImages: return StoreUploadFailure(kind: .unreadableImages, errorCode: nil)
             }
-        case let error as AppStoreConnectAPIError:
-            return apiFailure(status: error.httpStatus, isDecoding: error.isDecodingFailure)
-        case let error as GooglePlayAPIError:
+        case let error as any StoreAPIFailure:
             return apiFailure(status: error.httpStatus, isDecoding: error.isDecodingFailure)
         case is AppStoreConnectAuthError, is GooglePlayAuthError:
             return StoreUploadFailure(kind: .auth, errorCode: nil)
@@ -83,7 +80,7 @@ nonisolated struct StoreUploadFailure: Equatable {
         }
     }
 
-    /// Both upload contexts null out `httpStatus` for every non-HTTP underlying error, so a nil
+    /// `GPUploadFailureContext` nulls out `httpStatus` for every non-HTTP underlying error, so a nil
     /// here means the transport never got an answer — not that the shape is unknown.
     private static func requestFailure(status: Int?) -> StoreUploadFailure {
         guard let status else { return StoreUploadFailure(kind: .transport, errorCode: nil) }

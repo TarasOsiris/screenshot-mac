@@ -99,7 +99,7 @@ struct AnalyticsVocabularyTests {
     // MARK: - Restore and translation results
 
     @Test func restoreResultsAreWireSafe() {
-        expectWireSafe(StoreService.RestoreResult.allCases.map(\.rawValue), key: "result")
+        expectWireSafe(PurchaseService.RestoreResult.allCases.map(\.rawValue), key: "result")
     }
 
     /// `languagesNotDownloaded` used to absorb every failure — a declined download, a network

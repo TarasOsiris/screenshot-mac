@@ -1,39 +1,12 @@
 import Foundation
 
-enum AppStoreConnectAPIError: Error, LocalizedError {
-    case invalidURL
-    case httpError(status: Int, message: String)
-    case decodingFailed(Error)
-    case transport(Error)
-
-    var httpStatus: Int? {
-        if case let .httpError(status, _) = self { return status }
-        return nil
-    }
-
-    var isDecodingFailure: Bool {
-        if case .decodingFailed = self { return true }
-        return false
-    }
-
-    var transportError: Error? {
-        if case let .transport(underlying) = self { return underlying }
-        return nil
-    }
-
-    var errorDescription: String? {
-        switch self {
-        case .invalidURL:
-            return String(localized: "Invalid request URL.")
-        case .httpError(let status, let message):
-            return String(localized: "App Store Connect returned \(status): \(message)")
-        case .decodingFailed(let error):
-            return String(localized: "Response decoding failed: \(error.localizedDescription)")
-        case .transport(let error):
-            return error.localizedDescription
-        }
+nonisolated enum AppStoreConnectAPIOrigin: StoreAPIOrigin {
+    static func httpErrorDescription(status: Int, message: String) -> String {
+        String(localized: "App Store Connect returned \(status): \(message)")
     }
 }
+
+typealias AppStoreConnectAPIError = StoreAPIError<AppStoreConnectAPIOrigin>
 
 final class AppStoreConnectAPIService {
     static let shared = AppStoreConnectAPIService()
@@ -67,17 +40,6 @@ final class AppStoreConnectAPIService {
             errorMessage: Self.extractErrorMessage,
             retryPolicy: retryPolicy
         )
-    }
-
-    /// Maps transport failures onto this service's own error type, so every localized string
-    /// stays exactly where it is.
-    private static func mapped(_ error: StoreHTTPError) -> AppStoreConnectAPIError {
-        switch error {
-        case .invalidURL: .invalidURL
-        case .nonHTTPResponse: .httpError(status: -1, message: "Non-HTTP response")
-        case .status(let status, let message): .httpError(status: status, message: message ?? "HTTP \(status)")
-        case .transport(let underlying): .transport(underlying)
-        }
     }
 
     private var isDemoMode: Bool { credentials.isDemoMode }
@@ -580,7 +542,7 @@ final class AppStoreConnectAPIService {
                 repeatable: repeatable
             )
         } catch let error as StoreHTTPError {
-            throw Self.mapped(error)
+            throw AppStoreConnectAPIError(error)
         }
     }
 

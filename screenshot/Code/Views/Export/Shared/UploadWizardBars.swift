@@ -68,6 +68,31 @@ struct UploadWizardFooterBar<Leading: View, Actions: View>: View {
     }
 }
 
+/// The iPad counterpart of the footer's error slot: a full-width banner above the step content.
+struct UploadWizardErrorBanner: View {
+    let error: UploadWizardErrorSlot
+
+    var body: some View {
+        HStack(alignment: .top, spacing: 8) {
+            Image(systemName: "exclamationmark.triangle.fill")
+                .foregroundStyle(.red)
+            Text(error.message)
+                .font(.caption)
+                .foregroundStyle(.red)
+                .fixedSize(horizontal: false, vertical: true)
+            Spacer()
+            if let showDetails = error.showDetails {
+                Button("Details", action: showDetails)
+                    .font(.caption)
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.horizontal, 16)
+        .padding(.vertical, 8)
+        .background(Color.red.opacity(0.08))
+    }
+}
+
 /// The forward action for the step a wizard is on — "Next", "Upload", "Sync Selected Sets".
 ///
 /// One description drives two presentations: the macOS footer's primary button and the iPad

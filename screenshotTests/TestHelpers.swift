@@ -196,6 +196,12 @@ func makeTemporaryDataDirectory(label: String = "screenshot-tests") -> URL {
     return directory
 }
 
+/// A fresh, empty `UserDefaults` suite per call, so a test can't observe or clobber the app's real
+/// preferences or another test's.
+func makeIsolatedDefaults(_ label: String = "defaults") -> UserDefaults {
+    UserDefaults(suiteName: "screenshotTests.\(label).\(UUID().uuidString)")!
+}
+
 /// Counts main-actor turns, for tests asserting that a long operation actually yields.
 @MainActor
 final class MainActorTicker {

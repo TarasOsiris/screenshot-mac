@@ -73,27 +73,16 @@ struct MultiShapeInspector: View, MultiShapeEditing {
     @ViewBuilder
     private func textSection(shapes: [CanvasShapeModel]) -> some View {
         let primaryControlState = shapes.first.flatMap(CustomFontRegistry.controlState(for:))
-        let weightBinding = multiFontWeightBinding(controlState: primaryControlState)
         let italicBinding = multiItalicBinding(controlState: primaryControlState)
 
         InspectorSection(.shapeText, "Text") {
             EditorLabeledContent("Font") {
-                FontPicker(
-                    selection: multiFontNameBinding(),
-                    fontWeight: weightBinding,
-                    italic: italicBinding,
-                    customFaces: state.customFaces,
-                    onApplyImportedSelection: { applyImportedFontSelectionOnSelection($0) },
-                    onImportFont: { url in state.importCustomFont(from: url) }
-                )
+                MultiTextFontPickerControl(state: state, controlState: primaryControlState)
             }
 
             if showsMultiFontWeightPicker(primary: primaryControlState, textShapes: shapes) {
                 EditorLabeledContent("Weight") {
-                    FontWeightPicker(
-                        selection: weightBinding,
-                        options: primaryControlState?.availableWeights ?? [300, 400, 500, 700]
-                    )
+                    MultiTextFontWeightControl(state: state, controlState: primaryControlState)
                 }
             }
 

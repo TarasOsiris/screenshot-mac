@@ -115,10 +115,10 @@ extension EditorRowView {
             } : nil,
             nonBaseLocaleCount: facts.nonBaseLocaleCount,
             onCopyTextStyle: shape.type == .text ? {
-                state.textStyleClipboard = shape.extractTextStyle()
+                state.clipboard.textStyle = shape.extractTextStyle()
             } : nil,
-            onPasteTextStyle: shape.type == .text && state.textStyleClipboard != nil ? { [rowId = row.id] in
-                guard let style = state.textStyleClipboard else { return }
+            onPasteTextStyle: shape.type == .text && state.clipboard.textStyle != nil ? { [rowId = row.id] in
+                guard let style = state.clipboard.textStyle else { return }
                 let targets = isMulti ? facts.selectedTextShapeIds : [shape.id]
                 state.updateShapes(targets, in: rowId) { $0.applyTextStyle(style) }
             } : nil,

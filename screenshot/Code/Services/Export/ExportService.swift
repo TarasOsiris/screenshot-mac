@@ -6,18 +6,6 @@ import UIKit
 import os
 import UniformTypeIdentifiers
 
-enum ExportImageFormat: String {
-    case png
-    case jpeg
-
-    var fileExtension: String {
-        switch self {
-        case .png: return "png"
-        case .jpeg: return "jpeg"
-        }
-    }
-}
-
 struct ExportService {
     /// Renders every row × locale to `folderURL`, yielding between templates so the UI stays
     /// responsive. Rendering happens on `@MainActor` (required by `ImageRenderer`); image encoding

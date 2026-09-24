@@ -7,13 +7,6 @@ import Testing
 @MainActor
 struct ReviewPromptPolicyTests {
 
-    private func makeDefaults(_ label: String) -> UserDefaults {
-        let suite = "ReviewPromptPolicyTests.\(label).\(UUID().uuidString)"
-        let defaults = UserDefaults(suiteName: suite)!
-        defaults.removePersistentDomain(forName: suite)
-        return defaults
-    }
-
     private let day: TimeInterval = 86400
 
     private func policy(
@@ -25,7 +18,7 @@ struct ReviewPromptPolicyTests {
     }
 
     @Test func doesNotPromptBeforeThreeExports() {
-        let defaults = makeDefaults("count")
+        let defaults = makeIsolatedDefaults("count")
         let start = Date(timeIntervalSinceReferenceDate: 0)
         var now = start
         let p = policy(defaults) { now }
@@ -36,7 +29,7 @@ struct ReviewPromptPolicyTests {
     }
 
     @Test func doesNotPromptWithinTwoWeeksOfTheFirstExport() {
-        let defaults = makeDefaults("young")
+        let defaults = makeIsolatedDefaults("young")
         let start = Date(timeIntervalSinceReferenceDate: 0)
         var now = start
         let p = policy(defaults) { now }
@@ -48,7 +41,7 @@ struct ReviewPromptPolicyTests {
     }
 
     @Test func promptsAfterThreeExportsAndTwoWeeks() {
-        let defaults = makeDefaults("ready")
+        let defaults = makeIsolatedDefaults("ready")
         let start = Date(timeIntervalSinceReferenceDate: 0)
         var now = start
         let p = policy(defaults) { now }
@@ -60,7 +53,7 @@ struct ReviewPromptPolicyTests {
     }
 
     @Test func promptsAtMostOncePerVersion() {
-        let defaults = makeDefaults("version")
+        let defaults = makeIsolatedDefaults("version")
         let start = Date(timeIntervalSinceReferenceDate: 0)
         var now = start
         let p = policy(defaults) { now }
@@ -85,7 +78,7 @@ struct ReviewPromptPolicyTests {
     /// An unset version (which is what `Bundle.main.shortVersion` returns under test) would
     /// otherwise match the empty stored value and prompt on the very first export.
     @Test func neverPromptsWithoutAVersion() {
-        let defaults = makeDefaults("noversion")
+        let defaults = makeIsolatedDefaults("noversion")
         let start = Date(timeIntervalSinceReferenceDate: 0)
         let p = policy(defaults, version: "") { start.addingTimeInterval(400 * day) }
 

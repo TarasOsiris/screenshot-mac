@@ -17,7 +17,7 @@ Look for `** BUILD SUCCEEDED **` or `** BUILD FAILED **` in the output.
 
 ## When the user asks for tests
 
-Per AGENTS.md, the running app must be killed first or Xcode hangs/crashes:
+Per CLAUDE.md, the running app must be killed first or Xcode hangs/crashes:
 
 ```bash
 killall screenshot 2>/dev/null; killall "Screenshot Bro" 2>/dev/null

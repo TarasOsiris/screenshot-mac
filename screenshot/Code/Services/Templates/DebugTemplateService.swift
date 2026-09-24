@@ -5,15 +5,14 @@ import Foundation
 enum DebugTemplateService {
     private static let bookmarkKey = "debugTemplatesBundleBookmark"
 
-    /// Source path hint for the NSOpenPanel.
-    /// Relies on this file being at screenshot/Services/DebugTemplateService.swift
-    /// and Templates.bundle being at screenshot/Templates.bundle.
-    static var sourceTemplatesBundleURL: URL {
-        let thisFile = URL(fileURLWithPath: #filePath)
-        return thisFile
-            .deletingLastPathComponent()  // Services/
-            .deletingLastPathComponent()  // screenshot/
-            .appendingPathComponent("Templates.bundle", isDirectory: true)
+    /// Where the open panel starts: the source folder holding `Templates.bundle`, i.e. the parent of
+    /// `Code/`. Derived from `#filePath` alone — the sandbox can't stat the source tree.
+    static var sourceTemplatesParentURL: URL {
+        var url = URL(fileURLWithPath: #filePath)
+        while url.pathComponents.count > 1, url.lastPathComponent != "Code" {
+            url.deleteLastPathComponent()
+        }
+        return url.deletingLastPathComponent()
     }
 
     static func resolveBookmark() -> URL? {
@@ -37,7 +36,7 @@ enum DebugTemplateService {
         panel.canChooseDirectories = true
         panel.allowsMultipleSelection = false
         panel.treatsFilePackagesAsDirectories = true
-        panel.directoryURL = sourceTemplatesBundleURL.deletingLastPathComponent()
+        panel.directoryURL = sourceTemplatesParentURL
         panel.prompt = "Select"
 
         let response = CrashReportingService.withAppHangTrackingPaused { panel.runModal() }

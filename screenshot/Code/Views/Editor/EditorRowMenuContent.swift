@@ -2,7 +2,7 @@ import SwiftUI
 
 struct EditorRowMenuContent: View {
     @Bindable var state: AppState
-    @Environment(StoreService.self) private var store
+    @Environment(PurchaseService.self) private var store
     let row: ScreenshotRow
     let canMoveUp: Bool
     let canMoveDown: Bool

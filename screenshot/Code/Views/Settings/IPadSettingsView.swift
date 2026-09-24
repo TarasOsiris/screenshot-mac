@@ -6,8 +6,7 @@ import SwiftUI
 /// export-folder bookmark) are omitted; App Store Connect credentials are reachable via a
 /// pushed detail screen.
 struct IPadSettingsView: View {
-    @Environment(StoreService.self) private var store
-    @Environment(ICloudSyncStatusModel.self) private var iCloudStatus
+    @Environment(PurchaseService.self) private var store
     @AppStorage(AppSettingsKeys.appearance) private var appearance = AppSettingsKeys.Default.appearance
     @AppStorage(AppSettingsKeys.appLanguageOverride) private var languageOverride = ""
     @AppStorage(AppSettingsKeys.defaultScreenshotSize) private var defaultScreenshotSize = AppSettingsKeys.Default.defaultScreenshotSize
@@ -182,46 +181,8 @@ struct IPadSettingsView: View {
     @ViewBuilder
     private var iCloudSection: some View {
         Section("iCloud Sync") {
-            if !iCloud.isAvailable {
-                Label("iCloud is not available. Sign in to iCloud in Settings.",
-                      systemImage: "exclamationmark.triangle")
-                    .foregroundStyle(.secondary)
-            } else {
-                Toggle("Sync with iCloud", isOn: Binding(
-                    get: { iCloud.isEnabled },
-                    set: { newValue in
-                        if newValue { showEnableConfirmation = true } else { showDisableConfirmation = true }
-                    }
-                ))
-                .disabled(iCloud.isMigrating)
-
-                if let progress = iCloud.migrationProgress {
-                    HStack(spacing: 8) {
-                        ProgressView(value: progress)
-                        Text("\(Int(progress * 100))%")
-                            .monospacedDigit()
-                            .foregroundStyle(.secondary)
-                    }
-                }
-
-                if iCloud.isEnabled {
-                    // Plain HStack rather than LabeledContent: LabeledContent gives its trailing
-                    // content a flexible frame, which made this (conditional Label) row balloon
-                    // to a huge height.
-                    HStack {
-                        Text("Status")
-                        Spacer()
-                        ICloudStatusLabel(syncStatus: iCloudStatus.status)
-                    }
-                }
-
-                if let error = iCloud.errorMessage {
-                    Text(error).foregroundStyle(.red).font(.caption)
-                }
-
-                Text("Syncing may take a while if you have a lot of projects.")
-                    .font(.caption)
-                    .foregroundStyle(.orange)
+            ICloudSyncSettingsRows(iCloud: iCloud) { enable in
+                if enable { showEnableConfirmation = true } else { showDisableConfirmation = true }
             }
         }
     }

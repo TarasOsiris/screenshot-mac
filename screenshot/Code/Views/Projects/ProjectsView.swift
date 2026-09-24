@@ -9,7 +9,7 @@ import SwiftUI
 /// returns here.
 struct iPadRootView: View {
     @Environment(AppState.self) private var state
-    @Environment(StoreService.self) private var store
+    @Environment(PurchaseService.self) private var store
     @Environment(AppNavigationRouter.self) private var router
     @State private var openedProjectId: UUID?
 
@@ -166,7 +166,7 @@ private struct ProjectOpenGate: View {
 
 struct ProjectsView: View {
     @Environment(AppState.self) private var state
-    @Environment(StoreService.self) private var store
+    @Environment(PurchaseService.self) private var store
     let onOpen: (UUID) -> Void
 
     @State private var showNewProject = false

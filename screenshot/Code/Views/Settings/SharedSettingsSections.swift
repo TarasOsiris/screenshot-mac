@@ -49,6 +49,67 @@ final class ICloudSettingsModel {
     }
 }
 
+/// The rows of the iCloud Sync section. Each screen owns the `Section` and the enable/disable
+/// confirmations, which attach to different containers on each platform.
+struct ICloudSyncSettingsRows: View {
+    let iCloud: ICloudSettingsModel
+    /// Asks the screen to confirm; the toggle itself never flips the setting.
+    let requestToggle: (_ enable: Bool) -> Void
+
+    @Environment(ICloudSyncStatusModel.self) private var iCloudStatus
+
+    var body: some View {
+        if !iCloud.isAvailable {
+            Label(unavailableMessage, systemImage: "exclamationmark.triangle")
+                .foregroundStyle(.secondary)
+        } else {
+            Toggle("Sync with iCloud", isOn: Binding(
+                get: { iCloud.isEnabled },
+                set: { requestToggle($0) }
+            ))
+            .disabled(iCloud.isMigrating)
+
+            if let progress = iCloud.migrationProgress {
+                HStack(spacing: 8) {
+                    ProgressView(value: progress)
+                    Text("\(Int(progress * 100))%")
+                        .monospacedDigit()
+                        .foregroundStyle(.secondary)
+                }
+            }
+
+            if iCloud.isEnabled {
+                // Plain HStack rather than LabeledContent: LabeledContent gives its trailing
+                // content a flexible frame, which made this (conditional Label) row balloon
+                // to a huge height.
+                HStack {
+                    Text("Status")
+                    Spacer()
+                    ICloudStatusLabel(syncStatus: iCloudStatus.status)
+                }
+            }
+
+            if let error = iCloud.errorMessage {
+                Text(error)
+                    .foregroundStyle(.red)
+                    .font(.caption)
+            }
+
+            Text("Syncing may take a while if you have a lot of projects.")
+                .font(.caption)
+                .foregroundStyle(.orange)
+        }
+    }
+
+    private var unavailableMessage: LocalizedStringKey {
+        #if os(macOS)
+        "iCloud is not available. Sign in to iCloud in System Settings."
+        #else
+        "iCloud is not available. Sign in to iCloud in Settings."
+        #endif
+    }
+}
+
 /// Live iCloud state, including in-flight transfer progress. macOS used to show only
 /// connected/connecting because its copy predated the progress states.
 struct ICloudStatusLabel: View {
@@ -75,7 +136,7 @@ struct ICloudStatusLabel: View {
 }
 
 struct PlanDetailRows: View {
-    let tier: StoreService.ProTier
+    let tier: PurchaseService.ProTier
 
     var body: some View {
         switch tier {
@@ -88,26 +149,26 @@ struct PlanDetailRows: View {
                 Text(expirationDate, format: .dateTime.year().month().day())
                     .foregroundStyle(.secondary)
             }
-            Link("Manage Subscription", destination: StoreService.manageSubscriptionsURL)
+            Link("Manage Subscription", destination: PurchaseService.manageSubscriptionsURL)
         }
     }
 }
 
 /// The compare-plans + upgrade pair shown to users who haven't bought Pro.
 struct FreeTierSections: View {
-    let store: StoreService
+    let store: PurchaseService
 
     var body: some View {
         Section("Compare Plans") {
             PlanComparisonRow(title: "Projects", freeValue: "1", proValue: String(localized: "Unlimited"))
             PlanComparisonRow(
                 title: "Rows per project",
-                freeValue: "\(StoreService.freeMaxRows)",
+                freeValue: "\(PurchaseService.freeMaxRows)",
                 proValue: String(localized: "Unlimited")
             )
             PlanComparisonRow(
                 title: "Screenshots per row",
-                freeValue: "\(StoreService.freeMaxTemplatesPerRow)",
+                freeValue: "\(PurchaseService.freeMaxTemplatesPerRow)",
                 proValue: String(localized: "Unlimited")
             )
         }

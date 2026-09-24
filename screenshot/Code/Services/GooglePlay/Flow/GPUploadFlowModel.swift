@@ -189,17 +189,21 @@ final class GPUploadFlowModel {
         }
     }
 
+    /// Demo mode softens the duplicate-language error to a warning, so the upload path cannot
+    /// trust validation alone: one Play language means one delete-and-reupload.
+    private static func uploadLanguages(for plan: GPRowPlan) -> [GPUploadLanguage] {
+        guard plan.isEnabled else { return [] }
+        var claimedPlayCodes: Set<String> = []
+        return plan.localeTargets.compactMap { target -> GPUploadLanguage? in
+            guard target.isEnabled, let playCode = target.playLanguageCode else { return nil }
+            guard claimedPlayCodes.insert(playCode).inserted else { return nil }
+            return GPUploadLanguage(projectCode: target.appLocaleCode, playCode: playCode, label: target.appLocaleLabel)
+        }
+    }
+
     func buildUploadTargets() -> [GPUploadTarget] {
         rowPlans.compactMap { plan -> GPUploadTarget? in
-            guard plan.isEnabled else { return nil }
-            // Demo mode softens the duplicate-language error to a warning, so the upload path
-            // cannot trust validation alone: one Play language means one delete-and-reupload.
-            var claimedPlayCodes: Set<String> = []
-            let languages = plan.localeTargets.compactMap { target -> GPUploadLanguage? in
-                guard target.isEnabled, let playCode = target.playLanguageCode else { return nil }
-                guard claimedPlayCodes.insert(playCode).inserted else { return nil }
-                return GPUploadLanguage(projectCode: target.appLocaleCode, playCode: playCode, label: target.appLocaleLabel)
-            }
+            let languages = Self.uploadLanguages(for: plan)
             guard !languages.isEmpty else { return nil }
             return GPUploadTarget(
                 rowId: plan.id,
@@ -212,6 +216,20 @@ final class GPUploadFlowModel {
         }
     }
 
+    var plannedCounts: GPUploadCounts {
+        var counts = GPUploadCounts()
+        var playCodes: Set<String> = []
+        for plan in rowPlans {
+            let languages = Self.uploadLanguages(for: plan)
+            guard !languages.isEmpty else { continue }
+            counts.rows += 1
+            counts.screenshots += plan.templateCount * languages.count
+            playCodes.formUnion(languages.map(\.playCode))
+        }
+        counts.languages = playCodes.count
+        return counts
+    }
+
     func startUpload() async {
         errorMessage = nil
         errorDetailsText = nil
@@ -220,6 +238,7 @@ final class GPUploadFlowModel {
             return
         }
         let targets = buildUploadTargets()
+        let counts = plannedCounts
         guard !targets.isEmpty else {
             errorMessage = String(localized: "No rows × languages are selected.")
             return
@@ -244,24 +263,20 @@ final class GPUploadFlowModel {
                     progress: { p in self.uploadProgress = p }
                 )
                 let summary = GPUploadSummary(
-                    totalScreenshots: targets.reduce(0) { $0 + $1.templateCount * $1.languages.count },
-                    languageCount: Set(targets.flatMap { $0.languages.map(\.playCode) }).count,
+                    counts: counts,
                     packageName: pkg,
                     sentForReview: didSendForReview
                 )
                 uploadSummary = summary
                 AnalyticsService.capture(.storeUploadFinished, [
                     .store: "play",
-                    .imageCount: summary.totalScreenshots,
-                    .localeCount: summary.languageCount,
+                    .imageCount: counts.screenshots,
+                    .localeCount: counts.languages,
                 ])
                 step = .done
                 NotificationService.notify(
                     title: String(localized: "Upload complete"),
-                    body: uploadCompleteBody(
-                        screenshotCount: summary.totalScreenshots,
-                        languageCount: summary.languageCount
-                    )
+                    body: counts.text
                 )
             } catch is CancellationError {
                 errorMessage = String(localized: "Upload cancelled. The draft edit was discarded.")
@@ -280,19 +295,6 @@ final class GPUploadFlowModel {
         // the upload is in flight.
         uploadTask = task
         await task.value
-    }
-
-    private func uploadCompleteBody(screenshotCount: Int, languageCount: Int) -> String {
-        switch (screenshotCount == 1, languageCount == 1) {
-        case (true, true):
-            String(localized: "1 screenshot across 1 language")
-        case (true, false):
-            String(localized: "1 screenshot across \(languageCount) languages")
-        case (false, true):
-            String(localized: "\(screenshotCount) screenshots across 1 language")
-        case (false, false):
-            String(localized: "\(screenshotCount) screenshots across \(languageCount) languages")
-        }
     }
 
     /// The plan screen's Back button. Only one step back exists in this flow.

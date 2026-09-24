@@ -296,8 +296,6 @@ struct AppStoreConnectSettingsView: View {
         importError = nil
     }
 
-    @ViewBuilder
-
     private func connectionFailureMessage(for error: Error) -> String {
         if let apiError = error as? AppStoreConnectAPIError {
             switch apiError {

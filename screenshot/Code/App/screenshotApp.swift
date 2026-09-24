@@ -7,7 +7,7 @@ struct ScreenshotBroApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
     #endif
     @State private var appState = ScreenshotBroApp.makeAppState()
-    @State private var storeService = StoreService()
+    @State private var purchaseService = PurchaseService()
     #if os(iOS)
     @State private var appNavigationRouter = AppNavigationRouter()
     #endif
@@ -133,10 +133,10 @@ struct ScreenshotBroApp: App {
                 .environment(appState)
                 .environment(appState.iCloudStatus)
                 .environment(appState.zoom)
-                .environment(storeService)
+                .environment(purchaseService)
                 .preferredColorScheme(preferredColorScheme)
                 .background(WindowSceneBridge(role: .main))
-                .task { storeService.start() }
+                .task { purchaseService.start() }
                 .task { mcpServer.autostartIfEnabled(state: appState) }
                 #if DEBUG
                 .task {
@@ -174,7 +174,7 @@ struct ScreenshotBroApp: App {
                 .environment(appState)
                 .environment(appState.iCloudStatus)
                 .environment(appState.zoom)
-                .environment(storeService)
+                .environment(purchaseService)
                 .preferredColorScheme(preferredColorScheme)
         }
         .defaultSize(width: 760, height: 620)
@@ -240,8 +240,8 @@ struct ScreenshotBroApp: App {
                         if appState.hasSelection {
                             appState.duplicateSelectedShapes()
                         } else if let rowId = appState.selectedRowId {
-                            storeService.requirePro(
-                                allowed: storeService.canAddRow(currentCount: appState.rows.count),
+                            purchaseService.requirePro(
+                                allowed: purchaseService.canAddRow(currentCount: appState.rows.count),
                                 context: .rowLimit
                             ) {
                                 withAnimation(.easeInOut(duration: 0.2)) {
@@ -460,7 +460,7 @@ struct ScreenshotBroApp: App {
         // scene pins its window to a fixed size, ignoring windowResizability.
         Window("Screenshot Bro Settings", id: SettingsView.windowID) {
             SettingsView()
-                .environment(storeService)
+                .environment(purchaseService)
                 .environment(appState)
                 .environment(appState.iCloudStatus)
                 .environment(appState.zoom)
@@ -475,10 +475,10 @@ struct ScreenshotBroApp: App {
                 .environment(appState)
                 .environment(appState.iCloudStatus)
                 .environment(appState.zoom)
-                .environment(storeService)
+                .environment(purchaseService)
                 .environment(appNavigationRouter)
                 .preferredColorScheme(preferredColorScheme)
-                .task { storeService.start() }
+                .task { purchaseService.start() }
                 .fullScreenCover(isPresented: Binding(
                     get: { launchWelcomePresented },
                     set: { _ in }
@@ -487,7 +487,7 @@ struct ScreenshotBroApp: App {
                         persistCompletion: true,
                         onComplete: { welcomeDismissed = true }
                     )
-                    .environment(storeService)
+                    .environment(purchaseService)
                     .interactiveDismissDisabled()
                     .screenView(.onboarding, restoring: .projects)
                 }

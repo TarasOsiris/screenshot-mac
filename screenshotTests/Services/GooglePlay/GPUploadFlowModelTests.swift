@@ -29,14 +29,9 @@ struct GPUploadFlowModelTests {
                 uploader: uploader,
                 api: verifier,
                 credentials: credentials ?? GooglePlayCredentialsStore.isolatedForTesting(),
-                defaults: Self.isolatedDefaults()
+                defaults: makeIsolatedDefaults("gpRecents")
             )
             model.bind(document: document)
-        }
-
-        /// The recents list is UserDefaults-backed; a test run must not write into the real one.
-        static func isolatedDefaults() -> UserDefaults {
-            UserDefaults(suiteName: "GPUploadFlowModelTests.\(UUID().uuidString)") ?? .standard
         }
     }
 
@@ -192,7 +187,7 @@ struct GPUploadFlowModelTests {
     // MARK: - Recents
 
     @Test func recentsRememberTheMostRecentFirstAndCapTheList() {
-        let defaults = Harness.isolatedDefaults()
+        let defaults = makeIsolatedDefaults("gpRecents")
         for index in 0..<(GooglePlayRecentPackages.limit + 3) {
             GooglePlayRecentPackages.remember("com.example.app\(index)", defaults: defaults)
         }
@@ -204,7 +199,7 @@ struct GPUploadFlowModelTests {
     }
 
     @Test func reusingAPackageMovesItToTheFrontWithoutDuplicating() {
-        let defaults = Harness.isolatedDefaults()
+        let defaults = makeIsolatedDefaults("gpRecents")
         GooglePlayRecentPackages.remember("com.a", defaults: defaults)
         GooglePlayRecentPackages.remember("com.b", defaults: defaults)
         GooglePlayRecentPackages.remember("com.a", defaults: defaults)
@@ -353,6 +348,25 @@ struct GPUploadFlowModelTests {
         #expect(languages.first?.projectCode == "en", "the first claimant keeps the slot")
     }
 
+    @Test func plannedCountsMatchWhatUploadsWhenLocalesShareAPlayLanguage() {
+        let h = Harness(document: StubGPDocument(
+            rows: [row(label: "A", templates: 3)],
+            localeState: localeState(["en", "en-US", "de"])
+        ))
+        let model = h.model
+        var plans = model.buildRowPlans()
+        for index in plans[0].localeTargets.indices {
+            plans[0].localeTargets[index].isEnabled = true
+        }
+        model.rowPlans = plans
+
+        let counts = model.plannedCounts
+
+        #expect(counts.rows == 1)
+        #expect(counts.screenshots == 6, "3 templates × 2 Play languages, not 3 enabled locales")
+        #expect(counts.languages == 2)
+    }
+
     /// An unlabelled row still needs something to show in the plan and in error messages.
     @Test func anUnlabelledRowGetsAFallbackLabel() {
         let h = Harness(document: StubGPDocument(
@@ -386,8 +400,8 @@ struct GPUploadFlowModelTests {
         #expect(uploader.callCount == 1)
         #expect(uploader.lastPackageName == "com.example.app")
         let summary = try? #require(model.uploadSummary)
-        #expect(summary?.totalScreenshots == 6, "3 templates × 2 languages")
-        #expect(summary?.languageCount == 2)
+        #expect(summary?.counts.screenshots == 6, "3 templates × 2 languages")
+        #expect(summary?.counts.languages == 2)
         #expect(model.errorMessage == nil)
         #expect(model.uploadTask == nil, "the task handle is released so the button re-enables")
     }

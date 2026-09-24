@@ -3,7 +3,7 @@ import SwiftUI
 struct AppRootView: View {
     static let windowID = "main"
 
-    @Environment(StoreService.self) private var store
+    @Environment(PurchaseService.self) private var store
     @Environment(AppState.self) private var state
     // macOS-only: on iPadOS \.openWindow subscribes to focused-scene churn that re-invalidated the hierarchy for seconds on first project open.
     #if os(macOS)

@@ -2,7 +2,7 @@ import SwiftUI
 
 struct FontWeightPicker: View {
     @Binding var selection: Int
-    var options: [Int] = [300, 400, 500, 700]
+    var options: [Int] = CustomFontRegistry.presetWeightBuckets
     var width: CGFloat = 100
 
     var body: some View {

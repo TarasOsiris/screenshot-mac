@@ -68,15 +68,8 @@ struct ExportCoordinatorTests {
 
     // MARK: - Export folder bookmark
 
-    private func makeDefaults(_ label: String) -> UserDefaults {
-        let suite = "ExportCoordinatorTests.\(label).\(UUID().uuidString)"
-        let defaults = UserDefaults(suiteName: suite)!
-        defaults.removePersistentDomain(forName: suite)
-        return defaults
-    }
-
     @Test func bookmarkStartsEmpty() {
-        let store = ExportFolderBookmark(defaults: makeDefaults("empty"))
+        let store = ExportFolderBookmark(defaults: makeIsolatedDefaults("empty"))
         #expect(!store.hasDestination)
         #expect(store.bookmarkData.isEmpty)
         #expect(store.displayPath.isEmpty)
@@ -84,7 +77,7 @@ struct ExportCoordinatorTests {
     }
 
     @Test func savingAFolderMakesItResolvable() throws {
-        let store = ExportFolderBookmark(defaults: makeDefaults("save"))
+        let store = ExportFolderBookmark(defaults: makeIsolatedDefaults("save"))
         let dir = makeTemporaryDataDirectory(label: "export-bookmark")
         defer { try? FileManager.default.removeItem(at: dir) }
 
@@ -97,7 +90,7 @@ struct ExportCoordinatorTests {
     }
 
     @Test func clearForgetsTheDestination() {
-        let store = ExportFolderBookmark(defaults: makeDefaults("clear"))
+        let store = ExportFolderBookmark(defaults: makeIsolatedDefaults("clear"))
         let dir = makeTemporaryDataDirectory(label: "export-bookmark-clear")
         defer { try? FileManager.default.removeItem(at: dir) }
 
@@ -109,7 +102,7 @@ struct ExportCoordinatorTests {
 
     /// A bookmark that no longer resolves must be dropped, not left to fail on every export.
     @Test func unresolvableBookmarkIsCleared() {
-        let defaults = makeDefaults("stale")
+        let defaults = makeIsolatedDefaults("stale")
         defaults.set(Data([0x00, 0x01, 0x02, 0x03]), forKey: ExportFolderBookmark.bookmarkKey)
         let store = ExportFolderBookmark(defaults: defaults)
 

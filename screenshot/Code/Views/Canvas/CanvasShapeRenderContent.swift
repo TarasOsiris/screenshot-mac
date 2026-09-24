@@ -12,10 +12,10 @@ enum CanvasResourceState {
     /// The view asks the document; the document doesn't need to know what the canvas draws.
     init(_ fileName: String?, in state: AppState) {
         guard let fileName else { self = .satisfied; return }
-        if state.pendingDownloadImageFileNames.contains(fileName) {
+        if state.imageStore.pending.contains(fileName) {
             self = .downloading
         } else {
-            self = state.missingImageFileNames.contains(fileName) ? .missing : .satisfied
+            self = state.imageStore.missing.contains(fileName) ? .missing : .satisfied
         }
     }
 }

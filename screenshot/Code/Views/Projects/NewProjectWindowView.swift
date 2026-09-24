@@ -4,7 +4,7 @@ struct NewProjectWindowView: View {
     static let windowID = "new-project"
 
     @Environment(AppState.self) private var state
-    @Environment(StoreService.self) private var store
+    @Environment(PurchaseService.self) private var store
     @Environment(\.dismiss) private var dismiss
     #if os(iOS)
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass

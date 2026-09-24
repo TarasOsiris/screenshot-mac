@@ -5,22 +5,15 @@ import Testing
 @MainActor
 struct DeveloperRatingPromptPolicyTests {
 
-    private func makeDefaults(_ label: String) -> UserDefaults {
-        let suite = "DeveloperRatingPromptPolicyTests.\(label).\(UUID().uuidString)"
-        let defaults = UserDefaults(suiteName: suite)!
-        defaults.removePersistentDomain(forName: suite)
-        return defaults
-    }
-
     @Test func doesNotShowBeforeTwoExports() {
-        let defaults = makeDefaults("count")
+        let defaults = makeIsolatedDefaults("count")
         let p = DeveloperRatingPromptPolicy(defaults: defaults)
 
         #expect(p.recordExportAndCheck() == false, "first export")
     }
 
     @Test func showsOnTheSecondExport() {
-        let defaults = makeDefaults("ready")
+        let defaults = makeIsolatedDefaults("ready")
         let p = DeveloperRatingPromptPolicy(defaults: defaults)
 
         #expect(p.recordExportAndCheck() == false, "first export")
@@ -30,7 +23,7 @@ struct DeveloperRatingPromptPolicyTests {
     /// The sheet is presented on a delay, so the check cannot be what retires the ask: a window
     /// closed inside that delay has to leave it for the next export.
     @Test func checkAloneDoesNotSpendTheAsk() {
-        let defaults = makeDefaults("unspent")
+        let defaults = makeIsolatedDefaults("unspent")
         let p = DeveloperRatingPromptPolicy(defaults: defaults)
 
         _ = p.recordExportAndCheck()
@@ -39,7 +32,7 @@ struct DeveloperRatingPromptPolicyTests {
     }
 
     @Test func showsOnlyOnceEver() {
-        let defaults = makeDefaults("once")
+        let defaults = makeIsolatedDefaults("once")
         let p = DeveloperRatingPromptPolicy(defaults: defaults)
 
         _ = p.recordExportAndCheck()
@@ -53,7 +46,7 @@ struct DeveloperRatingPromptPolicyTests {
 
     /// Two exports inside the presentation delay schedule two sheets; only the first may count.
     @Test func markShownReportsOnlyTheCallThatSpentIt() {
-        let defaults = makeDefaults("idempotent")
+        let defaults = makeIsolatedDefaults("idempotent")
         let p = DeveloperRatingPromptPolicy(defaults: defaults)
 
         #expect(p.markShown() == true)
@@ -64,7 +57,7 @@ struct DeveloperRatingPromptPolicyTests {
     /// prior one — the model recreates this on every launch, so persistence must not depend on
     /// keeping one instance alive.
     @Test func persistsAcrossInstances() {
-        let defaults = makeDefaults("instances")
+        let defaults = makeIsolatedDefaults("instances")
 
         _ = DeveloperRatingPromptPolicy(defaults: defaults).recordExportAndCheck()
         #expect(DeveloperRatingPromptPolicy(defaults: defaults).recordExportAndCheck() == true)

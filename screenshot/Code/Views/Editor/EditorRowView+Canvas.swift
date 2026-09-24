@@ -168,7 +168,7 @@ extension EditorRowView {
                 return canvasX / row.displayScale(zoom: zoom)
             } action: { _, centerX in
                 guard let centerX else { return }
-                state.visibleCanvasModelCenterX = centerX
+                state.canvasHints.visibleModelCenterX = centerX
             }
             .onChange(of: state.canvasFocus.shapeRequestNonce) { _, _ in
                 guard state.selectedRowId == row.id,
@@ -433,7 +433,7 @@ extension EditorRowView {
                                 state.applyGroupDrag(offset: offset)
                                 dragSession.endDrag()
                             },
-                            onDidAppearAfterAdd: shape.id == state.justAddedShapeId ? { state.justAddedShapeId = nil } : nil,
+                            onDidAppearAfterAdd: shape.id == state.canvasHints.justAddedShapeId ? { state.canvasHints.justAddedShapeId = nil } : nil,
                             onEditingTextChanged: { editing in
                                 if state.textEdit.isActive != editing { state.textEdit.isActive = editing }
                                 if editing {
@@ -552,13 +552,13 @@ extension EditorRowView {
                     x: location.x / ds,
                     y: location.y / ds
                 )
-                state.canvasMouseModelPosition = modelPoint
+                state.canvasHints.mouseModelPosition = modelPoint
                 // Keep right-click position up-to-date while hovering,
                 // so it reflects cursor position when context menu opens.
                 contextMenuPointStore.value = modelPoint
                 updateHover(at: modelPoint, in: resolvedShapes)
             case .ended:
-                state.canvasMouseModelPosition = nil
+                state.canvasHints.mouseModelPosition = nil
                 clearHover()
             @unknown default:
                 break

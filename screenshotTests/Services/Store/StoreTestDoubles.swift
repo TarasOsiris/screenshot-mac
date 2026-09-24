@@ -20,15 +20,6 @@ final class InMemorySecretStore: SecretStore {
     func delete(account: String) { values.removeValue(forKey: account) }
 }
 
-/// A `UserDefaults` suite nobody else writes to, so a test can't observe or clobber the app's
-/// real preferences. The caller keeps it for the length of the test; the suite is removed on
-/// deinit.
-@MainActor
-func makeIsolatedDefaults(_ name: String = UUID().uuidString) -> UserDefaults {
-    // A fresh suite name per call means no cleanup ordering to get wrong.
-    UserDefaults(suiteName: "test.\(name)") ?? .standard
-}
-
 @MainActor
 extension AppStoreConnectCredentialsStore {
     /// An ASC credential store wired to throwaway storage.
