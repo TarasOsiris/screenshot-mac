@@ -57,11 +57,13 @@ final class ScreenshotImageStore {
     /// Evicts what the editor no longer references (e.g. after a locale switch) and returns the
     /// names that still need decoding, in the editor's order so the project fills in from the top.
     func retain(only needed: [String]) -> [String] {
-        for key in Set(images.keys).subtracting(needed) {
-            images.removeValue(forKey: key)
+        let keep = Set(needed)
+        // One write each, and none when nothing changed: every write invalidates the canvases.
+        if images.keys.contains(where: { !keep.contains($0) }) {
+            images = images.filter { keep.contains($0.key) }
         }
-        missing.formIntersection(needed)
-        pending.formIntersection(needed)
+        if !missing.isSubset(of: keep) { missing.formIntersection(keep) }
+        if !pending.isSubset(of: keep) { pending.formIntersection(keep) }
         return needed.filter { images[$0] == nil }
     }
 

@@ -38,7 +38,6 @@ final class AppState {
     var screenshotImages: [String: NSImage] {
         get { imageStore.images }
         _modify { yield &imageStore.images }
-        set { imageStore.images = newValue }
     }
     /// User-imported fonts. See CustomFontLibrary.
     let fonts: CustomFontLibrary
