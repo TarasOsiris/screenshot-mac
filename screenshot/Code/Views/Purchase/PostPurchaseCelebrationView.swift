@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct PostPurchaseCelebrationView: View {
-    let context: StoreService.PaywallContext
+    let context: PurchaseService.PaywallContext
     let onDismiss: () -> Void
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion

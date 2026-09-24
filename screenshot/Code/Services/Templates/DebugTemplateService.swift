@@ -5,15 +5,17 @@ import Foundation
 enum DebugTemplateService {
     private static let bookmarkKey = "debugTemplatesBundleBookmark"
 
-    /// Source path hint for the NSOpenPanel.
-    /// Relies on this file being at screenshot/Services/DebugTemplateService.swift
-    /// and Templates.bundle being at screenshot/Templates.bundle.
+    /// Source path hint for the NSOpenPanel: the nearest `Templates.bundle` above this source file,
+    /// found by walking up so moving the file doesn't silently break it.
     static var sourceTemplatesBundleURL: URL {
-        let thisFile = URL(fileURLWithPath: #filePath)
-        return thisFile
-            .deletingLastPathComponent()  // Services/
-            .deletingLastPathComponent()  // screenshot/
-            .appendingPathComponent("Templates.bundle", isDirectory: true)
+        let thisDirectory = URL(fileURLWithPath: #filePath).deletingLastPathComponent()
+        var directory = thisDirectory
+        while directory.pathComponents.count > 1 {
+            let candidate = directory.appendingPathComponent("Templates.bundle", isDirectory: true)
+            if FileManager.default.fileExists(atPath: candidate.path) { return candidate }
+            directory.deleteLastPathComponent()
+        }
+        return thisDirectory
     }
 
     static func resolveBookmark() -> URL? {

@@ -2,7 +2,7 @@ import RevenueCatUI
 import SwiftUI
 
 struct PaywallSheetContent: View {
-    @Bindable var store: StoreService
+    @Bindable var store: PurchaseService
 
     var body: some View {
         if let configurationIssue = store.configurationIssue {

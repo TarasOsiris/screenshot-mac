@@ -34,7 +34,7 @@ For any non-trivial macOS app, start with this shape instead of putting the app,
 all views, models, stores, services, and helpers in one Swift file:
 
 - `App/<AppName>App.swift`: the `@main` app type and `AppDelegate` only.
-- `Views/ContentView.swift`: root layout and high-level composition only.
+- `Views/Shell/ContentView.swift`: root layout and high-level composition only.
 - `Views/SidebarView.swift`, `Views/DetailView.swift`, `Views/ComposerView.swift`, etc.: feature views named after their primary type.
 - `Models/*.swift`: value models, identifiers, and selection enums.
 - `Stores/*.swift`: persistence and state stores.

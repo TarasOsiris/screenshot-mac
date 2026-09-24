@@ -15,6 +15,7 @@ struct AppStateTests {
             .deletingLastPathComponent()
             .deletingLastPathComponent()
             .deletingLastPathComponent()
+            .deletingLastPathComponent()
             .appendingPathComponent("screenshot/Templates.bundle/shared/fonts/\(fileName)")
     }
 

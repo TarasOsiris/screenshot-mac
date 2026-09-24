@@ -9,7 +9,7 @@ import Foundation
 /// identifiers only. Never project, row, or locale names, user file names, or any user-written text.
 @MainActor
 enum DiagnosticsSnapshot {
-    static func text(state: AppState, store: StoreService?) -> String {
+    static func text(state: AppState, store: PurchaseService?) -> String {
         var lines: [String] = []
 
         lines.append("Screenshot Bro \(Bundle.main.shortVersion) (\(Bundle.main.buildNumber)) · \(platformLine())")

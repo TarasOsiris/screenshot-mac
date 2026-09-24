@@ -8,7 +8,7 @@ import RevenueCat
 
 @MainActor
 @Observable
-final class StoreService {
+final class PurchaseService {
     /// Raw values are analytics event property values (`paywall_shown.trigger`), not user-facing
     /// text — renaming one renames the dimension in PostHog.
     /// Why a restore ended the way it did. `ok` alone could not tell "this Apple Account never

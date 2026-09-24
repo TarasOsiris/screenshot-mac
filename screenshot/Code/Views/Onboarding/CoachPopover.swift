@@ -74,7 +74,7 @@ private struct CoachPopoverModifier: ViewModifier {
 private struct CoachPopoverContent: View {
     let step: OnboardingCoachStep
     @Bindable var coach: OnboardingCoachController
-    @Environment(StoreService.self) private var store
+    @Environment(PurchaseService.self) private var store
 
     private var isLastStep: Bool { step.next == nil }
 

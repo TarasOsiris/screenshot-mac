@@ -13,7 +13,7 @@ You are a focused reviewer for the Screenshot Bro macOS app. Your only job is to
 Look only at the diff (current `git diff` plus staged changes) for files under:
 
 - `screenshot/Code/Views/` (especially `Canvas/`, `Export/`, `Inspector/`, `Toolbar/`)
-- `screenshot/Code/Services/ExportService.swift`
+- `screenshot/Code/Services/Export/ExportService.swift`
 - `screenshot/Code/Models/` (any `Codable` change)
 - Anything implementing `BackgroundFillable`
 
@@ -46,7 +46,7 @@ For any new case added to `BackgroundStyle`, `ShapeType`, `ImageFillMode`, `Devi
 - Grep for switches over the affected enum and verify every site handles the new case. Common sites: `EditorRowView`, `RowCanvasSceneView`, `ExportService`, `BackgroundEditor`, `CanvasShapeView`, `CanvasShapeRenderContent`, `ShapePropertiesSingleSelectionBar`, `ShapePropertiesMultiSelectionBar`, `InspectorPanel`. (`ShapePropertiesBar` itself is just a router that picks single/multi.) Also check the `BackgroundFillable` extension `backgroundFillView`.
 
 ### 5. Image resource lifecycle
-The image-lifecycle methods all live in `screenshot/Code/App/AppState+ImageResources.swift`.
+The image-lifecycle methods all live in `screenshot/Code/App/State/AppState+ImageResources.swift`.
 
 - New properties that reference image filenames must be added to `allReferencedImageFileNames()` and `isImageFileReferenced()`. Otherwise images become orphans or get deleted while still referenced.
 - Code that replaces a single image reference should call `cleanupUnreferencedImage()`. Bulk removal (deleting templates/rows/shapes) should call `cleanupUnreferencedImages()`.

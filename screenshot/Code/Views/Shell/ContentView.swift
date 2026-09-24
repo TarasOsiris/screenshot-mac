@@ -20,7 +20,7 @@ struct ContentView: View {
     }
 
     @Environment(AppState.self) var state
-    @Environment(StoreService.self) var store
+    @Environment(PurchaseService.self) var store
     #if os(iOS)
     /// Scroll room reserved under the canvas for the floating bottom chrome
     /// (shape-properties bar and, while editing text, the format bar above it).
@@ -611,7 +611,7 @@ struct ContentView: View {
     private func rateOnAppStore() {
         didRateFromDeveloperSheet = true
         exportFlow.showDeveloperRatingSheet = false
-        openURL(StoreService.rateOnAppStoreURL)
+        openURL(PurchaseService.rateOnAppStoreURL)
     }
 
     /// Reported from `onDismiss` rather than the buttons so every way out of the sheet is counted
@@ -646,5 +646,5 @@ struct ContentView: View {
         .environment(state)
         .environment(state.zoom)
         .environment(state.iCloudStatus)
-        .environment(StoreService())
+        .environment(PurchaseService())
 }

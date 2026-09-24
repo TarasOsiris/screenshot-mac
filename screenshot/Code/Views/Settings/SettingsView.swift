@@ -18,7 +18,7 @@ final class SettingsWindowNavigation {
 struct SettingsView: View {
     static let windowID = "settings"
 
-    @Environment(StoreService.self) private var store
+    @Environment(PurchaseService.self) private var store
     @Environment(AppState.self) private var appState
     @Environment(ICloudSyncStatusModel.self) private var iCloudStatus
     @Environment(MCPServerService.self) private var mcpServer
@@ -660,7 +660,7 @@ struct SettingsView: View {
 #Preview {
     let state = AppState()
     SettingsView()
-        .environment(StoreService())
+        .environment(PurchaseService())
         .environment(state)
         .environment(state.iCloudStatus)
         .environment(MCPServerService())

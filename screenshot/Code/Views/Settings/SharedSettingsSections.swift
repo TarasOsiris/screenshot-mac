@@ -75,7 +75,7 @@ struct ICloudStatusLabel: View {
 }
 
 struct PlanDetailRows: View {
-    let tier: StoreService.ProTier
+    let tier: PurchaseService.ProTier
 
     var body: some View {
         switch tier {
@@ -88,26 +88,26 @@ struct PlanDetailRows: View {
                 Text(expirationDate, format: .dateTime.year().month().day())
                     .foregroundStyle(.secondary)
             }
-            Link("Manage Subscription", destination: StoreService.manageSubscriptionsURL)
+            Link("Manage Subscription", destination: PurchaseService.manageSubscriptionsURL)
         }
     }
 }
 
 /// The compare-plans + upgrade pair shown to users who haven't bought Pro.
 struct FreeTierSections: View {
-    let store: StoreService
+    let store: PurchaseService
 
     var body: some View {
         Section("Compare Plans") {
             PlanComparisonRow(title: "Projects", freeValue: "1", proValue: String(localized: "Unlimited"))
             PlanComparisonRow(
                 title: "Rows per project",
-                freeValue: "\(StoreService.freeMaxRows)",
+                freeValue: "\(PurchaseService.freeMaxRows)",
                 proValue: String(localized: "Unlimited")
             )
             PlanComparisonRow(
                 title: "Screenshots per row",
-                freeValue: "\(StoreService.freeMaxTemplatesPerRow)",
+                freeValue: "\(PurchaseService.freeMaxTemplatesPerRow)",
                 proValue: String(localized: "Unlimited")
             )
         }

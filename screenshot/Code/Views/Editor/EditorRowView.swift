@@ -3,7 +3,7 @@ import UniformTypeIdentifiers
 
 struct EditorRowView: View {
     @Bindable var state: AppState
-    @Environment(StoreService.self) var store
+    @Environment(PurchaseService.self) var store
     #if os(iOS)
     @Environment(\.horizontalSizeClass) var horizontalSizeClass
     #endif

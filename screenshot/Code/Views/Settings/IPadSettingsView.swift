@@ -6,7 +6,7 @@ import SwiftUI
 /// export-folder bookmark) are omitted; App Store Connect credentials are reachable via a
 /// pushed detail screen.
 struct IPadSettingsView: View {
-    @Environment(StoreService.self) private var store
+    @Environment(PurchaseService.self) private var store
     @Environment(ICloudSyncStatusModel.self) private var iCloudStatus
     @AppStorage(AppSettingsKeys.appearance) private var appearance = AppSettingsKeys.Default.appearance
     @AppStorage(AppSettingsKeys.appLanguageOverride) private var languageOverride = ""

@@ -9,7 +9,7 @@ struct OnboardingView: View {
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     @Environment(\.verticalSizeClass) private var verticalSizeClass
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    @Environment(StoreService.self) private var store
+    @Environment(PurchaseService.self) private var store
     @State private var pageIndex = 0
     @State private var templatePreviews: [NSImage] = []
     /// Skip jumps *to* the Pro page rather than exiting, so by the time `complete()` runs
@@ -565,9 +565,9 @@ struct StepInfo {
 
 #Preview {
     #if os(iOS)
-    // iOS body reads StoreService from the environment — inject one so the preview doesn't trap.
+    // iOS body reads PurchaseService from the environment — inject one so the preview doesn't trap.
     OnboardingView()
-        .environment(StoreService())
+        .environment(PurchaseService())
     #else
     OnboardingView()
     #endif

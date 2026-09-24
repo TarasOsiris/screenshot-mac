@@ -119,7 +119,7 @@ extension EditorRowView {
         group.notify(queue: .main) { [self] in
             let sources = loadedImages.sorted(by: { $0.0 < $1.0 }).map { ImageImportSource(image: $0.1) }
             guard !sources.isEmpty else { return }
-            let cap = store.isProUnlocked ? nil : StoreService.freeMaxTemplatesPerRow
+            let cap = store.isProUnlocked ? nil : PurchaseService.freeMaxTemplatesPerRow
             Task { @MainActor in
                 let imported = await state.batchImportImages(sources, into: row.id, maxTemplatesPerRow: cap, source: .dropRow)
                 if imported < sources.count {

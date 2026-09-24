@@ -44,14 +44,14 @@ struct HelpContentTests {
     /// prose has to change with it.
     @Test func freeTierNumbersMatchTheStore() {
         let text = HelpSection.proFeatures.entry.blocks.map(\.searchText).joined(separator: "\n")
-        #expect(text.contains("\(StoreService.freeMaxProjects) project"))
-        #expect(text.contains("\(StoreService.freeMaxRows) rows"))
-        #expect(text.contains("\(StoreService.freeMaxTemplatesPerRow) templates"))
+        #expect(text.contains("\(PurchaseService.freeMaxProjects) project"))
+        #expect(text.contains("\(PurchaseService.freeMaxRows) rows"))
+        #expect(text.contains("\(PurchaseService.freeMaxTemplatesPerRow) templates"))
 
         #expect(HelpSection.rows.entry.blocks.map(\.searchText).joined()
-            .contains("\(StoreService.freeMaxRows) rows"))
+            .contains("\(PurchaseService.freeMaxRows) rows"))
         #expect(HelpSection.templates.entry.blocks.map(\.searchText).joined()
-            .contains("\(StoreService.freeMaxTemplatesPerRow) templates"))
+            .contains("\(PurchaseService.freeMaxTemplatesPerRow) templates"))
     }
 
     /// Adding a device category or a showcase preset should mean documenting it, the same way
