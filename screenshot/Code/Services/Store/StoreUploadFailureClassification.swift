@@ -67,9 +67,7 @@ nonisolated struct StoreUploadFailure: Equatable {
             case .noSetsSelected: return StoreUploadFailure(kind: .nothingSelected, errorCode: nil)
             case .unreadableImages: return StoreUploadFailure(kind: .unreadableImages, errorCode: nil)
             }
-        case let error as AppStoreConnectAPIError:
-            return apiFailure(status: error.httpStatus, isDecoding: error.isDecodingFailure)
-        case let error as GooglePlayAPIError:
+        case let error as any StoreAPIFailure:
             return apiFailure(status: error.httpStatus, isDecoding: error.isDecodingFailure)
         case is AppStoreConnectAuthError, is GooglePlayAuthError:
             return StoreUploadFailure(kind: .auth, errorCode: nil)

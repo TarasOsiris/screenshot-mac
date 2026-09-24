@@ -1,41 +1,12 @@
 import Foundation
 
-enum GooglePlayAPIError: Error, LocalizedError {
-    case invalidURL
-    case httpError(status: Int, message: String)
-    case decodingFailed(Error)
-    case transport(Error)
-
-    /// Mirrors `AppStoreConnectAPIError.httpStatus` so both stores read the same way.
-    var httpStatus: Int? {
-        if case let .httpError(status, _) = self { return status }
-        return nil
-    }
-
-    /// Mirrors `AppStoreConnectAPIError.transportError` so both stores read the same way.
-    var transportError: Error? {
-        if case let .transport(underlying) = self { return underlying }
-        return nil
-    }
-
-    var isDecodingFailure: Bool {
-        if case .decodingFailed = self { return true }
-        return false
-    }
-
-    var errorDescription: String? {
-        switch self {
-        case .invalidURL:
-            return String(localized: "Invalid request URL.")
-        case .httpError(let status, let message):
-            return String(localized: "Google Play returned \(status): \(message)")
-        case .decodingFailed(let error):
-            return String(localized: "Response decoding failed: \(error.localizedDescription)")
-        case .transport(let error):
-            return error.localizedDescription
-        }
+nonisolated enum GooglePlayAPIOrigin: StoreAPIOrigin {
+    static func httpErrorDescription(status: Int, message: String) -> String {
+        String(localized: "Google Play returned \(status): \(message)")
     }
 }
+
+typealias GooglePlayAPIError = StoreAPIError<GooglePlayAPIOrigin>
 
 /// Thin wrapper over the Google Play Android Publisher API v3 (raw URLSession, no SDK).
 /// Mirrors `AppStoreConnectAPIService`: bearer auth, JSON error extraction, and a demo
@@ -66,17 +37,6 @@ final class GooglePlayAPIService {
             bearerToken: { [auth] in try await auth.token() },
             errorMessage: Self.extractErrorMessage
         )
-    }
-
-    /// Maps transport failures onto this service's own error type, so every localized string
-    /// stays exactly where it is.
-    private static func mapped(_ error: StoreHTTPError) -> GooglePlayAPIError {
-        switch error {
-        case .invalidURL: .invalidURL
-        case .nonHTTPResponse: .httpError(status: -1, message: "Non-HTTP response")
-        case .status(let status, let message): .httpError(status: status, message: message ?? "HTTP \(status)")
-        case .transport(let underlying): .transport(underlying)
-        }
     }
 
     private var isDemoMode: Bool { credentials.isDemoMode }
@@ -197,7 +157,7 @@ final class GooglePlayAPIService {
                 extraHeaders: headers
             )
         } catch let error as StoreHTTPError {
-            throw Self.mapped(error)
+            throw GooglePlayAPIError(error)
         }
     }
 
