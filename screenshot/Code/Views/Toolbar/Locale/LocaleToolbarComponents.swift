@@ -95,3 +95,35 @@ struct FlowLayout: Layout {
         return (positions, CGSize(width: maxRowWidth, height: y + rowHeight))
     }
 }
+
+extension View {
+    /// The "Replace all text" and "Revert to Base" confirmations the locale menu and the locale
+    /// banner both offer for the active locale.
+    func localeBulkActionDialogs(
+        localeLabel: String,
+        showReplaceAll: Binding<Bool>,
+        showResetToBase: Binding<Bool>,
+        resetMessage: Text,
+        onReplaceAll: @escaping () -> Void,
+        onResetToBase: @escaping () -> Void
+    ) -> some View {
+        confirmationDialog(
+            "Replace all \(localeLabel) text with new translations?",
+            isPresented: showReplaceAll
+        ) {
+            Button("Replace All Text", role: .destructive, action: onReplaceAll)
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("This applies translation from the base language to every text layer in \(localeLabel) and replaces the current translated text.")
+        }
+        .confirmationDialog(
+            "Reset all \(localeLabel) text and image overrides?",
+            isPresented: showResetToBase
+        ) {
+            Button("Revert to Base", role: .destructive, action: onResetToBase)
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            resetMessage
+        }
+    }
+}

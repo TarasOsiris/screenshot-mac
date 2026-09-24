@@ -110,28 +110,14 @@ struct LocaleBanner: View {
                 TranslationOverviewSheet(state: state)
                     .screenView(.translationOverview, restoring: .editor)
             }
-            .confirmationDialog(
-                "Replace all \(label) text with new translations?",
-                isPresented: $showReplaceAllConfirmation
-            ) {
-                Button("Replace All Text", role: .destructive) {
-                    startTranslation(onlyUntranslated: false)
-                }
-                Button("Cancel", role: .cancel) {}
-            } message: {
-                Text("This applies translation from the base language to every text layer in \(label) and replaces the current translated text.")
-            }
-            .confirmationDialog(
-                "Reset all \(label) text and image overrides?",
-                isPresented: $showResetToBaseConfirmation
-            ) {
-                Button("Revert to Base", role: .destructive) {
-                    state.resetActiveLocaleToBase()
-                }
-                Button("Cancel", role: .cancel) {}
-            } message: {
-                Text("This removes all translated text and language-specific image overrides for \(label), so the project uses the base language text and images again.")
-            }
+            .localeBulkActionDialogs(
+                localeLabel: label,
+                showReplaceAll: $showReplaceAllConfirmation,
+                showResetToBase: $showResetToBaseConfirmation,
+                resetMessage: Text("This removes all translated text and language-specific image overrides for \(label), so the project uses the base language text and images again."),
+                onReplaceAll: { startTranslation(onlyUntranslated: false) },
+                onResetToBase: { state.resetActiveLocaleToBase() }
+            )
             .translationTask(translationConfig) { session in
                 await runBannerTranslation(session)
             }

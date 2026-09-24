@@ -41,28 +41,14 @@ struct LocaleBar: View {
                 TranslationOverviewSheet(state: state)
                     .screenView(.translationOverview, restoring: .editor)
             }
-            .confirmationDialog(
-                "Replace all \(state.localeState.activeLocaleLabel) text with new translations?",
-                isPresented: $showReplaceAllConfirmation
-            ) {
-                Button("Replace All Text", role: .destructive) {
-                    startQuickTranslation(onlyUntranslated: false)
-                }
-                Button("Cancel", role: .cancel) {}
-            } message: {
-                Text("This applies translation from the base language to every text layer in \(state.localeState.activeLocaleLabel) and replaces the current translated text.")
-            }
-            .confirmationDialog(
-                "Reset all \(state.localeState.activeLocaleLabel) text and image overrides?",
-                isPresented: $showResetToBaseConfirmation
-            ) {
-                Button("Revert to Base", role: .destructive) {
-                    state.resetActiveLocaleToBase()
-                }
-                Button("Cancel", role: .cancel) {}
-            } message: {
-                Text("This removes all translated text and language-specific image overrides for the current language, so the project uses the base language text and images again.")
-            }
+            .localeBulkActionDialogs(
+                localeLabel: state.localeState.activeLocaleLabel,
+                showReplaceAll: $showReplaceAllConfirmation,
+                showResetToBase: $showResetToBaseConfirmation,
+                resetMessage: Text("This removes all translated text and language-specific image overrides for the current language, so the project uses the base language text and images again."),
+                onReplaceAll: { startQuickTranslation(onlyUntranslated: false) },
+                onResetToBase: { state.resetActiveLocaleToBase() }
+            )
             .translationTask(quickTranslationConfig) { session in
                 await runQuickTranslation(session)
             }
