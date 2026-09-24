@@ -6,6 +6,8 @@ struct ResizeState {
     var newW: CGFloat
     var newH: CGFloat
 
+    var frame: CGRect { CGRect(x: newX, y: newY, width: newW, height: newH) }
+
     func movedFrom(_ shape: CanvasShapeModel) -> Bool {
         changed(newX, from: shape.x)
             || changed(newY, from: shape.y)
@@ -37,12 +39,86 @@ enum ResizeEdge: Equatable, CaseIterable {
         case .bottomRight: return CGPoint(x: 0, y: 0)
         }
     }
+
+    /// The edges this handle drags on an unrotated shape.
+    var movingSides: (x: AlignmentService.ResizeSide?, y: AlignmentService.ResizeSide?) {
+        switch self {
+        case .topLeft:     return (.min, .min)
+        case .top:         return (nil, .min)
+        case .topRight:    return (.max, .min)
+        case .left:        return (.min, nil)
+        case .right:       return (.max, nil)
+        case .bottomLeft:  return (.min, .max)
+        case .bottom:      return (nil, .max)
+        case .bottomRight: return (.max, .max)
+        }
+    }
 }
 
 /// A model-space pointer translation becomes the shape's new frame, with the handle's opposite
 /// corner or edge pinned. Every branch taken per tick must agree with its neighbour at the
 /// boundary where it flips, or the shape visibly steps mid-drag.
 enum ResizeGeometry {
+    typealias ResizeSnapper = (
+        _ frame: CGRect,
+        _ movingX: AlignmentService.ResizeSide?,
+        _ movingY: AlignmentService.ResizeSide?
+    ) -> ResizeSnapResult
+
+    /// `resize`, with the dragged edges pulled onto nearby alignment targets. The snap is fed back
+    /// as a translation so the min-size floor, aspect lock and anchor pin still decide the frame.
+    static func snappedResize(
+        shape: CanvasShapeModel,
+        edge: ResizeEdge,
+        translation: CGSize,
+        lockAspectRatio: Bool,
+        snap: ResizeSnapper
+    ) -> (state: ResizeState, guides: [AlignmentGuide]) {
+        let raw = resize(shape: shape, edge: edge, translation: translation, lockAspectRatio: lockAspectRatio)
+        // A rotated shape's handles don't move axis-aligned edges.
+        guard abs(shape.rotation.truncatingRemainder(dividingBy: 360)) <= 1e-6 else { return (raw, []) }
+
+        let sides = edge.movingSides
+        let result = snap(raw.frame, sides.x, sides.y)
+        guard result.delta != .zero else { return (raw, result.guides) }
+
+        let snappedTranslation: CGSize
+        if lockAspectRatio {
+            snappedTranslation = aspectLockedTranslation(shape: shape, raw: raw, sides: sides, delta: result.delta)
+        } else {
+            snappedTranslation = CGSize(
+                width: translation.width + result.delta.width,
+                height: translation.height + result.delta.height
+            )
+        }
+        let snapped = resize(shape: shape, edge: edge, translation: snappedTranslation, lockAspectRatio: lockAspectRatio)
+        let landed = result.guides.filter { guide in
+            guard let side = guide.axis == .vertical ? sides.x : sides.y else { return false }
+            return abs(side.edge(of: snapped.frame, along: guide.axis) - guide.position) < 0.01
+        }
+        return (snapped, landed)
+    }
+
+    /// One scale drives both axes, so only the closer of the two matches can be honoured. The
+    /// translation is built along the shape's diagonal so `lockedSize`'s projection returns it exactly.
+    private static func aspectLockedTranslation(
+        shape: CanvasShapeModel,
+        raw: ResizeState,
+        sides: (x: AlignmentService.ResizeSide?, y: AlignmentService.ResizeSide?),
+        delta: CGSize
+    ) -> CGSize {
+        let signX = sides.x?.sign ?? 0
+        let signY = sides.y?.sign ?? 0
+        let usesX = delta.width != 0 && (delta.height == 0 || abs(delta.width) <= abs(delta.height))
+        let scale = usesX
+            ? (raw.newW + delta.width * signX) / max(shape.width, 1)
+            : (raw.newH + delta.height * signY) / max(shape.height, 1)
+        return CGSize(
+            width: shape.width * (scale - 1) * signX,
+            height: shape.height * (scale - 1) * signY
+        )
+    }
+
     static func resize(
         shape: CanvasShapeModel,
         edge: ResizeEdge,

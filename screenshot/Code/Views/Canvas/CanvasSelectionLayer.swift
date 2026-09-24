@@ -88,6 +88,8 @@ struct CanvasSelectionLayer: View {
                 rotationDelta: rotationBinding(for: shape),
                 resizeState: resizeBinding(for: shape),
                 dragSession: dragSession,
+                resolveResize: resolveResize,
+                onResizeEnded: dragSession.endSnapping,
                 onUpdate: onUpdate
             )
         } else {
@@ -100,6 +102,35 @@ struct CanvasSelectionLayer: View {
                 zoom: 1.0
             )
         }
+    }
+
+    private func resolveResize(
+        base: CanvasShapeModel,
+        edge: ResizeEdge,
+        translation: CGSize,
+        lockAspectRatio: Bool
+    ) -> ResizeState {
+        let (state, guides) = ResizeGeometry.snappedResize(
+            shape: base,
+            edge: edge,
+            translation: translation,
+            lockAspectRatio: lockAspectRatio
+        ) { frame, movingX, movingY in
+            AlignmentService.computeResizeSnap(
+                frame: frame,
+                movingX: movingX,
+                movingY: movingY,
+                otherShapeBounds: dragSession.snapTargets {
+                    AlignmentService.makeSnapTargets(from: resolvedShapes.filter { $0.id != base.id })
+                },
+                templateWidth: row.templateWidth,
+                templateHeight: row.templateHeight,
+                templateCount: row.templates.count,
+                snapThreshold: 4 / visualScale
+            )
+        }
+        dragSession.publishGuides(guides)
+        return state
     }
 
     /// A setter, not a `body`, so publishing the readout here is legal — and it is the one place

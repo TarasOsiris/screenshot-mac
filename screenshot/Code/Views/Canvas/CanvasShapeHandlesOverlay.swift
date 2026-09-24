@@ -9,9 +9,12 @@ struct CanvasShapeHandlesOverlay: View {
     let handleDiameter: CGFloat
     @Binding var rotationDelta: Double
     @Binding var resizeState: ResizeState?
-    /// Holds the gesture's pre-resize base — see `CanvasDragSession.resizeBase`. Only
-    /// `@ObservationIgnored` state is touched here, so this registers no per-tick dependency.
+    /// Holds the gesture's pre-resize base — see `CanvasDragSession.resizeBase` — and its snap
+    /// state. Only written here, never read in `body`, so this registers no per-tick dependency.
     let dragSession: CanvasDragSession
+    /// Turns a handle's model-space translation into the frame to show, snapping included.
+    let resolveResize: (_ base: CanvasShapeModel, _ edge: ResizeEdge, _ translation: CGSize, _ lockAspectRatio: Bool) -> ResizeState
+    let onResizeEnded: () -> Void
     let onUpdate: (CanvasShapeModel) -> Void
 
     /// Only `CanvasSelectionLayer` builds this, and only for a single selection — see the
@@ -164,17 +167,18 @@ struct CanvasShapeHandlesOverlay: View {
                     // second signal, for a fresh gesture following one whose `onEnded` never came.
                     if resizeState == nil || value.translation == .zero {
                         dragSession.resizeBase[shape.id] = shape
+                        dragSession.endSnapping()
                     }
                     let base = dragSession.resizeBase[shape.id] ?? shape
                     let effectiveScale = displayScale * zoom
-                    resizeState = ResizeGeometry.resize(
-                        shape: base,
-                        edge: edge,
-                        translation: CGSize(
+                    resizeState = resolveResize(
+                        base,
+                        edge,
+                        CGSize(
                             width: value.translation.width / effectiveScale,
                             height: value.translation.height / effectiveScale
                         ),
-                        lockAspectRatio: PlatformModifiers.shiftDown || base.locksAspectRatioOnResize
+                        PlatformModifiers.shiftDown || base.locksAspectRatioOnResize
                     )
                 }
                 .onEnded { _ in
@@ -189,6 +193,7 @@ struct CanvasShapeHandlesOverlay: View {
                     }
                     dragSession.resizeBase[shape.id] = nil
                     resizeState = nil
+                    onResizeEnded()
                 }
         )
     }

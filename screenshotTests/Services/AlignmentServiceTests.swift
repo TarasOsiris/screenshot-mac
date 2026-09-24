@@ -163,4 +163,107 @@ struct AlignmentServiceTests {
         // Verify rotated shape AABB differs from raw position
         #expect(shape.aabb.minX != 1, "Rotated shape AABB should differ from raw x")
     }
+
+    // MARK: - Resize snapping
+
+    private func resizeSnap(
+        frame: CGRect,
+        movingX: AlignmentService.ResizeSide?,
+        movingY: AlignmentService.ResizeSide?,
+        others: [CanvasShapeModel] = []
+    ) -> ResizeSnapResult {
+        AlignmentService.computeResizeSnap(
+            frame: frame,
+            movingX: movingX,
+            movingY: movingY,
+            otherShapeBounds: AlignmentService.makeSnapTargets(from: others),
+            templateWidth: 1000,
+            templateHeight: 2000,
+            templateCount: 1
+        )
+    }
+
+    @Test func resizeRightEdgeSnapsToOtherShapeLeftEdge() {
+        let other = CanvasShapeModel(type: .rectangle, x: 300, y: 800, width: 100, height: 100)
+        let result = resizeSnap(frame: CGRect(x: 100, y: 100, width: 197, height: 100), movingX: .max, movingY: nil, others: [other])
+        #expect(result.delta == CGSize(width: 3, height: 0))
+        #expect(result.guides.map(\.axis) == [.vertical])
+        #expect(result.guides.first?.position == 300)
+    }
+
+    @Test func resizeCornerSnapsBothAxes() {
+        let result = resizeSnap(frame: CGRect(x: 100, y: 100, width: 398, height: 902), movingX: .max, movingY: .max)
+        #expect(result.delta == CGSize(width: 2, height: -2))
+        #expect(result.guides.count == 2)
+    }
+
+    @Test func resizeNeverSnapsPinnedEdgeOrCenter() {
+        // The left edge sits 2 from the template edge, but only the right edge is moving.
+        let result = resizeSnap(frame: CGRect(x: 2, y: 100, width: 800, height: 100), movingX: .max, movingY: nil)
+        #expect(result.delta == .zero)
+        #expect(result.guides.isEmpty)
+    }
+
+    @Test func resizeOutOfThresholdDoesNotSnap() {
+        let result = resizeSnap(frame: CGRect(x: 100, y: 100, width: 300, height: 300), movingX: .min, movingY: .min)
+        #expect(result.delta == .zero)
+        #expect(result.guides.isEmpty)
+    }
+
+    @Test func snappedResizeLandsDraggedEdgeOnTarget() {
+        let shape = CanvasShapeModel(type: .rectangle, x: 100, y: 100, width: 200, height: 100)
+        let other = CanvasShapeModel(type: .rectangle, x: 400, y: 800, width: 100, height: 100)
+        let targets = AlignmentService.makeSnapTargets(from: [other])
+        let (state, guides) = ResizeGeometry.snappedResize(
+            shape: shape,
+            edge: .right,
+            translation: CGSize(width: 97, height: 0),
+            lockAspectRatio: false
+        ) { frame, movingX, movingY in
+            AlignmentService.computeResizeSnap(
+                frame: frame, movingX: movingX, movingY: movingY, otherShapeBounds: targets,
+                templateWidth: 1000, templateHeight: 2000, templateCount: 1
+            )
+        }
+        #expect(state.newX == 100)
+        #expect(state.newX + state.newW == 400)
+        #expect(state.newH == 100)
+        #expect(guides.count == 1)
+    }
+
+    @Test func snappedResizeKeepsAspectRatioWhenLocked() {
+        let shape = CanvasShapeModel(type: .rectangle, x: 100, y: 100, width: 200, height: 100)
+        let (state, guides) = ResizeGeometry.snappedResize(
+            shape: shape,
+            edge: .bottomRight,
+            translation: CGSize(width: 198, height: 99),
+            lockAspectRatio: true
+        ) { frame, movingX, movingY in
+            AlignmentService.computeResizeSnap(
+                frame: frame, movingX: movingX, movingY: movingY, otherShapeBounds: [],
+                templateWidth: 1000, templateHeight: 2000, templateCount: 1
+            )
+        }
+        // Right edge lands on the template center (500); the height follows the 2:1 ratio.
+        #expect(abs(state.newX + state.newW - 500) < 0.001)
+        #expect(abs(state.newW / state.newH - 2) < 0.001)
+        #expect(guides.map(\.axis) == [.vertical])
+    }
+
+    @Test func snappedResizeSkipsRotatedShapes() {
+        var shape = CanvasShapeModel(type: .rectangle, x: 100, y: 100, width: 200, height: 100)
+        shape.rotation = 30
+        var snapCalled = false
+        let (_, guides) = ResizeGeometry.snappedResize(
+            shape: shape,
+            edge: .right,
+            translation: CGSize(width: 10, height: 0),
+            lockAspectRatio: false
+        ) { _, _, _ in
+            snapCalled = true
+            return ResizeSnapResult(delta: .zero, guides: [])
+        }
+        #expect(!snapCalled)
+        #expect(guides.isEmpty)
+    }
 }

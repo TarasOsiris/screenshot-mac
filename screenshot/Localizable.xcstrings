@@ -105774,6 +105774,31 @@
       "localizations" : {
 
       }
+    },
+    "I built Screenshot Bro and use it myself every day to ship App Store screenshots for my other apps. If it's helping you too, a quick rating on the App Store keeps this app alive." : {
+      "localizations" : {
+
+      }
+    },
+    "Maybe Later" : {
+      "localizations" : {
+
+      }
+    },
+    "Rate Screenshot Bro" : {
+      "localizations" : {
+
+      }
+    },
+    "Blue **alignment guides** appear while moving or resizing to show which edges are aligned." : {
+      "localizations" : {
+
+      }
+    },
+    "A quick favor?" : {
+      "localizations" : {
+
+      }
     }
   },
   "version" : "1.0"

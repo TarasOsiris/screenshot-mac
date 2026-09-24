@@ -17,3 +17,8 @@ nonisolated struct SnapResult {
     let snappedOffset: CGSize  // adjusted drag offset in canvas coords
     let guides: [AlignmentGuide]
 }
+
+nonisolated struct ResizeSnapResult {
+    let delta: CGSize  // how far each moving edge must shift to land on its target
+    let guides: [AlignmentGuide]
+}

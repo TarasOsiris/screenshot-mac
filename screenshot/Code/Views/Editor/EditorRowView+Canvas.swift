@@ -378,21 +378,12 @@ extension EditorRowView {
                             },
                             onRequestImagePicker: { requestImagePicker(for: shape.id) },
                             onDragSnap: { draggedShape, rawOffset in
-                                let targets: [AlignmentService.OtherShapeBounds]
-                                if let cached = dragSession.cachedSnapTargets {
-                                    targets = cached
-                                } else if isInSelection {
-                                    let filtered = AlignmentService.makeSnapTargets(
-                                        from: resolvedShapes.filter { !selectedShapeIds.contains($0.id) }
+                                let targets = dragSession.snapTargets {
+                                    AlignmentService.makeSnapTargets(
+                                        from: isInSelection
+                                            ? resolvedShapes.filter { !selectedShapeIds.contains($0.id) }
+                                            : resolvedShapes.filter { $0.id != draggedShape.id }
                                     )
-                                    dragSession.cachedSnapTargets = filtered
-                                    targets = filtered
-                                } else {
-                                    let filtered = AlignmentService.makeSnapTargets(
-                                        from: resolvedShapes.filter { $0.id != draggedShape.id }
-                                    )
-                                    dragSession.cachedSnapTargets = filtered
-                                    targets = filtered
                                 }
                                 let threshold = 4 / row.displayScale(zoom: zoom)
                                 let result = AlignmentService.computeSnap(
@@ -404,9 +395,7 @@ extension EditorRowView {
                                     templateCount: row.templates.count,
                                     snapThreshold: threshold
                                 )
-                                if dragSession.activeGuides != result.guides {
-                                    dragSession.activeGuides = result.guides
-                                }
+                                dragSession.publishGuides(result.guides)
                                 return result
                             },
                             // After the commit `handleDragEnded` already made, so the readout

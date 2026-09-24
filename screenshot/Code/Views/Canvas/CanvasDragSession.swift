@@ -58,7 +58,23 @@ final class CanvasDragSession {
     func endDrag() {
         activeDragOffset = .zero
         draggingShapeId = nil
-        activeGuides = []
+        endSnapping()
+    }
+
+    /// Built once per gesture — the other shapes don't change mid-drag.
+    func snapTargets(orBuild build: () -> [AlignmentService.OtherShapeBounds]) -> [AlignmentService.OtherShapeBounds] {
+        if let cachedSnapTargets { return cachedSnapTargets }
+        let targets = build()
+        cachedSnapTargets = targets
+        return targets
+    }
+
+    func publishGuides(_ guides: [AlignmentGuide]) {
+        if activeGuides != guides { activeGuides = guides }
+    }
+
+    func endSnapping() {
+        publishGuides([])
         cachedSnapTargets = nil
     }
 }

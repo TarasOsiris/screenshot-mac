@@ -329,7 +329,7 @@ extension HelpSection {
                 .bullet("Hold **⌥** while dragging to duplicate the shape as you move."),
                 .heading("Snapping & alignment guides"),
                 .bullet("Shapes snap to other shapes' edges and centers, and to template boundaries, within a 4px threshold."),
-                .bullet("Blue **alignment guides** appear while dragging to show which edges are aligned."),
+                .bullet("Blue **alignment guides** appear while moving or resizing to show which edges are aligned."),
                 .heading("Align, distribute, match"),
                 .bullet("Right-click a multi-shape selection ▸ **Align Selected** for left / center / right, top / middle / bottom, plus **Distribute Horizontally** and **Distribute Vertically**."),
                 .bullet("**Match to This** copies the shape you right-clicked — its **Position**, its **Size**, or both — onto the rest of the selection."),
