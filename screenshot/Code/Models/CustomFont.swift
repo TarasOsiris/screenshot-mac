@@ -403,6 +403,9 @@ enum CustomFontRegistry {
         }
     }
 
+    /// The weights the picker offers; `normalizedPresetWeight` rounds every face onto one of these.
+    static let presetWeightBuckets = [300, 400, 500, 700]
+
     private static func normalizedPresetWeight(_ weight: Int) -> Int {
         switch weight {
         case ..<350: return 300
@@ -414,7 +417,7 @@ enum CustomFontRegistry {
 
     private static func presetWeights(in fonts: [CustomFont]) -> [Int] {
         let set = Set(fonts.map(\.suggestedFontWeight))
-        return [300, 400, 500, 700].filter(set.contains)
+        return presetWeightBuckets.filter(set.contains)
     }
 
     /// A variable font puts several faces in one preset (Thin/ExtraLight/Light are all 300), so

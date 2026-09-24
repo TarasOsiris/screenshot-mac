@@ -400,8 +400,8 @@ struct GPUploadFlowModelTests {
         #expect(uploader.callCount == 1)
         #expect(uploader.lastPackageName == "com.example.app")
         let summary = try? #require(model.uploadSummary)
-        #expect(summary?.totalScreenshots == 6, "3 templates × 2 languages")
-        #expect(summary?.languageCount == 2)
+        #expect(summary?.counts.screenshots == 6, "3 templates × 2 languages")
+        #expect(summary?.counts.languages == 2)
         #expect(model.errorMessage == nil)
         #expect(model.uploadTask == nil, "the task handle is released so the button re-enables")
     }

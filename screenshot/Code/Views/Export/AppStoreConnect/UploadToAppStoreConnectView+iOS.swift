@@ -37,10 +37,8 @@ extension UploadToAppStoreConnectView {
 
     @ViewBuilder
     private var iosErrorBanner: some View {
-        if let errorMessage = model.errorMessage {
-            UploadWizardErrorBanner(message: errorMessage) {
-                presentErrorDetails(fallback: errorMessage)
-            }
+        if let errorSlot {
+            UploadWizardErrorBanner(error: errorSlot)
         }
     }
 

@@ -1,4 +1,3 @@
-import CoreGraphics
 import Foundation
 
 /// Where the editor last saw the pointer and the viewport, so added and pasted shapes land in

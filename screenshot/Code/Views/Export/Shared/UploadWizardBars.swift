@@ -70,20 +70,21 @@ struct UploadWizardFooterBar<Leading: View, Actions: View>: View {
 
 /// The iPad counterpart of the footer's error slot: a full-width banner above the step content.
 struct UploadWizardErrorBanner: View {
-    let message: String
-    let showDetails: () -> Void
+    let error: UploadWizardErrorSlot
 
     var body: some View {
         HStack(alignment: .top, spacing: 8) {
             Image(systemName: "exclamationmark.triangle.fill")
                 .foregroundStyle(.red)
-            Text(message)
+            Text(error.message)
                 .font(.caption)
                 .foregroundStyle(.red)
                 .fixedSize(horizontal: false, vertical: true)
             Spacer()
-            Button("Details", action: showDetails)
-                .font(.caption)
+            if let showDetails = error.showDetails {
+                Button("Details", action: showDetails)
+                    .font(.caption)
+            }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.horizontal, 16)

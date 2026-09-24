@@ -189,17 +189,21 @@ final class GPUploadFlowModel {
         }
     }
 
+    /// Demo mode softens the duplicate-language error to a warning, so the upload path cannot
+    /// trust validation alone: one Play language means one delete-and-reupload.
+    private static func uploadLanguages(for plan: GPRowPlan) -> [GPUploadLanguage] {
+        guard plan.isEnabled else { return [] }
+        var claimedPlayCodes: Set<String> = []
+        return plan.localeTargets.compactMap { target -> GPUploadLanguage? in
+            guard target.isEnabled, let playCode = target.playLanguageCode else { return nil }
+            guard claimedPlayCodes.insert(playCode).inserted else { return nil }
+            return GPUploadLanguage(projectCode: target.appLocaleCode, playCode: playCode, label: target.appLocaleLabel)
+        }
+    }
+
     func buildUploadTargets() -> [GPUploadTarget] {
         rowPlans.compactMap { plan -> GPUploadTarget? in
-            guard plan.isEnabled else { return nil }
-            // Demo mode softens the duplicate-language error to a warning, so the upload path
-            // cannot trust validation alone: one Play language means one delete-and-reupload.
-            var claimedPlayCodes: Set<String> = []
-            let languages = plan.localeTargets.compactMap { target -> GPUploadLanguage? in
-                guard target.isEnabled, let playCode = target.playLanguageCode else { return nil }
-                guard claimedPlayCodes.insert(playCode).inserted else { return nil }
-                return GPUploadLanguage(projectCode: target.appLocaleCode, playCode: playCode, label: target.appLocaleLabel)
-            }
+            let languages = Self.uploadLanguages(for: plan)
             guard !languages.isEmpty else { return nil }
             return GPUploadTarget(
                 rowId: plan.id,
@@ -213,7 +217,17 @@ final class GPUploadFlowModel {
     }
 
     var plannedCounts: GPUploadCounts {
-        GPUploadCounts(targets: buildUploadTargets())
+        var counts = GPUploadCounts()
+        var playCodes: Set<String> = []
+        for plan in rowPlans {
+            let languages = Self.uploadLanguages(for: plan)
+            guard !languages.isEmpty else { continue }
+            counts.rows += 1
+            counts.screenshots += plan.templateCount * languages.count
+            playCodes.formUnion(languages.map(\.playCode))
+        }
+        counts.languages = playCodes.count
+        return counts
     }
 
     func startUpload() async {
@@ -224,6 +238,7 @@ final class GPUploadFlowModel {
             return
         }
         let targets = buildUploadTargets()
+        let counts = plannedCounts
         guard !targets.isEmpty else {
             errorMessage = String(localized: "No rows × languages are selected.")
             return
@@ -247,23 +262,21 @@ final class GPUploadFlowModel {
                     source: document,
                     progress: { p in self.uploadProgress = p }
                 )
-                let counts = GPUploadCounts(targets: targets)
                 let summary = GPUploadSummary(
-                    totalScreenshots: counts.screenshots,
-                    languageCount: counts.languages,
+                    counts: counts,
                     packageName: pkg,
                     sentForReview: didSendForReview
                 )
                 uploadSummary = summary
                 AnalyticsService.capture(.storeUploadFinished, [
                     .store: "play",
-                    .imageCount: summary.totalScreenshots,
-                    .localeCount: summary.languageCount,
+                    .imageCount: counts.screenshots,
+                    .localeCount: counts.languages,
                 ])
                 step = .done
                 NotificationService.notify(
                     title: String(localized: "Upload complete"),
-                    body: summary.countsText
+                    body: counts.text
                 )
             } catch is CancellationError {
                 errorMessage = String(localized: "Upload cancelled. The draft edit was discarded.")

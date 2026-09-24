@@ -40,14 +40,6 @@ final class AppState {
         _modify { yield &imageStore.images }
         set { imageStore.images = newValue }
     }
-    var missingImageFileNames: Set<String> {
-        get { imageStore.missing }
-        set { imageStore.missing = newValue }
-    }
-    var pendingDownloadImageFileNames: Set<String> {
-        get { imageStore.pending }
-        set { imageStore.pending = newValue }
-    }
     /// User-imported fonts. See CustomFontLibrary.
     let fonts: CustomFontLibrary
 

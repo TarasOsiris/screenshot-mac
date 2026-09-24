@@ -322,7 +322,7 @@ extension UploadToGooglePlayView {
         VStack(spacing: 14) {
             UploadCompleteHeader(title: "Upload complete")
             if let summary = model.uploadSummary {
-                Text(summary.countsText)
+                Text(summary.counts.text)
                     .font(.callout)
                     .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)

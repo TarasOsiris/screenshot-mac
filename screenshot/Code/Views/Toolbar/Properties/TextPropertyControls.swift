@@ -30,7 +30,7 @@ struct TextFontWeightControl: View, ShapeEditing {
     var body: some View {
         FontWeightPicker(
             selection: fontWeightBinding(shapeId),
-            options: customControlState?.availableWeights ?? FontWeightPicker.standardWeights
+            options: customControlState?.availableWeights ?? CustomFontRegistry.presetWeightBuckets
         )
     }
 }
@@ -59,7 +59,7 @@ struct MultiTextFontWeightControl: View, MultiShapeEditing {
     var body: some View {
         FontWeightPicker(
             selection: multiFontWeightBinding(controlState: controlState),
-            options: controlState?.availableWeights ?? FontWeightPicker.standardWeights
+            options: controlState?.availableWeights ?? CustomFontRegistry.presetWeightBuckets
         )
     }
 }

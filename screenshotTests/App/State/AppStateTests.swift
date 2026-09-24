@@ -10,13 +10,8 @@ struct AppStateTests {
 
     private func makeState(fonts: CustomFontLibrary = CustomFontLibrary()) -> (AppState, URL) { makeTestState(fonts: fonts) }
     private func cleanup(_ tempDir: URL) { cleanupTestState(tempDir) }
-    private func bundledFontURL(_ fileName: String) -> URL {
-        URL(fileURLWithPath: #filePath)
-            .deletingLastPathComponent()
-            .deletingLastPathComponent()
-            .deletingLastPathComponent()
-            .deletingLastPathComponent()
-            .appendingPathComponent("screenshot/Templates.bundle/shared/fonts/\(fileName)")
+    private func bundledFontURL(_ fileName: String) throws -> URL {
+        try #require(TemplateService.sharedFontsURL).appendingPathComponent(fileName)
     }
 
     // MARK: - Initial state
@@ -1635,7 +1630,7 @@ struct AppStateTests {
         let (state, tempDir) = makeState()
         defer { cleanup(tempDir) }
 
-        let sourceFontURL = bundledFontURL("Raleway-VariableFont_wght.ttf")
+        let sourceFontURL = try bundledFontURL("Raleway-VariableFont_wght.ttf")
         #expect(FileManager.default.fileExists(atPath: sourceFontURL.path))
         let importedSelection = state.importCustomFont(from: sourceFontURL)
         #expect(importedSelection != nil)
@@ -1659,7 +1654,7 @@ struct AppStateTests {
         let (state, tempDir) = makeState()
         defer { cleanup(tempDir) }
 
-        let selection = try #require(state.importCustomFont(from: bundledFontURL("Raleway-VariableFont_wght.ttf")))
+        let selection = try #require(state.importCustomFont(from: try bundledFontURL("Raleway-VariableFont_wght.ttf")))
 
         #expect(selection.fontName == "Raleway Regular")
         #expect(selection.fontWeight == 400)
@@ -1698,7 +1693,7 @@ struct AppStateTests {
         let (state, tempDir) = makeState()
         defer { cleanup(tempDir) }
 
-        let sourceFontURL = bundledFontURL("Raleway-VariableFont_wght.ttf")
+        let sourceFontURL = try bundledFontURL("Raleway-VariableFont_wght.ttf")
         _ = try #require(state.importCustomFont(from: sourceFontURL))
         try expectCleanupKeepsFont(sourceFontURL.lastPathComponent, whileTextMovesFrom: "Raleway Thin", to: "Raleway Bold", in: state)
     }
@@ -1733,7 +1728,7 @@ struct AppStateTests {
         let (state, tempDir) = makeState()
         defer { cleanup(tempDir) }
 
-        let sourceFontURL = bundledFontURL("Raleway-VariableFont_wght.ttf")
+        let sourceFontURL = try bundledFontURL("Raleway-VariableFont_wght.ttf")
         let selection = try #require(state.importCustomFont(from: sourceFontURL))
         state.unregisterCustomFonts()
         #expect(state.customFonts.isEmpty)
