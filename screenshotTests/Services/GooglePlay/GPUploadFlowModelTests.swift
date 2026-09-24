@@ -29,14 +29,9 @@ struct GPUploadFlowModelTests {
                 uploader: uploader,
                 api: verifier,
                 credentials: credentials ?? GooglePlayCredentialsStore.isolatedForTesting(),
-                defaults: Self.isolatedDefaults()
+                defaults: makeIsolatedDefaults("gpRecents")
             )
             model.bind(document: document)
-        }
-
-        /// The recents list is UserDefaults-backed; a test run must not write into the real one.
-        static func isolatedDefaults() -> UserDefaults {
-            UserDefaults(suiteName: "GPUploadFlowModelTests.\(UUID().uuidString)") ?? .standard
         }
     }
 
@@ -192,7 +187,7 @@ struct GPUploadFlowModelTests {
     // MARK: - Recents
 
     @Test func recentsRememberTheMostRecentFirstAndCapTheList() {
-        let defaults = Harness.isolatedDefaults()
+        let defaults = makeIsolatedDefaults("gpRecents")
         for index in 0..<(GooglePlayRecentPackages.limit + 3) {
             GooglePlayRecentPackages.remember("com.example.app\(index)", defaults: defaults)
         }
@@ -204,7 +199,7 @@ struct GPUploadFlowModelTests {
     }
 
     @Test func reusingAPackageMovesItToTheFrontWithoutDuplicating() {
-        let defaults = Harness.isolatedDefaults()
+        let defaults = makeIsolatedDefaults("gpRecents")
         GooglePlayRecentPackages.remember("com.a", defaults: defaults)
         GooglePlayRecentPackages.remember("com.b", defaults: defaults)
         GooglePlayRecentPackages.remember("com.a", defaults: defaults)

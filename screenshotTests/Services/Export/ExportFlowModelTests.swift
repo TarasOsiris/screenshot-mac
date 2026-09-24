@@ -35,13 +35,6 @@ private final class StubDocument: ExportDocument {
 @MainActor
 struct ExportFlowModelTests {
 
-    private func makeDefaults(_ label: String) -> UserDefaults {
-        let suite = "ExportFlowModelTests.\(label).\(UUID().uuidString)"
-        let defaults = UserDefaults(suiteName: suite)!
-        defaults.removePersistentDomain(forName: suite)
-        return defaults
-    }
-
     private func makeRow(_ label: String) -> ScreenshotRow {
         var row = ScreenshotRow(
             templates: [ScreenshotTemplate()],
@@ -62,7 +55,7 @@ struct ExportFlowModelTests {
     }
 
     @Test func rowExportWritesOneZeroPaddedFilePerRow() async throws {
-        let model = ExportFlowModel(defaults: makeDefaults("rows"))
+        let model = ExportFlowModel(defaults: makeIsolatedDefaults("rows"))
         let document = StubDocument(rows: [makeRow("Alpha"), makeRow("Beta")])
         let base = makeTemporaryDataDirectory(label: "export-flow-rows")
         defer { try? FileManager.default.removeItem(at: base) }
@@ -92,7 +85,7 @@ struct ExportFlowModelTests {
     /// The temp-folder cleanup used to be `try? FileManager.default.removeItem(...)` repeated at
     /// six call sites in the view; a staged export that fails must not leave the folder behind.
     @Test func failedStagedExportRemovesTheTempFolder() async throws {
-        let model = ExportFlowModel(defaults: makeDefaults("cleanup"))
+        let model = ExportFlowModel(defaults: makeIsolatedDefaults("cleanup"))
         let document = StubDocument(rows: [makeRow("Alpha")])
         let base = makeTemporaryDataDirectory(label: "export-flow-cleanup")
         // Removing the base folder makes `createDirectory` inside it fail, standing in for any
@@ -116,7 +109,7 @@ struct ExportFlowModelTests {
     }
 
     @Test func emptyRowSetIsANoOp() async throws {
-        let model = ExportFlowModel(defaults: makeDefaults("empty"))
+        let model = ExportFlowModel(defaults: makeIsolatedDefaults("empty"))
         let document = StubDocument(rows: [])
         let base = makeTemporaryDataDirectory(label: "export-flow-empty")
         defer { try? FileManager.default.removeItem(at: base) }
@@ -130,7 +123,7 @@ struct ExportFlowModelTests {
     }
 
     @Test func discardingAStagedExportRemovesTheFilesAndClearsIt() throws {
-        let model = ExportFlowModel(defaults: makeDefaults("discard"))
+        let model = ExportFlowModel(defaults: makeIsolatedDefaults("discard"))
         let base = makeTemporaryDataDirectory(label: "export-flow-discard")
         let file = base.appendingPathComponent("01.png")
         try Data([0x1]).write(to: file)
@@ -144,7 +137,7 @@ struct ExportFlowModelTests {
 
     /// Success is transient by design — the toolbar button reverts from "Exported" after a beat.
     @Test func showingSuccessSetsTheTransientFlag() {
-        let model = ExportFlowModel(defaults: makeDefaults("success"))
+        let model = ExportFlowModel(defaults: makeIsolatedDefaults("success"))
         #expect(!model.exportSuccess)
         model.showSuccess(projectName: "Fixture", destination: "folder")
         #expect(model.exportSuccess)
@@ -154,7 +147,7 @@ struct ExportFlowModelTests {
     /// The report used to be recorded and then dropped: a user whose screenshots had gone missing
     /// got "12 screenshots exported" over a folder of blank frames and uploaded them.
     @Test func anExportThatDrewHolesSaysSoInsteadOfClaimingSuccess() async throws {
-        let model = ExportFlowModel(defaults: makeDefaults("holes"))
+        let model = ExportFlowModel(defaults: makeIsolatedDefaults("holes"))
         let document = StubDocument(rows: [makeRow("Alpha")])
         document.unreadableResourceNames = ["gone.png"]
         let base = makeTemporaryDataDirectory(label: "export-flow-holes")
@@ -177,7 +170,7 @@ struct ExportFlowModelTests {
     /// The alert is bound to `incompleteMessage` and only its OK button clears it, so a run that
     /// started with it on screen used to leave it there describing files nobody exported.
     @Test func aNewRunClearsThePreviousRunsBlankFrameReport() async throws {
-        let model = ExportFlowModel(defaults: makeDefaults("holes-cleared"))
+        let model = ExportFlowModel(defaults: makeIsolatedDefaults("holes-cleared"))
         let base = makeTemporaryDataDirectory(label: "export-flow-holes-cleared")
         defer { try? FileManager.default.removeItem(at: base) }
         model.incompleteMessage = "left over from the previous run"
