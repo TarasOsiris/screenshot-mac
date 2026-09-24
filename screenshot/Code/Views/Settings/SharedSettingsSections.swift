@@ -49,6 +49,67 @@ final class ICloudSettingsModel {
     }
 }
 
+/// The rows of the iCloud Sync section. Each screen owns the `Section` and the enable/disable
+/// confirmations, which attach to different containers on each platform.
+struct ICloudSyncSettingsRows: View {
+    let iCloud: ICloudSettingsModel
+    /// Asks the screen to confirm; the toggle itself never flips the setting.
+    let requestToggle: (_ enable: Bool) -> Void
+
+    @Environment(ICloudSyncStatusModel.self) private var iCloudStatus
+
+    var body: some View {
+        if !iCloud.isAvailable {
+            Label(unavailableMessage, systemImage: "exclamationmark.triangle")
+                .foregroundStyle(.secondary)
+        } else {
+            Toggle("Sync with iCloud", isOn: Binding(
+                get: { iCloud.isEnabled },
+                set: { requestToggle($0) }
+            ))
+            .disabled(iCloud.isMigrating)
+
+            if let progress = iCloud.migrationProgress {
+                HStack(spacing: 8) {
+                    ProgressView(value: progress)
+                    Text("\(Int(progress * 100))%")
+                        .monospacedDigit()
+                        .foregroundStyle(.secondary)
+                }
+            }
+
+            if iCloud.isEnabled {
+                // Plain HStack rather than LabeledContent: LabeledContent gives its trailing
+                // content a flexible frame, which made this (conditional Label) row balloon
+                // to a huge height.
+                HStack {
+                    Text("Status")
+                    Spacer()
+                    ICloudStatusLabel(syncStatus: iCloudStatus.status)
+                }
+            }
+
+            if let error = iCloud.errorMessage {
+                Text(error)
+                    .foregroundStyle(.red)
+                    .font(.caption)
+            }
+
+            Text("Syncing may take a while if you have a lot of projects.")
+                .font(.caption)
+                .foregroundStyle(.orange)
+        }
+    }
+
+    private var unavailableMessage: LocalizedStringKey {
+        #if os(macOS)
+        "iCloud is not available. Sign in to iCloud in System Settings."
+        #else
+        "iCloud is not available. Sign in to iCloud in Settings."
+        #endif
+    }
+}
+
 /// Live iCloud state, including in-flight transfer progress. macOS used to show only
 /// connected/connecting because its copy predated the progress states.
 struct ICloudStatusLabel: View {
