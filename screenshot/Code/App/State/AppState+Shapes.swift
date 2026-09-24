@@ -457,20 +457,14 @@ extension AppState {
     func copySelectedShapes() {
         guard let rowIdx = selectedRowIndex, !selectedShapeIds.isEmpty else { return }
         let ids = selectedShapeIds
-        clipboard = rows[rowIdx].shapes.filter { ids.contains($0.id) }
-        #if os(macOS)
-        clipboardPasteboardChangeCount = NSPasteboard.general.changeCount
-        #endif
+        clipboard.copy(rows[rowIdx].shapes.filter { ids.contains($0.id) })
     }
 
     func pasteShapes() {
         guard let rowIdx = selectedRowIndex else { return }
 
         #if os(macOS)
-        let pasteboardChanged = NSPasteboard.general.changeCount != clipboardPasteboardChangeCount
-
-        // If pasteboard changed since last internal copy, try system image first
-        if pasteboardChanged,
+        if clipboard.systemPasteboardIsNewer,
            let image = NSImage(pasteboard: NSPasteboard.general), image.isValid {
             let row = rows[rowIdx]
             let center = canvasHints.mouseModelPosition ?? CGPoint(x: row.templateWidth / 2, y: row.templateHeight / 2)
@@ -480,19 +474,20 @@ extension AppState {
         #endif
 
         // Otherwise paste from internal shape clipboard
-        guard !clipboard.isEmpty else { return }
-        withRowUndo(clipboard.count == 1 ? "Paste Shape" : "Paste Shapes", rowId: rows[rowIdx].id) {
+        let copied = clipboard.shapes
+        guard !copied.isEmpty else { return }
+        withRowUndo(copied.count == 1 ? "Paste Shape" : "Paste Shapes", rowId: rows[rowIdx].id) {
             var newIds: Set<UUID> = []
-            let groupMinX = clipboard.map(\.x).min() ?? 0
-            let groupMinY = clipboard.map(\.y).min() ?? 0
-            let groupMaxX = clipboard.map { $0.x + $0.width }.max() ?? 0
-            let groupMaxY = clipboard.map { $0.y + $0.height }.max() ?? 0
+            let groupMinX = copied.map(\.x).min() ?? 0
+            let groupMinY = copied.map(\.y).min() ?? 0
+            let groupMaxX = copied.map { $0.x + $0.width }.max() ?? 0
+            let groupMaxY = copied.map { $0.y + $0.height }.max() ?? 0
             let groupCenterX = (groupMinX + groupMaxX) / 2
             let groupCenterY = (groupMinY + groupMaxY) / 2
 
-            for source in clipboard {
+            for source in copied {
                 var pasted: CanvasShapeModel
-                if let mousePos = canvasHints.mouseModelPosition, clipboard.count == 1 {
+                if let mousePos = canvasHints.mouseModelPosition, copied.count == 1 {
                     pasted = source.duplicated()
                     pasted.x = mousePos.x - pasted.width / 2
                     pasted.y = mousePos.y - pasted.height / 2

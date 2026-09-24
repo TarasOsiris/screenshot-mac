@@ -168,9 +168,7 @@ final class AppState {
     var hasSelection: Bool { !selectedShapeIds.isEmpty }
 
     // Clipboard
-    var clipboard: [CanvasShapeModel] = []
-    var clipboardPasteboardChangeCount: Int = 0
-    var textStyleClipboard: TextStyle?
+    let clipboard = ShapeClipboard()
 
     var activeProject: Project? {
         visibleProjects.first { $0.id == activeProjectId }
