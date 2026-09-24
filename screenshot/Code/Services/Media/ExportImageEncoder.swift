@@ -5,6 +5,18 @@ import UIKit
 #endif
 import CoreGraphics
 
+enum ExportImageFormat: String {
+    case png
+    case jpeg
+
+    var fileExtension: String {
+        switch self {
+        case .png: return "png"
+        case .jpeg: return "jpeg"
+        }
+    }
+}
+
 enum ExportImageEncoder {
     /// Every nil below surfaces to the user as a bare `ExportError.renderFailed`; naming the
     /// stage is the only way to tell a zero-size image from an out-of-memory CGContext.
