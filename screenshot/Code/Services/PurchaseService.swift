@@ -186,6 +186,8 @@ final class PurchaseService {
     func start() {
         guard !didStart else { return }
         didStart = true
+        // Tests run in the app host, so configuring here would register a fresh anonymous customer per run.
+        guard !PersistenceService.isRunningUnderXCTest else { return }
 
         #if DEBUG
         if Self.isForceProUnlockedForCurrentProcess {
