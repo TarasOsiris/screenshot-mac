@@ -86,7 +86,7 @@ caller's executor instead of offloading — the shape that shipped as a multi-se
 that must read a non-Sendable value on the caller's actor before delegating to an `@concurrent`
 overload) and both carry `// swiftlint:disable:next inherited_executor_async` with the reason.
 
-`.codex/` mirrors the hooks and agent definitions for the cloud (Codex) harness; `AGENTS.md` is the agent registry. `tools/` holds Python utilities: `gen_template.py` (SVG→template), `translate_catalog.py` + `translate_popular_languages.py` + `xcstrings_format.py` (localization), and `project-schema.json` (JSON Schema for `project.json`).
+`.codex/` mirrors the hooks and agent definitions for the cloud (Codex) harness and is **generated** — edit `.claude/agents/` or the `hooks` in `.claude/settings.json`, then run `python3 tools/sync_agent_config.py` (`--check` fails if `.codex/` is stale); `AGENTS.md` is the agent registry. `tools/` holds Python utilities: `gen_template.py` (SVG→template), `translate_catalog.py` + `translate_popular_languages.py` + `xcstrings_format.py` (localization), and `project-schema.json` (JSON Schema for `project.json`).
 
 ### In-app MCP server (macOS, shipping)
 
