@@ -192,12 +192,12 @@ struct OrphanedResourceSweepTests {
         state.rows[0].backgroundImageConfig.fileName = "gone.png"
         state.rows[0].backgroundStyle = .image
         state.missingImageFileNames = ["gone.png"]
-        state.isLoadingScreenshotImages = true
+        state.imageStore.isLoading = true
 
         state.reloadUnresolvedScreenshotImages()
 
-        #expect(state.needsScreenshotImageReload)
-        #expect(state.isLoadingScreenshotImages, "The pass in flight must not have been cancelled")
+        #expect(state.imageStore.needsReload)
+        #expect(state.imageStore.isLoading, "The pass in flight must not have been cancelled")
     }
 
     /// Creating a project used to move `activeProjectId` without a teardown, so a decode pass in
@@ -206,13 +206,13 @@ struct OrphanedResourceSweepTests {
     @Test func creatingAProjectMidLoadDoesNotStrandTheLoadingFlag() throws {
         let (state, tempDir) = makeTestState()
         defer { cleanupTestState(tempDir) }
-        state.isLoadingScreenshotImages = true
-        state.needsScreenshotImageReload = true
+        state.imageStore.isLoading = true
+        state.imageStore.needsReload = true
 
         state.createProject(name: "Second")
 
-        #expect(!state.isLoadingScreenshotImages)
-        #expect(!state.needsScreenshotImageReload)
+        #expect(!state.imageStore.isLoading)
+        #expect(!state.imageStore.needsReload)
     }
 
     @discardableResult

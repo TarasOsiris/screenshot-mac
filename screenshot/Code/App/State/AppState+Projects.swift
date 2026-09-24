@@ -242,17 +242,8 @@ extension AppState {
         textEdit.isActive = false
         cancelPendingDebounceTasks()
         undoManager?.removeAllActions()
-        imageLoadTask?.cancel()
-        imageLoadTask = nil
-        isLoadingScreenshotImages = false
-        needsScreenshotImageReload = false
+        imageStore.reset()
         unregisterCustomFonts()
-        screenshotImages = [:]
-        missingImageFileNames = []
-        pendingDownloadImageFileNames = []
-        reportedMissingImageFileNames = []
-        missingResourceVerdictTask?.cancel()
-        missingResourceVerdictTask = nil
     }
 
     func beginProjectOpening(for id: UUID) {

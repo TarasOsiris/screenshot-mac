@@ -32,23 +32,22 @@ final class AppState {
     let coach = OnboardingCoachController()
     /// Editor popovers that must be single across the editor. See EditorPresentation.
     let presentation = EditorPresentation()
-    var screenshotImages: [String: NSImage] = [:]
-    /// Referenced resources the editor asked for and did not get. Transient view state, not
-    /// document state — an absent file is not an edit, and the model deliberately keeps its
-    /// reference so the bytes coming back later put the screenshot back.
-    var missingImageFileNames: Set<String> = []
-    /// The subset iCloud still owes us bytes for, which is a wait rather than a hole.
-    var pendingDownloadImageFileNames: Set<String> = []
-    /// Reset per project so one absent file is one issue, not one per locale switch.
-    @ObservationIgnored var reportedMissingImageFileNames: Set<String> = []
-    /// Holds the verdict on absent iCloud resources open until the file provider has had its
-    /// chance. See `reportMissingResources`.
-    @ObservationIgnored var missingResourceVerdictTask: Task<Void, Never>?
-    /// A decode pass is running. iCloud delivers a large project's resources in bursts, and
-    /// restarting the pass on each one would cancel the decode already in flight and reset the
-    /// progress pill; the flag below is what turns those bursts into one follow-up pass.
-    @ObservationIgnored var isLoadingScreenshotImages = false
-    @ObservationIgnored var needsScreenshotImageReload = false
+    /// Decoded screenshots and what couldn't be decoded. Not document state — see ScreenshotImageStore.
+    let imageStore = ScreenshotImageStore()
+    // Forwarded so the renderers, views and verbs keep one spelling for the editor's images.
+    var screenshotImages: [String: NSImage] {
+        get { imageStore.images }
+        _modify { yield &imageStore.images }
+        set { imageStore.images = newValue }
+    }
+    var missingImageFileNames: Set<String> {
+        get { imageStore.missing }
+        set { imageStore.missing = newValue }
+    }
+    var pendingDownloadImageFileNames: Set<String> {
+        get { imageStore.pending }
+        set { imageStore.pending = newValue }
+    }
     /// User-imported fonts. See CustomFontLibrary.
     let fonts: CustomFontLibrary
 
@@ -115,7 +114,6 @@ final class AppState {
 
     @ObservationIgnored var saveTask: Task<Void, Never>?
 
-    @ObservationIgnored var imageLoadTask: Task<Void, Never>?
     @ObservationIgnored var projectOpenTask: Task<Void, Never>?
     /// Serializes off-main iCloud reloads so overlapping remote changes don't race on the
     /// tombstone merge / own-write bookkeeping.

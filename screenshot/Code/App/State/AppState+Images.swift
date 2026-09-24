@@ -64,24 +64,6 @@ private struct StagedImageWrite {
     let source: StagedImageSource
 }
 
-/// What the decode loop couldn't produce, split by whose fault it is. `notDownloaded` is a wait —
-/// the file provider owes us the bytes — so it asks for them rather than reporting a hole.
-/// `nonisolated` because the decode loop that fills it is detached.
-nonisolated private struct UnloadableResources {
-    var missing: Set<String> = []
-    var pending: Set<String> = []
-
-    var isEmpty: Bool { missing.isEmpty && pending.isEmpty }
-
-    /// `availability` stats a ubiquitous path, which can block, so this must stay off the main actor.
-    mutating func record(_ fileName: String, at url: URL) {
-        switch PersistenceService.availability(of: url) {
-        case .notDownloaded: pending.insert(fileName)
-        case .present, .absent: missing.insert(fileName)
-        }
-    }
-}
-
 extension AppState {
 
     // MARK: - Screenshot Images
@@ -326,34 +308,21 @@ extension AppState {
         }
         let resourcesURL = PersistenceService.resourcesDir(activeId)
 
-        imageLoadTask?.cancel()
-        imageLoadTask = nil
-        // The cancelled pass will never reach `finishImageLoading`, so it can't clear this itself.
-        isLoadingScreenshotImages = false
+        imageStore.cancelLoad()
 
-        let needed = editorReferencedImageFileNames()
-
-        // Evict images that are no longer needed (e.g. after locale switch)
-        let stale = Set(screenshotImages.keys).subtracting(needed)
-        for key in stale {
-            screenshotImages.removeValue(forKey: key)
-        }
-        missingImageFileNames.formIntersection(needed)
-        pendingDownloadImageFileNames.formIntersection(needed)
-
-        let toLoad = needed.filter { screenshotImages[$0] == nil }
+        let toLoad = imageStore.retain(only: editorReferencedImageFileNames())
         guard !toLoad.isEmpty else {
             projectOpen.finishImages()
             return
         }
         projectOpen.beginImages(total: toLoad.count)
-        isLoadingScreenshotImages = true
+        imageStore.isLoading = true
 
         // Load downsampled images on a background thread, then publish in batches on main.
         // Full-resolution images are loaded from disk on-demand in export paths.
         let maxDim = ImageDownsampler.editorImageMaxDimension
         let batchSize = Self.imagePublishBatchSize
-        imageLoadTask = Task.detached { [weak self] in
+        imageStore.loadTask = Task.detached { [weak self] in
             var batch: [String: NSImage] = [:]
             var unloadable = UnloadableResources()
             var completed = 0
@@ -385,26 +354,20 @@ extension AppState {
     /// while we were decoding, and the incoming project must not inherit these images.
     private func publishLoadedImages(_ images: [String: NSImage], completed: Int, for projectId: UUID) {
         guard activeProjectId == projectId else { return }
-        screenshotImages.merge(images) { _, new in new }
-        // A resource that arrived is neither missing nor pending any more, and this is the only
-        // place that knows it — a retry re-reads the same names, so nothing else clears them.
-        missingImageFileNames.subtract(images.keys)
-        pendingDownloadImageFileNames.subtract(images.keys)
+        imageStore.publish(images)
         projectOpen.advanceImages(to: completed)
     }
 
     private func finishImageLoading(_ unloadable: UnloadableResources, in resourcesURL: URL, for projectId: UUID) {
         guard activeProjectId == projectId else { return }
-        isLoadingScreenshotImages = false
+        imageStore.isLoading = false
         projectOpen.finishImages()
         if !unloadable.isEmpty {
-            missingImageFileNames.formUnion(unloadable.missing)
-            pendingDownloadImageFileNames.formUnion(unloadable.pending)
             requestDownload(of: unloadable.missing.union(unloadable.pending), in: resourcesURL)
-            reportMissingResources(unloadable.missing, pending: unloadable.pending.count)
+            imageStore.record(unloadable)
         }
-        guard needsScreenshotImageReload else { return }
-        needsScreenshotImageReload = false
+        guard imageStore.needsReload else { return }
+        imageStore.needsReload = false
         reloadUnresolvedScreenshotImages()
     }
 
@@ -417,9 +380,9 @@ extension AppState {
     /// names stat as absent rather than not-downloaded. Gating the retry on `pending` alone left
     /// exactly the case this is for — a project opened mid-sync — stuck on the missing badge.
     func reloadUnresolvedScreenshotImages() {
-        guard !pendingDownloadImageFileNames.isEmpty || !missingImageFileNames.isEmpty else { return }
-        guard !isLoadingScreenshotImages else {
-            needsScreenshotImageReload = true
+        guard imageStore.hasUnresolved else { return }
+        guard !imageStore.isLoading else {
+            imageStore.needsReload = true
             return
         }
         loadScreenshotImages()
@@ -432,59 +395,6 @@ extension AppState {
     private func requestDownload(of fileNames: Set<String>, in resourcesURL: URL) {
         guard !fileNames.isEmpty else { return }
         iCloudMonitor?.requestDownload(fileNames.map { resourcesURL.appendingPathComponent($0) })
-    }
-
-    /// How long an iCloud project gets to finish arriving before an absent resource counts as a
-    /// hole. Long enough to cover the placeholder gap below, short enough that the report still
-    /// lands in the session it belongs to.
-    private static let missingResourceVerdictDelay = Duration.seconds(60)
-
-    /// On iCloud the first pass is the wrong moment to judge. A peer's `project.json` is one small
-    /// file and lands before the file provider has placeholders for the resources it names, so
-    /// every one of them stats as absent — which is why the reports that came back read
-    /// `loaded: 0, missing: 38, pending: 0`, a project that was merely still arriving. Judging
-    /// after a grace period instead reads the live set, which the retry passes
-    /// (`reloadUnresolvedScreenshotImages`) have been subtracting from meanwhile.
-    ///
-    /// Local storage judges immediately: there is nothing on the way, so absent is absent.
-    ///
-    /// A switch or a quit inside the window cancels the verdict rather than forcing it, and that is
-    /// the trade: reporting on teardown would report the project the user merely glanced at
-    /// mid-sync, which is the false positive this exists to remove. Nothing is lost permanently —
-    /// the dedupe set is per project, so the next open that lasts a minute asks again.
-    private func reportMissingResources(_ missing: Set<String>, pending: Int) {
-        guard PersistenceService.isUsingICloud else {
-            emitMissingResourceReport(missing, pending: pending)
-            return
-        }
-        // The first failing pass starts the clock and later ones join it. Restarting it per pass
-        // would let a project that syncs in bursts postpone the verdict indefinitely.
-        guard missingResourceVerdictTask == nil else { return }
-        missingResourceVerdictTask = Task { [weak self] in
-            try? await Task.sleep(for: Self.missingResourceVerdictDelay)
-            guard !Task.isCancelled, let self else { return }
-            missingResourceVerdictTask = nil
-            emitMissingResourceReport(missingImageFileNames, pending: pendingDownloadImageFileNames.count)
-        }
-    }
-
-    /// Counts only, and once per name per project — the file names would say what the user is
-    /// building, and a locale switch re-walks the same resources.
-    ///
-    /// `.warning`, not the default error level: a resource can also be absent because iCloud
-    /// hasn't caught up or the user removed the file, and neither is our bug. It stays a report
-    /// rather than a breadcrumb because a project whose resources have vanished is the most
-    /// damaging failure this app has had, and the last one went unnoticed for two days.
-    private func emitMissingResourceReport(_ missing: Set<String>, pending: Int) {
-        let unreported = missing.subtracting(reportedMissingImageFileNames)
-        guard !unreported.isEmpty else { return }
-        reportedMissingImageFileNames.formUnion(unreported)
-        CrashReportingService.report(.referencedResourceMissing, extra: [
-            "missing": unreported.count,
-            "pending": pending,
-            "loaded": screenshotImages.count,
-            "icloud": PersistenceService.isUsingICloud,
-        ], level: .warning)
     }
 
     func addImageShape(image: NSImage, centerX: CGFloat, centerY: CGFloat, source: ImageImportOrigin) {
