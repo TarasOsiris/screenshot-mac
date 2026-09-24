@@ -30,7 +30,36 @@ struct TextFontWeightControl: View, ShapeEditing {
     var body: some View {
         FontWeightPicker(
             selection: fontWeightBinding(shapeId),
-            options: customControlState?.availableWeights ?? [300, 400, 500, 700]
+            options: customControlState?.availableWeights ?? FontWeightPicker.standardWeights
+        )
+    }
+}
+
+struct MultiTextFontPickerControl: View, MultiShapeEditing {
+    let state: AppState
+    /// The first selected shape's custom-font state; the whole selection follows it.
+    let controlState: CustomFontControlState?
+
+    var body: some View {
+        FontPicker(
+            selection: multiFontNameBinding(),
+            fontWeight: multiFontWeightBinding(controlState: controlState),
+            italic: multiItalicBinding(controlState: controlState),
+            customFaces: state.customFaces,
+            onApplyImportedSelection: { applyImportedFontSelectionOnSelection($0) },
+            onImportFont: { url in state.importCustomFont(from: url) }
+        )
+    }
+}
+
+struct MultiTextFontWeightControl: View, MultiShapeEditing {
+    let state: AppState
+    let controlState: CustomFontControlState?
+
+    var body: some View {
+        FontWeightPicker(
+            selection: multiFontWeightBinding(controlState: controlState),
+            options: controlState?.availableWeights ?? FontWeightPicker.standardWeights
         )
     }
 }

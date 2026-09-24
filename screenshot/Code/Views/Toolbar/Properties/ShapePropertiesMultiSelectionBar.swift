@@ -110,7 +110,6 @@ struct ShapePropertiesMultiSelectionBar: View, MultiShapeEditing {
         if type == .text {
             let textShapes = shapes
             let primaryControlState = textShapes.first.flatMap(CustomFontRegistry.controlState(for:))
-            let weightBinding = multiFontWeightBinding(controlState: primaryControlState)
             let italicBinding = multiItalicBinding(controlState: primaryControlState)
 
             ShapePropertiesSection {
@@ -122,22 +121,12 @@ struct ShapePropertiesMultiSelectionBar: View, MultiShapeEditing {
             }
 
             ShapePropertiesSection {
-                FontPicker(
-                    selection: multiFontNameBinding(),
-                    fontWeight: weightBinding,
-                    italic: italicBinding,
-                    customFaces: state.customFaces,
-                    onApplyImportedSelection: { applyImportedFontSelectionOnSelection($0) },
-                    onImportFont: { url in state.importCustomFont(from: url) }
-                )
+                MultiTextFontPickerControl(state: state, controlState: primaryControlState)
 
                 ShapePropertiesSeparator()
 
                 if showsMultiFontWeightPicker(primary: primaryControlState, textShapes: textShapes) {
-                    FontWeightPicker(
-                        selection: weightBinding,
-                        options: primaryControlState?.availableWeights ?? [300, 400, 500, 700]
-                    )
+                    MultiTextFontWeightControl(state: state, controlState: primaryControlState)
 
                     ShapePropertiesSeparator()
                 }
@@ -180,7 +169,14 @@ struct ShapePropertiesMultiSelectionBar: View, MultiShapeEditing {
 
         if type.supportsOutline {
             ShapePropertiesSection {
-                multiOutlineControls(shapes: shapes)
+                ShapeOutlineControls(
+                    hasOutline: Binding(
+                        get: { shapes.contains { ($0.outlineWidth ?? 0) > 0 } },
+                        set: { setOutlineOnSelection($0) }
+                    ),
+                    outlineColor: multiShapeOptionalBinding(\.outlineColor, default: CanvasShapeModel.defaultOutlineColor),
+                    outlineWidth: multiShapeOptionalBinding(\.outlineWidth, default: CanvasShapeModel.defaultOutlineWidth, continuous: true)
+                )
             }
         }
 
@@ -188,33 +184,5 @@ struct ShapePropertiesMultiSelectionBar: View, MultiShapeEditing {
             shadow: multiShadowBinding(),
             showsOverrideDot: shapes.contains { $0.shadow?.isActive == true }
         )
-    }
-
-    @ViewBuilder
-    private func multiOutlineControls(shapes: [CanvasShapeModel]) -> some View {
-        let hasOutline = shapes.contains { ($0.outlineWidth ?? 0) > 0 }
-
-        Toggle("Outline", isOn: Binding(
-            get: { hasOutline },
-            set: { setOutlineOnSelection($0) }
-        ))
-        .toggleStyle(.switch)
-        .compactControlSize()
-
-        if hasOutline {
-            ColorPicker("", selection: multiShapeOptionalBinding(\.outlineColor, default: CanvasShapeModel.defaultOutlineColor), supportsOpacity: false)
-                .labelsHidden()
-                .frame(width: UIMetrics.ColorSwatch.inline)
-                .padding(.horizontal, 4)
-                .help("Outline")
-                .accessibilityLabel("Outline")
-
-            ShapePropertiesSeparator()
-
-            ShapePropertiesControlGroup("Width") {
-                Slider(value: multiShapeOptionalBinding(\.outlineWidth, default: CanvasShapeModel.defaultOutlineWidth, continuous: true), in: 1...50)
-                    .frame(width: UIMetrics.SliderWidth.standard)
-            }
-        }
     }
 }

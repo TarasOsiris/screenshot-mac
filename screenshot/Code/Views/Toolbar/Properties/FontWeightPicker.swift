@@ -1,8 +1,11 @@
 import SwiftUI
 
 struct FontWeightPicker: View {
+    /// Offered when the font can't list its own weights.
+    static let standardWeights = [300, 400, 500, 700]
+
     @Binding var selection: Int
-    var options: [Int] = [300, 400, 500, 700]
+    var options: [Int] = Self.standardWeights
     var width: CGFloat = 100
 
     var body: some View {
