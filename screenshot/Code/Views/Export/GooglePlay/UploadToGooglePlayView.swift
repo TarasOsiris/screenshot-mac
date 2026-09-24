@@ -121,12 +121,13 @@ struct UploadToGooglePlayView: View {
     /// Play replaces rather than reconciles — `deleteAllImages` then re-upload — so the dialog has
     /// to say so. App Store Connect's equivalent can promise it keeps matching assets; this can't.
     var confirmationMessage: String {
-        let screenshots = plannedScreenshotCount == 1
+        let counts = model.plannedCounts
+        let screenshots = counts.screenshots == 1
             ? String(localized: "1 screenshot")
-            : String(localized: "\(plannedScreenshotCount) screenshots")
-        let languages = plannedLanguageCount == 1
+            : String(localized: "\(counts.screenshots) screenshots")
+        let languages = counts.languages == 1
             ? String(localized: "1 language")
-            : String(localized: "\(plannedLanguageCount) languages")
+            : String(localized: "\(counts.languages) languages")
         return [
             String(localized: "\(screenshots) across \(languages)."),
             String(localized: "Every screenshot currently on the listing for the selected languages and image types is deleted and replaced."),

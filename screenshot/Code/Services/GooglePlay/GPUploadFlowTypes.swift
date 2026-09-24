@@ -7,6 +7,33 @@ struct GPUploadSummary {
     let packageName: String
     /// What actually happened on commit (the draft flag may be rejected → sent to review).
     let sentForReview: Bool
+
+    var countsText: String {
+        switch (totalScreenshots == 1, languageCount == 1) {
+        case (true, true):
+            String(localized: "1 screenshot across 1 language")
+        case (true, false):
+            String(localized: "1 screenshot across \(languageCount) languages")
+        case (false, true):
+            String(localized: "\(totalScreenshots) screenshots across 1 language")
+        case (false, false):
+            String(localized: "\(totalScreenshots) screenshots across \(languageCount) languages")
+        }
+    }
+}
+
+/// Counted from the upload targets rather than the row plans, so the preview can't disagree with
+/// what uploads once duplicate Play languages are collapsed.
+struct GPUploadCounts: Equatable {
+    let rows: Int
+    let screenshots: Int
+    let languages: Int
+
+    init(targets: [GPUploadTarget]) {
+        rows = targets.count
+        screenshots = targets.reduce(0) { $0 + $1.templateCount * $1.languages.count }
+        languages = Set(targets.flatMap { $0.languages.map(\.playCode) }).count
+    }
 }
 
 enum GPUploadStep: Hashable {

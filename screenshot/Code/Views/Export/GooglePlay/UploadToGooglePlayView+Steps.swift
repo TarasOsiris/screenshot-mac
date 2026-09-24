@@ -145,14 +145,15 @@ extension UploadToGooglePlayView {
 
     @ViewBuilder
     private var preflightPanel: some View {
+        let counts = model.plannedCounts
         StorePreflightPanel(
             isExpanded: $isPreflightExpanded,
             hasErrors: model.validationIssues.hasErrors,
             refresh: nil
         ) {
-            StoreSummaryMetric(value: "\(enabledRowCount)", label: "rows")
-            StoreSummaryMetric(value: "\(plannedScreenshotCount)", label: "screenshots")
-            StoreSummaryMetric(value: "\(plannedLanguageCount)", label: "languages")
+            StoreSummaryMetric(value: "\(counts.rows)", label: "rows")
+            StoreSummaryMetric(value: "\(counts.screenshots)", label: "screenshots")
+            StoreSummaryMetric(value: "\(counts.languages)", label: "languages")
         } details: {
             EmptyView()
         }
@@ -302,29 +303,6 @@ extension UploadToGooglePlayView {
         }
     }
 
-    // MARK: - Counts
-
-    var enabledRowCount: Int {
-        model.rowPlans.count { plan in
-            plan.isEnabled && plan.localeTargets.contains { $0.isEnabled && $0.playLanguageCode != nil }
-        }
-    }
-
-    var plannedScreenshotCount: Int {
-        model.rowPlans.reduce(0) { acc, plan in
-            guard plan.isEnabled else { return acc }
-            return acc + plan.templateCount * plan.localeTargets.count { $0.isEnabled && $0.playLanguageCode != nil }
-        }
-    }
-
-    var plannedLanguageCount: Int {
-        Set(
-            model.rowPlans
-                .filter(\.isEnabled)
-                .flatMap { $0.localeTargets.filter(\.isEnabled).compactMap(\.playLanguageCode) }
-        ).count
-    }
-
     // MARK: - Uploading / done
 
     @ViewBuilder
@@ -344,7 +322,7 @@ extension UploadToGooglePlayView {
         VStack(spacing: 14) {
             UploadCompleteHeader(title: "Upload complete")
             if let summary = model.uploadSummary {
-                Text(uploadCompleteSummary(summary))
+                Text(summary.countsText)
                     .font(.callout)
                     .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
@@ -364,19 +342,6 @@ extension UploadToGooglePlayView {
                         .buttonStyle(.bordered)
                 }
             }
-        }
-    }
-
-    private func uploadCompleteSummary(_ summary: GPUploadSummary) -> String {
-        switch (summary.totalScreenshots == 1, summary.languageCount == 1) {
-        case (true, true):
-            String(localized: "1 screenshot across 1 language")
-        case (true, false):
-            String(localized: "1 screenshot across \(summary.languageCount) languages")
-        case (false, true):
-            String(localized: "\(summary.totalScreenshots) screenshots across 1 language")
-        case (false, false):
-            String(localized: "\(summary.totalScreenshots) screenshots across \(summary.languageCount) languages")
         }
     }
 }

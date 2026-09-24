@@ -212,6 +212,10 @@ final class GPUploadFlowModel {
         }
     }
 
+    var plannedCounts: GPUploadCounts {
+        GPUploadCounts(targets: buildUploadTargets())
+    }
+
     func startUpload() async {
         errorMessage = nil
         errorDetailsText = nil
@@ -243,9 +247,10 @@ final class GPUploadFlowModel {
                     source: document,
                     progress: { p in self.uploadProgress = p }
                 )
+                let counts = GPUploadCounts(targets: targets)
                 let summary = GPUploadSummary(
-                    totalScreenshots: targets.reduce(0) { $0 + $1.templateCount * $1.languages.count },
-                    languageCount: Set(targets.flatMap { $0.languages.map(\.playCode) }).count,
+                    totalScreenshots: counts.screenshots,
+                    languageCount: counts.languages,
                     packageName: pkg,
                     sentForReview: didSendForReview
                 )
@@ -258,10 +263,7 @@ final class GPUploadFlowModel {
                 step = .done
                 NotificationService.notify(
                     title: String(localized: "Upload complete"),
-                    body: uploadCompleteBody(
-                        screenshotCount: summary.totalScreenshots,
-                        languageCount: summary.languageCount
-                    )
+                    body: summary.countsText
                 )
             } catch is CancellationError {
                 errorMessage = String(localized: "Upload cancelled. The draft edit was discarded.")
@@ -280,19 +282,6 @@ final class GPUploadFlowModel {
         // the upload is in flight.
         uploadTask = task
         await task.value
-    }
-
-    private func uploadCompleteBody(screenshotCount: Int, languageCount: Int) -> String {
-        switch (screenshotCount == 1, languageCount == 1) {
-        case (true, true):
-            String(localized: "1 screenshot across 1 language")
-        case (true, false):
-            String(localized: "1 screenshot across \(languageCount) languages")
-        case (false, true):
-            String(localized: "\(screenshotCount) screenshots across 1 language")
-        case (false, false):
-            String(localized: "\(screenshotCount) screenshots across \(languageCount) languages")
-        }
     }
 
     /// The plan screen's Back button. Only one step back exists in this flow.
