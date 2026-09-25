@@ -24,12 +24,17 @@ struct ScreenshotRow: Identifiable, Codable, Equatable, BackgroundFillable {
     var excludeFromAppStoreConnect: Bool
     /// The A/B variant this row belongs to; nil is the Original.
     var variantId: UUID?
+    /// The row a variant copy was made from; while it exists, this row's label follows it.
+    var originRowId: UUID?
 
-    var isOriginal: Bool { variantId == nil }
+    /// Nil with A/B testing off: every row is then Original, as in 4.18, rather than silently skipped by uploads.
+    var activeVariantId: UUID? { FeatureFlags.abTesting ? variantId : nil }
+
+    var isOriginal: Bool { activeVariantId == nil }
 
     /// Whether an App Store Connect upload of `variantId` (nil: the product page itself) takes this row.
     func uploadsToAppStore(from variantId: UUID?) -> Bool {
-        self.variantId == variantId && !excludeFromAppStoreConnect
+        activeVariantId == variantId && !excludeFromAppStoreConnect
     }
 
     var uploadsToAppStoreListing: Bool { uploadsToAppStore(from: nil) }
@@ -70,7 +75,8 @@ struct ScreenshotRow: Identifiable, Codable, Equatable, BackgroundFillable {
         isLabelManuallySet: Bool = false,
         isCollapsed: Bool = false,
         excludeFromAppStoreConnect: Bool = false,
-        variantId: UUID? = nil
+        variantId: UUID? = nil,
+        originRowId: UUID? = nil
     ) {
         self.id = id
         self.label = label
@@ -95,6 +101,7 @@ struct ScreenshotRow: Identifiable, Codable, Equatable, BackgroundFillable {
         self.isCollapsed = isCollapsed
         self.excludeFromAppStoreConnect = excludeFromAppStoreConnect
         self.variantId = variantId
+        self.originRowId = originRowId
     }
 
     enum CodingKeys: String, CodingKey {
@@ -110,6 +117,7 @@ struct ScreenshotRow: Identifiable, Codable, Equatable, BackgroundFillable {
         case showBorders = "sb", shapes = "s", isLabelManuallySet = "lm", isCollapsed = "col"
         case excludeFromAppStoreConnect = "exasc"
         case variantId = "vr"
+        case originRowId = "vo"
     }
 
     nonisolated init(from decoder: Decoder) throws {
@@ -135,7 +143,9 @@ struct ScreenshotRow: Identifiable, Codable, Equatable, BackgroundFillable {
         isLabelManuallySet = try c.decodeIfPresent(Bool.self, forKey: .isLabelManuallySet) ?? false
         isCollapsed = try c.decodeIfPresent(Bool.self, forKey: .isCollapsed) ?? false
         excludeFromAppStoreConnect = try c.decodeIfPresent(Bool.self, forKey: .excludeFromAppStoreConnect) ?? false
-        variantId = try c.decodeIfPresent(UUID.self, forKey: .variantId)
+        // Lossy: a malformed variant reference must not make the whole project unreadable.
+        variantId = (try? c.decodeIfPresent(UUID.self, forKey: .variantId)) ?? nil
+        originRowId = (try? c.decodeIfPresent(UUID.self, forKey: .originRowId)) ?? nil
     }
 
     func encode(to encoder: Encoder) throws {
@@ -163,6 +173,7 @@ struct ScreenshotRow: Identifiable, Codable, Equatable, BackgroundFillable {
         if isCollapsed { try c.encode(true, forKey: .isCollapsed) }
         if excludeFromAppStoreConnect { try c.encode(true, forKey: .excludeFromAppStoreConnect) }
         try c.encodeIfPresent(variantId, forKey: .variantId)
+        try c.encodeIfPresent(originRowId, forKey: .originRowId)
     }
 
     var bgColor: Color {

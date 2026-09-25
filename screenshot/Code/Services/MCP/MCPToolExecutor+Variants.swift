@@ -31,6 +31,9 @@ extension MCPToolExecutor {
         if let variantId, state.variants.variant(withId: variantId) == nil {
             throw MCPToolError.notFound("Variant \(variantId.uuidString)")
         }
+        if let occupant = state.rowOccupyingSlot(of: state.rows[rowIndex], in: variantId) {
+            throw MCPToolError.invalidArgument("variant_id", "that variant already has a row of this screenshot size (\(occupant.id.uuidString)); a variant holds one row per size")
+        }
         state.setRowVariant(state.rows[rowIndex].id, to: variantId)
         return try rowResult(rowIndex)
     }

@@ -73,6 +73,9 @@ extension MCPToolExecutor {
             defaultDevice = nil
         }
         let label = args.string("label")
+        if label != nil, let source = state.labelSource(of: row) {
+            throw MCPToolError.invalidArgument("label", "this variant row follows the label of row \(source.id.uuidString); rename that row instead")
+        }
         let showDevice = args.bool("show_device")
 
         if label != nil || size != nil || showDevice != nil || defaultDevice != nil {

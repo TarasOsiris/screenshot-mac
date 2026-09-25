@@ -301,7 +301,7 @@ extension AppState {
         // the same project is re-applied on every iCloud reload, where its rows are still on screen.
         EditorBlurRasterCache.purgeIfProjectChanged(to: projectId)
         prewarmDeviceModelScenes()
-        selectRow(rows.first?.id)
+        selectRow(rows.first(where: effectiveVariantFilter.includes)?.id ?? rows.first?.id)
         switch origin {
         case .open:
             viewMode.variantFilter = .all

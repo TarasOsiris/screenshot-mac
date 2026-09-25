@@ -72,7 +72,7 @@ enum EditorVariantFilter: Hashable {
     func includes(_ row: ScreenshotRow) -> Bool {
         switch self {
         case .all: true
-        case .variant(let id): row.variantId == id
+        case .variant(let id): row.activeVariantId == id
         }
     }
 

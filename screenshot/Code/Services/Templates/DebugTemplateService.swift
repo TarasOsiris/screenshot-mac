@@ -70,6 +70,20 @@ enum DebugTemplateService {
     }
 
     @MainActor
+    /// Keeps the Original rows (all rows, if every one is a variant row) with their variant tags cleared.
+    static func withoutVariants(_ data: ProjectData) -> ProjectData {
+        var result = data
+        let originals = data.rows.filter { $0.variantId == nil }
+        result.rows = (originals.isEmpty ? data.rows : originals).map { row in
+            var untagged = row
+            untagged.variantId = nil
+            untagged.originRowId = nil
+            return untagged
+        }
+        result.variants = []
+        return result
+    }
+
     static func saveProjectAsTemplate(projectId: UUID, templateName: String, bundleURL: URL) throws {
         let fm = FileManager.default
         try fm.createDirectory(at: bundleURL, withIntermediateDirectories: true)
@@ -83,7 +97,12 @@ enum DebugTemplateService {
         try fm.copyItem(at: sourceURL, to: destURL)
 
         let projectJSON = destURL.appendingPathComponent("project.json")
-        let projectData = try PersistenceService.decoder.decode(ProjectData.self, from: Data(contentsOf: projectJSON))
+        var projectData = try PersistenceService.decoder.decode(ProjectData.self, from: Data(contentsOf: projectJSON))
+        // Templates reach every user; A/B variants are the author's experiment, not the starting design.
+        if !projectData.variants.isEmpty || projectData.rows.contains(where: { $0.variantId != nil }) {
+            projectData = withoutVariants(projectData)
+            try PersistenceService.encoder.encode(projectData).write(to: projectJSON, options: .atomic)
+        }
         let usedFonts = referencedFontFamilies(in: projectData)
 
         moveFontsToShared(templateResources: destURL.appendingPathComponent("resources", isDirectory: true), bundleURL: bundleURL, usedFontFamilies: usedFonts)

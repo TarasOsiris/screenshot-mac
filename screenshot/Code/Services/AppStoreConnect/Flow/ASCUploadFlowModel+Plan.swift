@@ -6,10 +6,19 @@ extension ASCUploadFlowModel {
     /// Left as a computed property rather than memoized: it is O(destinations × rows), and it
     /// depends on `credentials.isDemoMode`, which can flip from a separate Settings window.
     var validationIssues: [UploadIssue] {
-        AppStoreConnectUploadValidator.validate(
+        var issues = AppStoreConnectUploadValidator.validate(
             destinations: destinationPlans,
             isDemoMode: credentials.isDemoMode
         )
+        let variantRowCount = document?.activeVariants.isEmpty == false ? rows.filter { !$0.isOriginal }.count : 0
+        if variantRowCount > 0 {
+            issues.append(UploadIssue(
+                severity: .warning,
+                message: String(localized: "^[\(variantRowCount) A/B variant row](inflect: true) won't be uploaded to your product page."),
+                hint: String(localized: "To test them, use Export ▸ Upload A/B Test to App Store Connect.")
+            ))
+        }
+        return issues
     }
 
     var canStartUpload: Bool {

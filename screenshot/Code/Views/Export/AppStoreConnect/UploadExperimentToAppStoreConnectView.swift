@@ -148,7 +148,7 @@ struct UploadExperimentToAppStoreConnectView: View {
         let assignment = model.localeAssignment
         return Section("Languages") {
             ForEach(model.localeState.locales) { locale in
-                if let ascLocale = assignment[locale.code] {
+                if let ascLocales = assignment[locale.code] {
                     Toggle(isOn: Binding(
                         get: { model.enabledLocaleCodes.contains(locale.code) },
                         set: { isOn in
@@ -156,7 +156,7 @@ struct UploadExperimentToAppStoreConnectView: View {
                             else { model.enabledLocaleCodes.remove(locale.code) }
                         }
                     )) {
-                        LabeledContent(locale.flagLabel, value: ascLocale)
+                        LabeledContent(locale.flagLabel, value: ascLocales.joined(separator: ", "))
                     }
                 } else {
                     LabeledContent(locale.flagLabel, value: String(localized: "Not on your product page"))

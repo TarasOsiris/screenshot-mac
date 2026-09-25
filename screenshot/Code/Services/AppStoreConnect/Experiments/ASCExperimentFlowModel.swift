@@ -31,9 +31,11 @@ final class ASCExperimentFlowModel {
     var newExperimentName = ""
     var trafficProportion = 50
     private(set) var existingTreatments: [ASCExperimentTreatment] = []
+    /// The experiment whose treatments are loading; uploading waits, or it would match against none.
+    private(set) var loadingTreatmentsFor: String?
 
     /// Project locale → the live product page's locale; a treatment can only localize into those.
-    private(set) var localeAssignment: [String: String] = [:]
+    private(set) var localeAssignment: [String: [String]] = [:]
     var enabledLocaleCodes: Set<String> = []
 
     private(set) var uploadProgress: UploadProgress?
@@ -103,7 +105,9 @@ final class ASCExperimentFlowModel {
         )
     }
 
-    func canUpload(given issues: [UploadIssue]) -> Bool { !isBusy && !issues.hasErrors }
+    func canUpload(given issues: [UploadIssue]) -> Bool {
+        !isBusy && loadingTreatmentsFor == nil && !issues.hasErrors
+    }
 
     // MARK: - Steps
 
@@ -149,9 +153,21 @@ final class ASCExperimentFlowModel {
     func selectExperiment(_ id: String?) async {
         selectedExperimentId = id
         existingTreatments = []
+        loadingTreatmentsFor = id
         guard let id else { return }
-        await run {
-            existingTreatments = try await experimentAPI.listTreatments(experimentId: id)
+        // Not `run`: a stale reply for an experiment the user left must not touch busy or error state.
+        let result: Result<[ASCExperimentTreatment], Error>
+        do {
+            result = .success(try await experimentAPI.listTreatments(experimentId: id))
+        } catch {
+            result = .failure(error)
+        }
+        guard selectedExperimentId == id else { return }
+        loadingTreatmentsFor = nil
+        switch result {
+        case .success(let treatments): existingTreatments = treatments
+        case .failure(is CancellationError): break
+        case .failure(let error): errorMessage = error.localizedDescription
         }
     }
 
@@ -300,9 +316,9 @@ final class ASCExperimentFlowModel {
         existingTreatments = existing
         let matches = ASCExperimentPlanner.treatmentMatches(variants: variants, existing: existing)
         let assignment = localeAssignment
-        let wanted = localeState.locales.map(\.code).compactMap { code -> (projectCode: String, ascLocale: String)? in
-            guard enabledLocaleCodes.contains(code), let ascLocale = assignment[code] else { return nil }
-            return (code, ascLocale)
+        let wanted = localeState.locales.map(\.code).flatMap { code -> [(projectCode: String, ascLocale: String)] in
+            guard enabledLocaleCodes.contains(code) else { return [] }
+            return (assignment[code] ?? []).map { (code, $0) }
         }
 
         var entries: [ASCTreatmentTarget] = []

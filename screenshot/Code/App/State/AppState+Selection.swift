@@ -20,7 +20,9 @@ extension AppState {
             deselectAll()
             return
         }
-        guard rows.contains(where: { $0.id == id }) else { return }
+        guard let row = rows.first(where: { $0.id == id }) else { return }
+        // Nothing may edit a row the variant filter hides; selecting one shows every variant.
+        if !effectiveVariantFilter.includes(row) { viewMode.variantFilter = .all }
         let rowChanged = selectedRowId != id
         selectedRowId = id
         selectedShapeIds = []
@@ -127,7 +129,7 @@ extension AppState {
 
     func normalizeSelection() {
         if let selectedRowId, !rows.contains(where: { $0.id == selectedRowId }) {
-            self.selectedRowId = rows.first?.id
+            self.selectedRowId = rows.first(where: effectiveVariantFilter.includes)?.id ?? rows.first?.id
         }
 
         if !selectedShapeIds.isEmpty {

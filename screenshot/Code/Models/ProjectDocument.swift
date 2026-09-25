@@ -24,7 +24,8 @@ struct ProjectDocument: Equatable {
     init(_ data: ProjectData) {
         self.rows = data.rows
         self.localeState = data.localeState ?? .default
-        self.variants = data.variants
+        var seen = Set<UUID>()
+        self.variants = data.variants.filter { seen.insert($0.id).inserted }.recoveringVariants(namedBy: data.rows)
     }
 
     func projectData(name: String?) -> ProjectData {

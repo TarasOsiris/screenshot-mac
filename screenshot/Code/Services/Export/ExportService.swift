@@ -34,8 +34,10 @@ struct ExportService {
     ) async throws -> (folderURL: URL, fileURLs: [URL], unrenderable: [String]) {
         let localeState = source.localeState
         // One top-level folder per A/B variant, but only when the export actually spans variants.
-        let variantFolders = rows.contains { variants.variant(withId: $0.variantId) != nil }
-            ? rows.map { ExportFileNaming.variantFolderName(for: $0, variants: variants) }
+        let folderByVariant = ExportFileNaming.variantFolderNames(variants)
+        let variantFolders: [String]? = rows.contains(where: { variants.variant(withId: $0.variantId) != nil })
+            // A row whose variant is gone exports with the Original.
+            ? rows.map { folderByVariant[$0.variantId] ?? folderByVariant[nil] ?? "" }
             : nil
         let rootName = ExportFileNaming.sanitizedRootFolderName(projectName)
         let rootFolder = ExportFileNaming.uniqueFolder(named: rootName, in: folderURL)

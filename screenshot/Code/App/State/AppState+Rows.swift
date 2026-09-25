@@ -15,7 +15,7 @@ extension AppState {
     func addRowAbove(_ id: UUID) {
         guard let idx = rows.firstIndex(where: { $0.id == id }) else { return }
         withUndo("Add New Row Above") {
-            let row = makeDefaultRow(variantId: rows[idx].variantId)
+            let row = makeDefaultRow(variantId: rows[idx].activeVariantId)
             rows.insert(row, at: idx)
             selectRow(row.id)
         }
@@ -24,21 +24,22 @@ extension AppState {
     func addRowBelow(_ id: UUID) {
         guard let idx = rows.firstIndex(where: { $0.id == id }) else { return }
         withUndo("Add New Row Below") {
-            let row = makeDefaultRow(variantId: rows[idx].variantId)
+            let row = makeDefaultRow(variantId: rows[idx].activeVariantId)
             rows.insert(row, at: idx + 1)
             selectRow(row.id)
         }
     }
 
+    /// Original rows only: a copy of a variant row would be a second row of its size in that variant.
     func duplicateRow(_ id: UUID) {
-        guard let idx = rows.firstIndex(where: { $0.id == id }) else { return }
+        guard let idx = rows.firstIndex(where: { $0.id == id }), rows[idx].isOriginal else { return }
         withUndo("Duplicate Row") {
             let source = rows[idx]
             insertDuplicate(
                 of: source,
                 at: idx + 1,
                 label: String(localized: "\(source.label) copy"),
-                variantId: source.variantId
+                variantId: source.activeVariantId
             )
         }
     }
@@ -49,13 +50,20 @@ extension AppState {
         at index: Int,
         label: String,
         isLabelManuallySet: Bool = true,
-        variantId: UUID?
+        variantId: UUID?,
+        originRowId: UUID? = nil
     ) {
         var newShapes = source.shapes.map { $0.duplicated() }
         for i in newShapes.indices {
             let originalId = source.shapes[i].id
             LocaleService.copyShapeOverrides(&localeState, fromId: originalId, toId: newShapes[i].id)
             copyImageFiles(for: &newShapes[i], originalId: originalId)
+            // A variant's copy must be editable on its own: left in a Reuse Translation group, its
+            // edits would rewrite the Original's text — the control — and the product page with it.
+            if variantId != nil, let sharedKey = newShapes[i].translationKey {
+                LocaleService.copyTextOverrides(&localeState, fromKey: sharedKey, toKey: newShapes[i].id.uuidString)
+                newShapes[i].translationKey = nil
+            }
         }
         let copy = ScreenshotRow(
             label: label,
@@ -76,7 +84,8 @@ extension AppState {
             shapes: newShapes,
             isLabelManuallySet: isLabelManuallySet,
             excludeFromAppStoreConnect: source.excludeFromAppStoreConnect,
-            variantId: variantId
+            variantId: variantId,
+            originRowId: originRowId
         )
         rows.insert(copy, at: index)
         selectRow(copy.id)
@@ -107,6 +116,7 @@ extension AppState {
             cleanupOrphanedTranslationOverrides()
             if wasSelectedRow {
                 selectRow(rows[min(firstIdx, rows.count - 1)].id)
+                keepSelectionVisible()
             } else {
                 normalizeSelection()
             }
@@ -136,6 +146,12 @@ extension AppState {
                 height: oldRow.templateHeight,
                 variantId: oldRow.variantId
             )
+            rows[idx].originRowId = oldRow.originRowId
+            rows[idx].excludeFromAppStoreConnect = oldRow.excludeFromAppStoreConnect
+            if let source = labelSource(of: rows[idx]) {
+                rows[idx].label = source.label
+                rows[idx].isLabelManuallySet = source.isLabelManuallySet
+            }
             cleanupOrphanedTranslationOverrides()
 
             selectedShapeIds = []
@@ -145,9 +161,13 @@ extension AppState {
         }
     }
 
+    /// A linked variant copy follows its source row's label, so renaming that row renames the copies.
     func updateRowLabel(_ rowId: UUID, text: String) {
-        guard let ri = rowIndex(for: rowId) else { return }
+        guard let ri = rowIndex(for: rowId), labelSource(of: rows[ri]) == nil else { return }
         withUndo("Edit Row Label") {
+            defer { propagateLabel(from: rowId) }
+            // Named by hand, a copy no longer follows the row it came from.
+            rows[ri].originRowId = nil
             let trimmed = text.trimmingCharacters(in: .whitespaces)
             if trimmed.isEmpty {
                 let row = rows[ri]

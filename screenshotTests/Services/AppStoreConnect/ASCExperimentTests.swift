@@ -28,7 +28,7 @@ struct ASCExperimentPlannerTests {
         let issues = ASCExperimentPlanner.issues(
             variants: [], rowsByVariant: ASCExperimentPlanner.rowsByVariant([iPhoneRow(variantId: nil)]), platform: .ios, experiment: nil,
             existingTreatments: [], newExperimentName: "Test",
-            enabledLocaleCodes: ["en"], localeAssignment: ["en": "en-US"]
+            enabledLocaleCodes: ["en"], localeAssignment: ["en": ["en-US"]]
         )
         #expect(issues.contains { $0.severity == .error })
     }
@@ -39,7 +39,7 @@ struct ASCExperimentPlannerTests {
         let issues = ASCExperimentPlanner.issues(
             variants: variants, rowsByVariant: ASCExperimentPlanner.rowsByVariant(rows), platform: .ios, experiment: nil,
             existingTreatments: [], newExperimentName: "Test",
-            enabledLocaleCodes: ["en"], localeAssignment: ["en": "en-US"]
+            enabledLocaleCodes: ["en"], localeAssignment: ["en": ["en-US"]]
         )
         #expect(issues.contains { $0.message.contains("3") && $0.severity == .error })
     }
@@ -52,7 +52,7 @@ struct ASCExperimentPlannerTests {
         let unmatched = ASCExperimentPlanner.issues(
             variants: [variantB], rowsByVariant: ASCExperimentPlanner.rowsByVariant(rows), platform: .ios, experiment: experiment,
             existingTreatments: existing, newExperimentName: "",
-            enabledLocaleCodes: ["en"], localeAssignment: ["en": "en-US"]
+            enabledLocaleCodes: ["en"], localeAssignment: ["en": ["en-US"]]
         )
         #expect(unmatched.contains { $0.severity == .error })
 
@@ -60,7 +60,7 @@ struct ASCExperimentPlannerTests {
         let matched = ASCExperimentPlanner.issues(
             variants: [variantB], rowsByVariant: ASCExperimentPlanner.rowsByVariant(rows), platform: .ios, experiment: experiment,
             existingTreatments: Array(renamed), newExperimentName: "",
-            enabledLocaleCodes: ["en"], localeAssignment: ["en": "en-US"]
+            enabledLocaleCodes: ["en"], localeAssignment: ["en": ["en-US"]]
         )
         #expect(!matched.contains { $0.severity == .error })
     }
@@ -70,7 +70,7 @@ struct ASCExperimentPlannerTests {
             variants: [variantB], rowsByVariant: ASCExperimentPlanner.rowsByVariant([iPhoneRow(variantId: variantB.id)]), platform: .ios,
             experiment: .fixture(id: "e1", state: .inReview),
             existingTreatments: [], newExperimentName: "",
-            enabledLocaleCodes: ["en"], localeAssignment: ["en": "en-US"]
+            enabledLocaleCodes: ["en"], localeAssignment: ["en": ["en-US"]]
         )
         #expect(issues.contains { $0.severity == .error })
     }
@@ -79,7 +79,7 @@ struct ASCExperimentPlannerTests {
         let issues = ASCExperimentPlanner.issues(
             variants: [variantB], rowsByVariant: ASCExperimentPlanner.rowsByVariant([iPhoneRow(variantId: variantB.id)]), platform: .ios, experiment: nil,
             existingTreatments: [], newExperimentName: "Test",
-            enabledLocaleCodes: ["de"], localeAssignment: ["en": "en-US"]
+            enabledLocaleCodes: ["de"], localeAssignment: ["en": ["en-US"]]
         )
         #expect(issues.contains { $0.severity == .error })
     }
@@ -89,7 +89,7 @@ struct ASCExperimentPlannerTests {
             variants: [variantB], rowsByVariant: ASCExperimentPlanner.rowsByVariant([iPhoneRow(variantId: nil), iPhoneRow(variantId: variantB.id)]),
             platform: .ios, experiment: nil,
             existingTreatments: [], newExperimentName: "Test",
-            enabledLocaleCodes: ["en"], localeAssignment: ["en": "en-US"]
+            enabledLocaleCodes: ["en"], localeAssignment: ["en": ["en-US"]]
         )
         #expect(!issues.contains { $0.severity == .error })
     }
@@ -118,7 +118,7 @@ struct ASCExperimentPlannerTests {
             variants: [variantB], rowsByVariant: ASCExperimentPlanner.rowsByVariant([iPhoneRow(variantId: variantB.id), iPhoneRow(variantId: variantB.id)]),
             platform: .ios, experiment: nil,
             existingTreatments: [], newExperimentName: "Test",
-            enabledLocaleCodes: ["en"], localeAssignment: ["en": "en-US"]
+            enabledLocaleCodes: ["en"], localeAssignment: ["en": ["en-US"]]
         )
         #expect(issues.contains { $0.severity == .error })
     }
@@ -183,7 +183,7 @@ struct ASCExperimentFlowModelTests {
         await model.continueToConfigure()
 
         #expect(model.step == .configuring)
-        #expect(model.localeAssignment == ["en": "en-US"])
+        #expect(model.localeAssignment == ["en": ["en-US"]])
         #expect(model.enabledLocaleCodes == ["en"])
     }
 

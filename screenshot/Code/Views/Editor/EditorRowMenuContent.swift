@@ -7,6 +7,8 @@ struct EditorRowMenuContent: View {
     let canMoveUp: Bool
     let canMoveDown: Bool
     let canDelete: Bool
+    let canDuplicate: Bool
+    let variantContext: RowVariantContext?
     @Binding var isSvgDialogPresented: Bool
     let addShapeFromMenu: (ShapeType) -> Void
     let exportRowScreenshots: () -> Void
@@ -62,8 +64,9 @@ struct EditorRowMenuContent: View {
     @ViewBuilder
     private var organizationSection: some View {
         Button("Duplicate Row", systemImage: "plus.square.on.square", action: duplicateRow)
+            .disabled(!canDuplicate)
         if FeatureFlags.abTesting {
-            RowVariantMenuItems(state: state, row: row)
+            RowVariantMenuItems(state: state, row: row, context: variantContext)
         }
         Button("Add New Row Above", systemImage: "arrow.up.to.line.compact") {
             store.requirePro(

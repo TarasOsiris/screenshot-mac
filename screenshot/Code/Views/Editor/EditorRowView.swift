@@ -12,7 +12,7 @@ struct EditorRowView: View {
     let isFirst: Bool
     let isLast: Bool
     let isOnlyRow: Bool
-    let variantBadge: VariantBadgeStyle?
+    let variantContext: RowVariantContext?
     /// Selection arrives as a value input rather than being read off `state`. Reading
     /// `state.selectedRowId` in the body put it in *every* realized row's tracking scope, so moving
     /// the selection to another row invalidated all of them — `.equatable()` can't intercept that,
@@ -60,6 +60,9 @@ struct EditorRowView: View {
     var canMoveUp: Bool { !isFirst }
     var canMoveDown: Bool { !isLast }
     var canDelete: Bool { !isOnlyRow }
+    /// A copy would be a second row of this size in the same variant.
+    var canDuplicate: Bool { row.isOriginal }
+    var isLabelLinked: Bool { variantContext?.isLabelLinked ?? false }
 
     var zoom: CGFloat { state.zoom.level }
     var isPreviewMode: Bool { state.viewMode.previewingRows.contains(row.id) }
@@ -131,6 +134,7 @@ struct EditorRowView: View {
                         canMoveUp: canMoveUp,
                         canMoveDown: canMoveDown,
                         canDelete: canDelete,
+                        canDuplicate: canDuplicate,
                         isEditingLabel: $isEditingLabel,
                         editingLabelText: $editingLabelText,
                         isLabelFieldFocused: $isLabelFieldFocused,
@@ -148,7 +152,7 @@ struct EditorRowView: View {
                         overriddenShapeCount: overridden.count,
                         overrideLocaleLabel: overridden.isEmpty ? "" : state.localeState.activeLocaleLabel,
                         onSelectOverridden: { state.selectShapes(overridden, in: row.id) },
-                        variantBadge: variantBadge
+                        variantBadge: variantContext.map { AnyView(VariantBadgeMenu(state: state, row: row, context: $0)) }
                     ) {
                         rowMenuContent
                     }
@@ -253,7 +257,7 @@ extension EditorRowView: Equatable {
             && lhs.isFirst == rhs.isFirst
             && lhs.isLast == rhs.isLast
             && lhs.isOnlyRow == rhs.isOnlyRow
-            && lhs.variantBadge == rhs.variantBadge
+            && lhs.variantContext == rhs.variantContext
             && lhs.isSelected == rhs.isSelected
             && lhs.selectedShapeIds == rhs.selectedShapeIds
     }

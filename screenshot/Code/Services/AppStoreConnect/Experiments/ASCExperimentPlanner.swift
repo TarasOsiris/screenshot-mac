@@ -43,12 +43,14 @@ enum ASCExperimentPlanner {
     }
 
     /// Project locale code → App Store locale code, matched the way the regular upload matches them.
+    /// Project locale code → every App Store locale it fills (en → en-US, en-GB…), as the regular upload matches.
     static func localeAssignment(
         projectCodes: [String],
         productPageLocalizations: [ASCAppStoreVersionLocalization]
-    ) -> [String: String] {
-        let assigned = ASCLocaleMatcher.assign(appCodes: projectCodes, to: productPageLocalizations)
-        return assigned.compactMapValues { $0.first?.attributes.locale }
+    ) -> [String: [String]] {
+        ASCLocaleMatcher.assign(appCodes: projectCodes, to: productPageLocalizations)
+            .mapValues { $0.map(\.attributes.locale) }
+            .filter { !$0.value.isEmpty }
     }
 
     static func uploadableDisplayType(for row: ScreenshotRow, platform: ASCPlatform) -> ASCDisplayType? {
@@ -65,12 +67,12 @@ enum ASCExperimentPlanner {
         existingTreatments: [ASCExperimentTreatment],
         newExperimentName: String,
         enabledLocaleCodes: Set<String>,
-        localeAssignment: [String: String]
+        localeAssignment: [String: [String]]
     ) -> [UploadIssue] {
         var issues: [UploadIssue] = []
         let testable = variantsWithRows(variants, rowsByVariant: rowsByVariant)
         if testable.isEmpty {
-            issues.append(UploadIssue(severity: .error, message: String(localized: "Create a variant first: use Duplicate as Variant on a row, then change the copy.")))
+            issues.append(UploadIssue(severity: .error, message: String(localized: "Create a variant first: choose New Variant from Row in a row's menu, then change the copy.")))
         }
         let matched = treatmentMatches(variants: testable, existing: existingTreatments).count
         if existingTreatments.count + testable.count - matched > ASCExperiment.maxTreatments {

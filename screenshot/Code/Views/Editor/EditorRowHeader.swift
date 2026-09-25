@@ -6,6 +6,7 @@ struct EditorRowHeader<RowMenuContent: View>: View {
     let canMoveUp: Bool
     let canMoveDown: Bool
     let canDelete: Bool
+    var canDuplicate = true
     @Binding var isEditingLabel: Bool
     @Binding var editingLabelText: String
     var isLabelFieldFocused: FocusState<Bool>.Binding
@@ -24,7 +25,7 @@ struct EditorRowHeader<RowMenuContent: View>: View {
     var overriddenShapeCount: Int = 0
     var overrideLocaleLabel: String = ""
     var onSelectOverridden: () -> Void = {}
-    var variantBadge: VariantBadgeStyle?
+    var variantBadge: AnyView?
     let rowMenuContent: () -> RowMenuContent
 
     @Environment(\.editorViewportWidth) private var editorViewportWidth
@@ -82,7 +83,7 @@ struct EditorRowHeader<RowMenuContent: View>: View {
             }
 
             if let variantBadge {
-                VariantBadge(name: variantBadge.name, tint: variantBadge.tint)
+                variantBadge
             }
 
             previewToggle
@@ -206,6 +207,7 @@ struct EditorRowHeader<RowMenuContent: View>: View {
                 canMoveUp: canMoveUp,
                 canMoveDown: canMoveDown,
                 canDelete: canDelete,
+                canDuplicate: canDuplicate,
                 onMoveUp: onMoveUp,
                 onMoveDown: onMoveDown,
                 onDuplicate: onDuplicate,
@@ -241,6 +243,7 @@ private struct RowHeaderActionButtons: View {
     let canMoveUp: Bool
     let canMoveDown: Bool
     let canDelete: Bool
+    let canDuplicate: Bool
     let onMoveUp: () -> Void
     let onMoveDown: () -> Void
     let onDuplicate: () -> Void
@@ -255,7 +258,12 @@ private struct RowHeaderActionButtons: View {
         HStack(spacing: 4) {
             ActionButton(icon: "chevron.up", tooltip: "Move up", disabled: !canMoveUp, action: onMoveUp)
             ActionButton(icon: "chevron.down", tooltip: "Move down", disabled: !canMoveDown, action: onMoveDown)
-            ActionButton(icon: "doc.on.doc", tooltip: "Duplicate row", disabled: false, action: onDuplicate)
+            ActionButton(
+                icon: "doc.on.doc",
+                tooltip: canDuplicate ? "Duplicate row" : "A variant holds one row per screenshot size",
+                disabled: !canDuplicate,
+                action: onDuplicate
+            )
             ActionButton(icon: "arrow.counterclockwise", tooltip: "Reset row", isDestructive: true, disabled: false, action: onReset)
             ActionButton(icon: "trash", tooltip: "Delete row", isDestructive: true, disabled: !canDelete, action: onDelete)
         }

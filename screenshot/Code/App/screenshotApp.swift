@@ -251,7 +251,8 @@ struct ScreenshotBroApp: App {
                         }
                     }
                     .keyboardShortcut("d", modifiers: .command)
-                    .disabled(!appState.hasSelection && appState.selectedRowId == nil)
+                    // A variant row can't be duplicated in place: the copy would clash with it.
+                    .disabled(!appState.hasSelection && !(appState.selectedRow?.isOriginal ?? false))
 
                     Button("Delete") {
                         if appState.hasSelection {

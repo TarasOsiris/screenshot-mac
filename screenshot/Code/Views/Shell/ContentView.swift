@@ -123,7 +123,7 @@ struct ContentView: View {
         let firstRowId = visibleRows.first?.id
         let lastRowId = visibleRows.last?.id
         let isOnlyRow = state.rows.count == 1
-        let badges = VariantBadgeStyle.byVariantId(state.activeVariants)
+        let variantContexts = RowVariantContext.all(for: state)
         // Selection is read here, once, rather than in every row's body. Reading it per row put
         // `\AppState.selectedRowId` in every row's tracking scope, so moving the selection to
         // another row rebuilt every visible canvas; passed down as a value it goes through the
@@ -140,7 +140,7 @@ struct ContentView: View {
                 isFirst: row.id == firstRowId,
                 isLast: row.id == lastRowId,
                 isOnlyRow: isOnlyRow,
-                variantBadge: row.variantId.flatMap { badges[$0] },
+                variantContext: variantContexts[row.id],
                 isSelected: isSelected,
                 selectedShapeIds: isSelected ? selectedShapeIds : [],
                 requestShowcaseExport: { presentShowcaseSheet(for: $0, mode: .singleRow) }
@@ -404,7 +404,7 @@ struct ContentView: View {
                         Divider()
                             .frame(height: 16)
                     }
-                    if !state.activeVariants.isEmpty {
+                    if FeatureFlags.abTesting {
                         VariantsToolbarMenu(state: state)
                         Divider()
                             .frame(height: 16)

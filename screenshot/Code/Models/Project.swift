@@ -143,7 +143,8 @@ nonisolated struct ProjectData: Codable {
         localeState = try c.decodeIfPresent(LocaleState.self, forKey: .localeState)
         modifiedAt = try c.decodeIfPresent(Date.self, forKey: .modifiedAt) ?? .distantPast
         name = try c.decodeIfPresent(String.self, forKey: .name)
-        variants = try c.decodeIfPresent([ScreenshotVariant].self, forKey: .variants) ?? []
+        variants = ((try? c.decodeIfPresent([LossyDecodable<ScreenshotVariant>].self, forKey: .variants)) ?? nil)?
+            .compactMap(\.value) ?? []
     }
 
     func encode(to encoder: Encoder) throws {

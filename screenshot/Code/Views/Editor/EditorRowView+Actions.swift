@@ -112,6 +112,7 @@ extension EditorRowView {
     }
 
     func startLabelEdit() {
+        guard !isLabelLinked else { return }
         editingLabelText = row.label
         isEditingLabel = true
         isLabelFieldFocused = true
@@ -148,6 +149,8 @@ extension EditorRowView {
             canMoveUp: canMoveUp,
             canMoveDown: canMoveDown,
             canDelete: canDelete,
+            canDuplicate: canDuplicate,
+            variantContext: variantContext,
             isSvgDialogPresented: $isSvgDialogPresented,
             addShapeFromMenu: addShapeFromMenu,
             exportRowScreenshots: exportRowScreenshots,
