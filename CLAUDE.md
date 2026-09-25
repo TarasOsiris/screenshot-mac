@@ -111,6 +111,8 @@ SwiftUI app, macOS-first with an iPad/iOS build sharing the same code. Always ve
 
 After implementing a fix, verify it covers ALL variants: image-based frames, clipped mode, rotated elements, dark mode, and export/preview parity. Don't assume a fix for one case covers all cases.
 
+**Send a screenshot of the macOS app after every UI change, while working — not batched at the end.** Whenever an edit touches anything user-visible (views, layout, strings, styling), build macOS, then run `./tools/capture-app.sh --relaunch`. It gracefully quits and relaunches the Debug build (saves flush; the shipping app and simulator are untouched, since instances match by bundle path), then captures the main window plus any sheet or popover over it, with only the app's own windows composited. It prints the PNG path, and fails loudly if the build is older than the sources, the window never appears, or Screen Recording isn't granted. Drop `--relaunch` to capture the running instance as-is; pass `--app <path>` for a build made with another `-derivedDataPath` and send that PNG to the user so they can check the look before you move on: `SendUserFile` where the session supports it, otherwise `Read` the PNG (a PostToolUse hook forwards Read images to the user's Telegram) and give its path in the reply. Look at it yourself — if it shows the wrong screen, get to the changed UI (the MCP server's tools can open a project or select a shape) and capture again. If capture fails (no Screen Recording grant, no window), say so rather than skipping silently.
+
 ## Architecture
 
 **Source layout:** All Swift source lives under `screenshot/Code/`:
