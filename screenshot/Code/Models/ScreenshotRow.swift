@@ -22,6 +22,17 @@ struct ScreenshotRow: Identifiable, Codable, Equatable, BackgroundFillable {
     var isLabelManuallySet: Bool
     var isCollapsed: Bool
     var excludeFromAppStoreConnect: Bool
+    /// The A/B variant this row belongs to; nil is the Original.
+    var variantId: UUID?
+
+    var isOriginal: Bool { variantId == nil }
+
+    /// Whether an App Store Connect upload of `variantId` (nil: the product page itself) takes this row.
+    func uploadsToAppStore(from variantId: UUID?) -> Bool {
+        self.variantId == variantId && !excludeFromAppStoreConnect
+    }
+
+    var uploadsToAppStoreListing: Bool { uploadsToAppStore(from: nil) }
 
     /// User-facing label; falls back to "Untitled Row" when `label` is empty.
     var displayLabel: String { label.isEmpty ? String(localized: "Untitled Row") : label }
@@ -58,7 +69,8 @@ struct ScreenshotRow: Identifiable, Codable, Equatable, BackgroundFillable {
         shapes: [CanvasShapeModel] = [],
         isLabelManuallySet: Bool = false,
         isCollapsed: Bool = false,
-        excludeFromAppStoreConnect: Bool = false
+        excludeFromAppStoreConnect: Bool = false,
+        variantId: UUID? = nil
     ) {
         self.id = id
         self.label = label
@@ -82,6 +94,7 @@ struct ScreenshotRow: Identifiable, Codable, Equatable, BackgroundFillable {
         self.isLabelManuallySet = isLabelManuallySet
         self.isCollapsed = isCollapsed
         self.excludeFromAppStoreConnect = excludeFromAppStoreConnect
+        self.variantId = variantId
     }
 
     enum CodingKeys: String, CodingKey {
@@ -96,6 +109,7 @@ struct ScreenshotRow: Identifiable, Codable, Equatable, BackgroundFillable {
         case hiddenShapeTypes = "hst"
         case showBorders = "sb", shapes = "s", isLabelManuallySet = "lm", isCollapsed = "col"
         case excludeFromAppStoreConnect = "exasc"
+        case variantId = "vr"
     }
 
     nonisolated init(from decoder: Decoder) throws {
@@ -121,6 +135,7 @@ struct ScreenshotRow: Identifiable, Codable, Equatable, BackgroundFillable {
         isLabelManuallySet = try c.decodeIfPresent(Bool.self, forKey: .isLabelManuallySet) ?? false
         isCollapsed = try c.decodeIfPresent(Bool.self, forKey: .isCollapsed) ?? false
         excludeFromAppStoreConnect = try c.decodeIfPresent(Bool.self, forKey: .excludeFromAppStoreConnect) ?? false
+        variantId = try c.decodeIfPresent(UUID.self, forKey: .variantId)
     }
 
     func encode(to encoder: Encoder) throws {
@@ -147,6 +162,7 @@ struct ScreenshotRow: Identifiable, Codable, Equatable, BackgroundFillable {
         if isLabelManuallySet { try c.encode(true, forKey: .isLabelManuallySet) }
         if isCollapsed { try c.encode(true, forKey: .isCollapsed) }
         if excludeFromAppStoreConnect { try c.encode(true, forKey: .excludeFromAppStoreConnect) }
+        try c.encodeIfPresent(variantId, forKey: .variantId)
     }
 
     var bgColor: Color {

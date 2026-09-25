@@ -12,6 +12,8 @@ import Observation
 @MainActor
 protocol ExportDocument: RowRenderSource {
     var rows: [ScreenshotRow] { get }
+    /// Flag-gated (`[ScreenshotVariant].active`), so export and uploads never check the flag themselves.
+    var activeVariants: [ScreenshotVariant] { get }
     var activeProjectName: String { get }
     /// Lands any edit still being composed off the document, so an export started inside a
     /// continuous edit's debounce window renders what the user just did rather than the value from
@@ -246,6 +248,7 @@ final class ExportFlowModel {
             source: document,
             localeFilter: localeFilter,
             customSuffix: customSuffix,
+            variants: document.activeVariants,
             onProgress: { [weak self] completed in self?.progress = completed }
         )
     }

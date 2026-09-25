@@ -101,6 +101,7 @@ struct ContentView: View {
     @State var showingASCUploadSheet = false
     @State var showingASCMetadataSheet = false
     @State var showingGooglePlayUploadSheet = false
+    @State var showingASCExperimentSheet = false
     @State var showcasePresentation: ShowcasePresentation?
     /// Which way the developer rating sheet was left, read once by `reportDeveloperRatingOutcome`.
     @State private var didRateFromDeveloperSheet = false
@@ -117,15 +118,19 @@ struct ContentView: View {
     /// the *outgoing* project before the loading overlay can paint.
     @ViewBuilder
     private var editorRows: some View {
-        let firstRowId = state.rows.first?.id
-        let lastRowId = state.rows.last?.id
+        let variantFilter = state.effectiveVariantFilter
+        let visibleRows = variantFilter == .all ? state.rows : state.rows.filter(variantFilter.includes)
+        let firstRowId = visibleRows.first?.id
+        let lastRowId = visibleRows.last?.id
+        let isOnlyRow = state.rows.count == 1
+        let badges = VariantBadgeStyle.byVariantId(state.activeVariants)
         // Selection is read here, once, rather than in every row's body. Reading it per row put
         // `\AppState.selectedRowId` in every row's tracking scope, so moving the selection to
         // another row rebuilt every visible canvas; passed down as a value it goes through the
         // `.equatable()` below, which lets all but the two affected rows keep their bodies.
         let selectedRowId = state.selectedRowId
         let selectedShapeIds = state.selectedShapeIds
-        ForEach(state.rows) { row in
+        ForEach(visibleRows) { row in
             // `.equatable()` so an edit in one row doesn't re-run every visible row's body
             // (see EditorRowView's Equatable).
             let isSelected = row.id == selectedRowId
@@ -134,6 +139,8 @@ struct ContentView: View {
                 row: row,
                 isFirst: row.id == firstRowId,
                 isLast: row.id == lastRowId,
+                isOnlyRow: isOnlyRow,
+                variantBadge: row.variantId.flatMap { badges[$0] },
                 isSelected: isSelected,
                 selectedShapeIds: isSelected ? selectedShapeIds : [],
                 requestShowcaseExport: { presentShowcaseSheet(for: $0, mode: .singleRow) }
@@ -149,7 +156,7 @@ struct ContentView: View {
                 context: .rowLimit
             ) {
                 withAnimation(.easeInOut(duration: 0.2)) {
-                    state.addRow()
+                    state.addRow(variantId: variantFilter.newRowVariantId)
                 }
             }
         }
@@ -397,6 +404,11 @@ struct ContentView: View {
                         Divider()
                             .frame(height: 16)
                     }
+                    if !state.activeVariants.isEmpty {
+                        VariantsToolbarMenu(state: state)
+                        Divider()
+                            .frame(height: 16)
+                    }
                     ZoomControls(onFit: fitZoomToWindow, fitHelpText: fitZoomHelpText)
                     Divider()
                         .frame(height: 16)
@@ -553,6 +565,11 @@ struct ContentView: View {
             UploadToAppStoreConnectView(mode: .metadata)
                 .environment(state)
                 .screenView(.ascMetadata, restoring: .editor)
+        }
+        .platformAdaptiveSheet(isPresented: $showingASCExperimentSheet) {
+            UploadExperimentToAppStoreConnectView()
+                .environment(state)
+                .screenView(.ascExperimentUpload, restoring: .editor)
         }
         .platformAdaptiveSheet(isPresented: $showingGooglePlayUploadSheet) {
             UploadToGooglePlayView()

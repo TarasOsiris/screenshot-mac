@@ -130,6 +130,7 @@ struct ASCScreenshotReviewOutlineTests {
         let target = ASCUploadTarget(
             versionId: versionId,
             versionLabel: "iOS · \(versionId)",
+            parentKind: .versionLocalization,
             rowId: rowId,
             rowLabel: rowLabel,
             rowSize: CGSize(width: 1290, height: 2796),

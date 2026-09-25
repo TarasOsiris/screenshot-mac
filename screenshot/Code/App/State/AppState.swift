@@ -13,6 +13,8 @@ final class AppState {
     var activeProjectId: UUID?
     var rows: [ScreenshotRow] = []
     var localeState: LocaleState = .default
+    /// A/B alternatives to the Original rows. Document state: undone and saved with `rows`.
+    var variants: [ScreenshotVariant] = []
     var selectedRowId: UUID?
     var selectedShapeIds: Set<UUID> = []
     /// The canvas's in-progress inline text edit. See InlineTextEditSession.
@@ -306,8 +308,14 @@ final class AppState {
     // Undo/redo lives in AppState+Undo.swift; this flag is a stored property, which an
     // extension can't declare, and is internal so that file can read it.
 
-    func makeDefaultRow(id: UUID = UUID(), label: String? = nil, width: CGFloat? = nil, height: CGFloat? = nil) -> ScreenshotRow {
-        makeDefaultRow(
+    func makeDefaultRow(
+        id: UUID = UUID(),
+        label: String? = nil,
+        width: CGFloat? = nil,
+        height: CGFloat? = nil,
+        variantId: UUID? = nil
+    ) -> ScreenshotRow {
+        var row = makeDefaultRow(
             id: id,
             label: label,
             width: width,
@@ -316,6 +324,8 @@ final class AppState {
             defaultDeviceCategory: nil,
             defaultDeviceFrameId: nil
         )
+        row.variantId = variantId
+        return row
     }
 
     func makeDefaultRow(

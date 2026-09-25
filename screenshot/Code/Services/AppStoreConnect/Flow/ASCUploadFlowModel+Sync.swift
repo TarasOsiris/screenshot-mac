@@ -247,7 +247,7 @@ extension ASCUploadFlowModel {
             destination.rowPlans.compactMap { plan -> ASCUploadTarget? in
                 guard plan.isEnabled, let displayType = plan.selectedAssetType else { return nil }
                 guard let row = rows.first(where: { $0.id == plan.id }),
-                      !row.excludeFromAppStoreConnect else { return nil }
+                      row.uploadsToAppStoreListing else { return nil }
                 let localizations = plan.localeTargets.flatMap { target -> [ASCUploadLocalization] in
                     guard target.isEnabled else { return [] }
                     return target.selectedCandidates
@@ -257,6 +257,7 @@ extension ASCUploadFlowModel {
                 return ASCUploadTarget(
                     versionId: destination.id,
                     versionLabel: destination.title,
+                    parentKind: .versionLocalization,
                     rowId: plan.id,
                     rowLabel: plan.displayLabel,
                     rowSize: plan.rowSize,

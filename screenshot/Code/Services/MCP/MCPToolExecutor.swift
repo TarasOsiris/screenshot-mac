@@ -32,7 +32,8 @@ final class MCPToolExecutor {
         // Argument *keys* only — the values carry project text the user wrote.
         CrashReportingService.breadcrumb(.mcp, "Tool \(name)", data: ["args": (arguments?.keys.sorted() ?? [])])
         // `name` is client-supplied; only a name that matched our catalog is safe to send onward.
-        let tool = MCPToolName(rawValue: name)
+        // A flag-gated tool is unknown while its flag is off, in analytics too.
+        let tool = MCPToolName(rawValue: name).flatMap { $0.isAvailable ? $0 : nil }
         let sessionId = sessions.note(.toolCall(tool))
         do {
             guard let tool else {
@@ -91,6 +92,10 @@ final class MCPToolExecutor {
         case .applyAppStoreScreenshotSync: try await applyAppStoreScreenshotSync(args)
         case .getSyncJobStatus: try getSyncJobStatus(args)
         case .cancelSyncJob: try cancelSyncJob(args)
+        case .listVariants: try listVariants()
+        case .createVariant: try createVariant(args)
+        case .setRowVariant: try setRowVariant(args)
+        case .deleteVariant: try deleteVariant(args)
         }
     }
 

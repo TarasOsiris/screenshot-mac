@@ -88,6 +88,7 @@ struct MCPRowSnapshot: Encodable {
     let showDevice: Bool
     let defaultDeviceCategory: String?
     let defaultDeviceFrameId: String?
+    let variantId: String?
     let background: MCPBackgroundSnapshot
     let templates: [MCPTemplateSnapshot]
     let shapes: [MCPShapeSnapshot]
@@ -148,6 +149,7 @@ enum MCPSnapshotBuilder {
             showDevice: row.showDevice,
             defaultDeviceCategory: row.defaultDeviceCategory?.rawValue,
             defaultDeviceFrameId: row.defaultDeviceFrameId,
+            variantId: row.variantId?.uuidString,
             background: background(
                 style: row.backgroundStyle,
                 color: row.backgroundColorData,

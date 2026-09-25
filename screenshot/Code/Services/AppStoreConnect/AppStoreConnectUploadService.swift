@@ -42,8 +42,11 @@ struct ASCUploadLocalization {
 
 struct ASCUploadTarget: Identifiable {
     let id = UUID()
+    /// The version — or, for an experiment, the treatment — the sets belong to.
     let versionId: String
     let versionLabel: String
+    /// What each of `localizations` is: a version localization, or a treatment localization.
+    let parentKind: ASCScreenshotSetParentKind
     let rowId: UUID
     let rowLabel: String
     let rowSize: CGSize

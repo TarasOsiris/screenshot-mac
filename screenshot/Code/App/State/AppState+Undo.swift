@@ -1,6 +1,6 @@
 import SwiftUI
 
-// The undo/persistence contract: withUndo snapshots rows + localeState as one document,
+// The undo/persistence contract: withUndo snapshots the whole `document` (rows, locales, variants),
 // registers a step only if they actually changed, and schedules the save. Nested calls join
 // the outer transaction via edits.isInUndoTransaction, so a wrapped helper never makes a second step.
 extension AppState {
@@ -17,12 +17,11 @@ extension AppState {
         edits.isInUndoTransaction = true
         defer { edits.isInUndoTransaction = false }
 
-        let baseRows = rows
-        let baseLocaleState = localeState
+        let base = document
         let result = body()
-        guard rows != baseRows || localeState != baseLocaleState else { return result }
+        guard document != base else { return result }
         CrashReportingService.breadcrumb(.edit, actionName, data: ["rows": rows.count])
-        registerSnapshot(actionName, baseRows: baseRows, baseLocaleState: baseLocaleState)
+        registerSnapshot(actionName, base: base)
         scheduleSave()
         return result
     }
@@ -35,10 +34,9 @@ extension AppState {
     /// they mutate `rows` in place and skip this whole-document copy.
     func withDocument(_ actionName: String, _ body: (inout ProjectDocument) -> Void) {
         withUndo(actionName) {
-            var updated = ProjectDocument(rows: rows, localeState: localeState)
+            var updated = document
             body(&updated)
-            rows = updated.rows
-            localeState = updated.localeState
+            document = updated
         }
     }
 
@@ -87,18 +85,16 @@ extension AppState {
     /// Registers a whole-document restore on the undo stack, re-registering its own inverse
     /// so redo cycles back to the post-edit state. Shared by `withUndo` and the continuous-edit
     /// commit path.
-    private func registerSnapshot(_ actionName: String, baseRows: [ScreenshotRow], baseLocaleState: LocaleState) {
+    private func registerSnapshot(_ actionName: String, base: ProjectDocument) {
         guard let undoManager else { return }
         registeringUndoStep(on: undoManager) {
             undoManager.registerUndo(withTarget: self) { target in
-                let redoRows = target.rows
-                let redoLocaleState = target.localeState
-                target.rows = baseRows
-                target.localeState = baseLocaleState
+                let redo = target.document
+                target.document = base
                 target.templateMoveContinuation = nil
                 target.normalizeSelection()
                 target.scheduleSave()
-                target.registerSnapshot(actionName, baseRows: redoRows, baseLocaleState: redoLocaleState)
+                target.registerSnapshot(actionName, base: redo)
                 target.undoManager?.setActionName(actionName)
             }
             undoManager.setActionName(actionName)
@@ -123,7 +119,10 @@ extension AppState {
     /// `withUndo` instead.
     func registerUndoWithBase(_ actionName: String, base: [ScreenshotRow], baseLocaleState: LocaleState? = nil) {
         CrashReportingService.breadcrumb(.edit, actionName, data: ["rows": rows.count])
-        registerSnapshot(actionName, baseRows: base, baseLocaleState: baseLocaleState ?? localeState)
+        registerSnapshot(
+            actionName,
+            base: ProjectDocument(rows: base, localeState: baseLocaleState ?? localeState, variants: variants)
+        )
     }
 
     /// Row-scoped undo with a pre-captured base row. Looks up the row by ID on undo/redo,

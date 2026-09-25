@@ -19,6 +19,9 @@ final class EditorViewModeController {
     /// Always false on macOS.
     private(set) var isViewMode = false
 
+    /// Which A/B variant's rows the editor lists.
+    var variantFilter: EditorVariantFilter = .all
+
     @ObservationIgnored private let textEdit: InlineTextEditSession
     /// Clears the shape selection. No-op until wired.
     @ObservationIgnored var deselectAll: () -> Void = {}
@@ -58,5 +61,35 @@ final class EditorViewModeController {
             textEdit.isActive = false
             deselectAll()
         }
+    }
+}
+
+/// The editor's A/B variant filter. Session-only view state.
+enum EditorVariantFilter: Hashable {
+    case all
+    case variant(UUID?)
+
+    func includes(_ row: ScreenshotRow) -> Bool {
+        switch self {
+        case .all: true
+        case .variant(let id): row.variantId == id
+        }
+    }
+
+    /// Stale or orphaned filters show everything — with no variants, the menu that would clear one is hidden.
+    func resolved(in variants: [ScreenshotVariant]) -> EditorVariantFilter {
+        switch self {
+        case .all: .all
+        case .variant(let id):
+            if variants.isEmpty { .all }
+            else if let id, variants.variant(withId: id) == nil { .all }
+            else { self }
+        }
+    }
+
+    /// Where a row added while this filter is on belongs, so it doesn't vanish on creation.
+    var newRowVariantId: UUID? {
+        if case .variant(let id) = self { return id }
+        return nil
     }
 }

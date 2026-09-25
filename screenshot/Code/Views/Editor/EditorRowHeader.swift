@@ -24,6 +24,7 @@ struct EditorRowHeader<RowMenuContent: View>: View {
     var overriddenShapeCount: Int = 0
     var overrideLocaleLabel: String = ""
     var onSelectOverridden: () -> Void = {}
+    var variantBadge: VariantBadgeStyle?
     let rowMenuContent: () -> RowMenuContent
 
     @Environment(\.editorViewportWidth) private var editorViewportWidth
@@ -78,6 +79,10 @@ struct EditorRowHeader<RowMenuContent: View>: View {
                 // translate into eight languages and to keep in step with this one.
                 .help(overriddenShapesDescription)
                 .accessibilityLabel(overriddenShapesDescription)
+            }
+
+            if let variantBadge {
+                VariantBadge(name: variantBadge.name, tint: variantBadge.tint)
             }
 
             previewToggle

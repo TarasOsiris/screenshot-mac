@@ -220,6 +220,10 @@ extension MCPToolExecutor {
                     issues.append("Skipped row \(row.id.uuidString): excluded from App Store Connect.")
                     continue
                 }
+                guard row.isOriginal else {
+                    issues.append("Skipped row \(row.id.uuidString): belongs to an A/B variant, not the product page.")
+                    continue
+                }
                 guard let displayType = ASCDisplayType.detect(width: row.templateWidth, height: row.templateHeight) else {
                     issues.append("Skipped row \(row.id.uuidString): its \(Int(row.templateWidth))×\(Int(row.templateHeight)) display type is ambiguous or unsupported.")
                     continue
@@ -246,6 +250,7 @@ extension MCPToolExecutor {
                 targets.append(ASCUploadTarget(
                     versionId: version.id,
                     versionLabel: "\(version.attributes.displayPlatform ?? "App Store") · Version \(version.attributes.versionString)",
+                    parentKind: .versionLocalization,
                     rowId: row.id,
                     rowLabel: row.label.isEmpty ? "Row" : row.label,
                     rowSize: row.templateSize,

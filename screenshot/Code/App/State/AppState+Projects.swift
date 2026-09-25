@@ -40,8 +40,7 @@ extension AppState {
                 defaultDeviceFrameId: configuration.deviceFrameId
             )
         }
-        rows = configuredRows.isEmpty ? [makeDefaultRow()] : configuredRows
-        localeState = .default
+        document = ProjectDocument(rows: configuredRows.isEmpty ? [makeDefaultRow()] : configuredRows)
         selectRow(rows.first?.id)
         CrashReportingService.breadcrumb(.project, "Created blank project", data: ["rows": rows.count])
         AnalyticsService.capture(.projectCreated, [.source: "blank", .rowCount: rows.count])
@@ -191,8 +190,7 @@ extension AppState {
         guard id == activeProjectId else { return }
         CrashReportingService.breadcrumb(.project, "Reset project")
         teardownActiveProject()
-        rows = [makeDefaultRow()]
-        localeState = .default
+        document = ProjectDocument(rows: [makeDefaultRow()])
         selectRow(rows.first?.id)
         saveAll()
     }
@@ -222,9 +220,8 @@ extension AppState {
             } else {
                 // No visible projects left — drop to the empty "Create Project" state.
                 deselectAll()
-                rows = []
+                document = ProjectDocument(rows: [])
                 viewMode.reconcilePreviewingRows(against: [])
-                localeState = .default
                 activeProjectId = nil
                 activeProjectDataModifiedAt = nil
             }

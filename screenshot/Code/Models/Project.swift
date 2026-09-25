@@ -118,16 +118,23 @@ nonisolated struct ProjectData: Codable {
     /// Mirrors the index entry (the source of truth) so a lost `projects.json` can be rebuilt with
     /// real names. Only refreshed when the project is saved, so a rename while closed leaves it stale.
     var name: String?
+    var variants: [ScreenshotVariant]
 
     enum CodingKeys: String, CodingKey {
-        case rows = "r", localeState = "ls", modifiedAt = "m", name = "n"
+        case rows = "r", localeState = "ls", modifiedAt = "m", name = "n", variants = "v"
     }
 
-    init(rows: [ScreenshotRow], localeState: LocaleState? = nil, name: String? = nil) {
+    init(
+        rows: [ScreenshotRow],
+        localeState: LocaleState? = nil,
+        name: String? = nil,
+        variants: [ScreenshotVariant] = []
+    ) {
         self.rows = rows
         self.localeState = localeState
         self.modifiedAt = Date()
         self.name = name
+        self.variants = variants
     }
 
     init(from decoder: Decoder) throws {
@@ -136,6 +143,16 @@ nonisolated struct ProjectData: Codable {
         localeState = try c.decodeIfPresent(LocaleState.self, forKey: .localeState)
         modifiedAt = try c.decodeIfPresent(Date.self, forKey: .modifiedAt) ?? .distantPast
         name = try c.decodeIfPresent(String.self, forKey: .name)
+        variants = try c.decodeIfPresent([ScreenshotVariant].self, forKey: .variants) ?? []
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var c = encoder.container(keyedBy: CodingKeys.self)
+        try c.encode(rows, forKey: .rows)
+        try c.encodeIfPresent(localeState, forKey: .localeState)
+        try c.encode(modifiedAt, forKey: .modifiedAt)
+        try c.encodeIfPresent(name, forKey: .name)
+        if !variants.isEmpty { try c.encode(variants, forKey: .variants) }
     }
 }
 

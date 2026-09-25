@@ -62,6 +62,9 @@ struct EditorRowMenuContent: View {
     @ViewBuilder
     private var organizationSection: some View {
         Button("Duplicate Row", systemImage: "plus.square.on.square", action: duplicateRow)
+        if FeatureFlags.abTesting {
+            RowVariantMenuItems(state: state, row: row)
+        }
         Button("Add New Row Above", systemImage: "arrow.up.to.line.compact") {
             store.requirePro(
                 allowed: store.canAddRow(currentCount: state.rows.count),

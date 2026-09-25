@@ -15,6 +15,8 @@ nonisolated struct ASCAppWithVersions {
     let app: ASCApp
     let versions: [ASCAppStoreVersion]
 
+    var platforms: [ASCPlatform] { versions.platforms }
+
     var hasScreenshotUploadableVersion: Bool { versions.contains(where: \.isScreenshotUploadable) }
 }
 
@@ -319,4 +321,15 @@ nonisolated struct ASCUploadOperation: Decodable {
 nonisolated struct ASCUploadHeader: Decodable {
     let name: String
     let value: String
+}
+
+nonisolated extension Array where Element == ASCAppStoreVersion {
+    /// The platforms these versions are on, each once, in first-seen order.
+    var platforms: [ASCPlatform] {
+        var seen: [ASCPlatform] = []
+        for platform in compactMap(\.attributes.ascPlatform) where !seen.contains(platform) {
+            seen.append(platform)
+        }
+        return seen
+    }
 }

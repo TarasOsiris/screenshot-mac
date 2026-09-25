@@ -51,7 +51,8 @@ extension MCPToolExecutor {
                 to: destination,
                 format: format,
                 source: checkout,
-                localeFilter: args.string("locale")
+                localeFilter: args.string("locale"),
+                variants: checkout.document.variants.active
             )
             return try MCPResultEncoding.result(ExportResult(
                 folder: result.folderURL.path,

@@ -144,7 +144,7 @@ extension AppState {
         guard let activeId = activeProjectId, projectOpenTask == nil else { return nil }
         guard activeId != degradedLoadProjectId else { return nil }
         let name = projects.first { $0.id == activeId }?.name
-        return (activeId, ProjectData(rows: rows, localeState: localeState, name: name))
+        return (activeId, document.projectData(name: name))
     }
 
     /// Debounced-autosave sibling of `saveAll()`: snapshots index + project on the

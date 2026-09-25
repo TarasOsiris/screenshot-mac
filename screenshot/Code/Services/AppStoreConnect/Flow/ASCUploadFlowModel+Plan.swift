@@ -104,7 +104,7 @@ extension ASCUploadFlowModel {
             ? ASCDisplayType.userSelectableCases(forPlatform: platform).first
             : nil
         let assignment = ASCLocaleMatcher.assign(appCodes: localeState.locales.map(\.code), to: localizations)
-        return rows.filter { !$0.excludeFromAppStoreConnect }.map { row in
+        return rows.filter(\.uploadsToAppStoreListing).map { row in
             let detected = ASCDisplayType.detect(width: row.templateWidth, height: row.templateHeight)
             let existingPlan = existingPlans.first(where: { $0.id == row.id })
             let targets = localeState.locales.map { locale -> ASCLocaleTarget in

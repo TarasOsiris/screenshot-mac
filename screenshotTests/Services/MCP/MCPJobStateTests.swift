@@ -143,6 +143,7 @@ struct MCPSyncJobThresholdTests {
         ASCUploadTarget(
             versionId: "v1",
             versionLabel: "v",
+            parentKind: .versionLocalization,
             rowId: UUID(),
             rowLabel: "r",
             rowSize: CGSize(width: 10, height: 20),

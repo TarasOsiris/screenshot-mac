@@ -392,6 +392,16 @@ struct RowInspector: View {
                 .scaledFont(UIMetrics.FontSize.body)
                 .toggleStyle(.switch)
                 .compactControlSize()
+            if !state.activeVariants.isEmpty {
+                Picker("A/B Variant", selection: Binding(
+                    get: { state.rowIndex(for: rowId).flatMap { state.rows[$0].variantId } },
+                    set: { state.setRowVariant(rowId, to: $0) }
+                )) {
+                    VariantPickerOptions(variants: state.activeVariants)
+                }
+                .scaledFont(UIMetrics.FontSize.body)
+                .compactControlSize()
+            }
         }
     }
 

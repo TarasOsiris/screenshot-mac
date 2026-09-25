@@ -70,7 +70,7 @@ struct ASCReplaceAllDiffTests {
         return AppStoreConnectScreenshotSyncService.makeDiff(
             id: "set",
             target: ASCUploadTarget(
-                versionId: "v1", versionLabel: "iOS · 1.0", rowId: UUID(), rowLabel: "Row",
+                versionId: "v1", versionLabel: "iOS · 1.0", parentKind: .versionLocalization, rowId: UUID(), rowLabel: "Row",
                 rowSize: CGSize(width: 1290, height: 2796), displayType: .iphone67,
                 localizations: [ASCUploadLocalization(id: "loc", label: "en-US", localeCode: "en")],
                 templateCount: count

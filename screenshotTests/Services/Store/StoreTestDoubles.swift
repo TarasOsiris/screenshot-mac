@@ -5,6 +5,7 @@ import UIKit
 #endif
 import Foundation
 @testable import Screenshot_Bro
+import Testing
 
 /// A `SecretStore` backed by a dictionary. Tests that exercise credential storage used to write
 /// a real ES256 private key into the developer's login Keychain and restore it by hand; they
@@ -52,6 +53,7 @@ extension GooglePlayCredentialsStore {
 @MainActor
 final class StubGPDocument: GPUploadDocument {
     var rows: [ScreenshotRow]
+    var activeVariants: [ScreenshotVariant] = []
     var activeProjectName: String
     var localeState: LocaleState
     var availableFontFamilySet: Set<String> = []
@@ -135,6 +137,7 @@ final class FakeGPPackageVerifier: GPPackageVerifying {
 @MainActor
 final class StubASCDocument: ASCUploadDocument {
     var rows: [ScreenshotRow]
+    var activeVariants: [ScreenshotVariant] = []
     var activeProjectName: String
     var localeState: LocaleState
     var availableFontFamilySet: Set<String> = []
@@ -242,4 +245,59 @@ final class FakeASCUploadAPI: ASCUploadAPI {
     func updateAppInfoLocalization(id: String, attributes: [String: AnyEncodable]) async throws {}
 
     func updateAppStoreVersion(id: String, attributes: [String: AnyEncodable]) async throws {}
+}
+
+/// A scripted `ASCExperimentAPI`: experiments and treatments are whatever the test seeds.
+@MainActor
+final class FakeASCExperimentAPI: ASCExperimentAPI {
+    var experiments: [ASCExperiment] = []
+    var treatmentsByExperiment: [String: [ASCExperimentTreatment]] = [:]
+
+    func listExperiments(appId: String) async throws -> [ASCExperiment] { experiments }
+
+    func experiment(id: String) async throws -> ASCExperiment {
+        try #require(experiments.first { $0.id == id })
+    }
+
+    func createExperiment(appId: String, platform: ASCPlatform, name: String, trafficProportion: Int) async throws -> ASCExperiment {
+        let experiment = ASCExperiment.fixture(id: "exp-new", name: name, platform: platform)
+        experiments.append(experiment)
+        return experiment
+    }
+
+    func startExperiment(id: String) async throws -> ASCExperiment {
+        try await experiment(id: id)
+    }
+
+    func listTreatments(experimentId: String) async throws -> [ASCExperimentTreatment] {
+        treatmentsByExperiment[experimentId] ?? []
+    }
+
+    func createTreatment(experimentId: String, name: String) async throws -> ASCExperimentTreatment {
+        let treatment = ASCExperimentTreatment(id: "t-\(name)", attributes: .init(name: name))
+        treatmentsByExperiment[experimentId, default: []].append(treatment)
+        return treatment
+    }
+
+    func listTreatmentLocalizations(treatmentId: String) async throws -> [ASCTreatmentLocalization] { [] }
+
+    func createTreatmentLocalization(treatmentId: String, locale: String) async throws -> ASCTreatmentLocalization {
+        ASCTreatmentLocalization(id: "tl-\(treatmentId)-\(locale)", attributes: .init(locale: locale))
+    }
+
+    func submitExperimentForReview(appId: String, platform: ASCPlatform, experimentId: String) async throws {}
+}
+
+extension ASCExperiment {
+    static func fixture(
+        id: String,
+        name: String = "Test",
+        platform: ASCPlatform = .ios,
+        state: ASCExperimentState = .prepareForSubmission
+    ) -> ASCExperiment {
+        ASCExperiment(
+            id: id,
+            attributes: .init(name: name, platform: platform.rawValue, state: state.rawValue, trafficProportion: 50)
+        )
+    }
 }

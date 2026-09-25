@@ -25,6 +25,13 @@ final class GPUploadFlowModel {
     /// stage as a draft. On, they are submitted to Google Play review on commit.
     var sendForReview: Bool = false
     var rowPlans: [GPRowPlan] = []
+    /// Play has no experiments API, so this is how a winning variant becomes the listing; nil is the Original.
+    var listingVariantId: UUID? {
+        didSet {
+            guard listingVariantId != oldValue else { return }
+            rowPlans = buildRowPlans(preserving: rowPlans)
+        }
+    }
 
     var recentPackageNames: [String] { GooglePlayRecentPackages.load(defaults: defaults) }
 
@@ -65,7 +72,13 @@ final class GPUploadFlowModel {
     }
 
     var rows: [ScreenshotRow] { document?.rows ?? [] }
+    var variants: [ScreenshotVariant] { document?.activeVariants ?? [] }
     var localeState: LocaleState { document?.localeState ?? .default }
+
+    /// A variant id that no longer exists falls back to the Original rather than planning nothing.
+    var listingRows: [ScreenshotRow] {
+        rows.inVariant(variants.variant(withId: listingVariantId)?.id)
+    }
 
     var validationIssues: [UploadIssue] {
         GooglePlayUploadValidator.validate(
@@ -163,7 +176,7 @@ final class GPUploadFlowModel {
 
     func buildRowPlans(preserving existingPlans: [GPRowPlan] = []) -> [GPRowPlan] {
         let defaultCodes = GooglePlayLanguageMatcher.defaultUploadCodes(among: localeState.locales.map(\.code))
-        return rows.map { row in
+        return listingRows.map { row in
             let detected = GPImageType.detect(width: row.templateWidth, height: row.templateHeight)
             let existingPlan = existingPlans.first(where: { $0.id == row.id })
             let targets = localeState.locales.map { locale -> GPLocaleTarget in

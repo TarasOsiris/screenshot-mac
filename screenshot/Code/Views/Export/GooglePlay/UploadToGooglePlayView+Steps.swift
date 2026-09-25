@@ -11,6 +11,9 @@ extension UploadToGooglePlayView {
                 packageField
                 verificationStatus
                 sendForReviewToggle
+                if !model.variants.isEmpty {
+                    listingVariantPicker
+                }
             }
             .padding(16)
             .frame(maxWidth: .infinity, alignment: .leading)
@@ -110,6 +113,22 @@ extension UploadToGooglePlayView {
                 .font(.callout)
                 .foregroundStyle(.secondary)
             }
+        }
+        .fixedSize(horizontal: false, vertical: true)
+    }
+
+    private var listingVariantPicker: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Picker("Listing variant", selection: $model.listingVariantId) {
+                VariantPickerOptions(variants: model.variants)
+            }
+            .fixedSize()
+            Label(
+                "Google Play has no API for store listing experiments. Upload a variant here to make it your listing, or export all screenshots — each variant gets its own folder — and add them to an experiment in Play Console.",
+                systemImage: "info.circle"
+            )
+            .font(.callout)
+            .foregroundStyle(.secondary)
         }
         .fixedSize(horizontal: false, vertical: true)
     }

@@ -7,6 +7,7 @@ import Testing
 @MainActor
 private final class StubDocument: ExportDocument {
     var rows: [ScreenshotRow]
+    var activeVariants: [ScreenshotVariant] = []
     var activeProjectName: String
     var localeState: LocaleState = .default
     var availableFontFamilySet: Set<String> = []

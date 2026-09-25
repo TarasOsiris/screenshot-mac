@@ -291,8 +291,7 @@ extension AppState {
         presentation.dismissAll()
         cancelPendingDebounceTasks()
         undoManager?.removeAllActions()
-        rows = data.rows
-        localeState = data.localeState ?? .default
+        document = ProjectDocument(data)
         activeProjectDataModifiedAt = data.modifiedAt
         lastSeenCatalogModified = PersistenceService.translationCatalogModifiedDate(projectId)
         // Drop any preview-mode entries that don't refer to a row in the new data.
@@ -304,7 +303,9 @@ extension AppState {
         prewarmDeviceModelScenes()
         selectRow(rows.first?.id)
         switch origin {
-        case .open: cleanupOrphanedResourceFilesAsync(for: projectId)
+        case .open:
+            viewMode.variantFilter = .all
+            cleanupOrphanedResourceFilesAsync(for: projectId)
         case .remoteReload: forgetDeferredOrphans()
         }
         seedAndReclaimFontsForLoadedProject()
@@ -347,8 +348,7 @@ extension AppState {
             } else {
                 degradedLoadProjectId = nil
             }
-            rows = [makeDefaultRow()]
-            localeState = .default
+            document = ProjectDocument(rows: [makeDefaultRow()])
             activeProjectDataModifiedAt = nil
             selectRow(rows.first?.id)
         }

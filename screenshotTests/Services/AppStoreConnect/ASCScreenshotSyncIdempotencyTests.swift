@@ -19,6 +19,9 @@ private final class FakeScreenshotSyncAPI: ASCScreenshotSyncAPI {
     private(set) var deleteCount = 0
     private(set) var orderCount = 0
     private(set) var listSetsCount = 0
+    /// Every parent a set was listed or created under, so a test can prove where sets landed.
+    private(set) var listedParents: [ASCScreenshotSetParent] = []
+    private(set) var createdParents: [ASCScreenshotSetParent] = []
     /// Localization whose uploads should fail, to model a set that stops halfway. Keyed by
     /// localization rather than set id because set ids are minted here, not by the test.
     var failUploadsForLocalization: String?
@@ -69,7 +72,9 @@ private final class FakeScreenshotSyncAPI: ASCScreenshotSyncAPI {
         return setId
     }
 
-    func listScreenshotSets(localizationId: String, limit: Int) async throws -> [ASCAppScreenshotSet] {
+    func listScreenshotSets(parent: ASCScreenshotSetParent, limit: Int) async throws -> [ASCAppScreenshotSet] {
+        let localizationId = parent.id
+        listedParents.append(parent)
         listSetsCount += 1
         if failListSetsTimes > 0 {
             failListSetsTimes -= 1
@@ -85,7 +90,9 @@ private final class FakeScreenshotSyncAPI: ASCScreenshotSyncAPI {
             }
     }
 
-    func createScreenshotSet(localizationId: String, displayType: String) async throws -> ASCAppScreenshotSet {
+    func createScreenshotSet(parent: ASCScreenshotSetParent, displayType: String) async throws -> ASCAppScreenshotSet {
+        let localizationId = parent.id
+        createdParents.append(parent)
         createSetCount += 1
         nextSetId += 1
         let id = "set-\(nextSetId)"
@@ -182,10 +189,15 @@ private final class StubRenderSource: RowRenderSource {
 @MainActor
 struct ASCScreenshotSyncIdempotencyTests {
 
-    private func makeTarget(rowId: UUID, localizations: [String] = ["loc-1"]) -> ASCUploadTarget {
+    private func makeTarget(
+        rowId: UUID,
+        localizations: [String] = ["loc-1"],
+        parentKind: ASCScreenshotSetParentKind = .versionLocalization
+    ) -> ASCUploadTarget {
         ASCUploadTarget(
             versionId: "v1",
             versionLabel: "iOS · Version 1.0",
+            parentKind: parentKind,
             rowId: rowId,
             rowLabel: "Row",
             rowSize: CGSize(width: 60, height: 120),
@@ -220,6 +232,32 @@ struct ASCScreenshotSyncIdempotencyTests {
             needsPreviews: needsPreviews
         )
         return (plan, stamp)
+    }
+
+    // MARK: - Set parent
+
+    /// An experiment treatment reuses the whole engine; only the set's parent differs.
+    @Test func aTreatmentTargetListsAndCreatesItsSetUnderTheTreatmentLocalization() async throws {
+        let api = FakeScreenshotSyncAPI()
+        let service = AppStoreConnectScreenshotSyncService(api: api, isDemoMode: { false })
+        let rowId = UUID()
+        let stamp = DocumentStamp(projectId: UUID(), modifiedAt: Date())
+        let plan = try await service.buildPlan(
+            appId: "123",
+            targets: [makeTarget(rowId: rowId, localizations: ["tloc-1"], parentKind: .treatmentLocalization)],
+            rows: [makeRow(id: rowId)],
+            source: StubRenderSource(),
+            document: stamp,
+            needsPreviews: false
+        )
+        let diff = try #require(plan.sets.first)
+        #expect(diff.parent == .treatmentLocalization("tloc-1"))
+
+        let result = try await service.apply(planId: plan.id, setIds: [diff.id], document: stamp)
+
+        #expect(result.succeeded)
+        #expect(api.createdParents == [.treatmentLocalization("tloc-1")])
+        #expect(api.listedParents.allSatisfy { $0.kind == .treatmentLocalization })
     }
 
     // MARK: - Strategy
@@ -444,7 +482,7 @@ struct ASCScreenshotSyncIdempotencyTests {
 
         #expect(result.succeeded)
         #expect(api.createSetCount == 1, "the retry adopts rather than posting again")
-        let sets = try await api.listScreenshotSets(localizationId: "loc-1", limit: 50)
+        let sets = try await api.listScreenshotSets(parent: .versionLocalization("loc-1"), limit: 50)
         #expect(sets.count == 1, "exactly one set for the display type")
     }
 
@@ -467,7 +505,7 @@ struct ASCScreenshotSyncIdempotencyTests {
         #expect(!result.succeeded)
         #expect(api.createSetCount == 1, "an unanswerable lookup must not be read as 'not created'")
         api.refuseAdoptLookup = false
-        let sets = try await api.listScreenshotSets(localizationId: "loc-1", limit: 50)
+        let sets = try await api.listScreenshotSets(parent: .versionLocalization("loc-1"), limit: 50)
         #expect(sets.count == 1, "no duplicate set for the display type")
     }
 
@@ -556,7 +594,7 @@ struct ASCScreenshotSyncIdempotencyTests {
             appId: "123",
             targets: [ASCDisplayType.iphone67, .ipadPro129M4].map {
                 ASCUploadTarget(
-                    versionId: "v1", versionLabel: "iOS · Version 1.0", rowId: rowId, rowLabel: "Row",
+                    versionId: "v1", versionLabel: "iOS · Version 1.0", parentKind: .versionLocalization, rowId: rowId, rowLabel: "Row",
                     rowSize: CGSize(width: 60, height: 120), displayType: $0,
                     localizations: localizations, templateCount: 1
                 )

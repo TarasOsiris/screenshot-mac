@@ -8,8 +8,11 @@ struct EditorRowView: View {
     @Environment(\.horizontalSizeClass) var horizontalSizeClass
     #endif
     let row: ScreenshotRow
+    /// First/last among the rows the editor shows, which a variant filter can narrow.
     let isFirst: Bool
     let isLast: Bool
+    let isOnlyRow: Bool
+    let variantBadge: VariantBadgeStyle?
     /// Selection arrives as a value input rather than being read off `state`. Reading
     /// `state.selectedRowId` in the body put it in *every* realized row's tracking scope, so moving
     /// the selection to another row invalidated all of them — `.equatable()` can't intercept that,
@@ -56,8 +59,7 @@ struct EditorRowView: View {
 
     var canMoveUp: Bool { !isFirst }
     var canMoveDown: Bool { !isLast }
-    /// The only undeletable row is the sole row — i.e. both first and last.
-    var canDelete: Bool { !(isFirst && isLast) }
+    var canDelete: Bool { !isOnlyRow }
 
     var zoom: CGFloat { state.zoom.level }
     var isPreviewMode: Bool { state.viewMode.previewingRows.contains(row.id) }
@@ -145,7 +147,8 @@ struct EditorRowView: View {
                         onTogglePreview: togglePreviewMode,
                         overriddenShapeCount: overridden.count,
                         overrideLocaleLabel: overridden.isEmpty ? "" : state.localeState.activeLocaleLabel,
-                        onSelectOverridden: { state.selectShapes(overridden, in: row.id) }
+                        onSelectOverridden: { state.selectShapes(overridden, in: row.id) },
+                        variantBadge: variantBadge
                     ) {
                         rowMenuContent
                     }
@@ -249,6 +252,8 @@ extension EditorRowView: Equatable {
         lhs.row == rhs.row
             && lhs.isFirst == rhs.isFirst
             && lhs.isLast == rhs.isLast
+            && lhs.isOnlyRow == rhs.isOnlyRow
+            && lhs.variantBadge == rhs.variantBadge
             && lhs.isSelected == rhs.isSelected
             && lhs.selectedShapeIds == rhs.selectedShapeIds
     }

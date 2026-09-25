@@ -244,7 +244,12 @@ extension AppState {
     /// The document view of the open project. The walks themselves live on `ProjectDocument` so a
     /// project the editor does not have open answers them identically.
     var document: ProjectDocument {
-        ProjectDocument(rows: rows, localeState: localeState)
+        get { ProjectDocument(rows: rows, localeState: localeState, variants: variants) }
+        set {
+            rows = newValue.rows
+            localeState = newValue.localeState
+            variants = newValue.variants
+        }
     }
 
     /// Image filenames needed for the editor (base shapes + active locale overrides only),

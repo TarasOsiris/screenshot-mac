@@ -31,6 +31,18 @@ enum MCPToolName: String, CaseIterable {
     case applyAppStoreScreenshotSync = "apply_app_store_screenshot_sync"
     case getSyncJobStatus = "get_sync_job_status"
     case cancelSyncJob = "cancel_sync_job"
+    case listVariants = "list_variants"
+    case createVariant = "create_variant"
+    case setRowVariant = "set_row_variant"
+    case deleteVariant = "delete_variant"
+
+    /// Tools behind a feature flag: listed and dispatched only while it is on.
+    nonisolated var isAvailable: Bool {
+        switch self {
+        case .listVariants, .createVariant, .setRowVariant, .deleteVariant: FeatureFlags.abTesting
+        default: true
+        }
+    }
 }
 
 nonisolated enum MCPToolCatalog {
@@ -58,7 +70,11 @@ nonisolated enum MCPToolCatalog {
         ),
     ], required: ["stops"])
 
-    static let tools: [Tool] = [
+    static var tools: [Tool] {
+        allTools.filter { MCPToolName(rawValue: $0.name)?.isAvailable ?? false }
+    }
+
+    private static let allTools: [Tool] = [
         Tool(
             name: MCPToolName.listTemplates.rawValue,
             description: "List bundled starter templates that create_project can instantiate.",
@@ -350,6 +366,34 @@ nonisolated enum MCPToolCatalog {
             inputSchema: MCPSchema.object([
                 "job_id": MCPSchema.string("Job id to cancel"),
             ], required: ["job_id"])
+        ),
+        Tool(
+            name: MCPToolName.listVariants.rawValue,
+            description: "List the active project's A/B variants and which rows belong to each. Rows with no variant are the Original — the control an App Store product page experiment compares against.",
+            inputSchema: MCPSchema.object([:])
+        ),
+        Tool(
+            name: MCPToolName.createVariant.rawValue,
+            description: "Start a new A/B variant in the active project by copying a row (shapes, translations and images) into it. The copy is inserted after the source row; edit it to make the alternative.",
+            inputSchema: MCPSchema.object([
+                "from_row_id": MCPSchema.string("Row UUID to copy into the new variant"),
+                "name": MCPSchema.string("Variant name (default \"Variant B\", \"Variant C\", …)"),
+            ], required: ["from_row_id"])
+        ),
+        Tool(
+            name: MCPToolName.setRowVariant.rawValue,
+            description: "Move a row into a variant, or back to the Original.",
+            inputSchema: MCPSchema.object([
+                "row_id": MCPSchema.string("Row UUID"),
+                "variant_id": MCPSchema.string("Variant UUID from list_variants; omit to move the row to the Original"),
+            ], required: ["row_id"])
+        ),
+        Tool(
+            name: MCPToolName.deleteVariant.rawValue,
+            description: "Delete a variant and its rows (undoable in the app). If its rows are all the project has, they move to the Original instead.",
+            inputSchema: MCPSchema.object([
+                "variant_id": MCPSchema.string("Variant UUID from list_variants"),
+            ], required: ["variant_id"])
         ),
     ]
 }

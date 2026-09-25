@@ -50,6 +50,13 @@ extension ContentView {
             }
             .disabled(state.rows.isEmpty)
 
+            if FeatureFlags.abTesting {
+                Button("Upload A/B Test to App Store Connect…", systemImage: "square.split.2x1") {
+                    showingASCExperimentSheet = true
+                }
+                .disabled(state.variants.isEmpty)
+            }
+
             Button("Upload to Google Play…", systemImage: "play.rectangle.on.rectangle") {
                 showingGooglePlayUploadSheet = true
             }
@@ -129,6 +136,13 @@ extension ContentView {
             showingASCUploadSheet = true
         }
         .disabled(state.rows.isEmpty)
+
+        if FeatureFlags.abTesting {
+            Button("Upload A/B Test to App Store Connect…", systemImage: "square.split.2x1") {
+                showingASCExperimentSheet = true
+            }
+            .disabled(state.variants.isEmpty)
+        }
 
         Button("Upload to Google Play…", systemImage: "play.rectangle.on.rectangle") {
             showingGooglePlayUploadSheet = true

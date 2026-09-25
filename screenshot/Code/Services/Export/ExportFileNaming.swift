@@ -71,6 +71,13 @@ enum ExportFileNaming {
         return base.isEmpty ? "row" : base
     }
 
+    /// The top-level export folder for a row's A/B variant; the Original gets its own too.
+    static func variantFolderName(for row: ScreenshotRow, variants: [ScreenshotVariant]) -> String {
+        guard let variant = variants.variant(withId: row.variantId) else { return String(localized: "Original") }
+        let name = sanitizedFileName(variant.name)
+        return name.isEmpty ? "Variant" : name
+    }
+
     /// Sanitized row label suitable for embedding in an export filename.
     /// Falls back to `"row"` when the label is empty or sanitizes away entirely.
     static func exportRowFileNameComponent(for row: ScreenshotRow) -> String {

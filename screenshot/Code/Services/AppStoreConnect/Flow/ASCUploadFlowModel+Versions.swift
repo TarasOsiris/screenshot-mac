@@ -9,11 +9,7 @@ extension ASCUploadFlowModel {
     /// something App Store Connect allows.
     var platformsAwaitingAVersion: [ASCPlatform] {
         guard !versions.contains(where: { $0.isSelectable(for: mode) }) else { return [] }
-        var seen: [ASCPlatform] = []
-        for platform in versions.compactMap({ $0.attributes.ascPlatform }) where !seen.contains(platform) {
-            seen.append(platform)
-        }
-        return seen
+        return versions.platforms
     }
 
     /// The version string to prefill for `platform`: a bump of the highest one the app already has

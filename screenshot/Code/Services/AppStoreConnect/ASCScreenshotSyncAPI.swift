@@ -11,8 +11,8 @@ protocol ASCScreenshotSyncAPI: AnyObject {
     /// The reserve loop drives its own retries off this rather than the per-call policy.
     var retryPolicy: StoreRetryPolicy { get }
 
-    func listScreenshotSets(localizationId: String, limit: Int) async throws -> [ASCAppScreenshotSet]
-    func createScreenshotSet(localizationId: String, displayType: String) async throws -> ASCAppScreenshotSet
+    func listScreenshotSets(parent: ASCScreenshotSetParent, limit: Int) async throws -> [ASCAppScreenshotSet]
+    func createScreenshotSet(parent: ASCScreenshotSetParent, displayType: String) async throws -> ASCAppScreenshotSet
     func listScreenshots(setId: String, limit: Int, retryPolicy: StoreRetryPolicy?) async throws -> [ASCAppScreenshot]
     func screenshot(id: String, retryPolicy: StoreRetryPolicy?) async throws -> ASCAppScreenshot
     func listScreenshotOrder(setId: String) async throws -> [String]
@@ -27,8 +27,8 @@ protocol ASCScreenshotSyncAPI: AnyObject {
 /// The defaults the concrete service declares inline. Repeated here because a protocol requirement
 /// can't carry them, and the call sites read better without the noise.
 extension ASCScreenshotSyncAPI {
-    func listScreenshotSets(localizationId: String) async throws -> [ASCAppScreenshotSet] {
-        try await listScreenshotSets(localizationId: localizationId, limit: 50)
+    func listScreenshotSets(parent: ASCScreenshotSetParent) async throws -> [ASCAppScreenshotSet] {
+        try await listScreenshotSets(parent: parent, limit: 50)
     }
 
     func listScreenshots(setId: String, retryPolicy: StoreRetryPolicy? = nil) async throws -> [ASCAppScreenshot] {

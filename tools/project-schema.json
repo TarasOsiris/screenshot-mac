@@ -23,6 +23,11 @@
     "n": {
       "description": "name — the project's display name, mirrored from the projects.json index so a lost index can be rebuilt from the project directories. Absent in projects last saved before this field shipped.",
       "type": "string"
+    },
+    "v": {
+      "description": "variants — A/B variants in display order; omitted when the project has none.",
+      "type": "array",
+      "items": { "$ref": "#/$defs/ScreenshotVariant" }
     }
   },
   "$defs": {
@@ -302,7 +307,19 @@
         },
         "lm":   { "description": "isLabelManuallySet — omitted when false.", "type": "boolean" },
         "col":  { "description": "isCollapsed — omitted when false.", "type": "boolean" },
-        "exasc": { "description": "excludeFromAppStoreConnect — hide this row from the App Store Connect upload wizard; omitted when false.", "type": "boolean" }
+        "exasc": { "description": "excludeFromAppStoreConnect — hide this row from the App Store Connect upload wizard; omitted when false.", "type": "boolean" },
+        "vr": { "description": "variantId — the A/B variant (an id from the root `v` list) this row belongs to; omitted for Original rows.", "$ref": "#/$defs/UUID" }
+      }
+    },
+
+    "ScreenshotVariant": {
+      "description": "An A/B alternative to the Original rows; rows opt in via `vr`.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id"],
+      "properties": {
+        "id": { "$ref": "#/$defs/UUID" },
+        "n": { "description": "name — user-facing variant name, also the App Store experiment treatment name.", "type": "string" }
       }
     },
 

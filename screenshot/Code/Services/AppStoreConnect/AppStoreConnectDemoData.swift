@@ -51,6 +51,7 @@ final class AppStoreConnectDemoData: @unchecked Sendable {
         // Reset upload state so re-opening the sheet starts from a clean slate.
         screenshotSetsByLocalization = [:]
         idCounter = 0
+        ASCExperimentDemoStore.shared.reset()
     }
 
     var apps: [ASCApp] {
@@ -168,17 +169,17 @@ final class AppStoreConnectDemoData: @unchecked Sendable {
         }
     }
 
-    func screenshotSets(localizationId: String) -> [ASCAppScreenshotSet] {
-        lockedRead { screenshotSetsByLocalization[localizationId] ?? [] }
+    func screenshotSets(parentId: String) -> [ASCAppScreenshotSet] {
+        lockedRead { screenshotSetsByLocalization[parentId] ?? [] }
     }
 
-    func createScreenshotSet(localizationId: String, displayType: String) -> ASCAppScreenshotSet {
+    func createScreenshotSet(parentId: String, displayType: String) -> ASCAppScreenshotSet {
         lock.lock(); defer { lock.unlock() }
         let set = ASCAppScreenshotSet(
             id: nextIdLocked(prefix: "demo-set"),
             attributes: ASCAppScreenshotSet.Attributes(screenshotDisplayType: displayType)
         )
-        screenshotSetsByLocalization[localizationId, default: []].append(set)
+        screenshotSetsByLocalization[parentId, default: []].append(set)
         return set
     }
 

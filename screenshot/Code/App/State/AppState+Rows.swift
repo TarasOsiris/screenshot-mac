@@ -4,9 +4,9 @@ extension AppState {
 
     // MARK: - Rows
 
-    func addRow() {
+    func addRow(variantId: UUID? = nil) {
         withUndo("Add New Row") {
-            let row = makeDefaultRow()
+            let row = makeDefaultRow(variantId: variantId)
             rows.append(row)
             selectRow(row.id)
         }
@@ -15,7 +15,7 @@ extension AppState {
     func addRowAbove(_ id: UUID) {
         guard let idx = rows.firstIndex(where: { $0.id == id }) else { return }
         withUndo("Add New Row Above") {
-            let row = makeDefaultRow()
+            let row = makeDefaultRow(variantId: rows[idx].variantId)
             rows.insert(row, at: idx)
             selectRow(row.id)
         }
@@ -24,7 +24,7 @@ extension AppState {
     func addRowBelow(_ id: UUID) {
         guard let idx = rows.firstIndex(where: { $0.id == id }) else { return }
         withUndo("Add New Row Below") {
-            let row = makeDefaultRow()
+            let row = makeDefaultRow(variantId: rows[idx].variantId)
             rows.insert(row, at: idx + 1)
             selectRow(row.id)
         }
@@ -34,64 +34,84 @@ extension AppState {
         guard let idx = rows.firstIndex(where: { $0.id == id }) else { return }
         withUndo("Duplicate Row") {
             let source = rows[idx]
-            var newShapes = source.shapes.map { $0.duplicated() }
-            for i in newShapes.indices {
-                let originalId = source.shapes[i].id
-                LocaleService.copyShapeOverrides(&localeState, fromId: originalId, toId: newShapes[i].id)
-                copyImageFiles(for: &newShapes[i], originalId: originalId)
-            }
-            let copy = ScreenshotRow(
+            insertDuplicate(
+                of: source,
+                at: idx + 1,
                 label: String(localized: "\(source.label) copy"),
-                templates: source.templates.map { $0.duplicated() },
-                templateWidth: source.templateWidth,
-                templateHeight: source.templateHeight,
-                bgColor: source.bgColor,
-                defaultDeviceBodyColor: source.defaultDeviceBodyColor,
-                defaultDeviceCategory: source.defaultDeviceCategory,
-                backgroundStyle: source.backgroundStyle,
-                gradientConfig: source.gradientConfig,
-                spanBackgroundAcrossRow: source.spanBackgroundAcrossRow,
-                backgroundImageConfig: source.backgroundImageConfig,
-                backgroundBlur: source.backgroundBlur,
-                defaultDeviceFrameId: source.defaultDeviceFrameId,
-                hiddenShapeTypes: source.hiddenShapeTypes,
-                showBorders: source.showBorders,
-                shapes: newShapes,
-                isLabelManuallySet: true,
-                excludeFromAppStoreConnect: source.excludeFromAppStoreConnect
+                variantId: source.variantId
             )
-            rows.insert(copy, at: idx + 1)
-            selectRow(copy.id)
         }
     }
 
+    /// Copies `source` (new shape ids, their overrides and image files) to `index`. Call inside an undo transaction.
+    func insertDuplicate(
+        of source: ScreenshotRow,
+        at index: Int,
+        label: String,
+        isLabelManuallySet: Bool = true,
+        variantId: UUID?
+    ) {
+        var newShapes = source.shapes.map { $0.duplicated() }
+        for i in newShapes.indices {
+            let originalId = source.shapes[i].id
+            LocaleService.copyShapeOverrides(&localeState, fromId: originalId, toId: newShapes[i].id)
+            copyImageFiles(for: &newShapes[i], originalId: originalId)
+        }
+        let copy = ScreenshotRow(
+            label: label,
+            templates: source.templates.map { $0.duplicated() },
+            templateWidth: source.templateWidth,
+            templateHeight: source.templateHeight,
+            bgColor: source.bgColor,
+            defaultDeviceBodyColor: source.defaultDeviceBodyColor,
+            defaultDeviceCategory: source.defaultDeviceCategory,
+            backgroundStyle: source.backgroundStyle,
+            gradientConfig: source.gradientConfig,
+            spanBackgroundAcrossRow: source.spanBackgroundAcrossRow,
+            backgroundImageConfig: source.backgroundImageConfig,
+            backgroundBlur: source.backgroundBlur,
+            defaultDeviceFrameId: source.defaultDeviceFrameId,
+            hiddenShapeTypes: source.hiddenShapeTypes,
+            showBorders: source.showBorders,
+            shapes: newShapes,
+            isLabelManuallySet: isLabelManuallySet,
+            excludeFromAppStoreConnect: source.excludeFromAppStoreConnect,
+            variantId: variantId
+        )
+        rows.insert(copy, at: index)
+        selectRow(copy.id)
+    }
+
     func deleteRow(_ id: UUID) {
-        guard rows.count > 1,
-              let idx = rows.firstIndex(where: { $0.id == id }) else { return }
-        withUndo("Delete Row") {
-            let row = rows[idx]
+        deleteRows([id], actionName: "Delete Row")
+    }
 
-            let shapeImageCandidates = imageFileNames(for: row.shapes)
-            let templateBgImages = row.templates.compactMap { $0.backgroundImageConfig.fileName }
-            let rowBgImage = row.backgroundImageConfig.fileName
-
-            for shape in row.shapes {
-                LocaleService.removeShapeOverrides(&localeState, shapeId: shape.id)
+    /// Deletes `ids` with one cleanup sweep. Refuses to delete every row.
+    func deleteRows(_ ids: Set<UUID>, actionName: String = "Delete Rows") {
+        guard let firstIdx = rows.firstIndex(where: { ids.contains($0.id) }),
+              rows.contains(where: { !ids.contains($0.id) }) else { return }
+        withUndo(actionName) {
+            var imageCandidates: [String?] = []
+            for row in rows where ids.contains(row.id) {
+                imageCandidates += imageFileNames(for: row.shapes)
+                imageCandidates += row.templates.map(\.backgroundImageConfig.fileName)
+                imageCandidates.append(row.backgroundImageConfig.fileName)
+                for shape in row.shapes {
+                    LocaleService.removeShapeOverrides(&localeState, shapeId: shape.id)
+                }
+                viewMode.exitPreview(for: row.id)
             }
 
-            let wasSelectedRow = selectedRowId == id
-            viewMode.exitPreview(for: id)
-            rows.remove(at: idx)
+            let wasSelectedRow = selectedRowId.map(ids.contains) ?? false
+            rows.removeAll { ids.contains($0.id) }
             cleanupOrphanedTranslationOverrides()
             if wasSelectedRow {
-                let newIdx = min(idx, rows.count - 1)
-                selectRow(rows[newIdx].id)
+                selectRow(rows[min(firstIdx, rows.count - 1)].id)
             } else {
                 normalizeSelection()
             }
 
-            let allCandidates: [String?] = shapeImageCandidates + templateBgImages + [rowBgImage]
-            cleanupUnreferencedImages(allCandidates)
+            cleanupUnreferencedImages(imageCandidates)
         }
     }
 
@@ -113,7 +133,8 @@ extension AppState {
                 id: oldRow.id,
                 label: oldRow.isLabelManuallySet ? oldRow.label : nil,
                 width: oldRow.templateWidth,
-                height: oldRow.templateHeight
+                height: oldRow.templateHeight,
+                variantId: oldRow.variantId
             )
             cleanupOrphanedTranslationOverrides()
 
@@ -192,17 +213,20 @@ extension AppState {
         edits.rowEdit.finish()
     }
 
-    func moveRowUp(_ id: UUID) {
-        guard let idx = rows.firstIndex(where: { $0.id == id }), idx > 0 else { return }
+    /// Swaps with the nearest row `isVisible` accepts, so a filtered editor never moves a row past hidden ones.
+    func moveRowUp(_ id: UUID, among isVisible: (ScreenshotRow) -> Bool = { _ in true }) {
+        guard let idx = rows.firstIndex(where: { $0.id == id }),
+              let target = rows[..<idx].lastIndex(where: isVisible) else { return }
         withUndo("Move Row Up") {
-            rows.swapAt(idx, idx - 1)
+            rows.swapAt(idx, target)
         }
     }
 
-    func moveRowDown(_ id: UUID) {
-        guard let idx = rows.firstIndex(where: { $0.id == id }), idx < rows.count - 1 else { return }
+    func moveRowDown(_ id: UUID, among isVisible: (ScreenshotRow) -> Bool = { _ in true }) {
+        guard let idx = rows.firstIndex(where: { $0.id == id }),
+              let target = rows[(idx + 1)...].firstIndex(where: isVisible) else { return }
         withUndo("Move Row Down") {
-            rows.swapAt(idx, idx + 1)
+            rows.swapAt(idx, target)
         }
     }
 

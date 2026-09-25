@@ -39,11 +39,11 @@ extension EditorRowView {
     }
 
     func moveRowUp() {
-        withAnimation(Self.rowAnimation) { state.moveRowUp(row.id) }
+        withAnimation(Self.rowAnimation) { state.moveRowUp(row.id, among: state.effectiveVariantFilter.includes) }
     }
 
     func moveRowDown() {
-        withAnimation(Self.rowAnimation) { state.moveRowDown(row.id) }
+        withAnimation(Self.rowAnimation) { state.moveRowDown(row.id, among: state.effectiveVariantFilter.includes) }
     }
 
     func duplicateRow() {

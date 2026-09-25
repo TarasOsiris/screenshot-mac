@@ -315,6 +315,7 @@ struct AppStoreConnectScreenshotSyncTests {
         let target = ASCUploadTarget(
             versionId: "version",
             versionLabel: "iOS · Version 1.0",
+            parentKind: .versionLocalization,
             rowId: UUID(),
             rowLabel: "iPhone",
             rowSize: CGSize(width: 1290, height: 2796),

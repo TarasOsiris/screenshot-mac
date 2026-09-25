@@ -42,11 +42,11 @@ final class AppStoreConnectAPIService {
         )
     }
 
-    private var isDemoMode: Bool { credentials.isDemoMode }
+    var isDemoMode: Bool { credentials.isDemoMode }
 
     /// Short pause so the upload wizard's progress UI animates believably in demo mode.
     /// Kept small because real upload flows make ~6 sequential calls per (template × locale).
-    private func demoDelay() async {
+    func demoDelay() async {
         try? await Task.sleep(for: .milliseconds(80))
     }
 
@@ -230,28 +230,28 @@ final class AppStoreConnectAPIService {
 
     // MARK: - Screenshot sets
 
-    func listScreenshotSets(localizationId: String, limit: Int = 50) async throws -> [ASCAppScreenshotSet] {
+    func listScreenshotSets(parent: ASCScreenshotSetParent, limit: Int = 50) async throws -> [ASCAppScreenshotSet] {
         if isDemoMode {
             await demoDelay()
-            return demoData.screenshotSets(localizationId: localizationId)
+            return demoData.screenshotSets(parentId: parent.id)
         }
-        let path = "/v1/appStoreVersionLocalizations/\(localizationId)/appScreenshotSets?limit=\(limit)"
+        let path = "\(parent.screenshotSetsPath)?limit=\(limit)"
         let response: ASCListResponse<ASCAppScreenshotSet> = try await get(path)
         return response.data
     }
 
-    func createScreenshotSet(localizationId: String, displayType: String) async throws -> ASCAppScreenshotSet {
+    func createScreenshotSet(parent: ASCScreenshotSetParent, displayType: String) async throws -> ASCAppScreenshotSet {
         if isDemoMode {
             await demoDelay()
-            return demoData.createScreenshotSet(localizationId: localizationId, displayType: displayType)
+            return demoData.createScreenshotSet(parentId: parent.id, displayType: displayType)
         }
         let body = ASCResourceCreate(
             data: ASCResourceCreate.Payload(
                 type: "appScreenshotSets",
                 attributes: ["screenshotDisplayType": AnyEncodable(displayType)],
                 relationships: [
-                    "appStoreVersionLocalization": AnyEncodable(
-                        ASCRelationship.single(type: "appStoreVersionLocalizations", id: localizationId)
+                    parent.kind.relationshipKey: AnyEncodable(
+                        ASCRelationship.single(type: parent.kind.resourceType, id: parent.id)
                     )
                 ]
             )
@@ -568,7 +568,7 @@ private nonisolated extension String {
 
 // MARK: - ASC request bodies
 
-private nonisolated struct ASCResourceCreate: Encodable {
+nonisolated struct ASCResourceCreate: Encodable {
     let data: Payload
 
     struct Payload: Encodable {
@@ -578,7 +578,7 @@ private nonisolated struct ASCResourceCreate: Encodable {
     }
 }
 
-private nonisolated struct ASCResourceUpdate: Encodable {
+nonisolated struct ASCResourceUpdate: Encodable {
     let data: Payload
 
     struct Payload: Encodable {
@@ -588,7 +588,7 @@ private nonisolated struct ASCResourceUpdate: Encodable {
     }
 }
 
-private nonisolated struct ASCRelationship: Encodable {
+nonisolated struct ASCRelationship: Encodable {
     let data: Ref
 
     struct Ref: Encodable {

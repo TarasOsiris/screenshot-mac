@@ -29,9 +29,14 @@ struct ExportService {
         source: some RowRenderSource,
         localeFilter: String? = nil,
         customSuffix: String = "",
+        variants: [ScreenshotVariant] = [],
         onProgress: (@MainActor (Int) -> Void)? = nil
     ) async throws -> (folderURL: URL, fileURLs: [URL], unrenderable: [String]) {
         let localeState = source.localeState
+        // One top-level folder per A/B variant, but only when the export actually spans variants.
+        let variantFolders = rows.contains { variants.variant(withId: $0.variantId) != nil }
+            ? rows.map { ExportFileNaming.variantFolderName(for: $0, variants: variants) }
+            : nil
         let rootName = ExportFileNaming.sanitizedRootFolderName(projectName)
         let rootFolder = ExportFileNaming.uniqueFolder(named: rootName, in: folderURL)
         try FileManager.default.createDirectory(at: rootFolder, withIntermediateDirectories: true)
@@ -74,23 +79,14 @@ struct ExportService {
         ])
 
         do {
-            var localeFolders: [String: URL] = [:]
-            for locale in localesToExport {
-                let folder = multiLocale ? rootFolder.appendingPathComponent(locale.code) : rootFolder
-                if multiLocale {
-                    try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
-                }
-                localeFolders[locale.code] = folder
-            }
-
-            // Row subfolder names are deduped per locale folder; rows iterate in the
-            // same order for every locale, so the numbering is computed once.
+            // Deduped per variant folder, since a variant's copy keeps its source row's label.
             let multiRow = rows.count > 1
             var usedFolderNames: [String: Int] = [:]
-            let rowFolderNames: [String] = rows.map { row in
+            let rowFolderNames: [String] = rows.enumerated().map { rowIndex, row in
                 let baseName = ExportFileNaming.exportFolderName(for: row)
-                let count = usedFolderNames[baseName, default: 0]
-                usedFolderNames[baseName] = count + 1
+                let key = "\(variantFolders?[rowIndex] ?? "")/\(baseName)"
+                let count = usedFolderNames[key, default: 0]
+                usedFolderNames[key] = count + 1
                 return count == 0 ? baseName : "\(baseName) (\(count + 1))"
             }
 
@@ -116,10 +112,11 @@ struct ExportService {
                 // Every (row, locale) folder receives files, so create them all up
                 // front — destFolder stays pure URL construction on the hot path.
                 var rowDestFolders: [String: URL] = [:]
+                let variantRoot = variantFolders.map { rootFolder.appendingPathComponent($0[rowIndex]) } ?? rootFolder
                 for locale in localesToExport {
-                    let base = localeFolders[locale.code] ?? rootFolder
+                    let base = multiLocale ? variantRoot.appendingPathComponent(locale.code) : variantRoot
                     let folder = multiRow ? base.appendingPathComponent(rowFolderNames[rowIndex]) : base
-                    if multiRow {
+                    if folder != rootFolder {
                         try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
                     }
                     rowDestFolders[locale.code] = folder

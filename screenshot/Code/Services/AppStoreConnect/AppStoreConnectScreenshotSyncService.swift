@@ -56,6 +56,7 @@ struct ASCScreenshotSetDiff: Identifiable, Sendable {
     /// User-written row name — safe in the UI, must never reach a breadcrumb.
     let rowLabel: String
     let localizationId: String
+    let parentKind: ASCScreenshotSetParentKind
     let localeCode: String
     let localeLabel: String
     let displayType: ASCDisplayType
@@ -67,6 +68,8 @@ struct ASCScreenshotSetDiff: Identifiable, Sendable {
     /// Non-blocking notices shown alongside the diff; they never gate `canApply`.
     let warnings: [String]
     let canApply: Bool
+
+    var parent: ASCScreenshotSetParent { ASCScreenshotSetParent(kind: parentKind, id: localizationId) }
 
     var changedCount: Int { items.lazy.filter { $0.status != .unchanged }.count }
     var isChanged: Bool { changedCount > 0 }
@@ -323,7 +326,7 @@ final class AppStoreConnectScreenshotSyncService {
         // corrected even when every target turned out to be unrenderable.
         progress(.init(stage: .comparing, completedRenders: 0, totalRenders: totalRenders, label: ""))
 
-        var setsByLocalization: [String: [ASCAppScreenshotSet]] = [:]
+        var setsByLocalization: [ASCScreenshotSetParent: [ASCAppScreenshotSet]] = [:]
         do {
             for (target, row) in renderable {
 
@@ -382,7 +385,7 @@ final class AppStoreConnectScreenshotSyncService {
                             previewDirectory: remotePreviewDirectory
                         )
                         : try await fetchRemoteSet(
-                            localizationId: localization.id,
+                            parent: ASCScreenshotSetParent(kind: target.parentKind, id: localization.id),
                             displayType: target.displayType,
                             previewMaxDimension: needsPreviews ? 420 : nil,
                             previewDirectory: needsPreviews ? remotePreviewDirectory : nil,
@@ -471,7 +474,7 @@ final class AppStoreConnectScreenshotSyncService {
         }
 
         // Revalidate every not-yet-applied set and its cached local bytes before the first write.
-        var setsByLocalization: [String: [ASCAppScreenshotSet]] = [:]
+        var setsByLocalization: [ASCScreenshotSetParent: [ASCAppScreenshotSet]] = [:]
         for diff in remaining {
             try Task.checkCancellation()
             for local in diff.proposedAssets.compactMap(\.localAsset) {
@@ -484,7 +487,7 @@ final class AppStoreConnectScreenshotSyncService {
             }
             if !isDemoMode() {
                 let snapshot = try await fetchRemoteSet(
-                    localizationId: diff.localizationId,
+                    parent: diff.parent,
                     displayType: diff.displayType,
                     previewMaxDimension: nil,
                     previewDirectory: nil,
@@ -555,7 +558,7 @@ final class AppStoreConnectScreenshotSyncService {
                 } else {
                     do {
                         setId = try await createOrAdoptScreenshotSet(
-                            localizationId: diff.localizationId,
+                            parent: diff.parent,
                             displayType: diff.displayType
                         )
                         markMutated()
@@ -816,6 +819,7 @@ final class AppStoreConnectScreenshotSyncService {
             rowId: target.rowId,
             rowLabel: target.rowLabel,
             localizationId: localization.id,
+            parentKind: target.parentKind,
             localeCode: localization.localeCode,
             localeLabel: localization.label,
             displayType: target.displayType,
@@ -840,18 +844,18 @@ final class AppStoreConnectScreenshotSyncService {
     /// display type. `setsByLocalization` is scoped to a single sweep — the repeats come from
     /// different outer-loop targets, so a per-iteration cache would never hit.
     private func fetchRemoteSet(
-        localizationId: String,
+        parent: ASCScreenshotSetParent,
         displayType: ASCDisplayType,
         previewMaxDimension: Int?,
         previewDirectory: URL?,
-        setsByLocalization: inout [String: [ASCAppScreenshotSet]]
+        setsByLocalization: inout [ASCScreenshotSetParent: [ASCAppScreenshotSet]]
     ) async throws -> RemoteSetSnapshot {
         let sets: [ASCAppScreenshotSet]
-        if let cached = setsByLocalization[localizationId] {
+        if let cached = setsByLocalization[parent] {
             sets = cached
         } else {
-            sets = try await api.listScreenshotSets(localizationId: localizationId)
-            setsByLocalization[localizationId] = sets
+            sets = try await api.listScreenshotSets(parent: parent)
+            setsByLocalization[parent] = sets
         }
         guard let set = sets.first(where: { $0.attributes.screenshotDisplayType == displayType.appStoreConnectValue }) else {
             return RemoteSetSnapshot(setId: nil, assets: [], warnings: [])
@@ -1089,7 +1093,7 @@ final class AppStoreConnectScreenshotSyncService {
     /// here because the plan only reaches this branch with `remoteSetId == nil` — revalidation
     /// confirmed no set for this display type existed moments ago, so one that exists now is ours.
     private func createOrAdoptScreenshotSet(
-        localizationId: String,
+        parent: ASCScreenshotSetParent,
         displayType: ASCDisplayType
     ) async throws -> String {
         let policy = api.retryPolicy
@@ -1097,7 +1101,7 @@ final class AppStoreConnectScreenshotSyncService {
         return try await policy.attempting {
             do {
                 return try await api.createScreenshotSet(
-                    localizationId: localizationId,
+                    parent: parent,
                     displayType: value
                 ).id
             } catch let createError {
@@ -1119,7 +1123,7 @@ final class AppStoreConnectScreenshotSyncService {
                 // guessing wrong leaves a duplicate `verify` never looks at.
                 let sets: [ASCAppScreenshotSet]
                 do {
-                    sets = try await api.listScreenshotSets(localizationId: localizationId)
+                    sets = try await api.listScreenshotSets(parent: parent)
                 } catch {
                     throw createError
                 }

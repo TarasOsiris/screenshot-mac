@@ -13,19 +13,22 @@ import Foundation
 struct ProjectDocument: Equatable {
     var rows: [ScreenshotRow]
     var localeState: LocaleState
+    var variants: [ScreenshotVariant]
 
-    init(rows: [ScreenshotRow], localeState: LocaleState = .default) {
+    init(rows: [ScreenshotRow], localeState: LocaleState = .default, variants: [ScreenshotVariant] = []) {
         self.rows = rows
         self.localeState = localeState
+        self.variants = variants
     }
 
     init(_ data: ProjectData) {
         self.rows = data.rows
         self.localeState = data.localeState ?? .default
+        self.variants = data.variants
     }
 
     func projectData(name: String?) -> ProjectData {
-        ProjectData(rows: rows, localeState: localeState, name: name)
+        ProjectData(rows: rows, localeState: localeState, name: name, variants: variants)
     }
 }
 

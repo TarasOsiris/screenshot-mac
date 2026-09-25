@@ -87,7 +87,7 @@ extension ASCUploadFlowModel {
         guard mode == .screenshots else { return Set(editable.map(\.id)) }
         let compatible = editable.filter { version in
             rows.contains { row in
-                guard !row.excludeFromAppStoreConnect,
+                guard row.uploadsToAppStoreListing,
                       let detected = ASCDisplayType.detect(width: row.templateWidth, height: row.templateHeight)
                 else { return false }
                 return detected.accepts(platform: version.attributes.ascPlatform)
