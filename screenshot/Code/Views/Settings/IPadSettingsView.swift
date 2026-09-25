@@ -254,13 +254,18 @@ struct IPadSettingsView: View {
         }
     }
 
+    @ViewBuilder
     private var aboutSection: some View {
         Section {
             LabeledContent("Version") {
                 Text("\(Bundle.main.shortVersion) (\(Bundle.main.buildNumber))")
                     .foregroundStyle(.secondary)
             }
+            AboutLinkRows()
+            SocialLinkButtons()
+                .frame(maxWidth: .infinity)
         }
+        MoreAppsSection()
     }
 
     // MARK: - iCloud toggle

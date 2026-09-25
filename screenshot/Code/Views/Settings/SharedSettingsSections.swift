@@ -280,3 +280,39 @@ struct AppLanguagePicker: View {
     }
     #endif
 }
+
+struct AboutLinkRows: View {
+    var body: some View {
+        Link(destination: AppLinks.rateOnAppStore) {
+            Label("Rate on the App Store", systemImage: "star")
+        }
+        Link(destination: AppLinks.support) {
+            Label("Contact Support", systemImage: "envelope")
+        }
+        Link(destination: AppLinks.website) {
+            Label("Website", systemImage: "globe")
+        }
+    }
+}
+
+struct SocialLinkButtons: View {
+    var body: some View {
+        HStack(spacing: 12) {
+            ForEach(AppLinks.social, id: \.name) { social in
+                Link(destination: social.url) {
+                    Image(social.assetName)
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: UIMetrics.About.socialGlyphSize, height: UIMetrics.About.socialGlyphSize)
+                        .frame(width: UIMetrics.About.socialButtonSize, height: UIMetrics.About.socialButtonSize)
+                        .background(.quaternary, in: .circle)
+                        .contentShape(.circle)
+                }
+                .buttonStyle(.plain)
+                .foregroundStyle(.secondary)
+                .help(social.name)
+                .accessibilityLabel(social.name)
+            }
+        }
+    }
+}

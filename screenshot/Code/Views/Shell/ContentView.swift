@@ -611,7 +611,7 @@ struct ContentView: View {
     private func rateOnAppStore() {
         didRateFromDeveloperSheet = true
         exportFlow.showDeveloperRatingSheet = false
-        openURL(PurchaseService.rateOnAppStoreURL)
+        openURL(AppLinks.rateOnAppStore)
     }
 
     /// Reported from `onDismiss` rather than the buttons so every way out of the sheet is counted

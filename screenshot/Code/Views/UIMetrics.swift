@@ -233,6 +233,13 @@ enum UIMetrics {
         #endif
     }
 
+    /// Settings ▸ About: the app icon header and the round social-link buttons under it.
+    enum About {
+        static let appIconSize: CGFloat = 96
+        static let socialGlyphSize: CGFloat = 16
+        static let socialButtonSize = max(36, ActionButton.minTouchTarget)
+    }
+
     /// How a locale-overridden property is marked: a wash over the control itself, plus the 5pt
     /// dot the section-header and row-header counts use.
     enum OverrideMark {

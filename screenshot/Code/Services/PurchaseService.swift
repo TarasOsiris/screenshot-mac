@@ -66,11 +66,6 @@ final class PurchaseService {
 
     static let manageSubscriptionsURL = URL(string: "https://apps.apple.com/account/subscriptions")!
 
-    /// Deep-links straight to the write-a-review box on the app's own App Store page (Apple ID
-    /// `6760177675`), rather than the app's storefront page or the system-controlled
-    /// `SKStoreReviewController` sheet `ReviewPromptPolicy` triggers.
-    static let rateOnAppStoreURL = URL(string: "https://apps.apple.com/app/id6760177675?action=write-review")!
-
     private static let revenueCatAPIKeyEnvironmentName = "REVENUECAT_API_KEY"
     private static let revenueCatAPIKeyInfoDictionaryKey = "REVENUECAT_API_KEY"
     private static let revenueCatEntitlementIDEnvironmentName = "REVENUECAT_ENTITLEMENT_ID"

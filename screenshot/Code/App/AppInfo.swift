@@ -6,6 +6,26 @@ import SwiftUI
 enum AppLinks {
     static let privacy = URL(string: "https://screenshotbro.app/privacy")!
     static let terms = URL(string: "https://screenshotbro.app/terms")!
+    static let website = URL(string: "https://screenshotbro.app")!
+    static let supportEmail = "leskiv.taras@gmail.com"
+    static let support = URL(string: "mailto:leskiv.taras@gmail.com?subject=Screenshot%20Bro")!
+    /// Deep-links straight to the write-a-review box on the app's own App Store page (Apple ID
+    /// `6760177675`), rather than the app's storefront page or the system-controlled
+    /// `SKStoreReviewController` sheet `ReviewPromptPolicy` triggers.
+    static let rateOnAppStore = URL(string: "https://apps.apple.com/app/id6760177675?action=write-review")!
+
+    /// Mirrors the social links in the screenshotbro.app footer.
+    static let social: [SocialLink] = [
+        SocialLink(name: "X", assetName: "SocialX", url: URL(string: "https://x.com/soycastic")!),
+        SocialLink(name: "Threads", assetName: "SocialThreads", url: URL(string: "https://www.threads.com/@soycastic")!),
+        SocialLink(name: "Discord", assetName: "SocialDiscord", url: URL(string: "https://discord.com/invite/ahnDehd")!),
+    ]
+}
+
+struct SocialLink {
+    let name: String
+    let assetName: String
+    let url: URL
 }
 
 /// Interface-language override (persisted via the `AppleLanguages` default).

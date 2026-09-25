@@ -1,5 +1,5 @@
 {
-  "originHash" : "6f80c1bb608c7eeb54ad079507b7c78b15cece77faacf7a3ff39d816910b4e50",
+  "originHash" : "2e48d88aa90bfd148e1efa4ed5139ef5c6fdda7879aecb83243e847937ae615e",
   "pins" : [
     {
       "identity" : "eventsource",
@@ -26,6 +26,15 @@
       "state" : {
         "revision" : "1b65c3baa951ad5ef4ab46f3b96a6e1dcc5cf015",
         "version" : "5.89.0"
+      }
+    },
+    {
+      "identity" : "sbappportfolio",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/slowbrewedmacchiato/SBAppPortfolio.git",
+      "state" : {
+        "revision" : "a725324b698890d83f255188dedd8ce8f8ee20eb",
+        "version" : "1.1.0"
       }
     },
     {

@@ -40,7 +40,7 @@ extension HelpSection {
     }
 
     private var supportEntry: HelpEntry {
-        let supportEmail = "leskiv.taras@gmail.com"
+        let supportEmail = AppLinks.supportEmail
         return HelpEntry(
             title: "Support & Feedback",
             subtitle: "We read every message.",
@@ -635,7 +635,6 @@ extension HelpSection {
                 .bullet("**iCloud sync** — toggle and check status."),
                 .bullet("**Editor tour** — **Replay Tour** runs the first-run coach marks again over your open project."),
                 .bullet("**Storage** — open the project library in Finder or create a one-off backup zip."),
-                .bullet("**Version** — the build you're running. Worth quoting in a bug report."),
                 .heading("Export"),
                 .bullet("**Format** — PNG or JPEG."),
                 .bullet("**Custom filename suffix** — append a suffix to exported screenshot filenames."),
@@ -651,6 +650,9 @@ extension HelpSection {
                 .bullet("Current plan, restore purchases, manage subscription, and a copyable purchase ID to quote if you ever need help with a transaction."),
                 .heading("Attributions"),
                 .bullet("Credits and licenses for fonts, icons, and bundled assets."),
+                .heading("About"),
+                .bullet("**Version** — the build you're running. Worth quoting in a bug report."),
+                .bullet("Links to rate the app, contact support, visit the website, or follow along on X, Threads, and Discord — plus **More Apps** from the same developer."),
             ],
             seeAlso: [.exporting, .appStoreConnect, .googlePlay, .automation]
         )

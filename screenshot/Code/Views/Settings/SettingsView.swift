@@ -49,7 +49,7 @@ struct SettingsView: View {
     enum BackupResult { case success; case failure(String) }
 
     enum SettingsSection: String, CaseIterable, Identifiable {
-        case general, export, appStoreConnect, googlePlay, automation, purchase, attributions
+        case general, export, appStoreConnect, googlePlay, automation, purchase, attributions, about
 
         var id: String { rawValue }
 
@@ -62,6 +62,7 @@ struct SettingsView: View {
             case .automation: "Automation"
             case .purchase: "Purchase"
             case .attributions: "Attributions"
+            case .about: "About"
             }
         }
 
@@ -74,6 +75,7 @@ struct SettingsView: View {
             case .automation: "terminal"
             case .purchase: "star"
             case .attributions: "heart"
+            case .about: "info.circle"
             }
         }
 
@@ -87,6 +89,7 @@ struct SettingsView: View {
             case .automation: .automation
             case .purchase: .proFeatures
             case .attributions: .settings
+            case .about: .support
             }
         }
     }
@@ -156,6 +159,7 @@ struct SettingsView: View {
         case .automation: automationSettings
         case .purchase: purchaseSettings
         case .attributions: attributionsSettings
+        case .about: aboutSettings
         }
     }
 
@@ -264,10 +268,6 @@ struct SettingsView: View {
             }
 
             Section {
-                LabeledContent("Version") {
-                    Text("\(Bundle.main.shortVersion) (\(Bundle.main.buildNumber))")
-                        .foregroundStyle(.secondary)
-                }
                 LabeledContent("Diagnostics") {
                     Button(copiedDiagnostics ? "Copied" : "Copy Diagnostics") {
                         PlatformPasteboard.copyString(
@@ -589,6 +589,36 @@ struct SettingsView: View {
                     }
                 }
             }
+        }
+        .formStyle(.grouped)
+    }
+
+    private var aboutSettings: some View {
+        Form {
+            Section {
+                VStack(spacing: 8) {
+                    Image(nsImage: NSApp.applicationIconImage)
+                        .resizable()
+                        .frame(width: UIMetrics.About.appIconSize, height: UIMetrics.About.appIconSize)
+                        .accessibilityHidden(true)
+                    Text(verbatim: "Screenshot Bro")
+                        .font(.title2.weight(.semibold))
+                    Text("Version \(Bundle.main.shortVersion) (\(Bundle.main.buildNumber))")
+                        .font(.callout)
+                        .foregroundStyle(.secondary)
+                        .textSelection(.enabled)
+                    SocialLinkButtons()
+                        .padding(.top, 4)
+                }
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 8)
+            }
+
+            Section {
+                AboutLinkRows()
+            }
+
+            MoreAppsSection(isVisible: selection == .about)
         }
         .formStyle(.grouped)
     }
