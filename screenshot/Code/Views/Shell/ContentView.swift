@@ -404,7 +404,7 @@ struct ContentView: View {
                         Divider()
                             .frame(height: 16)
                     }
-                    if FeatureFlags.abTesting {
+                    if BetaFeatures.shared.isABTestingEnabled {
                         VariantsToolbarMenu(state: state)
                         Divider()
                             .frame(height: 16)

@@ -152,7 +152,8 @@ struct EditorRowView: View {
                         overriddenShapeCount: overridden.count,
                         overrideLocaleLabel: overridden.isEmpty ? "" : state.localeState.activeLocaleLabel,
                         onSelectOverridden: { state.selectShapes(overridden, in: row.id) },
-                        variantBadge: variantContext.map { AnyView(VariantBadgeMenu(state: state, row: row, context: $0)) }
+                        variantBadge: variantContext.map { AnyView(VariantBadgeMenu(state: state, row: row, context: $0)) },
+                        labelLockReason: isLabelLinked ? "Named after the row it was copied from — rename that row to rename both" : nil
                     ) {
                         rowMenuContent
                     }

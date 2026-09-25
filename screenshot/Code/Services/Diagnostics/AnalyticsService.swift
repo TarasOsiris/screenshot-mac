@@ -112,7 +112,7 @@ nonisolated enum AnalyticsService {
         case ascUpload = "asc_upload"
         case ascMetadata = "asc_metadata"
         case googlePlayUpload = "google_play_upload"
-        // Debug-only behind FeatureFlags.abTesting; add to privacy.tsx §6 when the flag ships.
+        // Behind Settings ▸ Beta (off by default); list it in privacy.tsx §6 before the beta ships.
         case ascExperimentUpload = "asc_experiment_upload"
 
         case manageLocales = "manage_locales"

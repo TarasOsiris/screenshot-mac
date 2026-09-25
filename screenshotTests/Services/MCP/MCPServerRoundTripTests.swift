@@ -59,7 +59,7 @@ struct MCPServerRoundTripTests {
         ])
         let listResult = try #require(list["result"] as? [String: Any])
         let tools = try #require(listResult["tools"] as? [[String: Any]])
-        #expect(tools.count == MCPToolName.allCases.count)
+        #expect(tools.count == MCPToolName.available.count)
         #expect(tools.allSatisfy { $0["inputSchema"] != nil })
 
         let call = try await post(transport, [

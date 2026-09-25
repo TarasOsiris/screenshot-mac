@@ -35,6 +35,7 @@ struct IPadSettingsView: View {
             appStoreConnectSection
             googlePlaySection
             iCloudSection
+            BetaSettingsSection()
             purchaseSection
             legalSection
             attributionsSection

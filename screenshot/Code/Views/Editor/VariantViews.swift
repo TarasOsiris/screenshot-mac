@@ -80,13 +80,18 @@ struct VariantBadge: View {
 /// "Original" plus each variant, tagged `UUID?`, for any picker that assigns a variant.
 struct VariantPickerOptions: View {
     let variants: [ScreenshotVariant]
-    var isAvailable: (ScreenshotVariant) -> Bool = { _ in true }
+    /// Why a variant can't be picked; nil when it can.
+    var unavailableReason: (ScreenshotVariant) -> String? = { _ in nil }
 
     var body: some View {
         Text("Original").tag(UUID?.none)
         ForEach(variants) { variant in
-            Text(variant.name).tag(Optional(variant.id))
-                .disabled(!isAvailable(variant))
+            if let reason = unavailableReason(variant) {
+                Text(verbatim: "\(variant.name) — \(reason)").tag(Optional(variant.id))
+                    .disabled(true)
+            } else {
+                Text(variant.name).tag(Optional(variant.id))
+            }
         }
     }
 }
@@ -102,6 +107,10 @@ struct VariantBadgeMenu: View {
         let style = context.badge
         let filter: EditorVariantFilter = .variant(row.variantId)
         Menu {
+            if style.hasSizeClash {
+                Text(clashExplanation)
+                Divider()
+            }
             if context.filter == filter {
                 Button("Show All Variants", systemImage: "square.stack") { state.setVariantFilter(.all) }
             } else {
@@ -119,10 +128,15 @@ struct VariantBadgeMenu: View {
         .buttonStyle(.plain)
         .menuIndicator(.hidden)
         .fixedSize()
-        .help(style.hasSizeClash
-            ? "\(style.name) has another row of this screenshot size. A variant holds one row per size — move or delete one."
-            : "Variant options")
+        .help(style.hasSizeClash ? clashExplanation : "Variant options")
+        .accessibilityLabel(style.hasSizeClash
+            ? Text("\(style.name), another row has this screenshot size")
+            : Text(style.name))
         .variantRenameAlert(state: state, variant: $renaming)
+    }
+
+    private var clashExplanation: LocalizedStringKey {
+        "\(context.badge.name) has another row of this screenshot size. A variant takes one row per size, so move or delete one before uploading."
     }
 }
 
@@ -231,6 +245,10 @@ struct VariantsToolbarMenu: View {
                 .pickerStyle(.inline)
                 Divider()
             }
+            if variants.isEmpty {
+                Text("Variants are alternative screenshots to A/B test on your App Store product page.")
+                Divider()
+            }
             Button("New Variant from Selected Row", systemImage: "plus") {
                 guard let rowId = state.selectedRowId else { return }
                 store.requirePro(allowed: store.canAddRow(currentCount: state.rows.count), context: .rowLimit) {
@@ -296,7 +314,7 @@ struct VariantsToolbarMenu: View {
     }
 
     private static func rowCountText(_ count: Int) -> String {
-        String(localized: "^[\(count) row](inflect: true)")
+        String(inflecting: "^[\(count) row](inflect: true)")
     }
 }
 

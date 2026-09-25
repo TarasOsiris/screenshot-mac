@@ -8,6 +8,7 @@ enum RowAlert {
     case resetRow
     case exportFailed(String)
     case backgroundRemovalFailed(String)
+    case linkedLabel
     #if DEBUG
     case simulatorCaptureFailed(String)
     #endif
@@ -21,6 +22,7 @@ enum RowAlert {
         case .resetRow: "Reset Row"
         case .exportFailed: "Export Failed"
         case .backgroundRemovalFailed: "Remove Background Failed"
+        case .linkedLabel: "This row is named after the row it was copied from"
         #if DEBUG
         case .simulatorCaptureFailed: "iOS Simulator Capture Failed"
         #endif

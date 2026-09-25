@@ -19,8 +19,19 @@ final class ASCExperimentFlowModel {
     var selectedAppId: String? {
         didSet {
             guard selectedAppId != oldValue else { return }
-            platform = availablePlatforms.first ?? .ios
+            platform = preferredPlatform
         }
+    }
+
+    /// The app's platform that most variant rows fit, so a Mac project doesn't open on iOS.
+    private var preferredPlatform: ASCPlatform {
+        let available = availablePlatforms
+        let fits = ASCExperimentPlanner.rowsByVariant(rows).values.joined().compactMap {
+            ASCDisplayType.detect(width: $0.templateWidth, height: $0.templateHeight)
+        }
+        return available.max { lhs, rhs in
+            fits.filter { $0.accepts(platform: lhs) }.count < fits.filter { $0.accepts(platform: rhs) }.count
+        } ?? .ios
     }
     var platform: ASCPlatform = .ios
 
@@ -40,24 +51,31 @@ final class ASCExperimentFlowModel {
 
     private(set) var uploadProgress: UploadProgress?
     private(set) var uploadedScreenshotCount = 0
+    /// Screenshots an earlier upload left in a treatment that this upload didn't replace.
+    private(set) var leftoverNotes: [String] = []
     var errorMessage: String?
+    /// The full text behind `errorMessage` when it had to be summarised; shown by Details.
+    private(set) var errorDetailsText: String?
     var isBusy = false
 
     let credentials: AppStoreConnectCredentialsStore
     let screenshotSync: ASCScreenshotSyncCoordinator
     @ObservationIgnored private let uploadAPI: any ASCUploadAPI
     @ObservationIgnored private let experimentAPI: any ASCExperimentAPI
+    @ObservationIgnored private let setsAPI: any ASCScreenshotSyncAPI
     @ObservationIgnored private(set) weak var document: (any ASCUploadDocument)?
     @ObservationIgnored var task: Task<Void, Never>?
 
     init(
         uploadAPI: any ASCUploadAPI = AppStoreConnectAPIService.shared,
         experimentAPI: any ASCExperimentAPI = AppStoreConnectAPIService.shared,
+        setsAPI: any ASCScreenshotSyncAPI = AppStoreConnectAPIService.shared,
         credentials: AppStoreConnectCredentialsStore = .shared,
         screenshotSync: ASCScreenshotSyncCoordinator = ASCScreenshotSyncCoordinator()
     ) {
         self.uploadAPI = uploadAPI
         self.experimentAPI = experimentAPI
+        self.setsAPI = setsAPI
         self.credentials = credentials
         self.screenshotSync = screenshotSync
     }
@@ -101,8 +119,30 @@ final class ASCExperimentFlowModel {
             existingTreatments: existingTreatments,
             newExperimentName: newExperimentName,
             enabledLocaleCodes: enabledLocaleCodes,
-            localeAssignment: localeAssignment
+            localeAssignment: localeAssignment,
+            originalDisplayTypes: Set(rows.filter { $0.uploadsToAppStore(from: nil) }.compactMap {
+                ASCExperimentPlanner.uploadableDisplayType(for: $0, platform: platform)
+            })
         )
+    }
+
+    /// What Upload Treatments will do, for its confirmation.
+    var uploadSummary: String {
+        let testable = testableVariants
+        let created = testable.count - ASCExperimentPlanner.treatmentMatches(variants: testable, existing: existingTreatments).count
+        let languages = enabledLocaleCodes.filter { localeAssignment[$0] != nil }.count
+        let target = selectedExperiment.map { String(localized: "“\($0.name)”") }
+            ?? String(localized: "a new experiment, “\(newExperimentName.trimmingCharacters(in: .whitespaces))”,")
+        var summary = String(inflecting: "Uploads ^[\(testable.count) treatment](inflect: true) to \(target) in ^[\(languages) language](inflect: true).")
+        if created > 0 {
+            summary += " " + String(inflecting: "^[\(created) treatment](inflect: true) will be created in App Store Connect.")
+        }
+        return summary + " " + String(localized: "Nothing goes live until the experiment is approved and you start it.")
+    }
+
+    /// An existing experiment past the point where its screenshots can change.
+    var isSelectedExperimentLocked: Bool {
+        selectedExperiment.map { !$0.state.isEditable } ?? false
     }
 
     func canUpload(given issues: [UploadIssue]) -> Bool {
@@ -145,7 +185,7 @@ final class ASCExperimentFlowModel {
             )
             enabledLocaleCodes = Set(localeAssignment.keys)
             experiments = Array(try await fetchedExperiments.filter { $0.ascPlatform == platform }.reversed())
-            await selectExperiment(experiments.first { $0.state.isEditable }?.id)
+            await selectExperiment((experiments.first(where: \.canStart) ?? experiments.first { $0.state.isEditable })?.id)
             step = .configuring
         }
     }
@@ -193,6 +233,7 @@ final class ASCExperimentFlowModel {
     func upload() async {
         guard canUpload(given: issues), let app = selectedApp, let document else { return }
         errorMessage = nil
+        errorDetailsText = nil
         uploadProgress = UploadProgress(totalSteps: 0, completedSteps: 0, currentLabel: String(localized: "Preparing experiment…"))
         step = .uploading
         isBusy = true
@@ -223,7 +264,10 @@ final class ASCExperimentFlowModel {
             }
             let blocked = plan.changedSets.filter { !$0.canApply }
             guard blocked.isEmpty else {
-                throw ASCExperimentFlowError.message(blocked.flatMap(\.issues).joined(separator: "\n"))
+                errorDetailsText = blocked.flatMap { set in
+                    set.issues.map { "\(set.versionLabel) · \(set.localeLabel) · \(set.displayType.label): \($0)" }
+                }.joined(separator: "\n")
+                throw ASCExperimentFlowError.blocked(sets: blocked.count)
             }
             if !screenshotSync.selectedSets.isEmpty {
                 await screenshotSync.apply(document: document.documentStamp) { [weak self] in self?.uploadProgress = $0 }
@@ -232,6 +276,7 @@ final class ASCExperimentFlowModel {
                 }
             }
             uploadedScreenshotCount = plan.sets.reduce(0) { $0 + $1.proposedAssets.count }
+            leftoverNotes = await leftovers(in: entries, targets: targets)
             await refreshSelectedExperiment()
             step = .done
         } catch is CancellationError {
@@ -249,6 +294,10 @@ final class ASCExperimentFlowModel {
             try await experimentAPI.submitExperimentForReview(appId: app.id, platform: platform, experimentId: experiment.id)
             CrashReportingService.breadcrumb(.upload, "asc experiment submitted")
             await refreshSelectedExperiment()
+            // App Store Connect can lag a moment behind; a second Submit would only fail.
+            if let current = selectedExperiment, current.state.isEditable {
+                replace(current.with(state: .waitingForReview))
+            }
         }
     }
 
@@ -276,6 +325,7 @@ final class ASCExperimentFlowModel {
     private func run(_ body: () async throws -> Void) async {
         isBusy = true
         errorMessage = nil
+        errorDetailsText = nil
         defer { isBusy = false }
         do {
             try await body()
@@ -294,6 +344,50 @@ final class ASCExperimentFlowModel {
     private func refreshSelectedExperiment() async {
         guard let id = selectedExperimentId, let fresh = try? await experimentAPI.experiment(id: id) else { return }
         replace(fresh)
+    }
+
+    /// Best effort and read-only: removing screenshots from a live test is the user's call, in App Store Connect.
+    private func leftovers(in entries: [ASCTreatmentTarget], targets: [ASCUploadTarget]) async -> [String] {
+        let toCheck = entries.filter { !$0.preexistingLocalizations.isEmpty }
+        guard !toCheck.isEmpty else { return [] }
+        uploadProgress = UploadProgress(totalSteps: 0, completedSteps: 0, currentLabel: String(localized: "Checking for screenshots from earlier uploads…"))
+        var notes: [String] = []
+        for entry in toCheck {
+            let uploadedIds = Set(entry.localizations.map(\.id))
+            let uploadedTypes = Set(targets.filter { $0.versionId == entry.treatment.id }.map(\.displayType.appStoreConnectValue))
+            var stale: Set<String> = []
+            // A few at a time: the upload that just ran has already spent much of the rate limit.
+            let localizations = entry.preexistingLocalizations
+            for start in stride(from: 0, to: localizations.count, by: 4) {
+                if Task.isCancelled { return notes }
+                await withTaskGroup(of: [String].self) { group in
+                    for localization in localizations[start..<min(start + 4, localizations.count)] {
+                        let wasUploaded = uploadedIds.contains(localization.id)
+                        group.addTask { await self.staleLabels(in: localization, wasUploaded: wasUploaded, uploadedTypes: uploadedTypes) }
+                    }
+                    for await labels in group { stale.formUnion(labels) }
+                }
+            }
+            if !stale.isEmpty {
+                notes.append(String(localized: "“\(entry.treatment.name)” still has \(stale.sorted().joined(separator: ", ")) screenshots from an earlier upload."))
+            }
+        }
+        return notes
+    }
+
+    /// The language, if this upload skipped it and it has screenshots; else sizes it has that this upload didn't send.
+    private func staleLabels(in localization: ASCTreatmentLocalization, wasUploaded: Bool, uploadedTypes: Set<String>) async -> [String] {
+        guard let sets = try? await setsAPI.listScreenshotSets(parent: .treatmentLocalization(localization.id)) else { return [] }
+        var sizes: [String] = []
+        for set in sets {
+            guard !Task.isCancelled, let raw = set.attributes.screenshotDisplayType,
+                  !wasUploaded || !uploadedTypes.contains(raw),
+                  (try? await setsAPI.listScreenshots(setId: set.id, limit: 1, retryPolicy: nil))?.isEmpty == false
+            else { continue }
+            if !wasUploaded { return [LocaleDefinition.displayName(forCode: localization.attributes.locale)] }
+            sizes.append(ASCDisplayType.allCases.first { $0.appStoreConnectValue == raw }?.label ?? raw)
+        }
+        return sizes
     }
 
     private func ensureExperiment(appId: String) async throws -> (experiment: ASCExperiment, isNew: Bool) {
@@ -325,14 +419,15 @@ final class ASCExperimentFlowModel {
         for variant in variants {
             try Task.checkCancellation()
             let treatment: ASCExperimentTreatment
-            var treatmentLocalizations: [ASCTreatmentLocalization]
+            var treatmentLocalizations: [ASCTreatmentLocalization] = []
             if let match = matches[variant.id] {
                 treatment = match
                 treatmentLocalizations = try await experimentAPI.listTreatmentLocalizations(treatmentId: treatment.id)
             } else {
                 treatment = try await experimentAPI.createTreatment(experimentId: experiment.id, name: variant.name)
-                treatmentLocalizations = []
+                existingTreatments.append(treatment)
             }
+            let preexisting = treatmentLocalizations
             var uploadLocalizations: [ASCUploadLocalization] = []
             for (projectCode, ascLocale) in wanted {
                 let localization: ASCTreatmentLocalization
@@ -344,7 +439,12 @@ final class ASCExperimentFlowModel {
                 }
                 uploadLocalizations.append(ASCUploadLocalization(id: localization.id, label: ascLocale, localeCode: projectCode))
             }
-            entries.append(ASCTreatmentTarget(variantId: variant.id, treatment: treatment, localizations: uploadLocalizations))
+            entries.append(ASCTreatmentTarget(
+                variantId: variant.id,
+                treatment: treatment,
+                localizations: uploadLocalizations,
+                preexistingLocalizations: preexisting
+            ))
         }
         return entries
     }
@@ -353,6 +453,7 @@ final class ASCExperimentFlowModel {
 enum ASCExperimentFlowError: LocalizedError {
     case noVersion(String)
     case nothingToUpload
+    case blocked(sets: Int)
     case message(String)
 
     var errorDescription: String? {
@@ -361,6 +462,8 @@ enum ASCExperimentFlowError: LocalizedError {
             String(localized: "This app has no \(platform) version on the App Store to run an experiment against.")
         case .nothingToUpload:
             String(localized: "No variant row has a screenshot size App Store Connect accepts for this platform.")
+        case .blocked(let sets):
+            String(inflecting: "App Store Connect can't take ^[\(sets) screenshot set](inflect: true) yet. Open Details to see why.")
         case .message(let text):
             text
         }

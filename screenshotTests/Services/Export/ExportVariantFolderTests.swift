@@ -6,6 +6,9 @@ import Testing
 @MainActor
 struct ExportVariantFolderTests {
 
+    init() { BetaFeatures.shared.setABTesting(true, persist: false) }
+
+
     private func makeRow(label: String, variantId: UUID? = nil) -> ScreenshotRow {
         ScreenshotRow(
             label: label,

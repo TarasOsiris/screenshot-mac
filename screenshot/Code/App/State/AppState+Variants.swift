@@ -8,7 +8,7 @@ extension AppState {
     }
 
     /// What the UI, export and uploads see; `variants` itself is persisted regardless of the flag.
-    var activeVariants: [ScreenshotVariant] { variants.active }
+    var activeVariants: [ScreenshotVariant] { BetaFeatures.shared.isABTestingEnabled ? variants : [] }
 
     var effectiveVariantFilter: EditorVariantFilter {
         viewMode.variantFilter.resolved(in: activeVariants)
@@ -49,8 +49,9 @@ extension AppState {
         }
         let clashing = Set(holders.values.filter { $0.count > 1 }.joined().map(\.id))
         var occupants: [UUID: [UUID: String]] = [:]
+        let variants = activeVariants
         for (rowId, slot) in slots {
-            for variant in activeVariants {
+            for variant in variants {
                 if let holder = holders["\(variant.id)|\(slot)"]?.first(where: { $0.id != rowId }) {
                     occupants[rowId, default: [:]][variant.id] = holder.displayLabel
                 }

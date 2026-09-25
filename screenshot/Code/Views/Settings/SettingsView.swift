@@ -49,7 +49,7 @@ struct SettingsView: View {
     enum BackupResult { case success; case failure(String) }
 
     enum SettingsSection: String, CaseIterable, Identifiable {
-        case general, export, appStoreConnect, googlePlay, automation, purchase, attributions, about
+        case general, export, appStoreConnect, googlePlay, automation, beta, purchase, attributions, about
 
         var id: String { rawValue }
 
@@ -60,6 +60,7 @@ struct SettingsView: View {
             case .appStoreConnect: "App Store Connect"
             case .googlePlay: "Google Play"
             case .automation: "Automation"
+            case .beta: "Beta"
             case .purchase: "Purchase"
             case .attributions: "Attributions"
             case .about: "About"
@@ -73,6 +74,7 @@ struct SettingsView: View {
             case .appStoreConnect: "arrow.up.circle"
             case .googlePlay: "play.rectangle.on.rectangle"
             case .automation: "terminal"
+            case .beta: "flask"
             case .purchase: "star"
             case .attributions: "heart"
             case .about: "info.circle"
@@ -87,6 +89,7 @@ struct SettingsView: View {
             case .appStoreConnect: .appStoreConnect
             case .googlePlay: .googlePlay
             case .automation: .automation
+            case .beta: .settings
             case .purchase: .proFeatures
             case .attributions: .settings
             case .about: .support
@@ -157,6 +160,7 @@ struct SettingsView: View {
         case .appStoreConnect: AppStoreConnectSettingsView()
         case .googlePlay: GooglePlaySettingsView()
         case .automation: automationSettings
+        case .beta: Form { BetaSettingsSection(showsHeader: false) }.formStyle(.grouped)
         case .purchase: purchaseSettings
         case .attributions: attributionsSettings
         case .about: aboutSettings

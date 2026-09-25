@@ -36,6 +36,8 @@ enum MCPToolName: String, CaseIterable {
     case setRowVariant = "set_row_variant"
     case deleteVariant = "delete_variant"
 
+    nonisolated static var available: [MCPToolName] { allCases.filter(\.isAvailable) }
+
     /// Tools behind a feature flag: listed and dispatched only while it is on.
     nonisolated var isAvailable: Bool {
         switch self {

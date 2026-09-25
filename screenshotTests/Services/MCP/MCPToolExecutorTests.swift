@@ -21,8 +21,8 @@ struct MCPToolExecutorTests {
 
     @Test func listToolsCoversAllCatalogEntries() {
         let tools = MCPToolCatalog.tools
-        #expect(tools.count == MCPToolName.allCases.count)
-        #expect(Set(tools.map(\.name)) == Set(MCPToolName.allCases.map(\.rawValue)))
+        #expect(tools.count == MCPToolName.available.count)
+        #expect(Set(tools.map(\.name)) == Set(MCPToolName.available.map(\.rawValue)))
     }
 
     /// Uses the injection seam rather than `.shared`, so the session model is exercised end to end

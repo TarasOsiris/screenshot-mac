@@ -26,6 +26,8 @@ struct EditorRowHeader<RowMenuContent: View>: View {
     var overrideLocaleLabel: String = ""
     var onSelectOverridden: () -> Void = {}
     var variantBadge: AnyView?
+    /// Set when the label follows another row and can't be edited here.
+    var labelLockReason: LocalizedStringKey?
     let rowMenuContent: () -> RowMenuContent
 
     @Environment(\.editorViewportWidth) private var editorViewportWidth
@@ -60,6 +62,16 @@ struct EditorRowHeader<RowMenuContent: View>: View {
 
             if showLabels {
                 labelView
+                if let labelLockReason {
+                    Button(action: onStartLabelEdit) {
+                        Image(systemName: "link")
+                            .font(.system(size: 10))
+                            .foregroundStyle(.secondary)
+                    }
+                    .buttonStyle(EditorIconButtonStyle())
+                    .help(labelLockReason)
+                    .accessibilityLabel(labelLockReason)
+                }
 
                 Text(verbatim: row.resolutionLabel)
                     .font(.system(size: 10))
@@ -144,6 +156,7 @@ struct EditorRowHeader<RowMenuContent: View>: View {
                 .lineLimit(1)
                 .fixedSize()
                 .onTapGesture(count: 2, perform: onStartLabelEdit)
+                .help(labelLockReason ?? "")
         }
     }
 

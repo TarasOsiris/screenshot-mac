@@ -5,6 +5,9 @@ import Testing
 @MainActor
 struct ScreenshotVariantTests {
 
+    init() { BetaFeatures.shared.setABTesting(true, persist: false) }
+
+
     @Test func projectDataWithoutVariantsDecodes() throws {
         let json = #"{"r":[],"m":0}"#
         let data = try JSONDecoder().decode(ProjectData.self, from: Data(json.utf8))

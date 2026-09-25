@@ -112,7 +112,14 @@ extension EditorRowView {
     }
 
     func startLabelEdit() {
-        guard !isLabelLinked else { return }
+        guard !isLabelLinked else {
+            activeAlert = .linkedLabel
+            return
+        }
+        beginLabelEdit()
+    }
+
+    func beginLabelEdit() {
         editingLabelText = row.label
         isEditingLabel = true
         isLabelFieldFocused = true
@@ -121,7 +128,8 @@ extension EditorRowView {
     func commitLabelEdit() {
         guard isEditingLabel else { return }
         isEditingLabel = false
-        state.updateRowLabel(row.id, text: editingLabelText)
+        // A linked row is only ever edited after choosing to name it separately.
+        state.updateRowLabel(row.id, text: editingLabelText, detaching: isLabelLinked)
     }
 
     func cancelLabelEdit() {

@@ -19,7 +19,7 @@ enum ASCExperimentError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .openReviewSubmission(let platform):
-            String(localized: "App Store Connect already has an unsubmitted \(platform) review submission. Add the experiment to it there, or submit or remove it first, so nothing else is sent to review by accident.")
+            String(localized: "App Store Connect already has an unsubmitted \(platform) review submission. Submit or remove it there first — this app won't add to it, so nothing else goes to review by accident.")
         }
     }
 }
@@ -146,7 +146,7 @@ extension AppStoreConnectAPIService: ASCExperimentAPI {
         return response.data
     }
 
-    /// Never reuses an open submission: it may carry an app version the user isn't ready to send.
+    /// Never adds to a submission that holds anything else: it may carry an app version the user isn't ready to send.
     func submitExperimentForReview(appId: String, platform: ASCPlatform, experimentId: String) async throws {
         if isDemoMode {
             await demoDelay()
@@ -156,7 +156,21 @@ extension AppStoreConnectAPIService: ASCExperimentAPI {
         let open: ASCListResponse<ASCResourceReference> = try await get(
             "/v1/reviewSubmissions?filter%5Bapp%5D=\(appId)&filter%5Bplatform%5D=\(platform.rawValue)&filter%5Bstate%5D=READY_FOR_REVIEW&limit=5"
         )
-        guard open.data.isEmpty else {
+        for submission in open.data {
+            let items: ASCListResponse<ASCReviewSubmissionItem> = try await get(
+                "/v1/reviewSubmissions/\(submission.id)/items?include=appStoreVersionExperimentV2&limit=10"
+            )
+            // Empty, or holding only this experiment from an unfinished attempt: finishing it sends nothing else.
+            if items.data.isEmpty {
+                try await addAndSubmit(experimentId: experimentId, submissionId: submission.id)
+                return
+            }
+            if items.data.allSatisfy({ $0.experimentId == experimentId }) {
+                try await markSubmitted(submissionId: submission.id)
+                return
+            }
+        }
+        if !open.data.isEmpty {
             throw ASCExperimentError.openReviewSubmission(platform: platform.displayName)
         }
         let submissionBody = ASCResourceCreate(data: .init(
@@ -165,13 +179,31 @@ extension AppStoreConnectAPIService: ASCExperimentAPI {
             relationships: ["app": AnyEncodable(ASCRelationship.single(type: "apps", id: appId))]
         ))
         let submission: ASCSingleResponse<ASCResourceReference> = try await post("/v1/reviewSubmissions", body: submissionBody)
+        do {
+            try await addAndSubmit(experimentId: experimentId, submissionId: submission.data.id)
+        } catch {
+            // Left open, our own half-built submission would block every retry through the check above.
+            let cancelBody = ASCResourceUpdate(data: .init(
+                type: "reviewSubmissions",
+                id: submission.data.id,
+                attributes: ["canceled": AnyEncodable(true)]
+            ))
+            let _: ASCSingleResponse<ASCResourceReference>? = try? await patch(
+                "/v1/reviewSubmissions/\(submission.data.id)",
+                body: cancelBody,
+                repeatable: true
+            )
+            throw error
+        }
+    }
 
+    private func addAndSubmit(experimentId: String, submissionId: String) async throws {
         let itemBody = ASCResourceCreate(data: .init(
             type: "reviewSubmissionItems",
             attributes: nil,
             relationships: [
                 "reviewSubmission": AnyEncodable(
-                    ASCRelationship.single(type: "reviewSubmissions", id: submission.data.id)
+                    ASCRelationship.single(type: "reviewSubmissions", id: submissionId)
                 ),
                 "appStoreVersionExperimentV2": AnyEncodable(
                     ASCRelationship.single(type: "appStoreVersionExperiments", id: experimentId)
@@ -179,14 +211,17 @@ extension AppStoreConnectAPIService: ASCExperimentAPI {
             ]
         ))
         let _: ASCSingleResponse<ASCResourceReference> = try await post("/v1/reviewSubmissionItems", body: itemBody)
+        try await markSubmitted(submissionId: submissionId)
+    }
 
+    private func markSubmitted(submissionId: String) async throws {
         let submitBody = ASCResourceUpdate(data: .init(
             type: "reviewSubmissions",
-            id: submission.data.id,
+            id: submissionId,
             attributes: ["submitted": AnyEncodable(true)]
         ))
         let _: ASCSingleResponse<ASCResourceReference> = try await patch(
-            "/v1/reviewSubmissions/\(submission.data.id)",
+            "/v1/reviewSubmissions/\(submissionId)",
             body: submitBody,
             repeatable: true
         )

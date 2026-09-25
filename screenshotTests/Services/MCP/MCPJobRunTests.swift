@@ -134,7 +134,7 @@ struct MCPJobRunTests {
     }
 
     @Test func catalogAndDispatchStayInStep() async throws {
-        #expect(MCPToolCatalog.tools.count == MCPToolName.allCases.count)
+        #expect(MCPToolCatalog.tools.count == MCPToolName.available.count)
         let names = Set(MCPToolCatalog.tools.map(\.name))
         #expect(names.contains(MCPToolName.getSyncJobStatus.rawValue))
         #expect(names.contains(MCPToolName.cancelSyncJob.rawValue))

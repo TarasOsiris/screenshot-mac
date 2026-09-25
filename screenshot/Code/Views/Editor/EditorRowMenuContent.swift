@@ -65,7 +65,7 @@ struct EditorRowMenuContent: View {
     private var organizationSection: some View {
         Button("Duplicate Row", systemImage: "plus.square.on.square", action: duplicateRow)
             .disabled(!canDuplicate)
-        if FeatureFlags.abTesting {
+        if BetaFeatures.shared.isABTestingEnabled {
             RowVariantMenuItems(state: state, row: row, context: variantContext)
         }
         Button("Add New Row Above", systemImage: "arrow.up.to.line.compact") {

@@ -16,6 +16,15 @@ extension EditorRowView {
                 withAnimation(.easeInOut(duration: 0.2)) { state.resetRow(row.id) }
             }
             Button("Cancel", role: .cancel) {}
+        case .linkedLabel:
+            Button("Name This Copy Separately") {
+                // After the alert has gone, or focus returns to whatever it dismissed to.
+                Task {
+                    try? await Task.sleep(for: .milliseconds(200))
+                    beginLabelEdit()
+                }
+            }
+            Button("Cancel", role: .cancel) {}
         #if DEBUG && os(macOS)
         case .simulatorInstallPrompt(let shapeId):
             Button("Install…") { installSimulatorHelper(capturingInto: shapeId) }
@@ -35,6 +44,8 @@ extension EditorRowView {
             Text("This will remove all screenshots and shapes from \"\(row.label)\" and restore default settings.")
         case .exportFailed(let message), .backgroundRemovalFailed(let message):
             Text(message)
+        case .linkedLabel:
+            Text("Renaming that row renames this copy too. To give this copy its own name, name it separately.")
         #if DEBUG
         case .simulatorCaptureFailed(let message):
             Text(message)

@@ -5,6 +5,9 @@ import Testing
 @MainActor
 struct ASCExperimentPlannerTests {
 
+    init() { BetaFeatures.shared.setABTesting(true, persist: false) }
+
+
     private func iPhoneRow(variantId: UUID?) -> ScreenshotRow {
         ScreenshotRow(templates: [ScreenshotTemplate()], templateWidth: 1290, templateHeight: 2796, variantId: variantId)
     }
@@ -143,7 +146,63 @@ struct ASCExperimentPlannerTests {
 }
 
 @MainActor
+struct ASCExperimentPlannerWarningTests {
+
+    init() { BetaFeatures.shared.setABTesting(true, persist: false) }
+
+
+    private func iPhoneRow(variantId: UUID?) -> ScreenshotRow {
+        ScreenshotRow(templates: [ScreenshotTemplate()], templateWidth: 1290, templateHeight: 2796, variantId: variantId)
+    }
+
+    @Test func aTreatmentNoVariantMatchesIsReported() {
+        let variant = ScreenshotVariant(name: "B")
+        let rows = [iPhoneRow(variantId: variant.id)]
+        let issues = ASCExperimentPlanner.issues(
+            variants: [variant], rowsByVariant: ASCExperimentPlanner.rowsByVariant(rows), platform: .ios,
+            experiment: .fixture(id: "e1"),
+            existingTreatments: [ASCExperimentTreatment(id: "t1", attributes: .init(name: "Old idea"))],
+            newExperimentName: "", enabledLocaleCodes: ["en"], localeAssignment: ["en": ["en-US"]]
+        )
+        #expect(issues.contains { $0.severity == .warning && $0.scope == "Old idea" })
+    }
+
+    @Test func aSizeTheOriginalHasButTheVariantLacksIsReported() {
+        let variant = ScreenshotVariant(name: "B")
+        let rows = [iPhoneRow(variantId: variant.id)]
+        let issues = ASCExperimentPlanner.issues(
+            variants: [variant], rowsByVariant: ASCExperimentPlanner.rowsByVariant(rows), platform: .ios,
+            experiment: nil, existingTreatments: [], newExperimentName: "Test",
+            enabledLocaleCodes: ["en"], localeAssignment: ["en": ["en-US"]],
+            originalDisplayTypes: [.ipadPro3Gen129]
+        )
+        #expect(issues.contains { $0.severity == .warning && $0.scope == "B" })
+    }
+
+    @Test func tooManyScreenshotsInAVariantRowBlocksBeforeAnythingIsCreated() {
+        let variant = ScreenshotVariant(name: "B")
+        let row = ScreenshotRow(
+            templates: Array(repeating: ScreenshotTemplate(), count: 11),
+            templateWidth: 1290, templateHeight: 2796, variantId: variant.id
+        )
+        let issues = ASCExperimentPlanner.issues(
+            variants: [variant], rowsByVariant: ASCExperimentPlanner.rowsByVariant([row]), platform: .ios,
+            experiment: nil, existingTreatments: [], newExperimentName: "Test",
+            enabledLocaleCodes: ["en"], localeAssignment: ["en": ["en-US"]]
+        )
+        #expect(issues.contains { $0.severity == .error })
+    }
+
+    @Test func noVariantGuidanceTellsEmptyVariantsApart() {
+        #expect(ASCExperimentPlanner.noVariantsIssue(hasVariants: false).message != ASCExperimentPlanner.noVariantsIssue(hasVariants: true).message)
+    }
+}
+
+@MainActor
 struct ASCExperimentFlowModelTests {
+
+    init() { BetaFeatures.shared.setABTesting(true, persist: false) }
+
 
     private func makeModel(
         experiments: FakeASCExperimentAPI = FakeASCExperimentAPI()
@@ -213,6 +272,28 @@ struct ASCExperimentFlowModelTests {
         #expect(!model.newExperimentName.isEmpty)
     }
 
+    @Test func aSubmittedExperimentReadsAsWaitingEvenIfTheRefreshLags() async {
+        let api = FakeASCExperimentAPI()
+        api.experiments = [.fixture(id: "draft")]
+        let (model, _, _) = makeModel(experiments: api)
+        await model.continueToConfigure()
+
+        await model.submitForReview()
+
+        #expect(model.selectedExperiment?.state == .waitingForReview)
+    }
+
+    @Test func anApprovedExperimentIsPreselectedSoItCanBeStarted() async {
+        let api = FakeASCExperimentAPI()
+        api.experiments = [.fixture(id: "draft"), .fixture(id: "approved", state: .accepted)]
+        let (model, _, _) = makeModel(experiments: api)
+
+        await model.continueToConfigure()
+
+        #expect(model.selectedExperimentId == "approved")
+        #expect(model.isSelectedExperimentLocked)
+    }
+
     @Test func newExperimentNameDefaultsFromTheProject() {
         let (model, _, _) = makeModel()
         #expect(model.newExperimentName.contains("Fixture"))
@@ -221,6 +302,9 @@ struct ASCExperimentFlowModelTests {
 
 @MainActor
 struct GPListingVariantTests {
+
+    init() { BetaFeatures.shared.setABTesting(true, persist: false) }
+
 
     @Test func listingVariantChoosesWhichRowsArePlanned() {
         let variant = ScreenshotVariant(name: "B")

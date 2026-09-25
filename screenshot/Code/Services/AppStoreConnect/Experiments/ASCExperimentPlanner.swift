@@ -5,6 +5,8 @@ struct ASCTreatmentTarget {
     let variantId: UUID
     let treatment: ASCExperimentTreatment
     let localizations: [ASCUploadLocalization]
+    /// The localizations it had before this upload — where screenshots from earlier ones can linger.
+    var preexistingLocalizations: [ASCTreatmentLocalization] = []
 }
 
 /// The pure half of the experiment flow: row → treatment mapping, locale matching, and preflight.
@@ -67,20 +69,35 @@ enum ASCExperimentPlanner {
         existingTreatments: [ASCExperimentTreatment],
         newExperimentName: String,
         enabledLocaleCodes: Set<String>,
-        localeAssignment: [String: [String]]
+        localeAssignment: [String: [String]],
+        originalDisplayTypes: Set<ASCDisplayType> = []
     ) -> [UploadIssue] {
         var issues: [UploadIssue] = []
         let testable = variantsWithRows(variants, rowsByVariant: rowsByVariant)
         if testable.isEmpty {
-            issues.append(UploadIssue(severity: .error, message: String(localized: "Create a variant first: choose New Variant from Row in a row's menu, then change the copy.")))
+            issues.append(noVariantsIssue(hasVariants: !variants.isEmpty))
         }
-        let matched = treatmentMatches(variants: testable, existing: existingTreatments).count
+        let matches = treatmentMatches(variants: testable, existing: existingTreatments)
+        let matched = matches.count
+        let matchedIds = Set(matches.values.map(\.id))
+        for treatment in existingTreatments where !matchedIds.contains(treatment.id) {
+            issues.append(UploadIssue(
+                severity: .warning,
+                scope: treatment.name,
+                message: String(localized: "No variant has this name, so this treatment stays in the experiment unchanged."),
+                hint: String(localized: "Rename a variant to match it, or remove the treatment in App Store Connect.")
+            ))
+        }
         if existingTreatments.count + testable.count - matched > ASCExperiment.maxTreatments {
             issues.append(UploadIssue(severity: .error, message: String(localized: "An App Store experiment holds at most 3 treatments. Delete a variant or merge two.")))
         }
         if let experiment {
             if !experiment.state.isEditable {
-                issues.append(UploadIssue(severity: .error, message: String(localized: "“\(experiment.name)” is \(experiment.statusText.lowercased()) and can no longer be changed. Start a new experiment.")))
+                issues.append(UploadIssue(
+                    severity: .error,
+                    message: String(localized: "“\(experiment.name)” can't take new screenshots now."),
+                    hint: experiment.guidance
+                ))
             }
         } else if newExperimentName.trimmingCharacters(in: .whitespaces).isEmpty {
             issues.append(UploadIssue(severity: .error, message: String(localized: "Name the new experiment.")))
@@ -90,12 +107,25 @@ enum ASCExperimentPlanner {
         }
         for variant in testable {
             let variantRows = rowsByVariant[variant.id] ?? []
+            for row in variantRows where row.templates.count > ASCUploadLimits.maxScreenshotsPerSet {
+                issues.append(ASCUploadLimits.tooManyScreenshotsIssue(count: row.templates.count, scope: "\(variant.name) · \(row.displayLabel)"))
+            }
             let displayTypes = variantRows.map { uploadableDisplayType(for: $0, platform: platform) }
             let unuploadableCount = displayTypes.filter { $0 == nil }.count
             if unuploadableCount == variantRows.count {
                 issues.append(UploadIssue(severity: .error, scope: variant.name, message: String(localized: "None of these rows has an App Store screenshot size for \(platform.displayName).")))
             } else if unuploadableCount > 0 {
                 issues.append(UploadIssue(severity: .warning, scope: variant.name, message: String(localized: "Some of these rows have no \(platform.displayName) screenshot size and will be skipped.")))
+            }
+            let missing = originalDisplayTypes.subtracting(displayTypes.compactMap { $0 })
+            if !missing.isEmpty {
+                let names = ASCDisplayType.allCases.filter(missing.contains).map(\.label).joined(separator: ", ")
+                issues.append(UploadIssue(
+                    severity: .warning,
+                    scope: variant.name,
+                    message: String(localized: "Has no \(names) row, so this upload doesn't change its \(names) screenshots."),
+                    hint: String(localized: "Use Copy Row to Variant on the Original's row to test it too.")
+                ))
             }
             // The sync engine would reject this too, but only after the experiment exists in App Store Connect.
             let counts = Dictionary(displayTypes.compactMap { $0 }.map { ($0, 1) }, uniquingKeysWith: +)
@@ -104,6 +134,20 @@ enum ASCExperimentPlanner {
             }
         }
         return issues
+    }
+
+    static func noVariantsIssue(hasVariants: Bool) -> UploadIssue {
+        hasVariants
+            ? UploadIssue(
+                severity: .error,
+                message: String(localized: "None of your variants has a row that uploads to App Store Connect."),
+                hint: String(localized: "Copy a row into a variant, or turn off “Exclude when uploading to App Store Connect” on one.")
+            )
+            : UploadIssue(
+                severity: .error,
+                message: String(localized: "There's nothing to test yet."),
+                hint: String(localized: "Choose New Variant from Row in a row's menu, then change the copy.")
+            )
     }
 
     /// One upload target per uploadable variant row, parented to its treatment's localizations.

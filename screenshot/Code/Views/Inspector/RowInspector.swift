@@ -397,10 +397,9 @@ struct RowInspector: View {
                     get: { state.rowIndex(for: rowId).flatMap { state.rows[$0].variantId } },
                     set: { state.setRowVariant(rowId, to: $0) }
                 )) {
+                    let occupants = state.variantSlotOccupancy().occupants[rowId] ?? [:]
                     VariantPickerOptions(variants: state.activeVariants) { variant in
-                        guard let idx = state.rowIndex(for: rowId) else { return false }
-                        let row = state.rows[idx]
-                        return row.variantId == variant.id || state.rowOccupyingSlot(of: row, in: variant.id) == nil
+                        occupants[variant.id].map { String(localized: "already has \($0)") }
                     }
                 }
                 .scaledFont(UIMetrics.FontSize.body)

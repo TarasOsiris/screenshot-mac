@@ -14,7 +14,7 @@ extension ASCUploadFlowModel {
         if variantRowCount > 0 {
             issues.append(UploadIssue(
                 severity: .warning,
-                message: String(localized: "^[\(variantRowCount) A/B variant row](inflect: true) won't be uploaded to your product page."),
+                message: String(inflecting: "^[\(variantRowCount) A/B variant row](inflect: true) won't be uploaded to your product page."),
                 hint: String(localized: "To test them, use Export ▸ Upload A/B Test to App Store Connect.")
             ))
         }

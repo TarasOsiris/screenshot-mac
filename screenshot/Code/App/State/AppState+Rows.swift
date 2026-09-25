@@ -6,7 +6,7 @@ extension AppState {
 
     func addRow(variantId: UUID? = nil) {
         withUndo("Add New Row") {
-            let row = makeDefaultRow(variantId: variantId)
+            let row = newRow(inVariant: variantId)
             rows.append(row)
             selectRow(row.id)
         }
@@ -15,7 +15,7 @@ extension AppState {
     func addRowAbove(_ id: UUID) {
         guard let idx = rows.firstIndex(where: { $0.id == id }) else { return }
         withUndo("Add New Row Above") {
-            let row = makeDefaultRow(variantId: rows[idx].activeVariantId)
+            let row = newRow(inVariant: rows[idx].activeVariantId)
             rows.insert(row, at: idx)
             selectRow(row.id)
         }
@@ -24,10 +24,17 @@ extension AppState {
     func addRowBelow(_ id: UUID) {
         guard let idx = rows.firstIndex(where: { $0.id == id }) else { return }
         withUndo("Add New Row Below") {
-            let row = makeDefaultRow(variantId: rows[idx].activeVariantId)
+            let row = newRow(inVariant: rows[idx].activeVariantId)
             rows.insert(row, at: idx + 1)
             selectRow(row.id)
         }
+    }
+
+    /// A default row for `variantId`, or for the Original when the variant already holds that size.
+    private func newRow(inVariant variantId: UUID?) -> ScreenshotRow {
+        var row = makeDefaultRow(variantId: variantId)
+        if rowOccupyingSlot(of: row, in: variantId) != nil { row.variantId = nil }
+        return row
     }
 
     /// Original rows only: a copy of a variant row would be a second row of its size in that variant.
@@ -161,9 +168,12 @@ extension AppState {
         }
     }
 
-    /// A linked variant copy follows its source row's label, so renaming that row renames the copies.
-    func updateRowLabel(_ rowId: UUID, text: String) {
-        guard let ri = rowIndex(for: rowId), labelSource(of: rows[ri]) == nil else { return }
+    /// Renames propagate to linked copies; `detaching` names a linked copy itself, if the name changes.
+    func updateRowLabel(_ rowId: UUID, text: String, detaching: Bool = false) {
+        guard let ri = rowIndex(for: rowId) else { return }
+        if labelSource(of: rows[ri]) != nil {
+            guard detaching, text.trimmingCharacters(in: .whitespaces) != rows[ri].label else { return }
+        }
         withUndo("Edit Row Label") {
             defer { propagateLabel(from: rowId) }
             // Named by hand, a copy no longer follows the row it came from.

@@ -23,6 +23,7 @@ struct AppSettingsKeysTests {
         #expect(AppSettingsKeys.defaultDeviceFrameId == "defaultDeviceFrameId")
         #expect(AppSettingsKeys.projectSortOrder == "projectSortOrder")
         #expect(AppSettingsKeys.selectionInspector == "selectionInspectorEnabled")
+        #expect(AppSettingsKeys.betaABTesting == "betaABTestingEnabled")
         #expect(AppSettingsKeys.lastZoomLevel == "lastZoomLevel")
         #expect(AppSettingsKeys.installId == "installId")
         #expect(AppSettingsKeys.installFirstVersion == "installFirstVersion")
@@ -52,7 +53,7 @@ struct AppSettingsKeysTests {
             AppSettingsKeys.defaultTemplateCount, AppSettingsKeys.defaultZoomLevel,
             AppSettingsKeys.confirmBeforeDeleting, AppSettingsKeys.defaultDeviceCategory,
             AppSettingsKeys.defaultDeviceFrameId, AppSettingsKeys.projectSortOrder,
-            AppSettingsKeys.lastZoomLevel, AppSettingsKeys.selectionInspector,
+            AppSettingsKeys.lastZoomLevel, AppSettingsKeys.selectionInspector, AppSettingsKeys.betaABTesting,
         ]
         #expect(Set(keys).count == keys.count)
         #expect(keys.allSatisfy { !$0.isEmpty })

@@ -7,6 +7,9 @@ import Testing
 @MainActor
 struct AppStateVariantTests {
 
+    init() { BetaFeatures.shared.setABTesting(true, persist: false) }
+
+
     private func makeState() -> (AppState, URL) { makeTestState() }
     private func cleanup(_ tempDir: URL) { cleanupTestState(tempDir) }
 
@@ -448,5 +451,37 @@ struct AppStateVariantTests {
 
         let selected = try #require(state.selectedRow)
         #expect(state.effectiveVariantFilter.includes(selected))
+    }
+
+    @Test func aCopyCanBeNamedSeparately() throws {
+        let (state, tempDir) = makeState()
+        defer { cleanup(tempDir) }
+        let source = try #require(state.rows.first)
+        state.updateRowLabel(source.id, text: "Welcome")
+        let variantId = try #require(state.createVariant(fromRow: source.id))
+        let copy = try #require(state.rows.inVariant(variantId).first)
+
+        state.updateRowLabel(copy.id, text: copy.label, detaching: true)
+        #expect(state.labelSource(of: state.rows.inVariant(variantId)[0]) != nil, "the same name keeps the link")
+        state.updateRowLabel(copy.id, text: "Bold", detaching: true)
+        state.updateRowLabel(source.id, text: "Hello")
+
+        #expect(state.rows.inVariant(variantId).first?.label == "Bold")
+    }
+
+    @Test func aRowAddedToAVariantWhoseSizeIsTakenGoesToTheOriginal() throws {
+        let (state, tempDir) = makeState()
+        defer { cleanup(tempDir) }
+        let source = try #require(state.rows.first)
+        let variantId = try #require(state.createVariant(fromRow: source.id))
+        let before = state.rows.count
+        let defaultRow = state.makeDefaultRow()
+        let defaultSizeTaken = state.rowOccupyingSlot(of: defaultRow, in: variantId) != nil
+
+        state.addRow(variantId: variantId)
+
+        #expect(state.rows.count == before + 1)
+        #expect(state.rows.last?.variantId == (defaultSizeTaken ? nil : variantId))
+        #expect(state.variantSlotOccupancy().clashing.isEmpty)
     }
 }

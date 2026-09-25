@@ -120,7 +120,9 @@ extension UploadToGooglePlayView {
     private var listingVariantPicker: some View {
         VStack(alignment: .leading, spacing: 6) {
             Picker("Listing variant", selection: $model.listingVariantId) {
-                VariantPickerOptions(variants: model.variants)
+                VariantPickerOptions(variants: model.variants) { variant in
+                    model.rows.contains { $0.activeVariantId == variant.id } ? nil : String(localized: "no rows")
+                }
             }
             .fixedSize()
             Label(
@@ -140,6 +142,10 @@ extension UploadToGooglePlayView {
         ScrollView {
             LazyVStack(alignment: .leading, spacing: 16) {
                 preflightPanel
+                if let variant = model.variants.variant(withId: model.listingVariantId) {
+                    Label("Uploading “\(variant.name)” as your Google Play listing", systemImage: "square.split.2x1")
+                        .font(.callout.weight(.medium))
+                }
                 if model.rowPlans.isEmpty {
                     Text("This project has no rows to upload.")
                         .foregroundStyle(.secondary)

@@ -14,3 +14,10 @@ extension String {
         (try? Double(self, format: .number)) ?? Double(replacing(",", with: "."))
     }
 }
+
+extension String {
+    /// Applies `^[…](inflect: true)` agreement, which plain `String(localized:)` leaves as raw markup.
+    nonisolated init(inflecting resource: String.LocalizationValue) {
+        self = String(AttributedString(localized: resource).characters)
+    }
+}

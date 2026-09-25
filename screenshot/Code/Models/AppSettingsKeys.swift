@@ -25,6 +25,8 @@ nonisolated enum AppSettingsKeys {
     /// macOS: the inspector follows the selection (row or shapes) instead of always showing the
     /// row, and the bottom properties bar steps aside while it does. Off by default while the layout is new.
     static let selectionInspector = "selectionInspectorEnabled"
+    /// Settings ▸ Beta: A/B variants and App Store product page experiments. Off by default.
+    static let betaABTesting = "betaABTestingEnabled"
     /// The zoom the editor was left at, restored on launch. Distinct from
     /// `defaultZoomLevel`, which is the user's configured starting point.
     static let lastZoomLevel = "lastZoomLevel"

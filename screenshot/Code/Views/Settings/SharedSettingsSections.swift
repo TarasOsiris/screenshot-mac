@@ -316,3 +316,24 @@ struct SocialLinkButtons: View {
         }
     }
 }
+
+/// Settings ▸ Beta: features that work but may still change. Shared by both settings screens.
+struct BetaSettingsSection: View {
+    /// The macOS pane is already titled Beta; the iPad list needs the header.
+    var showsHeader = true
+    @Bindable private var beta = BetaFeatures.shared
+
+    var body: some View {
+        Section {
+            Toggle("A/B testing", isOn: Binding(
+                get: { beta.isABTestingEnabled },
+                set: { beta.setABTesting($0) }
+            ))
+        } header: {
+            if showsHeader { Text("Beta") }
+        } footer: {
+            Text("Make variants of your rows — alternative screenshots — and upload them as an App Store product page experiment, or export them for a Google Play store listing experiment. Turning this off hides variants; they stay in your projects.")
+                .foregroundStyle(.secondary)
+        }
+    }
+}

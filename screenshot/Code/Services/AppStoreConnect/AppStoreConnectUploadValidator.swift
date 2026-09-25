@@ -5,6 +5,16 @@ enum ASCUploadLimits {
     static let minScreenshotsPerSet = 1
     static let recommendedScreenshotsPerSet = 3
     static let maxScreenshotsPerSet = 10
+
+    static func tooManyScreenshotsIssue(count: Int, scope: String) -> UploadIssue {
+        UploadIssue(
+            severity: .error,
+            scope: scope,
+            message: String(localized: "App Store Connect allows at most \(maxScreenshotsPerSet) screenshots per display type; this row has \(count)."),
+            hint: String(localized: "Remove columns to bring the count to \(maxScreenshotsPerSet) or fewer."),
+            demoDowngradable: true
+        )
+    }
 }
 
 enum AppStoreConnectUploadValidator {
@@ -116,13 +126,7 @@ enum AppStoreConnectUploadValidator {
                 ))
             }
             if plan.templateCount > ASCUploadLimits.maxScreenshotsPerSet {
-                issues.append(UploadIssue(
-                    severity: .error,
-                    scope: rowName,
-                    message: String(localized: "App Store Connect allows at most \(ASCUploadLimits.maxScreenshotsPerSet) screenshots per display type; this row has \(plan.templateCount)."),
-                    hint: String(localized: "Remove columns to bring the count to \(ASCUploadLimits.maxScreenshotsPerSet) or fewer."),
-                    demoDowngradable: true
-                ))
+                issues.append(ASCUploadLimits.tooManyScreenshotsIssue(count: plan.templateCount, scope: rowName))
             }
 
             let matchable = plan.localeTargets.filter { !$0.candidates.isEmpty }
