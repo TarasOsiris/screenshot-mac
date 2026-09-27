@@ -96,15 +96,22 @@ private struct NewProjectModeCard: View {
 
 struct NewProjectTemplateConfigurator: View {
     let templates: [ProjectTemplate]
+    let deviceFamilies: [DeviceFrameFamily]
+    @Binding var deviceFilter: DeviceFrameFamily?
     @Binding var selectedTemplateId: String?
     let columns: [GridItem]
     let spacing: CGFloat
     let horizontalPadding: CGFloat
+    let onActivate: (ProjectTemplate) -> Void
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
-            Text("Choose a template")
-                .font(.headline)
+            HStack {
+                Text("Choose a template")
+                    .font(.headline)
+                Spacer()
+                TemplateDeviceFilterPicker(families: deviceFamilies, selection: $deviceFilter)
+            }
 
             #if DEBUG
             if !templates.isEmpty {
@@ -120,7 +127,8 @@ struct NewProjectTemplateConfigurator: View {
                         templates: templates,
                         selectedTemplateId: $selectedTemplateId,
                         columns: columns,
-                        spacing: spacing
+                        spacing: spacing,
+                        onActivate: onActivate
                     )
                     .padding(.horizontal, horizontalPadding)
                 }
@@ -132,12 +140,15 @@ struct NewProjectTemplateConfigurator: View {
 #if os(iOS)
 struct NewProjectTemplateSection: View {
     let templates: [ProjectTemplate]
+    let deviceFamilies: [DeviceFrameFamily]
+    @Binding var deviceFilter: DeviceFrameFamily?
     @Binding var selectedTemplateId: String?
     let columns: [GridItem]
     let spacing: CGFloat
 
     var body: some View {
         Section {
+            TemplateDeviceFilterPicker(families: deviceFamilies, selection: $deviceFilter)
             if templates.isEmpty {
                 NewProjectNoTemplatesView()
             } else {
@@ -145,7 +156,8 @@ struct NewProjectTemplateSection: View {
                     templates: templates,
                     selectedTemplateId: $selectedTemplateId,
                     columns: columns,
-                    spacing: spacing
+                    spacing: spacing,
+                    onActivate: nil
                 )
                 .padding(.vertical, 6)
                 .listRowInsets(EdgeInsets(top: 0, leading: 16, bottom: 0, trailing: 16))
@@ -169,6 +181,8 @@ private struct NewProjectTemplateGrid: View {
     @Binding var selectedTemplateId: String?
     let columns: [GridItem]
     let spacing: CGFloat
+    /// Double-click creates, as in Finder's and Sketch's template pickers; iPad has no equivalent.
+    let onActivate: ((ProjectTemplate) -> Void)?
 
     var body: some View {
         LazyVGrid(columns: columns, spacing: spacing) {
@@ -182,6 +196,11 @@ private struct NewProjectTemplateGrid: View {
                     )
                 }
                 .buttonStyle(.plain)
+                .simultaneousGesture(TapGesture(count: 2).onEnded {
+                    guard let onActivate else { return }
+                    selectTemplate(template)
+                    onActivate(template)
+                })
             }
         }
     }
@@ -220,6 +239,7 @@ private struct NewProjectReleaseTemplateLegend: View {
 private struct TemplateSelectionCard: View {
     let template: ProjectTemplate
     let isSelected: Bool
+    @State private var isHovered = false
 
     private var borderColor: Color {
         if isSelected {
@@ -230,7 +250,7 @@ private struct TemplateSelectionCard: View {
             return Color.green.opacity(0.55)
         }
         #endif
-        return Color.secondary.opacity(0.12)
+        return Color.secondary.opacity(isHovered ? 0.35 : 0.12)
     }
 
     private var borderWidth: CGFloat {
@@ -257,12 +277,20 @@ private struct TemplateSelectionCard: View {
                     }
                 }
                 .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
-            Text(template.name)
-                .font(.system(size: 12, weight: .semibold))
-                .foregroundStyle(.primary)
-                .lineLimit(1)
+            HStack(alignment: .firstTextBaseline, spacing: 6) {
+                Text(template.name)
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundStyle(.primary)
+                    .lineLimit(1)
+                Spacer(minLength: 0)
+                Text(verbatim: template.deviceFamilies.map(\.rawValue).joined(separator: " · "))
+                    .font(.system(size: 11))
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
+            }
         }
         .padding(8)
+        .onHover { isHovered = $0 }
         .background(
             cardBackgroundColor,
             in: RoundedRectangle(cornerRadius: 14, style: .continuous)
@@ -280,5 +308,25 @@ private struct TemplateSelectionCard: View {
         }
         #endif
         return Color.platformControlBackground
+    }
+}
+
+/// Brand names, so the segments are verbatim; only "All" is translated.
+private struct TemplateDeviceFilterPicker: View {
+    let families: [DeviceFrameFamily]
+    @Binding var selection: DeviceFrameFamily?
+
+    var body: some View {
+        if families.count > 1 {
+            Picker("Devices", selection: $selection) {
+                Text("All").tag(DeviceFrameFamily?.none)
+                ForEach(families) { family in
+                    Text(verbatim: family.rawValue).tag(Optional(family))
+                }
+            }
+            .pickerStyle(.segmented)
+            .labelsHidden()
+            .fixedSize()
+        }
     }
 }

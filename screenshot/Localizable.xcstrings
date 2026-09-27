@@ -28999,58 +28999,6 @@
         }
       }
     },
-    "Choose **Blank** to set up rows and screenshot sizes manually, or **From Template** to start with a pre-designed layout." : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Wählen Sie **Leer**, um Zeilen und Screenshot-Größen manuell einzurichten, oder **Aus Vorlage**, um mit einem vorgefertigten Layout zu beginnen."
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Elija **En blanco** para configurar filas y tamaños de captura de pantalla manualmente, o **Desde plantilla** para comenzar con un diseño prediseñado."
-          }
-        },
-        "fa" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "**Blank** را برای تنظیم ردیف ها و اندازه های اسکرین شات به صورت دستی انتخاب کنید، یا **از الگو** را برای شروع با یک طرح از پیش طراحی شده انتخاب کنید."
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Choisissez **Vierge** pour configurer manuellement les lignes et les tailles de capture d'écran, ou **À partir d'un modèle** pour commencer avec une mise en page prédéfinie."
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "[**空白**] を選択して行とスクリーンショットのサイズを手動で設定するか、[**テンプレートから**] を選択して事前に設計されたレイアウトから開始します。"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "행과 스크린샷 크기를 수동으로 설정하려면 **비어 있음**을 선택하고, 미리 디자인된 레이아웃으로 시작하려면 **템플릿에서**를 선택하세요."
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Escolha **Em branco** para configurar linhas e tamanhos de captura de tela manualmente ou **Do modelo** para começar com um layout pré-projetado."
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "选择 **空白** 手动设置行和屏幕截图大小，或选择 **从模板** 以预先设计的布局开始。"
-          }
-        }
-      }
-    },
     "Choose **Upload to Google Play…** from the export menu. Screenshot Bro renders the selected screenshots directly from the project." : {
       "localizations" : {
         "de" : {
@@ -106370,6 +106318,715 @@
             "value" : "为 App 评分、联系支持、访问网站或在 X、Threads 和 Discord 上关注我们的链接，以及同一开发者的**更多 App**。"
           }
         }
+      }
+    },
+    "A sample app and a simulated experiment. Nothing is sent to App Store Connect." : {
+      "localizations" : {
+
+      }
+    },
+    "Unknown" : {
+      "localizations" : {
+
+      }
+    },
+    "Approved" : {
+      "localizations" : {
+
+      }
+    },
+    "%@ — already has %@" : {
+      "localizations" : {
+
+      }
+    },
+    "A/B testing" : {
+      "localizations" : {
+
+      }
+    },
+    "Variant %@" : {
+      "localizations" : {
+
+      }
+    },
+    "Show All Variants" : {
+      "localizations" : {
+
+      }
+    },
+    "Rejected" : {
+      "localizations" : {
+
+      }
+    },
+    "Upload A/B test to App Store Connect?" : {
+      "localizations" : {
+
+      }
+    },
+    "Variants are alternative screenshots to A/B test on your App Store product page." : {
+      "localizations" : {
+
+      }
+    },
+    "It has run, so its screenshots are final. Choose New Experiment to test new ones." : {
+      "localizations" : {
+
+      }
+    },
+    "Name the new experiment." : {
+      "localizations" : {
+
+      }
+    },
+    "No variant has this name, so this treatment stays in the experiment unchanged." : {
+      "localizations" : {
+
+      }
+    },
+    "Variant options" : {
+      "localizations" : {
+
+      }
+    },
+    "Variants" : {
+      "localizations" : {
+
+      }
+    },
+    "^[%lld row](inflect: true)" : {
+      "localizations" : {
+
+      }
+    },
+    "Next, submit it for review. Apple reviews an experiment before it can start." : {
+      "localizations" : {
+
+      }
+    },
+    "“%@” can't take new screenshots now." : {
+      "localizations" : {
+
+      }
+    },
+    "Has no %@ row, so this upload doesn't change its %@ screenshots." : {
+      "localizations" : {
+
+      }
+    },
+    "Recovered Variant" : {
+      "localizations" : {
+
+      }
+    },
+    "Completed" : {
+      "localizations" : {
+
+      }
+    },
+    "Variant %lld" : {
+      "localizations" : {
+
+      }
+    },
+    "Open in App Store Connect" : {
+      "localizations" : {
+
+      }
+    },
+    "already has %@" : {
+      "localizations" : {
+
+      }
+    },
+    "Rename Variant" : {
+      "localizations" : {
+
+      }
+    },
+    "It's approved. Start it when you're ready, or choose New Experiment to test other screenshots." : {
+      "localizations" : {
+
+      }
+    },
+    "Uploading treatments…" : {
+      "localizations" : {
+
+      }
+    },
+    "^[%lld A/B variant row](inflect: true) won't be uploaded to your product page." : {
+      "localizations" : {
+
+      }
+    },
+    "Upload A/B Test to App Store Connect" : {
+      "localizations" : {
+
+      }
+    },
+    "Start the experiment?" : {
+      "localizations" : {
+
+      }
+    },
+    "In Review" : {
+      "localizations" : {
+
+      }
+    },
+    "Submit for Review…" : {
+      "localizations" : {
+
+      }
+    },
+    "Prepare for Submission" : {
+      "localizations" : {
+
+      }
+    },
+    "Accepted" : {
+      "localizations" : {
+
+      }
+    },
+    "Listing variant" : {
+      "localizations" : {
+
+      }
+    },
+    "Waiting for Review" : {
+      "localizations" : {
+
+      }
+    },
+    "To test them, use Export ▸ Upload A/B Test to App Store Connect." : {
+      "localizations" : {
+
+      }
+    },
+    "They're part of the test until you remove them in App Store Connect." : {
+      "localizations" : {
+
+      }
+    },
+    "Named after the row it was copied from — rename that row to rename both" : {
+      "localizations" : {
+
+      }
+    },
+    "Choose the experiment and what goes into it" : {
+      "localizations" : {
+
+      }
+    },
+    "^[%lld treatment](inflect: true) will be created in App Store Connect." : {
+      "localizations" : {
+
+      }
+    },
+    "Its screenshots can't change in this state. Choose New Experiment to test new ones." : {
+      "localizations" : {
+
+      }
+    },
+    "New Experiment" : {
+      "localizations" : {
+
+      }
+    },
+    "Updates existing treatment" : {
+      "localizations" : {
+
+      }
+    },
+    "Delete Variant" : {
+      "localizations" : {
+
+      }
+    },
+    "Uploads ^[%lld treatment](inflect: true) to %@ in ^[%lld language](inflect: true)." : {
+      "localizations" : {
+
+      }
+    },
+    "A/B variants: show one, start a new one, or rename and delete them" : {
+      "localizations" : {
+
+      }
+    },
+    "Choose the app and platform to test" : {
+      "localizations" : {
+
+      }
+    },
+    "It's running. Results are in App Store Connect; choose New Experiment to test other screenshots." : {
+      "localizations" : {
+
+      }
+    },
+    "A/B Variant" : {
+      "localizations" : {
+
+      }
+    },
+    "None of your variants has a row that uploads to App Store Connect." : {
+      "localizations" : {
+
+      }
+    },
+    "Upload cancelled. Changes already made in App Store Connect were not reverted." : {
+      "localizations" : {
+
+      }
+    },
+    "Submit experiment for review?" : {
+      "localizations" : {
+
+      }
+    },
+    "Start Experiment…" : {
+      "localizations" : {
+
+      }
+    },
+    "More than one row is %@. A treatment takes one row per screenshot size — move one to another variant or exclude it from App Store Connect." : {
+      "localizations" : {
+
+      }
+    },
+    "Make variants of your rows — alternative screenshots — and upload them as an App Store product page experiment, or export them for a Google Play store listing experiment. Turning this off hides variants; they stay in your projects." : {
+      "localizations" : {
+
+      }
+    },
+    "An App Store experiment holds at most 3 treatments. Delete a variant or merge two." : {
+      "localizations" : {
+
+      }
+    },
+    "Not on your product page" : {
+      "localizations" : {
+
+      }
+    },
+    "None of these rows has an App Store screenshot size for %@." : {
+      "localizations" : {
+
+      }
+    },
+    "This submits the screenshots already in App Store Connect. If you changed rows since the last upload, upload first. Its screenshots can't change while it's in review." : {
+      "localizations" : {
+
+      }
+    },
+    "Upload to" : {
+      "localizations" : {
+
+      }
+    },
+    "Treatments uploaded" : {
+      "localizations" : {
+
+      }
+    },
+    "%@ screenshots" : {
+      "localizations" : {
+
+      }
+    },
+    "Name This Copy Separately" : {
+      "localizations" : {
+
+      }
+    },
+    "Start Experiment" : {
+      "localizations" : {
+
+      }
+    },
+    "Ready for Review" : {
+      "localizations" : {
+
+      }
+    },
+    "Use Copy Row to Variant on the Original's row to test it too." : {
+      "localizations" : {
+
+      }
+    },
+    "App Store visitors in the test start seeing the treatments now. A running experiment can only be stopped in App Store Connect." : {
+      "localizations" : {
+
+      }
+    },
+    "Submit for Review" : {
+      "localizations" : {
+
+      }
+    },
+    "Show" : {
+      "localizations" : {
+
+      }
+    },
+    "No variant row has a screenshot size App Store Connect accepts for this platform." : {
+      "localizations" : {
+
+      }
+    },
+    "Move Row to Variant" : {
+      "localizations" : {
+
+      }
+    },
+    "Its rows are all this project has, so they move to the Original. You can undo this." : {
+      "localizations" : {
+
+      }
+    },
+    "New treatment" : {
+      "localizations" : {
+
+      }
+    },
+    "Upload Treatments…" : {
+      "localizations" : {
+
+      }
+    },
+    "%@, another row has this screenshot size" : {
+      "localizations" : {
+
+      }
+    },
+    "Treatments" : {
+      "localizations" : {
+
+      }
+    },
+    "“%@” now has ^[%lld screenshot](inflect: true)." : {
+      "localizations" : {
+
+      }
+    },
+    "A variant holds one row per screenshot size" : {
+      "localizations" : {
+
+      }
+    },
+    "Nothing goes live until the experiment is approved and you start it." : {
+      "localizations" : {
+
+      }
+    },
+    "App Store Connect can't take ^[%lld screenshot set](inflect: true) yet. Open Details to see why." : {
+      "localizations" : {
+
+      }
+    },
+    "This row is named after the row it was copied from" : {
+      "localizations" : {
+
+      }
+    },
+    "Upload A/B Test to App Store Connect…" : {
+      "localizations" : {
+
+      }
+    },
+    "The share of App Store visitors who take part, split evenly between the Original and each treatment. The rest always see the Original." : {
+      "localizations" : {
+
+      }
+    },
+    "Stopped" : {
+      "localizations" : {
+
+      }
+    },
+    "It has no rows. You can undo this." : {
+      "localizations" : {
+
+      }
+    },
+    "%@ has another row of this screenshot size. A variant takes one row per size, so move or delete one before uploading." : {
+      "localizations" : {
+
+      }
+    },
+    "Preparing experiment…" : {
+      "localizations" : {
+
+      }
+    },
+    "“%@”" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "“%@”"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "“%@”"
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "“%@”"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "“%@”"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "“%@”"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "“%@”"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "“%@”"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "“%@”"
+          }
+        }
+      }
+    },
+    "Choose New Variant from Row in a row's menu, then change the copy." : {
+      "localizations" : {
+
+      }
+    },
+    "Checking for screenshots from earlier uploads…" : {
+      "localizations" : {
+
+      }
+    },
+    "Original" : {
+      "localizations" : {
+
+      }
+    },
+    "a new experiment, “%@”," : {
+      "localizations" : {
+
+      }
+    },
+    "An App Store experiment tests up to 3 variants." : {
+      "localizations" : {
+
+      }
+    },
+    "Experiment" : {
+      "localizations" : {
+
+      }
+    },
+    "Uploading “%@” as your Google Play listing" : {
+      "localizations" : {
+
+      }
+    },
+    "App Store Connect already has an unsubmitted %@ review submission. Submit or remove it there first — this app won't add to it, so nothing else goes to review by accident." : {
+      "localizations" : {
+
+      }
+    },
+    "New Variant from Selected Row" : {
+      "localizations" : {
+
+      }
+    },
+    "Copy Row to Variant" : {
+      "localizations" : {
+
+      }
+    },
+    "New Variant from Row" : {
+      "localizations" : {
+
+      }
+    },
+    "Rename a variant to match it, or remove the treatment in App Store Connect." : {
+      "localizations" : {
+
+      }
+    },
+    "%@ — %@" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ — %@"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ — %@"
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ — %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ — %@"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ — %@"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ — %@"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ — %@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ — %@"
+          }
+        }
+      }
+    },
+    "Renaming that row renames this copy too. To give this copy its own name, name it separately." : {
+      "localizations" : {
+
+      }
+    },
+    "Rename Variant…" : {
+      "localizations" : {
+
+      }
+    },
+    "Upload Treatments" : {
+      "localizations" : {
+
+      }
+    },
+    "This app has no %@ version on the App Store to run an experiment against." : {
+      "localizations" : {
+
+      }
+    },
+    "All Variants" : {
+      "localizations" : {
+
+      }
+    },
+    "Delete “%@”?" : {
+      "localizations" : {
+
+      }
+    },
+    "Each variant becomes one treatment in a product page experiment. The Original rows stay on your product page as the control." : {
+      "localizations" : {
+
+      }
+    },
+    "“%@” still has %@ screenshots from an earlier upload." : {
+      "localizations" : {
+
+      }
+    },
+    "There's nothing to test yet." : {
+      "localizations" : {
+
+      }
+    },
+    "Copy a row into a variant, or turn off “Exclude when uploading to App Store Connect” on one." : {
+      "localizations" : {
+
+      }
+    },
+    "Each template card lists the devices it has rows for. Use the **All / iPhone / iPad / Android** filter to show only templates for your device, and double-click a card to create the project straight away." : {
+      "localizations" : {
+
+      }
+    },
+    "Google Play has no API for store listing experiments. Upload a variant here to make it your listing, or export all screenshots — each variant gets its own folder — and add them to an experiment in Play Console." : {
+      "localizations" : {
+
+      }
+    },
+    "Select at least one language that exists on your product page." : {
+      "localizations" : {
+
+      }
+    },
+    "Choose **Blank** to set up rows and screenshot sizes manually, or **Template** to start with a pre-designed layout." : {
+      "localizations" : {
+
+      }
+    },
+    "no rows" : {
+      "localizations" : {
+
+      }
+    },
+    "Some of these rows have no %@ screenshot size and will be skipped." : {
+      "localizations" : {
+
+      }
+    },
+    "No variant has any rows yet." : {
+      "localizations" : {
+
+      }
+    },
+    "It's with App Review. To change it, remove it from review in App Store Connect, then upload again." : {
+      "localizations" : {
+
+      }
+    },
+    "Show Only %@" : {
+      "localizations" : {
+
+      }
+    },
+    "Its %@ are deleted too. You can undo this." : {
+      "localizations" : {
+
+      }
+    },
+    "Visitors in the test" : {
+      "localizations" : {
+
       }
     }
   },

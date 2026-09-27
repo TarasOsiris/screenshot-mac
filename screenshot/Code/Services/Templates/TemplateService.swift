@@ -12,6 +12,8 @@ nonisolated struct ProjectTemplate: Identifiable {
     let previewImage: NSImage?
     let menuIcon: NSImage?
     var isIncludedInReleaseBuild: Bool = false
+    /// Which devices the template has rows for, in picker order.
+    var deviceFamilies: [DeviceFrameFamily] = []
 }
 
 nonisolated struct ProjectTemplateMetadata: Codable, Equatable {
@@ -95,7 +97,8 @@ enum TemplateService {
                     url: url,
                     previewImage: previewImage,
                     menuIcon: menuIcon,
-                    isIncludedInReleaseBuild: metadata.includeInReleaseBuild
+                    isIncludedInReleaseBuild: metadata.includeInReleaseBuild,
+                    deviceFamilies: deviceFamilies(ofTemplateAt: url)
                 )
             }
             .sorted { (a: ProjectTemplate, b: ProjectTemplate) in
@@ -109,6 +112,25 @@ enum TemplateService {
         #else
         return all.filter(\.isIncludedInReleaseBuild)
         #endif
+    }
+
+    /// Reads only each row's default device, not the whole project, so the scan stays cheap.
+    nonisolated static func deviceFamilies(ofTemplateAt templateURL: URL) -> [DeviceFrameFamily] {
+        guard let data = try? Data(contentsOf: templateURL.appendingPathComponent("project.json")),
+              let summary = try? JSONDecoder().decode(TemplateRowsSummary.self, from: data) else { return [] }
+        let families = Set(summary.r.compactMap { $0.ddc.flatMap(deviceFamily(forCategoryRawValue:)) })
+        return DeviceFrameFamily.allCases.filter(families.contains)
+    }
+
+    /// `DeviceCategory` raw values; the enum itself is main-actor isolated and this runs off-main.
+    nonisolated static func deviceFamily(forCategoryRawValue rawValue: String) -> DeviceFrameFamily? {
+        switch rawValue {
+        case "iphone": .iphone
+        case "ipadPro11", "ipadPro13": .ipad
+        case "android", "pixel9", "androidTablet": .android
+        case "macbook": .mac
+        default: nil
+        }
     }
 
     nonisolated static func metadataURL(for templateURL: URL) -> URL {
@@ -131,4 +153,11 @@ enum TemplateService {
         }
         return metadata
     }
+}
+
+private nonisolated struct TemplateRowsSummary: Decodable {
+    struct Row: Decodable {
+        let ddc: String?
+    }
+    let r: [Row]
 }

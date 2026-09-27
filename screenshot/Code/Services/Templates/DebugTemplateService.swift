@@ -159,6 +159,29 @@ enum DebugTemplateService {
         }
     }
 
+    /// A neutral stand-in app screen: a soft wash of the row's colour with a few skeleton blocks.
+    static func previewPlaceholderScreen(tint: NSColor) -> NSImage {
+        let size = NSSize(width: 600, height: 1300)
+        return NSImage(size: size, flipped: true) { rect in
+            let top = NSColor.white.blended(withFraction: 0.10, of: tint) ?? .white
+            let bottom = NSColor.white.blended(withFraction: 0.22, of: tint) ?? .white
+            NSGradient(starting: top, ending: bottom)?.draw(in: rect, angle: 90)
+            let block = NSColor.white.blended(withFraction: 0.30, of: tint)?.withAlphaComponent(0.55) ?? .lightGray
+            block.setFill()
+            let inset: CGFloat = 48
+            let blocks = [
+                NSRect(x: inset, y: 170, width: 300, height: 44),
+                NSRect(x: inset, y: 260, width: rect.width - inset * 2, height: 320),
+                NSRect(x: inset, y: 620, width: rect.width - inset * 2, height: 150),
+                NSRect(x: inset, y: 810, width: rect.width - inset * 2, height: 150),
+            ]
+            for frame in blocks {
+                NSBezierPath(roundedRect: frame, xRadius: 28, yRadius: 28).fill()
+            }
+            return true
+        }
+    }
+
     /// Generate a preview image by rendering actual row canvases and compositing them.
     @MainActor
     static func generatePreviewImage(templateURL: URL, projectData existingData: ProjectData? = nil) -> Bool {
@@ -203,20 +226,44 @@ enum DebugTemplateService {
             }
         }
 
+        // An empty device screen renders pure white, which dominated every thumbnail.
+        let placeholderName = "__template-preview-placeholder__"
+        let background = row.backgroundColorData
+        let isLightBackground = 0.2126 * background.red + 0.7152 * background.green + 0.0722 * background.blue > 0.85
+        // A near-white row tints the stand-in to white too, which is the blank slab it replaces.
+        let tint = isLightBackground
+            ? NSColor(srgbRed: 0.45, green: 0.50, blue: 0.60, alpha: 1)
+            : NSColor(srgbRed: background.red, green: background.green, blue: background.blue, alpha: 1)
+        screenshotImages[placeholderName] = previewPlaceholderScreen(tint: tint)
+        for index in row.shapes.indices where row.shapes[index].type == .device && row.shapes[index].screenshotFileName == nil {
+            row.shapes[index].screenshotFileName = placeholderName
+        }
+
         let localeState = projectData.localeState ?? .default
-        let previewHeight: CGFloat = 144
+        // 2× the 144 pt the picker was designed around, so cards stay sharp on Retina.
+        let previewHeight: CGFloat = 288
 
         let totalWidth = row.templateWidth * CGFloat(row.templates.count)
         let scaledWidth = totalWidth * (previewHeight / row.templateHeight)
 
         let previewSize = NSSize(width: scaledWidth, height: previewHeight)
 
-        let rowImage = RowRenderer.renderRowImage(
-            row: row,
-            screenshotImages: screenshotImages,
-            localeState: localeState,
-            displayScale: previewHeight / row.templateHeight
-        )
+        // Bundled fonts are only registered for an open project, so a template not open in the
+        // editor would otherwise preview in the system face.
+        let sharedFontsURL = templateURL.deletingLastPathComponent()
+            .appendingPathComponent(TemplateService.sharedFontsSubpath, isDirectory: true)
+        let fontURLs = (try? FileManager.default.contentsOfDirectory(at: sharedFontsURL, includingPropertiesForKeys: nil)) ?? []
+        let fontScope = ProjectFontScope.make(fontURLs: fontURLs)
+        defer { fontScope.dispose() }
+        let rowImage = fontScope.withResolvedFonts {
+            RowRenderer.renderRowImage(
+                row: row,
+                screenshotImages: screenshotImages,
+                localeState: localeState,
+                availableFontFamilies: fontScope.availableFamilySet,
+                displayScale: previewHeight / row.templateHeight
+            )
+        }
 
         // NSBitmapImageRep ensures 1x pixel output (lockFocus produces 2x on Retina)
         guard let bitmap = RowRenderer.bitmapRep(width: scaledWidth, height: previewHeight) else { return false }
