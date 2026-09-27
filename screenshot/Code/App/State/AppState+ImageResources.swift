@@ -60,10 +60,16 @@ extension AppState {
             }
             guard let referenced else { return }
             let orphans = AppState.orphanedResourceURLs(in: files, referenced: referenced)
+            var removedCount = 0
             for fileURL in orphans {
-                try? FileManager.default.removeItem(at: fileURL)
+                do {
+                    try PersistenceService.removeItemIfExists(at: fileURL)
+                    removedCount += 1
+                } catch {
+                    CrashReportingService.report(.imageResourceDeleteFailed, error: error, extra: ["kind": "orphanSweep"])
+                }
             }
-            AppState.reportSweep(listed: files.count, referenced: referenced.count, removed: orphans.count)
+            AppState.reportSweep(listed: files.count, referenced: referenced.count, removed: removedCount)
         }
     }
 
@@ -138,11 +144,21 @@ extension AppState {
         }
     }
 
+    /// Called on the main actor from the save tick, so a coordinated iCloud delete goes to `saveQueue`.
     private func removeImageFile(_ fileName: String) {
         screenshotImages.removeValue(forKey: fileName)
-        if let projectId = activeProjectId {
-            let fileURL = PersistenceService.resourcesDir(projectId).appendingPathComponent(fileName)
+        guard let projectId = activeProjectId else { return }
+        let fileURL = PersistenceService.resourcesDir(projectId).appendingPathComponent(fileName)
+        guard PersistenceService.isUsingICloud else {
             try? FileManager.default.removeItem(at: fileURL)
+            return
+        }
+        Self.saveQueue.async {
+            do {
+                try PersistenceService.removeItemIfExists(at: fileURL)
+            } catch {
+                CrashReportingService.report(.imageResourceDeleteFailed, error: error, extra: ["kind": "unreferenced"])
+            }
         }
     }
 
