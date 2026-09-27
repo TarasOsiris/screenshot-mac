@@ -348,10 +348,10 @@ struct CanvasShapeRenderContent: View {
                     dropHighlight(cornerRadius: cornerRadius)
                 }
             }
-            .onDrop(of: [.image], isTargeted: $isDropTargeted) { providers in
+            .modifier(ImageDropTarget(isTargeted: $isDropTargeted) { providers in
                 guard showsEditorHelpers else { return false }
                 return onHandleDrop(providers)
-            }
+            })
     }
 
     /// A referenced screenshot that isn't on screen is not the same as an empty frame, and the
@@ -497,6 +497,24 @@ struct ShadowModifier: ViewModifier {
 /// `ShadowModifier` — for the built-in ambient shadows (showcase tiles, abstract device
 /// bodies), which would otherwise point up in exports and down in the editor.
 /// macOS-only for the same reason as `compensatedOffset`.
+/// A raster host never receives a drop, and on macOS `.onDrop` is an AppKit-hosted view: under a
+/// 45° rotation at a fractional scale its fitting frame comes out NaN and AppKit aborts in
+/// `_nsis_frameInEngine` (SCREENSHOT-BRO-1Y). `isExportRendering` is fixed per host, so branching
+/// on it can't re-key a live canvas the way branching on `showsEditorHelpers` would.
+private struct ImageDropTarget: ViewModifier {
+    @Binding var isTargeted: Bool
+    let perform: ([NSItemProvider]) -> Bool
+    @Environment(\.isExportRendering) private var isExportRendering
+
+    func body(content: Content) -> some View {
+        if isExportRendering {
+            content
+        } else {
+            content.onDrop(of: [.image], isTargeted: $isTargeted, perform: perform)
+        }
+    }
+}
+
 private struct FlipCompensatedShadow: ViewModifier {
     let color: Color
     let radius: CGFloat
