@@ -64,7 +64,8 @@ struct TemplateServiceTests {
     }
 
     /// App Store search shows a screenshot ~390 px tall, so text under 2 % of the canvas height
-    /// renders at 4–6 px there. Labels sized to a button or badge shape follow their container.
+    /// renders at 4–6 px there. Labels sized to a solid, upright button or badge shape follow
+    /// their container; a faint or rotated decoration behind text is not a container.
     @Test func bundledTemplateTextMeetsLegibilityFloor() throws {
         for (name, project) in try Self.bundledProjects() {
             for row in project.rows {
@@ -74,6 +75,7 @@ struct TemplateServiceTests {
                     let isLabel = containers.contains {
                         CGRect(x: $0.x, y: $0.y, width: $0.width, height: $0.height).contains(center)
                             && $0.width * $0.height < 4 * shape.width * shape.height
+                            && $0.opacity >= 0.5 && $0.rotation == 0
                     }
                     guard !isLabel, let fontSize = shape.fontSize else { continue }
                     #expect(fontSize >= (0.02 * row.templateHeight).rounded(.up),
@@ -91,6 +93,26 @@ struct TemplateServiceTests {
             #expect(!TemplateService.deviceFamilies(ofTemplateAt: bundleURL.appendingPathComponent(name)).isEmpty, "\(name)")
         }
         #expect(TemplateService.deviceFamilies(ofTemplateAt: bundleURL.appendingPathComponent("amethyst")) == [.iphone, .android, .ipad])
+    }
+
+    /// The picker is sectioned by category; an uncategorised template falls to a trailing "More".
+    @Test func everyBundledTemplateHasACategory() throws {
+        let bundleURL = try #require(Bundle.main.url(forResource: "Templates", withExtension: "bundle"))
+        for (name, _) in try Self.bundledProjects() {
+            #expect(TemplateService.loadMetadata(at: bundleURL.appendingPathComponent(name)).category != nil, "\(name)")
+        }
+    }
+
+    /// Store templates ship a row per store device, so a user never starts an iPad or Android
+    /// listing from nothing. Device showcases are about one specific device and are exempt.
+    @Test func storeTemplatesCoverEveryStoreDevice() throws {
+        let bundleURL = try #require(Bundle.main.url(forResource: "Templates", withExtension: "bundle"))
+        for (name, _) in try Self.bundledProjects() {
+            let url = bundleURL.appendingPathComponent(name)
+            guard TemplateService.loadMetadata(at: url).category != .showcase else { continue }
+            let families = Set(TemplateService.deviceFamilies(ofTemplateAt: url))
+            #expect(families.isSuperset(of: [.iphone, .ipad, .android]), "\(name) covers only \(families.map(\.rawValue).sorted())")
+        }
     }
 
     /// Cards are 230–320 pt wide, so a 1× preview is upscaled and blurry on Retina.

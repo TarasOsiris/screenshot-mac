@@ -18,22 +18,11 @@ struct NewProjectWindowView: View {
     @State private var selectedTemplateId: String?
     @State private var rowDrafts: [BlankProjectRowDraft] = []
     @State private var templates: [ProjectTemplate] = []
-    @State private var deviceFilter: DeviceFrameFamily?
     @FocusState private var isNameFieldFocused: Bool
 
     private var selectedTemplate: ProjectTemplate? {
         guard let selectedTemplateId else { return nil }
         return templates.first(where: { $0.id == selectedTemplateId })
-    }
-
-    private var templateDeviceFamilies: [DeviceFrameFamily] {
-        let present = Set(templates.flatMap(\.deviceFamilies))
-        return DeviceFrameFamily.allCases.filter(present.contains)
-    }
-
-    private var visibleTemplates: [ProjectTemplate] {
-        guard let deviceFilter else { return templates }
-        return templates.filter { $0.deviceFamilies.contains(deviceFilter) }
     }
 
     private var createButtonTitle: LocalizedStringKey {
@@ -52,7 +41,6 @@ struct NewProjectWindowView: View {
         platformContent
             .onAppear(perform: prepareInitialState)
             .task { await loadTemplates() }
-            .onChange(of: deviceFilter) { keepSelectionVisible() }
             .screenView(.newProject, restoring: hostScreen)
     }
 
@@ -69,9 +57,7 @@ struct NewProjectWindowView: View {
                         BlankProjectConfigurator(rowDrafts: $rowDrafts)
                     case .template:
                         NewProjectTemplateConfigurator(
-                            templates: visibleTemplates,
-                            deviceFamilies: templateDeviceFamilies,
-                            deviceFilter: $deviceFilter,
+                            templates: templates,
                             selectedTemplateId: $selectedTemplateId,
                             columns: templateGridColumns,
                             spacing: templateGridSpacing,
@@ -114,9 +100,7 @@ struct NewProjectWindowView: View {
             switch creationMode {
             case .template:
                 NewProjectTemplateSection(
-                    templates: visibleTemplates,
-                    deviceFamilies: templateDeviceFamilies,
-                    deviceFilter: $deviceFilter,
+                    templates: templates,
                     selectedTemplateId: $selectedTemplateId,
                     columns: templateGridColumns,
                     spacing: templateGridSpacing
@@ -178,7 +162,7 @@ struct NewProjectWindowView: View {
         case .blank:
             !rowDrafts.isEmpty
         case .template:
-            selectedTemplate.map { template in visibleTemplates.contains { $0.id == template.id } } ?? false
+            selectedTemplate != nil
         }
     }
 
@@ -195,14 +179,6 @@ struct NewProjectWindowView: View {
         templates = await TemplateService.availableTemplatesAsync()
         if selectedTemplateId == nil {
             selectedTemplateId = templates.first?.id
-        }
-    }
-
-    /// Create acts on the selection, so it must never point at a card the filter just hid.
-    private func keepSelectionVisible() {
-        let visible = visibleTemplates
-        if !visible.contains(where: { $0.id == selectedTemplateId }) {
-            selectedTemplateId = visible.first?.id
         }
     }
 
@@ -240,7 +216,7 @@ struct NewProjectWindowView: View {
             let configurations = rowDrafts.map(\.configuration)
             state.createBlankProject(name: resolvedName, rowConfigurations: configurations)
         case .template:
-            guard let selectedTemplate, visibleTemplates.contains(where: { $0.id == selectedTemplate.id }) else { return }
+            guard let selectedTemplate else { return }
             state.createProjectFromTemplate(selectedTemplate, name: resolvedName)
         }
 

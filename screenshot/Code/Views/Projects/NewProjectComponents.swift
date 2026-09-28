@@ -96,8 +96,6 @@ private struct NewProjectModeCard: View {
 
 struct NewProjectTemplateConfigurator: View {
     let templates: [ProjectTemplate]
-    let deviceFamilies: [DeviceFrameFamily]
-    @Binding var deviceFilter: DeviceFrameFamily?
     @Binding var selectedTemplateId: String?
     let columns: [GridItem]
     let spacing: CGFloat
@@ -106,12 +104,8 @@ struct NewProjectTemplateConfigurator: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
-            HStack {
-                Text("Choose a template")
-                    .font(.headline)
-                Spacer()
-                TemplateDeviceFilterPicker(families: deviceFamilies, selection: $deviceFilter)
-            }
+            Text("Choose a template")
+                .font(.headline)
 
             #if DEBUG
             if !templates.isEmpty {
@@ -140,15 +134,12 @@ struct NewProjectTemplateConfigurator: View {
 #if os(iOS)
 struct NewProjectTemplateSection: View {
     let templates: [ProjectTemplate]
-    let deviceFamilies: [DeviceFrameFamily]
-    @Binding var deviceFilter: DeviceFrameFamily?
     @Binding var selectedTemplateId: String?
     let columns: [GridItem]
     let spacing: CGFloat
 
     var body: some View {
         Section {
-            TemplateDeviceFilterPicker(families: deviceFamilies, selection: $deviceFilter)
             if templates.isEmpty {
                 NewProjectNoTemplatesView()
             } else {
@@ -184,25 +175,48 @@ private struct NewProjectTemplateGrid: View {
     /// Double-click creates, as in Finder's and Sketch's template pickers; iPad has no equivalent.
     let onActivate: ((ProjectTemplate) -> Void)?
 
-    var body: some View {
-        LazyVGrid(columns: columns, spacing: spacing) {
-            ForEach(templates) { template in
-                Button {
-                    selectTemplate(template)
-                } label: {
-                    TemplateSelectionCard(
-                        template: template,
-                        isSelected: selectedTemplateId == template.id
-                    )
-                }
-                .buttonStyle(.plain)
-                .simultaneousGesture(TapGesture(count: 2).onEnded {
-                    guard let onActivate else { return }
-                    selectTemplate(template)
-                    onActivate(template)
-                })
+    /// Templates arrive sorted by category, so grouping keeps that order.
+    private var sections: [(category: TemplateCategory?, templates: [ProjectTemplate])] {
+        var result: [(category: TemplateCategory?, templates: [ProjectTemplate])] = []
+        for template in templates {
+            if let last = result.indices.last, result[last].category == template.category {
+                result[last].templates.append(template)
+            } else {
+                result.append((template.category, [template]))
             }
         }
+        return result
+    }
+
+    var body: some View {
+        LazyVGrid(columns: columns, alignment: .leading, spacing: spacing) {
+            ForEach(sections, id: \.category) { section in
+                Section {
+                    ForEach(section.templates) { template in
+                        card(for: template)
+                    }
+                } header: {
+                    TemplateCategoryHeader(category: section.category)
+                }
+            }
+        }
+    }
+
+    private func card(for template: ProjectTemplate) -> some View {
+        Button {
+            selectTemplate(template)
+        } label: {
+            TemplateSelectionCard(
+                template: template,
+                isSelected: selectedTemplateId == template.id
+            )
+        }
+        .buttonStyle(.plain)
+        .simultaneousGesture(TapGesture(count: 2).onEnded {
+            guard let onActivate else { return }
+            selectTemplate(template)
+            onActivate(template)
+        })
     }
 
     private func selectTemplate(_ template: ProjectTemplate) {
@@ -257,6 +271,13 @@ private struct TemplateSelectionCard: View {
         isSelected ? 2 : 1
     }
 
+    /// Most templates cover every store device; only call out the ones that don't.
+    private var deviceNote: String? {
+        let everyStoreDevice: Set<DeviceFrameFamily> = [.iphone, .ipad, .android]
+        guard !everyStoreDevice.isSubset(of: Set(template.deviceFamilies)) else { return nil }
+        return template.deviceFamilies.map(\.rawValue).joined(separator: " · ")
+    }
+
     private var previewAspectRatio: CGFloat {
         guard let size = template.previewImage?.size, size.height > 0 else { return 266.0 / 144.0 }
         return size.width / size.height
@@ -283,10 +304,12 @@ private struct TemplateSelectionCard: View {
                     .foregroundStyle(.primary)
                     .lineLimit(1)
                 Spacer(minLength: 0)
-                Text(verbatim: template.deviceFamilies.map(\.rawValue).joined(separator: " · "))
-                    .font(.system(size: 11))
-                    .foregroundStyle(.secondary)
-                    .lineLimit(1)
+                if let deviceNote {
+                    Text(verbatim: deviceNote)
+                        .font(.system(size: 11))
+                        .foregroundStyle(.secondary)
+                        .lineLimit(1)
+                }
             }
         }
         .padding(8)
@@ -311,22 +334,21 @@ private struct TemplateSelectionCard: View {
     }
 }
 
-/// Brand names, so the segments are verbatim; only "All" is translated.
-private struct TemplateDeviceFilterPicker: View {
-    let families: [DeviceFrameFamily]
-    @Binding var selection: DeviceFrameFamily?
+private struct TemplateCategoryHeader: View {
+    let category: TemplateCategory?
 
     var body: some View {
-        if families.count > 1 {
-            Picker("Devices", selection: $selection) {
-                Text("All").tag(DeviceFrameFamily?.none)
-                ForEach(families) { family in
-                    Text(verbatim: family.rawValue).tag(Optional(family))
-                }
+        Group {
+            if let category {
+                Text(category.title)
+            } else {
+                Text("More")
             }
-            .pickerStyle(.segmented)
-            .labelsHidden()
-            .fixedSize()
         }
+        .font(.system(size: 12, weight: .semibold))
+        .foregroundStyle(.secondary)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.top, 10)
+        .padding(.bottom, 2)
     }
 }

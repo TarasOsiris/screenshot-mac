@@ -93,7 +93,7 @@ extension HelpSection {
                 .heading("Creating a project"),
                 .bullet("**File ▸ New Project…** (⌘N) opens the New Project window."),
                 .bullet("Choose **Blank** to set up rows and screenshot sizes manually, or **Template** to start with a pre-designed layout."),
-                .bullet("Each template card lists the devices it has rows for. Use the **All / iPhone / iPad / Android** filter to show only templates for your device, and double-click a card to create the project straight away."),
+                .bullet("Templates are grouped by style — **Minimal**, **Playful**, **Editorial**, **Gradient**, **Colorful**, **Dark** and **Device Showcase**. Almost all come with iPhone, iPad and Android rows; a card lists its devices when it covers fewer. Double-click a card to create the project straight away."),
                 .bullet("In Blank mode, pick the device categories you want — each one becomes a row with the right default screenshot size for the App Store / Play Store."),
                 .heading("Switching between projects"),
                 .bullet("Use the project picker in the toolbar to jump between projects."),

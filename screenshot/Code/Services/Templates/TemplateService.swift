@@ -14,13 +14,41 @@ nonisolated struct ProjectTemplate: Identifiable {
     var isIncludedInReleaseBuild: Bool = false
     /// Which devices the template has rows for, in picker order.
     var deviceFamilies: [DeviceFrameFamily] = []
+    var category: TemplateCategory?
+}
+
+/// The picker's sections, in display order.
+nonisolated enum TemplateCategory: String, Codable, CaseIterable, Identifiable {
+    case minimal
+    case bold
+    case editorial
+    case gradient
+    case colorful
+    case dark
+    case showcase
+
+    var id: String { rawValue }
+
+    var title: LocalizedStringResource {
+        switch self {
+        case .minimal: "Minimal"
+        case .bold: "Playful"
+        case .editorial: "Editorial"
+        case .gradient: "Gradient"
+        case .colorful: "Colorful"
+        case .dark: "Dark"
+        case .showcase: "Device Showcase"
+        }
+    }
 }
 
 nonisolated struct ProjectTemplateMetadata: Codable, Equatable {
     var includeInReleaseBuild: Bool
+    var category: TemplateCategory?
 
-    init(includeInReleaseBuild: Bool = false) {
+    init(includeInReleaseBuild: Bool = false, category: TemplateCategory? = nil) {
         self.includeInReleaseBuild = includeInReleaseBuild
+        self.category = category
     }
 }
 
@@ -98,13 +126,18 @@ enum TemplateService {
                     previewImage: previewImage,
                     menuIcon: menuIcon,
                     isIncludedInReleaseBuild: metadata.includeInReleaseBuild,
-                    deviceFamilies: deviceFamilies(ofTemplateAt: url)
+                    deviceFamilies: deviceFamilies(ofTemplateAt: url),
+                    category: metadata.category
                 )
             }
             .sorted { (a: ProjectTemplate, b: ProjectTemplate) in
                 if a.isIncludedInReleaseBuild != b.isIncludedInReleaseBuild {
                     return a.isIncludedInReleaseBuild
                 }
+                let order = TemplateCategory.allCases
+                let aRank = a.category.flatMap(order.firstIndex) ?? order.count
+                let bRank = b.category.flatMap(order.firstIndex) ?? order.count
+                if aRank != bRank { return aRank < bRank }
                 return a.name.localizedStandardCompare(b.name) == .orderedAscending
             }
         #if DEBUG
