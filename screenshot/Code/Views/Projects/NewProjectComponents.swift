@@ -278,10 +278,8 @@ private struct TemplateSelectionCard: View {
         return template.deviceFamilies.map(\.rawValue).joined(separator: " · ")
     }
 
-    private var previewAspectRatio: CGFloat {
-        guard let size = template.previewImage?.size, size.height > 0 else { return 266.0 / 144.0 }
-        return size.width / size.height
-    }
+    // Fixed so every card in the grid lines up, whatever the preview image's own shape.
+    private let previewAspectRatio: CGFloat = 266.0 / 144.0
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
