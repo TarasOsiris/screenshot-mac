@@ -1,4 +1,5 @@
 import SwiftUI
+import UniformTypeIdentifiers
 
 extension AppState {
 
@@ -460,19 +461,44 @@ extension AppState {
         clipboard.copy(rows[rowIdx].shapes.filter { ids.contains($0.id) })
     }
 
+    #if os(macOS)
+    /// Reading pasteboard data blocks on the app that copied it (SCREENSHOT-BRO-1Z), so it happens off-main.
+    private func pasteSystemPasteboardImage(intoRow rowId: UUID) {
+        let changeCount = NSPasteboard.general.changeCount
+        let projectId = activeProjectId
+        let pointer = canvasHints.mouseModelPosition
+        Task {
+            guard let image = await Self.readPasteboardImage(),
+                  NSPasteboard.general.changeCount == changeCount,
+                  activeProjectId == projectId,
+                  let rowIdx = selectedRowIndex, rows[rowIdx].id == rowId else { return }
+            let row = rows[rowIdx]
+            let center = pointer ?? CGPoint(x: row.templateWidth / 2, y: row.templateHeight / 2)
+            addImageShape(image: image, centerX: center.x, centerY: center.y, source: .paste)
+        }
+    }
+
+    @concurrent private nonisolated static func readPasteboardImage() async -> NSImage? {
+        let pasteboard = NSPasteboard.general
+        guard pasteboard.canReadObject(forClasses: [NSImage.self], options: nil) else { return nil }
+        // NSImage reads file URLs too; don't pull a copied video or archive into memory to find out it isn't one.
+        let fileURLs = pasteboard.readObjects(forClasses: [NSURL.self], options: [.urlReadingFileURLsOnly: true]) as? [URL] ?? []
+        if let fileURL = fileURLs.first,
+           UTType(filenameExtension: fileURL.pathExtension)?.conforms(to: .image) != true {
+            return nil
+        }
+        guard let image = NSImage(pasteboard: pasteboard), image.isValid else { return nil }
+        return image
+    }
+    #endif
+
     func pasteShapes() {
         guard let rowIdx = selectedRowIndex else { return }
 
         #if os(macOS)
-        // Types are metadata; NSImage(pasteboard:) fetches data synchronously, which blocks
-        // on the source app for promised flavors (SCREENSHOT-BRO-1Z).
-        let pasteboard = NSPasteboard.general
-        if clipboard.systemPasteboardIsNewer,
-           pasteboard.canReadObject(forClasses: [NSImage.self], options: nil),
-           let image = NSImage(pasteboard: pasteboard), image.isValid {
-            let row = rows[rowIdx]
-            let center = canvasHints.mouseModelPosition ?? CGPoint(x: row.templateWidth / 2, y: row.templateHeight / 2)
-            addImageShape(image: image, centerX: center.x, centerY: center.y, source: .paste)
+        // A newer outside copy wins even when it isn't an image — the shapes copied before it are stale.
+        if clipboard.systemPasteboardIsNewer {
+            pasteSystemPasteboardImage(intoRow: rows[rowIdx].id)
             return
         }
         #endif

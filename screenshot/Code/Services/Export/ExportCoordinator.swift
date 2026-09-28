@@ -47,16 +47,21 @@ struct ExportFolderBookmark {
     /// Resolves the stored bookmark, refreshing it when the OS hands back a renewed one and
     /// clearing it when it no longer resolves (folder deleted, permission revoked). Both keys go
     /// together — a lingering display path would advertise a destination that can't be exported to.
+    /// A folder on an unmounted volume is kept, so unplugging a drive doesn't forget it.
     func resolve() -> URL? {
         let stored = bookmarkData
-        guard let result = ExportFolderService.resolveBookmark(stored) else {
+        switch ExportFolderService.resolveBookmark(stored, path: displayPath) {
+        case let .resolved(url, refreshed):
+            if let refreshed {
+                defaults.set(refreshed, forKey: Self.bookmarkKey)
+            }
+            return url
+        case .unavailable:
+            return nil
+        case .invalid:
             if !stored.isEmpty { clear() }
             return nil
         }
-        if let refreshed = result.refreshedBookmark {
-            defaults.set(refreshed, forKey: Self.bookmarkKey)
-        }
-        return result.url
     }
 
     /// Stores `url` as the remembered destination. Returns false when a bookmark can't be made,

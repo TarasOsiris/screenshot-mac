@@ -110,4 +110,51 @@ struct ExportCoordinatorTests {
         #expect(store.resolve() == nil)
         #expect(!store.hasDestination, "a bookmark that can't resolve should be forgotten")
     }
+
+    /// A folder the user deleted is expected: forgotten, and filed as a breadcrumb rather than a Sentry event.
+    @Test func deletedFolderIsForgottenAsAnExpectedFailure() throws {
+        let store = ExportFolderBookmark(defaults: makeIsolatedDefaults("deleted"))
+        let dir = makeTemporaryDataDirectory(label: "export-bookmark-deleted")
+        #expect(store.save(dir))
+        let stored = store.bookmarkData
+        try FileManager.default.removeItem(at: dir)
+
+        var isStale = false
+        do {
+            _ = try URL(resolvingBookmarkData: stored, options: ExportFolderService.bookmarkResolveOptions,
+                        relativeTo: nil, bookmarkDataIsStale: &isStale)
+            Issue.record("a deleted folder's bookmark should not resolve")
+        } catch {
+            #expect(ExportFolderService.isExpectedResolveFailure(error))
+        }
+        #expect(store.resolve() == nil)
+        #expect(!store.hasDestination)
+    }
+
+    @Test func expectedResolveFailureLooksThroughUnderlyingErrors() {
+        let wrapped = NSError(domain: NSCocoaErrorDomain, code: NSFileReadUnknownError, userInfo: [
+            NSUnderlyingErrorKey: NSError(domain: NSCocoaErrorDomain, code: NSFileNoSuchFileError),
+        ])
+        #expect(ExportFolderService.isExpectedResolveFailure(wrapped))
+        #expect(ExportFolderService.isExpectedResolveFailure(CocoaError(.fileReadNoPermission)))
+        #expect(!ExportFolderService.isExpectedResolveFailure(CocoaError(.fileReadCorruptFile)))
+    }
+
+    @Test func folderInTheTrashIsNotADestination() {
+        #expect(ExportFolderService.isInTrash(URL(fileURLWithPath: "/Users/someone/.Trash/Shots")))
+        #expect(ExportFolderService.isInTrash(URL(fileURLWithPath: "/Volumes/SSD/.Trashes/501/Shots")))
+        #expect(!ExportFolderService.isInTrash(URL(fileURLWithPath: "/Users/someone/Desktop/Shots")))
+    }
+
+    /// Unplugging a drive must not cost the user their remembered export folder.
+    @Test func folderOnUnmountedVolumeIsKept() {
+        let defaults = makeIsolatedDefaults("unmounted")
+        defaults.set(Data([0x00, 0x01, 0x02, 0x03]), forKey: ExportFolderBookmark.bookmarkKey)
+        defaults.set("/Volumes/NoSuchVolume-\(UUID().uuidString)/Shots", forKey: ExportFolderBookmark.pathKey)
+        let store = ExportFolderBookmark(defaults: defaults)
+
+        #expect(store.resolve() == nil)
+        #expect(store.hasDestination)
+        #expect(!ExportFolderService.isOnUnmountedVolume("/Users/someone/Desktop/Shots"))
+    }
 }
