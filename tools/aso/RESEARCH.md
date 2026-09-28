@@ -128,6 +128,56 @@ Consequence: all 12 take `LATIN_SUBTITLE` and the en-US keyword tail. Their
 value is the extra per-storefront keyword field and a native-language
 description, not new search vocabulary.
 
+## Finding 6 — first real numbers (Astro, 2026-09-28)
+
+Astro supplies Apple Search Ads popularity (5–100, **5 is the floor**) and a
+difficulty score. The earlier findings were autosuggest-only; these confirm them
+and settle the open questions.
+
+**The whole category is below the instrument's floor.** Every on-intent phrase
+reads popularity 5 in every storefront checked (us jp cn kr de fr es br):
+`app screenshots`, `app store screenshots`, `screenshot maker`, `mockup maker`,
+`device frames`, `screenshot template`, `app localization`. Difficulty is
+5–20 almost everywhere, so the listing is winnable — but there is no hidden
+high-volume term to switch to.
+
+| query (us) | pop | diff | Mac rank | iPhone rank |
+|---|---|---|---|---|
+| `mockup maker` | 5 | 11–13 | 1 | 7 |
+| `screenshot template` | 5 | 9–11 | 1 | 4 |
+| `marketing screenshots` | 5 | 7 | 1 | 1 |
+| `screenshot maker` | 5 | 9–19 | 3 | 13 |
+| `app screenshot generator` | 5 | 7–13 | 3 | 13 |
+| `app screenshots` | 5 | 5–11 | 4 | 140 |
+| `app store screenshots` | 5 | 5–7 | 28 | 11 |
+| `screenshots` | 13 | 19–23 | 4 | 48 |
+| `screenshot editor` | 16 | 7–17 | 14 | 177 |
+| `aso` | 16 | 5–38 | — | — |
+| `3d mockup` | 9 | 21 | — | — |
+| `app store connect` | 47 | 39–71 | 78 | — |
+
+The above-floor terms that looked attractive are wrong intent on inspection:
+`localize` (57) is farmers' markets, `mockup creator` (14) and `mock up` (16) are
+t-shirt mockups, `screenshot editor` (16) is redact/blur tools, `design app`,
+`translate`, `xcode`, `testflight` are Apple's own or generic.
+
+**Mac is healthy; iPhone is an authority problem.** The same metadata ranks top-10
+on Mac and 10–180 on iPhone. The app has **0 US ratings** (Astro: 1 in Canada,
+5 in Ukraine). No keyword change fixes that — ratings do.
+
+**Local tokens, settled.** Unranked-at-floor or consumer-intent, so dropped:
+`entwickler` (de, d43), `capture` (fr, pop 38 but consumer capture apps),
+`captura`/`plantilla` (es, d38/d53 — closes the Sept open question), `tela`/`modelo`/
+`captura` (pt-BR; `captura de tela` is 28 but consumer). Kept: `vorlage` (de —
+`screenshot vorlage` ranks **1**), `maquette`/`maqueta` (on-intent, ranking 55–86).
+Added: `スクショ` (ja, pop 28, d39 — the colloquial dev word; the direct competitor
+"アプリストア用スクショ・モックアップ作成" leads with it; `モックアップ` alone, pop 24, is mostly
+T-shirt apps) and `3d` (pop 9 via `3d mockup`; the app really has 3D device frames).
+Freed budget goes to the English tail, which is where these storefronts' devs search.
+
+`생성기`/`生成器` (cn pop 25), `템플릿` (kr pop 52), `스크린샷` (kr pop 25, in the ko
+subtitle) are above floor but generic; left as they are.
+
 ## 2026-09-01 — the subtitle was rejected
 
 `App Store & Play Screenshots` shipped, and Apple rejected iOS 4.9 on **two**

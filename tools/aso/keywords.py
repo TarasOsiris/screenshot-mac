@@ -53,10 +53,13 @@ EXTRA = {
     "en-GB":   EN_TAIL,
     "en-AU":   EN_TAIL,
     "en-CA":   EN_TAIL,
-    "de-DE":   ["localization", "aso", "editor", "vorlage", "entwickler"],
-    "fr-FR":   ["localization", "aso", "editor", "maquette", "capture"],
+    # 2026-09-28 Astro pass: every local token below that is not kept was
+    # unranked at the popularity floor, or (`capture`, `captura de tela`) had
+    # volume only for consumer capture apps. See RESEARCH.md Finding 6.
+    "de-DE":   EN_TAIL + ["vorlage"],
+    "fr-FR":   EN_TAIL + ["maquette"],
     "fr-CA":   EN_TAIL,
-    "es-ES":   ["localization", "aso", "editor", "maqueta", "captura", "plantilla"],
+    "es-ES":   EN_TAIL + ["maqueta"],
     "es-MX":   EN_TAIL,
     "it":      ["localization", "aso", "editor", "schermate", "anteprima"],
     "nl-NL":   ["localization", "aso", "editor", "sjabloon"],
@@ -65,7 +68,7 @@ EXTRA = {
     "no":      ["localization", "aso", "editor", "mal", "skjermbilde"],
     "fi":      ["localization", "aso", "editor", "malli"],
     "pt-PT":   ["localization", "aso", "editor", "captura", "modelo"],
-    "pt-BR":   ["localization", "aso", "editor", "captura", "tela", "modelo"],
+    "pt-BR":   EN_TAIL,
     "pl":      ["localization", "aso", "editor", "zrzut", "ekranu", "szablon"],
     "tr":      ["localization", "aso", "editor", "ekran", "şablon"],
     "id":      ["localization", "aso", "editor", "tangkapan", "layar", "aplikasi"],
@@ -102,7 +105,7 @@ EXTRA = {
     "kn-IN":  EN_TAIL,
     "ml-IN":  EN_TAIL,
     "ur-PK":  EN_TAIL,
-    "ja":      ["モックアップ", "ストア", "画像", "作成", "素材", "localization", "aso", "editor"],
+    "ja":      ["スクショ", "モックアップ", "ストア", "画像", "作成", "素材", "localization", "aso", "editor"],
     "ko":      ["스크린샷", "앱스토어", "목업", "제작", "localization", "aso", "editor"],
     "zh-Hans": ["应用截图", "上架", "生成器", "制作", "工具", "localization", "aso", "editor"],
     "zh-Hant": ["應用截圖", "上架", "製作", "工具", "產生器", "localization", "aso", "editor"],
@@ -112,7 +115,7 @@ EXTRA = {
 
 # Packed last: real queries, but weaker than anything above. They exist to spend
 # the budget the shortened subtitle handed back rather than ship a 90/100 field.
-TAIL = ["marketing", "listing", "publish"]
+TAIL = ["3d", "marketing", "listing", "publish"]
 
 LIMIT = 100
 
