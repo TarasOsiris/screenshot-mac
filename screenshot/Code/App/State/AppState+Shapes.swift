@@ -464,8 +464,12 @@ extension AppState {
         guard let rowIdx = selectedRowIndex else { return }
 
         #if os(macOS)
+        // Types are metadata; NSImage(pasteboard:) fetches data synchronously, which blocks
+        // on the source app for promised flavors (SCREENSHOT-BRO-1Z).
+        let pasteboard = NSPasteboard.general
         if clipboard.systemPasteboardIsNewer,
-           let image = NSImage(pasteboard: NSPasteboard.general), image.isValid {
+           pasteboard.canReadObject(forClasses: [NSImage.self], options: nil),
+           let image = NSImage(pasteboard: pasteboard), image.isValid {
             let row = rows[rowIdx]
             let center = canvasHints.mouseModelPosition ?? CGPoint(x: row.templateWidth / 2, y: row.templateHeight / 2)
             addImageShape(image: image, centerX: center.x, centerY: center.y, source: .paste)

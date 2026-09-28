@@ -58,7 +58,11 @@ enum ExportFolderService {
                 bookmarkDataIsStale: &isStale
             )
         } catch {
-            CrashReportingService.report(.exportFolderBookmarkFailed, error: error, extra: ["stage": "resolve"])
+            if isFolderGone(error) {
+                CrashReportingService.breadcrumb(.export, "Saved export folder no longer exists")
+            } else {
+                CrashReportingService.report(.exportFolderBookmarkFailed, error: error, extra: ["stage": "resolve"])
+            }
             return nil
         }
         let refreshed: Data? = isStale ? (try? url.bookmarkData(
@@ -67,6 +71,13 @@ enum ExportFolderService {
             relativeTo: nil
         )) : nil
         return (url, refreshed)
+    }
+
+    /// The user deleted or unmounted the folder — expected, not our bug.
+    private static func isFolderGone(_ error: Error) -> Bool {
+        let nsError = error as NSError
+        return nsError.domain == NSCocoaErrorDomain
+            && [NSFileNoSuchFileError, NSFileReadNoSuchFileError].contains(nsError.code)
     }
 
     static func folderName(for path: String) -> String {
