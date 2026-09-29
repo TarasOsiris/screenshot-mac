@@ -228,7 +228,7 @@ extension ShapeInspector {
                     onChanged: { state.scheduleSave() },
                     onPickImage: { isReplacingFillImage = true },
                     onRemoveImage: { state.removeShapeFillImage(for: shapeId) },
-                    onDropImage: { image in state.saveShapeFillImage(image, for: shapeId) },
+                    onDropImage: shape.type.supportsFill ? { image in state.saveShapeFillImage(image, for: shapeId) } : nil,
                     allowsImage: shape.type.supportsFill
                 )
                 if shape.type == .text && shape.resolvedFillStyle == .gradient && shape.hasRichText {

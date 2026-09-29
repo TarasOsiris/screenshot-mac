@@ -21,7 +21,7 @@ struct RasterizedDisplayTextView: View {
     var richTextData: String?
     var fontScale: CGFloat = 1
     var stroke: TextStroke?
-    var fillOverride: NSColor?
+    var glyphFill: TextGlyphFill?
     /// Supersample factor for the raster. Export and preview leave it at the default, which
     /// reproduces what the implicit rasterizer produced before; the editor passes its on-screen
     /// scale so a zoomed-in row stays sharp.
@@ -56,14 +56,17 @@ struct RasterizedDisplayTextView: View {
             richTextData: richTextData,
             fontScale: fontScale,
             stroke: stroke,
-            fillOverride: fillOverride,
+            glyphFill: glyphFill,
             renderScale: renderScale,
             cachesResult: cachesRaster
         ) {
+            // An outline is rasterized into a margin around the box; hang it outside the frame.
+            let pad = stroke?.rasterPadding ?? 0
             Image(nsImage: image)
                 .resizable()
                 .interpolation(.high)
-                .frame(width: size.width, height: size.height)
+                .frame(width: size.width + 2 * pad, height: size.height + 2 * pad)
+                .padding(-pad)
         } else {
             Color.clear
         }

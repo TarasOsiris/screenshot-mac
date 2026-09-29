@@ -119,7 +119,7 @@ struct CanvasShapeRenderContent: View {
             && TextFitMeasurer.overflows(fitInput, shrinksToFit: shrinksToFit)
 
         let stroke = showPlaceholder ? nil : textStroke
-        func raster(fillOverride: NSColor?, stroke: TextStroke?) -> RasterizedDisplayTextView {
+        func raster(glyphFill: TextGlyphFill?, stroke: TextStroke?) -> RasterizedDisplayTextView {
             RasterizedDisplayTextView(
                 size: CGSize(width: effectiveW, height: effectiveH),
                 text: displayText,
@@ -134,7 +134,7 @@ struct CanvasShapeRenderContent: View {
                 richTextData: richText,
                 fontScale: fontScale,
                 stroke: stroke,
-                fillOverride: fillOverride,
+                glyphFill: glyphFill,
                 renderScale: textRenderScale,
                 cachesRaster: !isLiveShapeEdit
             )
@@ -146,15 +146,14 @@ struct CanvasShapeRenderContent: View {
         // thread on a 111-shape project. The only live text view left is the one being edited.
         return ZStack(alignment: .topLeading) {
             if shape.resolvedFillStyle == .gradient && !showPlaceholder {
-                // The outline layer draws no fill, so the gradient shows through the glyphs only.
-                if let stroke {
-                    raster(fillOverride: .clear, stroke: stroke)
-                }
+                // Highlights and the outline, with no glyph fill, so the gradient shows through the
+                // glyphs only.
+                raster(glyphFill: .clear, stroke: stroke)
                 shape.fillView(image: nil, modelSize: CGSize(width: effectiveW, height: effectiveH))
                     .frame(width: effectiveW, height: effectiveH)
-                    .mask { raster(fillOverride: .white, stroke: nil) }
+                    .mask { raster(glyphFill: .mask, stroke: nil) }
             } else {
-                raster(fillOverride: nil, stroke: stroke)
+                raster(glyphFill: nil, stroke: stroke)
             }
         }
         .frame(width: effectiveW, height: effectiveH)

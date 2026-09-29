@@ -7,12 +7,6 @@ import UIKit
 // `renderImage` builds a `TextLayoutNSView`, so it stays in `Views/` while the rest of
 // `TextLayoutStyle` — pure TextKit metrics that `RichTextUtils` needs — lives in `Services/Media/`.
 // Splitting the type rather than moving it keeps all 23 call sites unchanged.
-/// A glyph outline drawn under the fill; `width` is the visible band outside the glyphs, in model points.
-struct TextStroke: Equatable {
-    var color: NSColor
-    var width: CGFloat
-}
-
 extension TextLayoutStyle {
     /// Ceiling on the supersample factor. The editor asks for `displayScale × screenScale`, which a
     /// short template at maximum zoom can push past 6 — enough to turn one headline into a
@@ -57,7 +51,7 @@ extension TextLayoutStyle {
         richTextData: String? = nil,
         fontScale: CGFloat = 1,
         stroke: TextStroke? = nil,
-        fillOverride: NSColor? = nil,
+        glyphFill: TextGlyphFill? = nil,
         renderScale: CGFloat = defaultTextRenderScale,
         cachesResult: Bool = true
     ) -> NSImage? {
@@ -69,7 +63,7 @@ extension TextLayoutStyle {
             size: size, scale: scale, text: text, font: font, color: color, alignment: alignment,
             verticalAlignment: verticalAlignment, uppercase: uppercase, letterSpacing: letterSpacing,
             lineHeightMultiple: lineHeightMultiple, legacyLineSpacing: legacyLineSpacing,
-            richTextData: richTextData, fontScale: fontScale, stroke: stroke, fillOverride: fillOverride
+            richTextData: richTextData, fontScale: fontScale, stroke: stroke, glyphFill: glyphFill
         ) as NSString
         if let cached = textImageCache.object(forKey: cacheKey) {
             return cached
@@ -78,14 +72,14 @@ extension TextLayoutStyle {
             size: size, scale: scale, text: text, font: font, color: color, alignment: alignment,
             verticalAlignment: verticalAlignment, uppercase: uppercase, letterSpacing: letterSpacing,
             lineHeightMultiple: lineHeightMultiple, legacyLineSpacing: legacyLineSpacing,
-            richTextData: richTextData, fontScale: fontScale, stroke: stroke, fillOverride: fillOverride
+            richTextData: richTextData, fontScale: fontScale, stroke: stroke, glyphFill: glyphFill
         ) else { return nil }
         // A continuous style edit (a tracking/size slider) puts a changing value in the key, so
         // every tick is a guaranteed miss whose raster is dead on the next one. Storing them would
         // evict the settled rasters of every other text shape on screen.
         guard cachesResult else { return image }
-        let pixelWidth = max(1, Int((size.width * scale).rounded(.up)))
-        let pixelHeight = max(1, Int((size.height * scale).rounded(.up)))
+        let pixelWidth = max(1, Int((image.size.width * scale).rounded(.up)))
+        let pixelHeight = max(1, Int((image.size.height * scale).rounded(.up)))
         let cost = pixelWidth * pixelHeight * 4
         textImageCache.setObject(image, forKey: cacheKey, cost: cost)
         return image
@@ -116,9 +110,11 @@ extension TextLayoutStyle {
         richTextData: String?,
         fontScale: CGFloat,
         stroke: TextStroke?,
-        fillOverride: NSColor?
+        glyphFill: TextGlyphFill?
     ) -> NSImage? {
-        let view = TextLayoutNSView(frame: NSRect(origin: .zero, size: size))
+        let pad = stroke?.rasterPadding ?? 0
+        let canvasSize = CGSize(width: size.width + 2 * pad, height: size.height + 2 * pad)
+        let view = TextLayoutNSView(frame: NSRect(origin: .zero, size: canvasSize))
         view.configure(
             text: text,
             font: font,
@@ -132,13 +128,13 @@ extension TextLayoutStyle {
             richTextData: richTextData,
             fontScale: fontScale,
             stroke: stroke,
-            fillOverride: fillOverride
+            glyphFill: glyphFill
         )
         view.layoutSubtreeIfNeeded()
         guard let rep = NSBitmapImageRep(
             bitmapDataPlanes: nil,
-            pixelsWide: max(1, Int((size.width * scale).rounded(.up))),
-            pixelsHigh: max(1, Int((size.height * scale).rounded(.up))),
+            pixelsWide: max(1, Int((canvasSize.width * scale).rounded(.up))),
+            pixelsHigh: max(1, Int((canvasSize.height * scale).rounded(.up))),
             bitsPerSample: 8,
             samplesPerPixel: 4,
             hasAlpha: true,
@@ -151,13 +147,13 @@ extension TextLayoutStyle {
         ) else { return nil }
         // Point size, not pixel size: the extra pixels are zoom headroom, and every caller frames
         // the result in model space. This is also what makes the CTM scale points→pixels for us.
-        rep.size = size
+        rep.size = canvasSize
         guard let context = NSGraphicsContext(bitmapImageRep: rep) else { return nil }
         NSGraphicsContext.saveGraphicsState()
         NSGraphicsContext.current = context
         view.displayIgnoringOpacity(view.bounds, in: context)
         NSGraphicsContext.restoreGraphicsState()
-        let image = NSImage(size: size)
+        let image = NSImage(size: canvasSize)
         image.addRepresentation(rep)
         return image
     }
@@ -180,7 +176,7 @@ extension TextLayoutStyle {
         richTextData: String?,
         fontScale: CGFloat,
         stroke: TextStroke?,
-        fillOverride: NSColor?
+        glyphFill: TextGlyphFill?
     ) -> NSImage? {
         let attributed = overridingForeground(RichTextUtils.buildAttributedString(
             richText: richTextData,
@@ -193,7 +189,7 @@ extension TextLayoutStyle {
             legacyLineSpacing: legacyLineSpacing,
             uppercase: uppercase,
             fontScale: fontScale
-        ), with: fillOverride)
+        ), with: glyphFill)
         let textStorage = NSTextStorage(attributedString: attributed)
         let layoutManager = NSLayoutManager()
         let compactDelegate = CompactLineLayoutDelegate()
@@ -220,14 +216,16 @@ extension TextLayoutStyle {
             alignment: verticalAlignment
         )
 
-        return PlatformImageRenderer.image(size: size, scale: scale) {
-            let origin = CGPoint(x: 0, y: yOffset)
+        let pad = stroke?.rasterPadding ?? 0
+        let canvasSize = CGSize(width: size.width + 2 * pad, height: size.height + 2 * pad)
+        return PlatformImageRenderer.image(size: canvasSize, scale: scale) {
+            let origin = CGPoint(x: pad, y: pad + yOffset)
+            layoutManager.drawBackground(forGlyphRange: glyphRange, at: origin)
             if let stroke {
                 applyStroke(to: textStorage, color: stroke.color, width: stroke.width)
                 layoutManager.drawGlyphs(forGlyphRange: glyphRange, at: origin)
                 removeStroke(from: textStorage)
             }
-            layoutManager.drawBackground(forGlyphRange: glyphRange, at: origin)
             layoutManager.drawGlyphs(forGlyphRange: glyphRange, at: origin)
         }
     }
@@ -262,7 +260,7 @@ extension TextLayoutStyle {
         size: CGSize, scale: CGFloat, text: String, font: NSFont, color: NSColor,
         alignment: NSTextAlignment, verticalAlignment: TextVerticalAlign, uppercase: Bool,
         letterSpacing: CGFloat?, lineHeightMultiple: CGFloat?, legacyLineSpacing: CGFloat?,
-        richTextData: String?, fontScale: CGFloat = 1, stroke: TextStroke? = nil, fillOverride: NSColor? = nil
+        richTextData: String?, fontScale: CGFloat = 1, stroke: TextStroke? = nil, glyphFill: TextGlyphFill? = nil
     ) -> String {
         return [
             "\(scalarToken(size.width))x\(scalarToken(size.height))",
@@ -276,7 +274,7 @@ extension TextLayoutStyle {
             richTextData ?? "-",
             scalarToken(fontScale),
             stroke.map { "\(colorToken($0.color))/\(scalarToken($0.width))" } ?? "-",
-            fillOverride.map(colorToken) ?? "-",
+            glyphFill.map { "\($0)" } ?? "-",
         ].joined(separator: "|")
     }
 }

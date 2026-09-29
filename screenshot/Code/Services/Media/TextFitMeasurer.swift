@@ -17,6 +17,16 @@ struct TextFitInput {
     var legacyLineSpacing: CGFloat?
     var richTextData: String?
 
+    /// Two weights of one variable font share a PostScript name, so the weight is keyed on its own.
+    private static func weightToken(_ font: NSFont) -> String {
+        #if os(macOS)
+        let traits = font.fontDescriptor.object(forKey: .traits) as? [NSFontDescriptor.TraitKey: Any]
+        #else
+        let traits = font.fontDescriptor.object(forKey: .traits) as? [UIFontDescriptor.TraitKey: Any]
+        #endif
+        return (traits?[.weight] as? CGFloat).map { "\($0)" } ?? "-"
+    }
+
     /// The inputs the canvas lays out for a text shape that is already resolved for its locale.
     init(shape: CanvasShapeModel, availableFontFamilies: Set<String>) {
         let fontSize = shape.fontSize ?? CanvasShapeModel.defaultFontSize
@@ -56,7 +66,7 @@ struct TextFitInput {
     fileprivate var cacheKey: String {
         [
             "\(size.width)x\(size.height)", text, font.fontName, "\(font.pointSize)",
-            "\(font.fontDescriptor.symbolicTraits.rawValue)", "\(alignment.rawValue)", "\(uppercase)",
+            "\(font.fontDescriptor.symbolicTraits.rawValue)", Self.weightToken(font), "\(alignment.rawValue)", "\(uppercase)",
             letterSpacing.map { "\($0)" } ?? "-", lineHeightMultiple.map { "\($0)" } ?? "-",
             legacyLineSpacing.map { "\($0)" } ?? "-", richTextData ?? "-",
         ].joined(separator: "|")

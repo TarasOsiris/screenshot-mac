@@ -885,6 +885,8 @@ struct CanvasShapeModel: Identifiable, Codable, Equatable {
         if lineSpacing != oldBase.lineSpacing { result.lineSpacing = lineSpacing }
         if lineHeightMultiple != oldBase.lineHeightMultiple { result.lineHeightMultiple = lineHeightMultiple }
 
+        if shrinkToFit != oldBase.shrinkToFit { result.shrinkToFit = shrinkToFit }
+
         if imageFileName != oldBase.imageFileName { result.imageFileName = imageFileName }
         if deviceCategory != oldBase.deviceCategory { result.deviceCategory = deviceCategory }
         if deviceBodyColorData != oldBase.deviceBodyColorData { result.deviceBodyColorData = deviceBodyColorData }

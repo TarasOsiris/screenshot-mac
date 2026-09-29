@@ -20,7 +20,7 @@ final class TextLayoutNSView: NSView {
     private var lastLegacyLineSpacing: CGFloat?
     private var lastRichTextData: String?
     private var lastFontScale: CGFloat?
-    private var lastFillOverride: NSColor?
+    private var lastGlyphFill: TextGlyphFill?
     private var stroke: TextStroke?
 
     override var isFlipped: Bool { true }
@@ -59,10 +59,11 @@ final class TextLayoutNSView: NSView {
         richTextData: String? = nil,
         fontScale: CGFloat = 1,
         stroke: TextStroke? = nil,
-        fillOverride: NSColor? = nil
+        glyphFill: TextGlyphFill? = nil
     ) {
         if stroke != self.stroke {
             self.stroke = stroke
+            needsLayout = true
             needsDisplay = true
         }
         guard text != lastText
@@ -76,7 +77,7 @@ final class TextLayoutNSView: NSView {
             || legacyLineSpacing != lastLegacyLineSpacing
             || richTextData != lastRichTextData
             || fontScale != lastFontScale
-            || fillOverride != lastFillOverride
+            || glyphFill != lastGlyphFill
         else { return }
 
         lastText = text
@@ -90,7 +91,7 @@ final class TextLayoutNSView: NSView {
         lastLegacyLineSpacing = legacyLineSpacing
         lastRichTextData = richTextData
         lastFontScale = fontScale
-        lastFillOverride = fillOverride
+        lastGlyphFill = glyphFill
 
         self.verticalAlignment = verticalAlignment
         compactDelegate.lineHeightMultiple = lineHeightMultiple ?? 1.0
@@ -111,13 +112,16 @@ final class TextLayoutNSView: NSView {
             legacyLineSpacing: legacyLineSpacing,
             uppercase: uppercase,
             fontScale: fontScale
-        ), with: fillOverride))
+        ), with: glyphFill))
         needsDisplay = true
     }
 
+    /// Room around the text box for an outline, which the raster otherwise clips at the box edge.
+    private var contentInset: CGFloat { stroke?.rasterPadding ?? 0 }
+
     override func layout() {
         super.layout()
-        textContainer.size = bounds.size
+        textContainer.size = bounds.insetBy(dx: contentInset, dy: contentInset).size
         needsDisplay = true
     }
 
@@ -128,19 +132,19 @@ final class TextLayoutNSView: NSView {
         let glyphRange = layoutManager.glyphRange(for: textContainer)
         let usedRect = layoutManager.usedRect(for: textContainer)
         let yOffset = TextLayoutStyle.verticalOffset(
-            containerHeight: bounds.height,
+            containerHeight: bounds.height - 2 * contentInset,
             contentHeight: usedRect.height,
             padding: verticalGlyphPadding,
             alignment: verticalAlignment
         )
 
-        let origin = NSPoint(x: 0, y: yOffset)
+        let origin = NSPoint(x: contentInset, y: contentInset + yOffset)
+        layoutManager.drawBackground(forGlyphRange: glyphRange, at: origin)
         if let stroke {
             TextLayoutStyle.applyStroke(to: textStorage, color: stroke.color, width: stroke.width)
             layoutManager.drawGlyphs(forGlyphRange: glyphRange, at: origin)
             TextLayoutStyle.removeStroke(from: textStorage)
         }
-        layoutManager.drawBackground(forGlyphRange: glyphRange, at: origin)
         layoutManager.drawGlyphs(forGlyphRange: glyphRange, at: origin)
     }
 }

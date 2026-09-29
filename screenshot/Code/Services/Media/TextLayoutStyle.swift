@@ -42,6 +42,23 @@ final class CompactLineLayoutDelegate: NSObject, NSLayoutManagerDelegate {
     }
 }
 
+/// A glyph outline drawn under the fill; `width` is the visible band outside the glyphs, in model points.
+struct TextStroke: Equatable {
+    var color: NSColor
+    var width: CGFloat
+
+    /// Whole points of margin the raster needs so the band isn't clipped at the box edge.
+    var rasterPadding: CGFloat { ceil(max(0, width)) }
+}
+
+/// Replaces the glyph fill for the gradient layers.
+enum TextGlyphFill: Equatable {
+    /// No glyph fill: only highlights and the outline, drawn under a gradient.
+    case clear
+    /// Opaque glyphs and nothing else — the gradient's mask.
+    case mask
+}
+
 enum TextLayoutStyle {
     static let defaultLineHeightMultiple: CGFloat = 1.0
     static let lineHeightRange: ClosedRange<CGFloat> = 0.5...2.0
@@ -242,11 +259,18 @@ enum TextLayoutStyle {
         storage.endEditing()
     }
 
-    /// One color over every run, rich-text colors included — what a gradient mask needs.
-    static func overridingForeground(_ attributed: NSAttributedString, with color: NSColor?) -> NSAttributedString {
-        guard let color else { return attributed }
+    /// One glyph fill over every run, rich-text colors included.
+    static func overridingForeground(_ attributed: NSAttributedString, with fill: TextGlyphFill?) -> NSAttributedString {
+        guard let fill else { return attributed }
         let result = NSMutableAttributedString(attributedString: attributed)
-        result.addAttribute(.foregroundColor, value: color, range: NSRange(location: 0, length: result.length))
+        let fullRange = NSRange(location: 0, length: result.length)
+        switch fill {
+        case .clear:
+            result.addAttribute(.foregroundColor, value: NSColor.clear, range: fullRange)
+        case .mask:
+            result.addAttribute(.foregroundColor, value: NSColor.white, range: fullRange)
+            result.removeAttribute(.backgroundColor, range: fullRange)
+        }
         return result
     }
 }

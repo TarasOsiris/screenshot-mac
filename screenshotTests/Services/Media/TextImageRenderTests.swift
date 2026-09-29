@@ -207,13 +207,13 @@ struct TextImageRenderTests {
             letterSpacing: CGFloat? = nil, lineHeightMultiple: CGFloat? = nil,
             legacyLineSpacing: CGFloat? = nil, richTextData: String? = nil,
             size: CGSize = TextImageRenderTests.size, fontScale: CGFloat = 1,
-            stroke: TextStroke? = nil, fillOverride: NSColor? = nil
+            stroke: TextStroke? = nil, glyphFill: TextGlyphFill? = nil
         ) -> String {
             TextLayoutStyle.textImageCacheKey(
                 size: size, scale: scale, text: text, font: font, color: color, alignment: alignment,
                 verticalAlignment: verticalAlignment, uppercase: uppercase, letterSpacing: letterSpacing,
                 lineHeightMultiple: lineHeightMultiple, legacyLineSpacing: legacyLineSpacing,
-                richTextData: richTextData, fontScale: fontScale, stroke: stroke, fillOverride: fillOverride
+                richTextData: richTextData, fontScale: fontScale, stroke: stroke, glyphFill: glyphFill
             )
         }
         let base = key()
@@ -232,7 +232,7 @@ struct TextImageRenderTests {
         #expect(key(fontScale: 0.75) != base)
         #expect(key(stroke: TextStroke(color: .red, width: 4)) != base)
         #expect(key(stroke: TextStroke(color: .red, width: 4)) != key(stroke: TextStroke(color: .red, width: 5)))
-        #expect(key(fillOverride: .white) != base)
+        #expect(key(glyphFill: .mask) != base)
         #expect(key(size: CGSize(width: 241, height: 80)) != base)
         #expect(key(size: CGSize(width: 240.1, height: 80)) != key(size: CGSize(width: 240.4, height: 80)))
         #expect(
