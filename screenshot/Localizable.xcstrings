@@ -178837,267 +178837,4184 @@
     },
     "Doesn't fit" : {
       "localizations" : {
-
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Passt nicht"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No cabe"
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "جا نمی‌شود"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ne tient pas"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Non entra"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "収まりません"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "맞지 않음"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Não cabe"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Не помещается"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sığmıyor"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Не вміщається"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "放不下"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "放不下"
+          }
+        }
       }
     },
     "This text is too long for its box in this language. Enlarge the box, shorten the text, or turn on Shrink to Fit." : {
       "localizations" : {
-
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dieser Text ist in dieser Sprache zu lang für sein Feld. Vergrößere das Feld, kürze den Text oder aktiviere „Passend verkleinern“."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Este texto es demasiado largo para su cuadro en este idioma. Agranda el cuadro, acorta el texto o activa Reducir para ajustar."
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "این متن در این زبان برای کادرش بیش از حد طولانی است. کادر را بزرگ‌تر کنید، متن را کوتاه کنید یا «کوچک‌سازی برای جا شدن» را روشن کنید."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ce texte est trop long pour son cadre dans cette langue. Agrandissez le cadre, raccourcissez le texte ou activez Réduire pour ajuster."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Questo testo è troppo lungo per il suo riquadro in questa lingua. Ingrandisci il riquadro, accorcia il testo o attiva Riduci per adattare."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "この言語ではテキストが枠に収まりません。枠を広げるか、テキストを短くするか、「縮小して合わせる」をオンにしてください。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "이 언어에서는 텍스트가 상자에 비해 너무 깁니다. 상자를 키우거나 텍스트를 줄이거나 '맞게 축소'를 켜세요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Este texto é longo demais para a caixa neste idioma. Aumente a caixa, encurte o texto ou ative Reduzir para caber."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "В этом языке текст не помещается в рамку. Увеличьте рамку, сократите текст или включите «Уменьшать по размеру»."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bu metin bu dilde kutusu için çok uzun. Kutuyu büyütün, metni kısaltın veya Sığdırmak İçin Küçült'ü açın."
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "У цій мові текст не вміщається в рамку. Збільште рамку, скоротіть текст або ввімкніть «Зменшувати під розмір»."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在此语言中，文本超出了文本框。请放大文本框、缩短文本，或打开“缩小以适合”。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在此語言中，文字超出了文字框。請放大文字框、縮短文字，或開啟「縮小以符合」。"
+          }
+        }
       }
     },
     "Shrink to Fit" : {
       "localizations" : {
-
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Passend verkleinern"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reducir para ajustar"
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "کوچک‌سازی برای جا شدن"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Réduire pour ajuster"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Riduci per adattare"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "縮小して合わせる"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "맞게 축소"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reduzir para caber"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Уменьшать по размеру"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sığdırmak İçin Küçült"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Зменшувати під розмір"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "缩小以适合"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "縮小以符合"
+          }
+        }
       }
     },
     "Scale the text down so every line fits the box, in every language" : {
       "localizations" : {
-
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Text verkleinern, bis jede Zeile ins Feld passt – in jeder Sprache"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reduce el texto para que cada línea quepa en el cuadro, en todos los idiomas"
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "متن را کوچک می‌کند تا همه سطرها در هر زبانی در کادر جا شوند"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Réduit le texte pour que chaque ligne tienne dans le cadre, dans toutes les langues"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Riduce il testo in modo che ogni riga entri nel riquadro, in ogni lingua"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "すべての言語で、各行が枠に収まるようにテキストを縮小します"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "모든 언어에서 모든 줄이 상자에 맞도록 텍스트를 축소합니다"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reduz o texto para que cada linha caiba na caixa, em todos os idiomas"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Уменьшает текст, чтобы каждая строка помещалась в рамку, на любом языке"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Metni, her dilde her satır kutuya sığacak şekilde küçültür"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Зменшує текст, щоб кожен рядок уміщався в рамку, будь-якою мовою"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "缩小文本，使每种语言的每一行都能放进文本框"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "縮小文字，讓每種語言的每一行都能放進文字框"
+          }
+        }
       }
     },
     "Text doesn't fit its box in %@." : {
       "localizations" : {
-
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Text passt in %@ nicht in sein Feld."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "El texto no cabe en su cuadro en %@."
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "متن در %@ در کادرش جا نمی‌شود."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Le texte ne tient pas dans son cadre en %@."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Il testo non entra nel riquadro in %@."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ でテキストが枠に収まりません。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@에서 텍스트가 상자에 맞지 않습니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O texto não cabe na caixa em %@."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Текст не помещается в рамку: %@."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Metin %@ dilinde kutusuna sığmıyor."
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Текст не вміщається в рамку: %@."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在 %@ 中，文本超出了文本框。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在 %@ 中，文字超出了文字框。"
+          }
+        }
       }
     },
     "Enlarge the text box, shorten the translation, or turn on Shrink to Fit." : {
       "localizations" : {
-
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vergrößere das Textfeld, kürze die Übersetzung oder aktiviere „Passend verkleinern“."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Agranda el cuadro de texto, acorta la traducción o activa Reducir para ajustar."
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "کادر متن را بزرگ‌تر کنید، ترجمه را کوتاه کنید یا «کوچک‌سازی برای جا شدن» را روشن کنید."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Agrandissez le cadre de texte, raccourcissez la traduction ou activez Réduire pour ajuster."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ingrandisci il riquadro di testo, accorcia la traduzione o attiva Riduci per adattare."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "テキスト枠を広げるか、翻訳を短くするか、「縮小して合わせる」をオンにしてください。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "텍스트 상자를 키우거나 번역을 줄이거나 '맞게 축소'를 켜세요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aumente a caixa de texto, encurte a tradução ou ative Reduzir para caber."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Увеличьте текстовую рамку, сократите перевод или включите «Уменьшать по размеру»."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Metin kutusunu büyütün, çeviriyi kısaltın veya Sığdırmak İçin Küçült'ü açın."
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Збільште текстову рамку, скоротіть переклад або ввімкніть «Зменшувати під розмір»."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "请放大文本框、缩短译文，或打开“缩小以适合”。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "請放大文字框、縮短譯文，或開啟「縮小以符合」。"
+          }
+        }
       }
     },
     "**Shrink to Fit** scales the text down just enough for every line to fit its box. It is worked out per language, so a long German translation shrinks while the English headline stays full size." : {
       "localizations" : {
-
-      }
-    },
-    "Text that is too long for its box loses its last lines. Such a shape shows an **orange warning triangle** on the canvas, its cell in the translation table says *Doesn't fit*, and the App Store Connect and Google Play upload checks list it as a warning. Enlarge the box, shorten the text, or turn on **Shrink to Fit**." : {
-      "localizations" : {
-
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Passend verkleinern** verkleinert den Text gerade so weit, dass jede Zeile in ihr Feld passt. Das wird pro Sprache berechnet: Eine lange deutsche Übersetzung wird kleiner, während die englische Überschrift in voller Größe bleibt."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Reducir para ajustar** reduce el texto lo justo para que cada línea quepa en su cuadro. Se calcula por idioma, así que una traducción larga al alemán se reduce mientras el titular en inglés mantiene su tamaño."
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**کوچک‌سازی برای جا شدن** متن را فقط به اندازه‌ای کوچک می‌کند که همه سطرها در کادر جا شوند. این کار برای هر زبان جداگانه انجام می‌شود، پس ترجمه طولانی آلمانی کوچک می‌شود، در حالی که تیتر انگلیسی در اندازه کامل می‌ماند."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Réduire pour ajuster** réduit le texte juste assez pour que chaque ligne tienne dans son cadre. Le calcul se fait par langue : une longue traduction allemande est réduite tandis que le titre anglais garde sa taille."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Riduci per adattare** rimpicciolisce il testo quanto basta perché ogni riga entri nel riquadro. Il calcolo è per lingua, quindi una lunga traduzione tedesca si riduce mentre il titolo inglese resta a grandezza piena."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**縮小して合わせる**は、各行が枠に収まる分だけテキストを縮小します。言語ごとに計算されるため、長いドイツ語訳は縮小され、英語の見出しは元のサイズのままです。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**맞게 축소**는 모든 줄이 상자에 맞을 만큼만 텍스트를 축소합니다. 언어별로 계산되므로 긴 독일어 번역은 작아지고 영어 헤드라인은 원래 크기를 유지합니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Reduzir para caber** reduz o texto só o suficiente para cada linha caber na caixa. O cálculo é feito por idioma, então uma tradução longa em alemão diminui enquanto o título em inglês fica no tamanho original."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Уменьшать по размеру** уменьшает текст ровно настолько, чтобы каждая строка поместилась в рамку. Расчёт идёт для каждого языка отдельно: длинный немецкий перевод уменьшится, а английский заголовок останется в полном размере."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Sığdırmak İçin Küçült**, metni her satır kutusuna sığacak kadar küçültür. Bu her dil için ayrı hesaplanır; böylece uzun bir Almanca çeviri küçülürken İngilizce başlık tam boyutta kalır."
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Зменшувати під розмір** зменшує текст рівно настільки, щоб кожен рядок уміщався в рамку. Розрахунок ведеться для кожної мови окремо: довгий німецький переклад зменшиться, а англійський заголовок залишиться повнорозмірним."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**缩小以适合**会将文本缩小到刚好让每一行都能放进文本框。它按语言分别计算，因此较长的德语译文会缩小，而英文标题保持原大小。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**縮小以符合**會將文字縮小到剛好讓每一行都能放進文字框。它按語言分別計算，因此較長的德文譯文會縮小，而英文標題維持原大小。"
+          }
+        }
       }
     },
     "Text doesn't fit" : {
       "localizations" : {
-
-      }
-    },
-    "Text doesn't fit in its box. Enlarge the box, shorten the text, or turn on Shrink Text to Fit." : {
-      "localizations" : {
-
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Text passt nicht"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "El texto no cabe"
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "متن جا نمی‌شود"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Le texte ne tient pas"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Il testo non entra"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "テキストが収まりません"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "텍스트가 맞지 않음"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O texto não cabe"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Текст не помещается"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Metin sığmıyor"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Текст не вміщається"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "文本放不下"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "文字放不下"
+          }
+        }
       }
     },
     "Text doesn't fit in its box. Enlarge the box, shorten the text, or turn on Shrink to Fit." : {
       "localizations" : {
-
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Der Text passt nicht in sein Feld. Vergrößere das Feld, kürze den Text oder aktiviere „Passend verkleinern“."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "El texto no cabe en su cuadro. Agranda el cuadro, acorta el texto o activa Reducir para ajustar."
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "متن در کادرش جا نمی‌شود. کادر را بزرگ‌تر کنید، متن را کوتاه کنید یا «کوچک‌سازی برای جا شدن» را روشن کنید."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Le texte ne tient pas dans son cadre. Agrandissez le cadre, raccourcissez le texte ou activez Réduire pour ajuster."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Il testo non entra nel riquadro. Ingrandisci il riquadro, accorcia il testo o attiva Riduci per adattare."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "テキストが枠に収まりません。枠を広げるか、テキストを短くするか、「縮小して合わせる」をオンにしてください。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "텍스트가 상자에 맞지 않습니다. 상자를 키우거나 텍스트를 줄이거나 '맞게 축소'를 켜세요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O texto não cabe na caixa. Aumente a caixa, encurte o texto ou ative Reduzir para caber."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Текст не помещается в рамку. Увеличьте рамку, сократите текст или включите «Уменьшать по размеру»."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Metin kutusuna sığmıyor. Kutuyu büyütün, metni kısaltın veya Sığdırmak İçin Küçült'ü açın."
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Текст не вміщається в рамку. Збільште рамку, скоротіть текст або ввімкніть «Зменшувати під розмір»."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "文本超出了文本框。请放大文本框、缩短文本，或打开“缩小以适合”。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "文字超出了文字框。請放大文字框、縮短文字，或開啟「縮小以符合」。"
+          }
+        }
       }
     },
     "Import Localized Screenshots" : {
       "localizations" : {
-
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lokalisierte Screenshots importieren"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Importar capturas localizadas"
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "وارد کردن اسکرین‌شات‌های بومی‌سازی‌شده"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Importer des captures d'écran localisées"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Importa screenshot localizzati"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ローカライズ済みスクリーンショットを読み込む"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "현지화된 스크린샷 가져오기"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Importar capturas de tela localizadas"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Импорт локализованных скриншотов"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yerelleştirilmiş Ekran Görüntülerini İçe Aktar"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Імпорт локалізованих знімків екрана"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "导入本地化截图"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "輸入在地化螢幕截圖"
+          }
+        }
       }
     },
     "Choose a folder with one subfolder per language, such as en-US and de-DE." : {
       "localizations" : {
-
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wähle einen Ordner mit einem Unterordner pro Sprache, z. B. en-US und de-DE."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Elige una carpeta con una subcarpeta por idioma, como en-US y de-DE."
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "پوشه‌ای با یک زیرپوشه برای هر زبان انتخاب کنید، مانند en-US و de-DE."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Choisissez un dossier contenant un sous-dossier par langue, comme en-US et de-DE."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Scegli una cartella con una sottocartella per lingua, come en-US e de-DE."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "言語ごとにサブフォルダ（en-US、de-DE など）があるフォルダを選択してください。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "언어별 하위 폴더(예: en-US, de-DE)가 있는 폴더를 선택하세요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Escolha uma pasta com uma subpasta por idioma, como en-US e de-DE."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Выберите папку с отдельной подпапкой для каждого языка, например en-US и de-DE."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Her dil için bir alt klasör içeren bir klasör seçin; örneğin en-US ve de-DE."
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Виберіть папку з окремою підпапкою для кожної мови, наприклад en-US і de-DE."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "选择一个每种语言各有一个子文件夹的文件夹，例如 en-US 和 de-DE。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "選擇每種語言各有一個子檔案夾的檔案夾，例如 en-US 和 de-DE。"
+          }
+        }
       }
     },
     "Choose" : {
       "localizations" : {
-
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Auswählen"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Elegir"
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "انتخاب"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Choisir"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Scegli"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "選択"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "선택"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Escolher"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Выбрать"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Seç"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Вибрати"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "选取"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "選擇"
+          }
+        }
       }
     },
     "Project Colors" : {
       "localizations" : {
-
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Projektfarben"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Colores del proyecto"
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "رنگ‌های پروژه"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Couleurs du projet"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Colori del progetto"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "プロジェクトのカラー"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "프로젝트 색상"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cores do projeto"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Цвета проекта"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Proje Renkleri"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Кольори проєкту"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "项目颜色"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "專案顏色"
+          }
+        }
       }
     },
     "Save colors here to reuse them anywhere in this project." : {
       "localizations" : {
-
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Speichere hier Farben, um sie überall in diesem Projekt wiederzuverwenden."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Guarda aquí colores para reutilizarlos en cualquier parte de este proyecto."
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "رنگ‌ها را اینجا ذخیره کنید تا در هر جای این پروژه دوباره از آن‌ها استفاده کنید."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Enregistrez ici des couleurs pour les réutiliser partout dans ce projet."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Salva qui i colori per riutilizzarli ovunque in questo progetto."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ここにカラーを保存すると、このプロジェクトのどこでも再利用できます。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "여기에 색상을 저장하면 이 프로젝트 어디서나 다시 사용할 수 있습니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Salve cores aqui para reutilizá-las em qualquer lugar deste projeto."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Сохраняйте здесь цвета, чтобы использовать их в любом месте проекта."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Renkleri, bu projenin her yerinde yeniden kullanmak için buraya kaydedin."
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Зберігайте тут кольори, щоб використовувати їх будь-де в цьому проєкті."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在此存储颜色，即可在此项目的任何位置重复使用。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在此儲存顏色，即可在此專案的任何位置重複使用。"
+          }
+        }
       }
     },
     "Document Colors" : {
       "localizations" : {
-
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dokumentfarben"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Colores del documento"
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "رنگ‌های سند"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Couleurs du document"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Colori del documento"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "書類のカラー"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "문서 색상"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cores do documento"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Цвета документа"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Belge Renkleri"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Кольори документа"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "文稿颜色"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "文件顏色"
+          }
+        }
       }
     },
     "Save the current color to this project" : {
       "localizations" : {
-
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aktuelle Farbe in diesem Projekt speichern"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Guardar el color actual en este proyecto"
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ذخیره رنگ فعلی در این پروژه"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Enregistrer la couleur actuelle dans ce projet"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Salva il colore attuale in questo progetto"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "現在のカラーをこのプロジェクトに保存"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "현재 색상을 이 프로젝트에 저장"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Salvar a cor atual neste projeto"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Сохранить текущий цвет в проекте"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Geçerli rengi bu projeye kaydet"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Зберегти поточний колір у проєкті"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "将当前颜色存储到此项目"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "將目前顏色儲存到此專案"
+          }
+        }
       }
     },
     "Add Current Color" : {
       "localizations" : {
-
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aktuelle Farbe hinzufügen"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Añadir color actual"
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "افزودن رنگ فعلی"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ajouter la couleur actuelle"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aggiungi colore attuale"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "現在のカラーを追加"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "현재 색상 추가"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Adicionar cor atual"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Добавить текущий цвет"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Geçerli Rengi Ekle"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Додати поточний колір"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "添加当前颜色"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "加入目前顏色"
+          }
+        }
       }
     },
     "Remove from Project Colors" : {
       "localizations" : {
-
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aus Projektfarben entfernen"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Quitar de Colores del proyecto"
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "حذف از رنگ‌های پروژه"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Retirer des couleurs du projet"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rimuovi dai colori del progetto"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "プロジェクトのカラーから削除"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "프로젝트 색상에서 제거"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Remover das cores do projeto"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Удалить из цветов проекта"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Proje Renklerinden Kaldır"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Вилучити з кольорів проєкту"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "从项目颜色中移除"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "從專案顏色中移除"
+          }
+        }
       }
     },
     "Save to Project Colors" : {
       "localizations" : {
-
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "In Projektfarben speichern"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Guardar en Colores del proyecto"
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ذخیره در رنگ‌های پروژه"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Enregistrer dans les couleurs du projet"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Salva nei colori del progetto"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "プロジェクトのカラーに保存"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "프로젝트 색상에 저장"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Salvar nas cores do projeto"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Сохранить в цвета проекта"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Proje Renklerine Kaydet"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Зберегти в кольори проєкту"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "存储到项目颜色"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "儲存到專案顏色"
+          }
+        }
       }
     },
     "Standard" : {
       "localizations" : {
-
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Standard"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Estándar"
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "استاندارد"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Standard"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Standard"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "標準"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "표준"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Padrão"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Стандартный"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Standart"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Стандартний"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "标准"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "標準"
+          }
+        }
       }
     },
     "File layout" : {
       "localizations" : {
-
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dateistruktur"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Estructura de archivos"
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "چیدمان فایل‌ها"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Organisation des fichiers"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Struttura dei file"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ファイル構成"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "파일 구조"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Estrutura de arquivos"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Структура файлов"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dosya düzeni"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Структура файлів"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "文件布局"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "檔案佈局"
+          }
+        }
       }
     },
     "Example: en-US/01_Onboarding%@.%@ — ready for fastlane deliver. One folder per App Store language, numbered across rows." : {
       "localizations" : {
-
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Beispiel: en-US/01_Onboarding%@.%@ – bereit für fastlane deliver. Ein Ordner pro App-Store-Sprache, zeilenübergreifend nummeriert."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ejemplo: en-US/01_Onboarding%@.%@ — listo para fastlane deliver. Una carpeta por idioma de App Store, con numeración continua entre filas."
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "نمونه: en-US/01_Onboarding%@.%@ — آماده برای fastlane deliver. یک پوشه برای هر زبان App Store، با شماره‌گذاری پیوسته در همه ردیف‌ها."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Exemple : en-US/01_Onboarding%@.%@ — prêt pour fastlane deliver. Un dossier par langue de l'App Store, numéroté sur l'ensemble des lignes."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Esempio: en-US/01_Onboarding%@.%@ — pronto per fastlane deliver. Una cartella per lingua dell'App Store, con numerazione continua tra le righe."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "例：en-US/01_Onboarding%@.%@ — fastlane deliver でそのまま使えます。App Store の言語ごとに 1 フォルダ、番号は行をまたいで連番です。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "예: en-US/01_Onboarding%@.%@ — fastlane deliver에 바로 사용 가능. App Store 언어마다 폴더 하나, 번호는 행 전체에 걸쳐 이어집니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Exemplo: en-US/01_Onboarding%@.%@ — pronto para o fastlane deliver. Uma pasta por idioma da App Store, com numeração contínua entre as linhas."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Пример: en-US/01_Onboarding%@.%@ — готово для fastlane deliver. Отдельная папка для каждого языка App Store, сквозная нумерация по всем строкам."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Örnek: en-US/01_Onboarding%@.%@ — fastlane deliver için hazır. Her App Store dili için bir klasör, satırlar boyunca sıralı numaralı."
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Приклад: en-US/01_Onboarding%@.%@ — готово для fastlane deliver. Окрема папка для кожної мови App Store, наскрізна нумерація в усіх рядках."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "示例：en-US/01_Onboarding%@.%@ — 可直接用于 fastlane deliver。每种 App Store 语言一个文件夹，编号跨行连续。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "範例：en-US/01_Onboarding%@.%@ — 可直接用於 fastlane deliver。每種 App Store 語言一個檔案夾，編號跨列連續。"
+          }
+        }
       }
     },
     "A gradient replaces the colors set on parts of the text." : {
       "localizations" : {
-
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ein Verlauf ersetzt die Farben, die einzelnen Textteilen zugewiesen sind."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Un degradado sustituye los colores aplicados a partes del texto."
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "گرادیان جایگزین رنگ‌هایی می‌شود که روی بخش‌هایی از متن تنظیم شده‌اند."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Un dégradé remplace les couleurs appliquées à certaines parties du texte."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Una sfumatura sostituisce i colori applicati a parti del testo."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "グラデーションは、テキストの一部に設定した色より優先されます。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "그라디언트는 텍스트 일부에 지정한 색상을 대체합니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Um gradiente substitui as cores aplicadas a partes do texto."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Градиент заменяет цвета, заданные для отдельных частей текста."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Renk geçişi, metnin bölümlerine atanan renklerin yerini alır."
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Градієнт замінює кольори, задані для окремих частин тексту."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "渐变会取代为部分文本设置的颜色。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "漸層會取代為部分文字設定的顏色。"
+          }
+        }
       }
     },
     "Import Localized Screenshots…" : {
       "localizations" : {
-
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lokalisierte Screenshots importieren…"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Importar capturas localizadas…"
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "وارد کردن اسکرین‌شات‌های بومی‌سازی‌شده…"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Importer des captures d'écran localisées…"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Importa screenshot localizzati…"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ローカライズ済みスクリーンショットを読み込む…"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "현지화된 스크린샷 가져오기…"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Importar capturas de tela localizadas…"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Импорт локализованных скриншотов…"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yerelleştirilmiş Ekran Görüntülerini İçe Aktar…"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Імпорт локалізованих знімків екрана…"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "导入本地化截图…"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "輸入在地化螢幕截圖…"
+          }
+        }
       }
     },
     "No screenshots in this folder match this row's languages and its %@ size. Name subfolders by language — for example en-US and de-DE — or add the language code to each file name." : {
       "localizations" : {
-
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Keine Screenshots in diesem Ordner passen zu den Sprachen dieser Zeile und ihrer Größe %@. Benenne Unterordner nach Sprachen – etwa en-US und de-DE – oder füge jedem Dateinamen den Sprachcode hinzu."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ninguna captura de esta carpeta coincide con los idiomas de esta fila y su tamaño de %@. Nombra las subcarpetas por idioma (por ejemplo, en-US y de-DE) o añade el código de idioma a cada nombre de archivo."
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "هیچ اسکرین‌شاتی در این پوشه با زبان‌های این ردیف و اندازه %@ آن مطابقت ندارد. زیرپوشه‌ها را به نام زبان‌ها نام‌گذاری کنید — مثلاً en-US و de-DE — یا کد زبان را به نام هر فایل اضافه کنید."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aucune capture de ce dossier ne correspond aux langues de cette ligne et à sa taille de %@. Nommez les sous-dossiers par langue — par exemple en-US et de-DE — ou ajoutez le code de langue à chaque nom de fichier."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nessuno screenshot in questa cartella corrisponde alle lingue di questa riga e alla sua dimensione %@. Dai alle sottocartelle il nome della lingua, ad esempio en-US e de-DE, oppure aggiungi il codice lingua a ogni nome di file."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "このフォルダには、この行の言語とサイズ（%@）に一致するスクリーンショットがありません。サブフォルダに言語名（en-US、de-DE など）を付けるか、各ファイル名に言語コードを追加してください。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "이 폴더에 이 행의 언어와 %@ 크기에 맞는 스크린샷이 없습니다. 하위 폴더 이름을 언어로 지정하거나(예: en-US, de-DE) 각 파일 이름에 언어 코드를 추가하세요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nenhuma captura de tela desta pasta corresponde aos idiomas desta linha e ao tamanho %@. Nomeie as subpastas pelo idioma — por exemplo, en-US e de-DE — ou adicione o código do idioma a cada nome de arquivo."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "В этой папке нет скриншотов, подходящих к языкам этой строки и её размеру %@. Назовите подпапки по языкам (например, en-US и de-DE) или добавьте код языка в имя каждого файла."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bu klasördeki hiçbir ekran görüntüsü bu satırın dilleri ve %@ boyutuyla eşleşmiyor. Alt klasörleri dile göre adlandırın (ör. en-US ve de-DE) veya her dosya adına dil kodunu ekleyin."
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "У цій папці немає знімків екрана, що відповідають мовам цього рядка та його розміру %@. Назвіть підпапки за мовами (наприклад, en-US і de-DE) або додайте код мови до назви кожного файлу."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "此文件夹中没有与此行的语言及其 %@ 尺寸匹配的截图。请按语言命名子文件夹（例如 en-US 和 de-DE），或在每个文件名中加入语言代码。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "此檔案夾中沒有與此列的語言及其 %@ 尺寸相符的螢幕截圖。請按語言命名子檔案夾（例如 en-US 和 de-DE），或在每個檔名中加入語言代碼。"
+          }
+        }
       }
     },
     "Skipped folders: %@" : {
       "localizations" : {
-
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Übersprungene Ordner: %@"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Carpetas omitidas: %@"
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "پوشه‌های ردشده: %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dossiers ignorés : %@"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cartelle saltate: %@"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "スキップしたフォルダ：%@"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "건너뛴 폴더: %@"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pastas ignoradas: %@"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Пропущенные папки: %@"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Atlanan klasörler: %@"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Пропущені папки: %@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已跳过的文件夹：%@"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已略過的檔案夾：%@"
+          }
+        }
       }
     },
     "^[%lld image](inflect: true) skipped: not %@." : {
       "localizations" : {
-
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "^[%lld Bild](inflect: true) übersprungen: nicht %@."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "^[%lld imagen omitida](inflect: true): no es de %@."
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld تصویر رد شد: اندازه %@ نیست."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "^[%lld image ignorée](inflect: true) : pas au format %@."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "^[%lld immagine saltata](inflect: true): non è %@."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld 枚の画像をスキップしました：%@ ではありません。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "이미지 %lld개를 건너뜀: %@ 크기가 아님."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "^[%lld imagem ignorada](inflect: true): não é %@."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Пропущено изображений: %lld — размер не %@."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld görüntü atlandı: %@ değil."
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Пропущено зображень: %lld — розмір не %@."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已跳过 %lld 张图像：尺寸不是 %@。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已略過 %lld 張影像：尺寸不是 %@。"
+          }
+        }
       }
     },
     "Replaces ^[%lld screenshot](inflect: true) already in this row." : {
       "localizations" : {
-
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ersetzt bereits vorhandene Screenshots in dieser Zeile: %lld."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reemplaza capturas que ya están en esta fila: %lld."
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld اسکرین‌شات موجود در این ردیف جایگزین می‌شود."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Remplace des captures déjà présentes dans cette ligne : %lld."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sostituisce screenshot già presenti in questa riga: %lld."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "この行にある %lld 枚のスクリーンショットが置き換えられます。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "이 행에 이미 있는 스크린샷 %lld개를 대체합니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Substitui capturas de tela já existentes nesta linha: %lld."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Будут заменены скриншоты в этой строке: %lld."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bu satırdaki %lld ekran görüntüsünün yerini alır."
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Буде замінено знімки екрана в цьому рядку: %lld."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "将替换此行中已有的 %lld 张截图。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "將取代此列中已有的 %lld 張螢幕截圖。"
+          }
+        }
       }
     },
     "^[%lld screenshot](inflect: true)" : {
       "localizations" : {
-
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "^[%lld Screenshot](inflect: true)"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "^[%lld captura](inflect: true)"
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld اسکرین‌شات"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "^[%lld capture](inflect: true)"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "^[%lld screenshot](inflect: true)"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld 枚のスクリーンショット"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "스크린샷 %lld개"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "^[%lld captura](inflect: true)"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Скриншотов: %lld"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld ekran görüntüsü"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Знімків: %lld"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld 张截图"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld 張螢幕截圖"
+          }
+        }
       }
     },
     "Languages not in this project" : {
       "localizations" : {
-
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sprachen, die nicht im Projekt sind"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Idiomas que no están en este proyecto"
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "زبان‌هایی که در این پروژه نیستند"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Langues absentes de ce projet"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lingue non presenti in questo progetto"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "このプロジェクトにない言語"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "이 프로젝트에 없는 언어"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Idiomas que não estão neste projeto"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Языки, которых нет в проекте"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bu projede olmayan diller"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Мови, яких немає в проєкті"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "不在此项目中的语言"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "不在此專案中的語言"
+          }
+        }
       }
     },
     "Add %@ (%@)" : {
       "localizations" : {
-
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ hinzufügen (%@)"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Añadir %@ (%@)"
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "افزودن %@ (%@)"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ajouter %@ (%@)"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aggiungi %@ (%@)"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ を追加（%@）"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ 추가(%@)"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Adicionar %@ (%@)"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Добавить %@ (%@)"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ ekle (%@)"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Додати %@ (%@)"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "添加 %@（%@）"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "加入 %@（%@）"
+          }
+        }
       }
     },
     "Import" : {
       "localizations" : {
-
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Importieren"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Importar"
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "وارد کردن"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Importer"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Importa"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "読み込む"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "가져오기"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Importar"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Импортировать"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "İçe Aktar"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Імпортувати"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "导入"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "輸入"
+          }
+        }
       }
     },
     "Unlock the shape to crop it" : {
       "localizations" : {
-
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Entsperre die Form, um sie zuzuschneiden"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Desbloquea la forma para recortarla"
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "برای برش، قفل شکل را باز کنید"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Déverrouillez la forme pour la recadrer"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sblocca la forma per ritagliarla"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "トリミングするには図形のロックを解除してください"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "자르려면 도형의 잠금을 해제하세요"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Desbloqueie a forma para recortá-la"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Разблокируйте фигуру, чтобы обрезать её"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kırpmak için şeklin kilidini açın"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Відімкніть фігуру, щоб обрізати її"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "解锁形状后才能裁剪"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "解鎖形狀後才能裁切"
+          }
+        }
       }
     },
     "Drag the picture to reposition it inside the frame (or double-click the image)" : {
       "localizations" : {
-
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zieh das Bild, um es im Rahmen zu verschieben (oder doppelklicke auf das Bild)"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Arrastra la imagen para recolocarla dentro del marco (o haz doble clic en ella)"
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تصویر را بکشید تا جایش را درون قاب تغییر دهید (یا روی تصویر دوبار کلیک کنید)"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Faites glisser l'image pour la repositionner dans le cadre (ou double-cliquez dessus)"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Trascina l'immagine per riposizionarla nella cornice (oppure fai doppio clic sull'immagine)"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "画像をドラッグして枠内の位置を調整します（または画像をダブルクリック）"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "사진을 드래그하여 프레임 안에서 위치를 조정합니다(또는 이미지를 이중 클릭)"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Arraste a imagem para reposicioná-la dentro do quadro (ou clique duas vezes nela)"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Перетащите изображение, чтобы изменить его положение в рамке (или дважды нажмите на него)"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Resmi çerçeve içinde yeniden konumlandırmak için sürükleyin (veya görüntüye çift tıklayın)"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Перетягніть зображення, щоб змінити його положення в рамці (або двічі клацніть його)"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "拖移图片以调整它在框内的位置（或连按图像）"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "拖移圖片以調整它在框內的位置（或按兩下影像）"
+          }
+        }
       }
     },
     "Zoom the picture inside its frame" : {
       "localizations" : {
-
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bild im Rahmen zoomen"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Amplía la imagen dentro de su marco"
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "بزرگ‌نمایی تصویر درون قابش"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zoomer sur l'image dans son cadre"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ingrandisci l'immagine nella cornice"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "枠内で画像を拡大"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "프레임 안에서 사진 확대"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ampliar a imagem dentro do quadro"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Масштабировать изображение в рамке"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Resmi çerçevesi içinde yakınlaştır"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Масштабувати зображення в рамці"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在框内缩放图片"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在框內縮放圖片"
+          }
+        }
       }
     },
     "Reset Crop" : {
       "localizations" : {
-
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zuschnitt zurücksetzen"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Restablecer recorte"
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "بازنشانی برش"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Réinitialiser le recadrage"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reimposta ritaglio"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "トリミングをリセット"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "자르기 재설정"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Redefinir recorte"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Сбросить обрезку"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kırpmayı Sıfırla"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Скинути обрізання"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "重置裁剪"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "重置裁切"
+          }
+        }
       }
     },
     "Crop" : {
       "localizations" : {
-
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zuschneiden"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Recortar"
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "برش"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Recadrer"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ritaglia"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "トリミング"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "자르기"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Recortar"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Обрезать"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kırp"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Обрізати"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "裁剪"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "裁切"
+          }
+        }
       }
     },
     "**Project Colors** — the palette button next to a color well opens this project's saved colors. **+** saves the current color, click a swatch to apply it, and right-click to remove one. **Document Colors** below lists the colors the project already uses." : {
       "localizations" : {
-
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Projektfarben** – die Palettentaste neben einem Farbfeld öffnet die gespeicherten Farben dieses Projekts. **+** speichert die aktuelle Farbe, ein Klick auf ein Farbmuster wendet es an, und per Rechtsklick entfernst du eines. **Dokumentfarben** darunter listet die Farben, die das Projekt bereits verwendet."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Colores del proyecto**: el botón de paleta junto a un selector de color abre los colores guardados de este proyecto. **+** guarda el color actual; haz clic en una muestra para aplicarla y clic secundario para quitarla. **Colores del documento**, debajo, muestra los colores que ya usa el proyecto."
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**رنگ‌های پروژه** — دکمه پالت کنار هر انتخابگر رنگ، رنگ‌های ذخیره‌شده این پروژه را باز می‌کند. **+** رنگ فعلی را ذخیره می‌کند، با کلیک روی یک نمونه آن را اعمال کنید و با کلیک راست حذفش کنید. **رنگ‌های سند** در پایین، رنگ‌هایی را که پروژه از قبل استفاده می‌کند فهرست می‌کند."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Couleurs du projet** — le bouton palette à côté d'un sélecteur de couleur ouvre les couleurs enregistrées du projet. **+** enregistre la couleur actuelle, cliquez sur une pastille pour l'appliquer et faites un clic droit pour la retirer. **Couleurs du document**, en dessous, liste les couleurs déjà utilisées par le projet."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Colori del progetto**: il pulsante tavolozza accanto a un selettore colore apre i colori salvati del progetto. **+** salva il colore attuale, fai clic su un campione per applicarlo e clic destro per rimuoverlo. **Colori del documento**, sotto, elenca i colori già usati nel progetto."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**プロジェクトのカラー** — カラーウェルの横にあるパレットボタンで、このプロジェクトに保存したカラーを開きます。**+** で現在のカラーを保存し、スウォッチをクリックすると適用、右クリックで削除できます。下の**書類のカラー**には、プロジェクトで使用中のカラーが表示されます。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**프로젝트 색상** — 색상 선택기 옆의 팔레트 버튼을 누르면 이 프로젝트에 저장된 색상이 열립니다. **+**는 현재 색상을 저장하고, 견본을 클릭하면 적용되며, 오른쪽 클릭으로 제거할 수 있습니다. 아래의 **문서 색상**에는 프로젝트에서 이미 사용 중인 색상이 표시됩니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Cores do projeto** — o botão de paleta ao lado de um seletor de cor abre as cores salvas do projeto. **+** salva a cor atual, clique em uma amostra para aplicá-la e clique com o botão direito para removê-la. **Cores do documento**, abaixo, lista as cores que o projeto já usa."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Цвета проекта** — кнопка палитры рядом с полем цвета открывает сохранённые цвета проекта. **+** сохраняет текущий цвет, нажатие на образец применяет его, а правый клик удаляет. Ниже, в разделе **Цвета документа**, перечислены цвета, которые уже используются в проекте."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Proje Renkleri** — bir renk kutusunun yanındaki palet düğmesi bu projenin kayıtlı renklerini açar. **+** geçerli rengi kaydeder; uygulamak için bir renk örneğine tıklayın, kaldırmak için sağ tıklayın. Aşağıdaki **Belge Renkleri**, projede zaten kullanılan renkleri listeler."
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Кольори проєкту** — кнопка палітри поруч із полем кольору відкриває збережені кольори проєкту. **+** зберігає поточний колір, клацання зразка застосовує його, а правий клік вилучає. Нижче, у розділі **Кольори документа**, наведено кольори, які вже використовуються в проєкті."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**项目颜色** — 点按颜色池旁的调色板按钮即可打开此项目存储的颜色。**+** 存储当前颜色，点按色板即可应用，右键点按可将其移除。下方的**文稿颜色**列出了项目中已使用的颜色。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**專案顏色** — 按一下顏色池旁的調色盤按鈕即可打開此專案儲存的顏色。**+** 會儲存目前顏色，按一下色票即可套用，按右鍵可將其移除。下方的**文件顏色**會列出專案已使用的顏色。"
+          }
+        }
       }
     },
     "**Fill** can be a solid color or a **gradient** across the letters, and **Outline** draws a stroke around them. A gradient replaces any colors set on parts of the text." : {
       "localizations" : {
-
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Füllung** kann eine Vollfarbe oder ein **Verlauf** über die Buchstaben sein, und **Kontur** zieht eine Linie um sie. Ein Verlauf ersetzt Farben, die einzelnen Textteilen zugewiesen sind."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "El **Relleno** puede ser un color sólido o un **degradado** sobre las letras, y el **Contorno** dibuja un trazo a su alrededor. Un degradado sustituye los colores aplicados a partes del texto."
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**پرکردن** می‌تواند یک رنگ یکدست یا یک **گرادیان** روی حروف باشد و **خط دور** دور آن‌ها خط می‌کشد. گرادیان جایگزین رنگ‌هایی می‌شود که روی بخش‌هایی از متن تنظیم شده‌اند."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Le **Remplissage** peut être une couleur unie ou un **dégradé** sur les lettres, et le **Contour** trace un trait autour. Un dégradé remplace les couleurs appliquées à certaines parties du texte."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Riempi** può essere un colore pieno o una **sfumatura** sulle lettere, e **Contorno** traccia un bordo intorno. Una sfumatura sostituisce i colori applicati a parti del testo."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**塗りつぶし**は単色か文字全体にかかる**グラデーション**にでき、**枠線**は文字の周囲に線を描きます。グラデーションは、テキストの一部に設定した色より優先されます。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**채우기**는 단색이나 글자 전체에 걸친 **그라디언트**로 지정할 수 있고, **윤곽선**은 글자 주위에 선을 그립니다. 그라디언트는 텍스트 일부에 지정한 색상을 대체합니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O **Preenchimento** pode ser uma cor sólida ou um **gradiente** nas letras, e o **Contorno** desenha um traço ao redor delas. Um gradiente substitui as cores aplicadas a partes do texto."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Заливка** может быть сплошным цветом или **градиентом** по буквам, а **Обводка** рисует контур вокруг них. Градиент заменяет цвета, заданные для отдельных частей текста."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Dolgu**, düz bir renk veya harflere yayılan bir **renk geçişi** olabilir; **Dış Çizgi** ise harflerin çevresine çizgi çizer. Renk geçişi, metnin bölümlerine atanan renklerin yerini alır."
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Заповнення** може бути суцільним кольором або **градієнтом** по літерах, а **Контур** малює обведення навколо них. Градієнт замінює кольори, задані для окремих частин тексту."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**填充**可以是纯色，也可以是横跨字母的**渐变**，**描边**会在字母周围描线。渐变会取代为部分文本设置的颜色。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**填滿**可以是單色，也可以是橫跨字母的**漸層**，**外框線**會在字母周圍描線。漸層會取代為部分文字設定的顏色。"
+          }
+        }
       }
     },
     "Double-click a **device** shape, or an empty **image** shape, to open the picker and swap its picture." : {
       "localizations" : {
-
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Doppelklicke auf eine **Geräte**-Form oder eine leere **Bild**-Form, um die Auswahl zu öffnen und ihr Bild auszutauschen."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Haz doble clic en una forma de **dispositivo** o en una forma de **imagen** vacía para abrir el selector y cambiar su imagen."
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "روی یک شکل **دستگاه** یا یک شکل **تصویر** خالی دوبار کلیک کنید تا انتخابگر باز شود و تصویرش را عوض کنید."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Double-cliquez sur une forme **appareil**, ou sur une forme **image** vide, pour ouvrir le sélecteur et changer son image."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fai doppio clic su una forma **dispositivo**, o su una forma **immagine** vuota, per aprire il selettore e cambiarne l'immagine."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**デバイス**図形、または空の**画像**図形をダブルクリックすると、ピッカーが開いて画像を差し替えられます。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**기기** 도형이나 비어 있는 **이미지** 도형을 이중 클릭하면 선택기가 열려 사진을 바꿀 수 있습니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Clique duas vezes em uma forma de **dispositivo**, ou em uma forma de **imagem** vazia, para abrir o seletor e trocar a imagem."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Дважды нажмите на фигуру **устройства** или пустую фигуру **изображения**, чтобы открыть выбор и заменить картинку."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Seçiciyi açıp resmini değiştirmek için bir **aygıt** şekline veya boş bir **görüntü** şekline çift tıklayın."
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Двічі клацніть фігуру **пристрою** або порожню фігуру **зображення**, щоб відкрити вибір і замінити картинку."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "连按**设备**形状或空的**图像**形状，即可打开选择器并更换其图片。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "按兩下**裝置**形狀或空的**影像**形狀，即可打開選擇器並更換其圖片。"
+          }
+        }
       }
     },
     "Double-click an **image** shape that has a picture to crop it: drag to reposition, then press **Return**." : {
       "localizations" : {
-
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Doppelklicke auf eine **Bild**-Form mit Bild, um sie zuzuschneiden: Zieh zum Verschieben und drücke dann **Return**."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Haz doble clic en una forma de **imagen** que tenga una imagen para recortarla: arrastra para recolocarla y pulsa **Retorno**."
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "روی یک شکل **تصویر** که تصویر دارد دوبار کلیک کنید تا برشش دهید: بکشید تا جابه‌جا شود، سپس **Return** را فشار دهید."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Double-cliquez sur une forme **image** contenant une image pour la recadrer : faites glisser pour la repositionner, puis appuyez sur **Retour**."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fai doppio clic su una forma **immagine** con un'immagine per ritagliarla: trascina per riposizionarla, poi premi **A capo**."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "画像が入った**画像**図形をダブルクリックするとトリミングできます。ドラッグして位置を調整し、**return** キーを押します。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "사진이 있는 **이미지** 도형을 이중 클릭하면 자를 수 있습니다. 드래그하여 위치를 조정한 다음 **Return** 키를 누르세요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Clique duas vezes em uma forma de **imagem** que tenha uma imagem para recortá-la: arraste para reposicionar e pressione **Return**."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Дважды нажмите на фигуру **изображения** с картинкой, чтобы обрезать её: перетащите для изменения положения, затем нажмите **Return**."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Resim içeren bir **görüntü** şeklini kırpmak için çift tıklayın: yeniden konumlandırmak için sürükleyin, ardından **Return** tuşuna basın."
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Двічі клацніть фігуру **зображення** з картинкою, щоб обрізати її: перетягніть для зміни положення, а потім натисніть **Return**."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "连按带有图片的**图像**形状即可裁剪：拖移以调整位置，然后按下 **Return** 键。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "按兩下含有圖片的**影像**形狀即可裁切：拖移以調整位置，然後按下 **Return** 鍵。"
+          }
+        }
       }
     },
     "Text that is too long for its box loses its last lines. Such a shape shows a dashed **orange outline** with a warning badge on the canvas, its cell in the translation table says *Doesn't fit*, and the App Store Connect and Google Play upload checks list it as a warning. Enlarge the box, shorten the text, or turn on **Shrink to Fit**." : {
       "localizations" : {
-
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Text, der zu lang für sein Feld ist, verliert seine letzten Zeilen. Eine solche Form zeigt auf der Arbeitsfläche einen gestrichelten **orangefarbenen Rahmen** mit einem Warnsymbol, ihre Zelle in der Übersetzungstabelle zeigt *Passt nicht*, und die Upload-Prüfungen für App Store Connect und Google Play führen sie als Warnung auf. Vergrößere das Feld, kürze den Text oder aktiviere **Passend verkleinern**."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "El texto demasiado largo para su cuadro pierde sus últimas líneas. Esa forma muestra un **contorno naranja** discontinuo con un distintivo de aviso en el lienzo, su celda en la tabla de traducción indica *No cabe* y las comprobaciones de subida a App Store Connect y Google Play la muestran como aviso. Agranda el cuadro, acorta el texto o activa **Reducir para ajustar**."
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "متنی که برای کادرش بیش از حد طولانی باشد، سطرهای آخرش را از دست می‌دهد. چنین شکلی روی بوم یک **کادر نارنجی** خط‌چین با نشان هشدار نشان می‌دهد، خانه‌اش در جدول ترجمه *جا نمی‌شود* را نشان می‌دهد و بررسی‌های آپلود App Store Connect و Google Play آن را به‌عنوان هشدار فهرست می‌کنند. کادر را بزرگ‌تر کنید، متن را کوتاه کنید یا **کوچک‌سازی برای جا شدن** را روشن کنید."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Un texte trop long pour son cadre perd ses dernières lignes. Une telle forme affiche un **contour orange** en pointillés avec un badge d'alerte sur le canevas, sa cellule dans le tableau de traduction indique *Ne tient pas*, et les vérifications d'envoi vers App Store Connect et Google Play la signalent comme avertissement. Agrandissez le cadre, raccourcissez le texte ou activez **Réduire pour ajuster**."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Il testo troppo lungo per il suo riquadro perde le ultime righe. Una forma del genere mostra sulla tela un **contorno arancione** tratteggiato con un badge di avviso, la sua cella nella tabella delle traduzioni indica *Non entra* e i controlli di caricamento per App Store Connect e Google Play la segnalano come avviso. Ingrandisci il riquadro, accorcia il testo o attiva **Riduci per adattare**."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "枠に対して長すぎるテキストは、最後の行が表示されなくなります。その図形にはキャンバス上で破線の**オレンジ色の枠線**と警告バッジが表示され、翻訳テーブルのセルには*収まりません*と表示されます。App Store Connect と Google Play のアップロード前チェックでも警告として示されます。枠を広げるか、テキストを短くするか、**縮小して合わせる**をオンにしてください。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "상자에 비해 너무 긴 텍스트는 마지막 줄이 잘립니다. 이런 도형은 캔버스에 점선 **주황색 윤곽선**과 경고 배지가 표시되고, 번역 테이블의 셀에는 *맞지 않음*이 표시되며, App Store Connect 및 Google Play 업로드 검사에서 경고로 나열됩니다. 상자를 키우거나 텍스트를 줄이거나 **맞게 축소**를 켜세요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Um texto longo demais para a caixa perde as últimas linhas. Essa forma mostra um **contorno laranja** tracejado com um selo de aviso na tela, sua célula na tabela de tradução diz *Não cabe* e as verificações de envio para App Store Connect e Google Play a listam como aviso. Aumente a caixa, encurte o texto ou ative **Reduzir para caber**."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Если текст слишком длинный для своей рамки, его последние строки пропадают. У такой фигуры на холсте появляется пунктирная **оранжевая рамка** со значком предупреждения, в таблице переводов её ячейка помечена *Не помещается*, а проверки перед загрузкой в App Store Connect и Google Play показывают предупреждение. Увеличьте рамку, сократите текст или включите **Уменьшать по размеру**."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kutusu için çok uzun olan metin son satırlarını kaybeder. Böyle bir şekil tuvalde uyarı rozetli, kesik çizgili **turuncu bir çerçeve** gösterir; çeviri tablosundaki hücresinde *Sığmıyor* yazar ve App Store Connect ile Google Play yükleme denetimleri onu uyarı olarak listeler. Kutuyu büyütün, metni kısaltın veya **Sığdırmak İçin Küçült**'ü açın."
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Якщо текст задовгий для своєї рамки, його останні рядки зникають. Така фігура показує на полотні пунктирну **помаранчеву рамку** зі значком попередження, її клітинка в таблиці перекладів позначена *Не вміщається*, а перевірки перед вивантаженням у App Store Connect і Google Play показують попередження. Збільште рамку, скоротіть текст або ввімкніть **Зменшувати під розмір**."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "超出文本框的文本会丢失最后几行。这样的形状会在画布上显示虚线**橙色轮廓**和警告标记，它在翻译表中的单元格会显示*放不下*，App Store Connect 和 Google Play 的上传检查也会将其列为警告。请放大文本框、缩短文本，或打开**缩小以适合**。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "超出文字框的文字會遺失最後幾行。這樣的形狀會在畫布上顯示虛線**橙色外框**和警告標記，它在翻譯表中的儲存格會顯示*放不下*，App Store Connect 和 Google Play 的上傳檢查也會將其列為警告。請放大文字框、縮短文字，或開啟**縮小以符合**。"
+          }
+        }
       }
     },
     "**Import Localized Screenshots…** (row ▸ **⋯** menu, or drop a folder onto a row) takes a folder with one subfolder per language, such as a fastlane `screenshots` folder with `en-US` and `de-DE`, and gives each language its own screenshots in one step. Images whose size doesn't match the row are skipped, and a subfolder for a language the project doesn't have can be added as you import. One **Undo** reverts the whole import." : {
       "localizations" : {
-
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Lokalisierte Screenshots importieren…** (Zeilenmenü **⋯** oder einen Ordner auf eine Zeile ziehen) nimmt einen Ordner mit einem Unterordner pro Sprache, etwa einen fastlane-Ordner `screenshots` mit `en-US` und `de-DE`, und gibt jeder Sprache in einem Schritt ihre eigenen Screenshots. Bilder, deren Größe nicht zur Zeile passt, werden übersprungen, und einen Unterordner für eine Sprache, die das Projekt noch nicht hat, kannst du beim Import hinzufügen. Ein einziges **Widerrufen** macht den ganzen Import rückgängig."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Importar capturas localizadas…** (menú **⋯** de la fila, o suelta una carpeta sobre una fila) toma una carpeta con una subcarpeta por idioma, como una carpeta `screenshots` de fastlane con `en-US` y `de-DE`, y da a cada idioma sus propias capturas en un solo paso. Se omiten las imágenes cuyo tamaño no coincide con la fila, y puedes añadir durante la importación una subcarpeta de un idioma que el proyecto no tiene. Un solo **Deshacer** revierte toda la importación."
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**وارد کردن اسکرین‌شات‌های بومی‌سازی‌شده…** (منوی **⋯** ردیف، یا رها کردن یک پوشه روی ردیف) پوشه‌ای با یک زیرپوشه برای هر زبان می‌گیرد، مثلاً پوشه `screenshots` در fastlane با `en-US` و `de-DE`، و در یک مرحله به هر زبان اسکرین‌شات‌های خودش را می‌دهد. تصویرهایی که اندازه‌شان با ردیف نمی‌خواند رد می‌شوند، و زیرپوشه زبانی را که پروژه ندارد می‌توانید هنگام وارد کردن اضافه کنید. یک **واگرد** کل وارد کردن را برمی‌گرداند."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Importer des captures d'écran localisées…** (menu **⋯** de la ligne, ou déposez un dossier sur une ligne) prend un dossier contenant un sous-dossier par langue, comme un dossier fastlane `screenshots` avec `en-US` et `de-DE`, et attribue à chaque langue ses propres captures en une seule étape. Les images dont la taille ne correspond pas à la ligne sont ignorées, et le sous-dossier d'une langue absente du projet peut être ajouté pendant l'import. Un seul **Annuler** annule tout l'import."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Importa screenshot localizzati…** (menu **⋯** della riga, oppure trascina una cartella su una riga) prende una cartella con una sottocartella per lingua, come una cartella fastlane `screenshots` con `en-US` e `de-DE`, e assegna a ogni lingua i propri screenshot in un solo passaggio. Le immagini con dimensioni diverse da quelle della riga vengono saltate, e una sottocartella per una lingua non presente nel progetto può essere aggiunta durante l'importazione. Un solo **Annulla** ripristina l'intera importazione."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**ローカライズ済みスクリーンショットを読み込む…**（行の **⋯** メニュー、またはフォルダを行にドロップ）は、言語ごとにサブフォルダがあるフォルダ（`en-US` と `de-DE` を含む fastlane の `screenshots` フォルダなど）を読み込み、各言語にそれぞれのスクリーンショットを一度に設定します。サイズが行と一致しない画像はスキップされ、プロジェクトにない言語のサブフォルダは読み込み時に追加できます。**取り消す**を 1 回実行すると、読み込み全体が元に戻ります。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**현지화된 스크린샷 가져오기…**(행의 **⋯** 메뉴, 또는 폴더를 행에 드롭)는 `en-US`와 `de-DE`가 있는 fastlane `screenshots` 폴더처럼 언어별 하위 폴더가 있는 폴더를 가져와 한 번에 각 언어에 해당 스크린샷을 지정합니다. 크기가 행과 맞지 않는 이미지는 건너뛰며, 프로젝트에 없는 언어의 하위 폴더는 가져오면서 추가할 수 있습니다. **실행 취소** 한 번으로 전체 가져오기가 되돌려집니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Importar capturas de tela localizadas…** (menu **⋯** da linha, ou solte uma pasta sobre uma linha) recebe uma pasta com uma subpasta por idioma, como uma pasta `screenshots` do fastlane com `en-US` e `de-DE`, e dá a cada idioma suas próprias capturas em uma única etapa. Imagens cujo tamanho não corresponde à linha são ignoradas, e a subpasta de um idioma que o projeto não tem pode ser adicionada durante a importação. Um único **Desfazer** reverte toda a importação."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Импорт локализованных скриншотов…** (меню **⋯** строки или перетаскивание папки на строку) берёт папку с отдельной подпапкой для каждого языка — например, папку fastlane `screenshots` с `en-US` и `de-DE` — и за один шаг даёт каждому языку свои скриншоты. Изображения, размер которых не совпадает со строкой, пропускаются, а подпапку для языка, которого нет в проекте, можно добавить прямо при импорте. Одна команда **Отменить** отменяет весь импорт."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Yerelleştirilmiş Ekran Görüntülerini İçe Aktar…** (satırın **⋯** menüsü veya bir klasörü satırın üzerine bırakın), her dil için bir alt klasör içeren bir klasörü — örneğin `en-US` ve `de-DE` içeren bir fastlane `screenshots` klasörünü — alır ve tek adımda her dile kendi ekran görüntülerini verir. Boyutu satırla eşleşmeyen görüntüler atlanır; projede olmayan bir dilin alt klasörünü içe aktarırken ekleyebilirsiniz. Tek bir **Geri Al** tüm içe aktarmayı geri alır."
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Імпорт локалізованих знімків екрана…** (меню **⋯** рядка або перетягування папки на рядок) бере папку з окремою підпапкою для кожної мови — наприклад, папку fastlane `screenshots` з `en-US` і `de-DE` — і за один крок дає кожній мові власні знімки екрана. Зображення, розмір яких не збігається з рядком, пропускаються, а підпапку для мови, якої немає в проєкті, можна додати під час імпорту. Одна команда **Відмінити** скасовує весь імпорт."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**导入本地化截图…**（行的 **⋯** 菜单，或将文件夹拖放到行上）会读取每种语言各有一个子文件夹的文件夹，例如包含 `en-US` 和 `de-DE` 的 fastlane `screenshots` 文件夹，并一步为每种语言设置各自的截图。尺寸与行不符的图像会被跳过，项目中还没有的语言的子文件夹可以在导入时添加。一次**撤销**即可还原整个导入。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**輸入在地化螢幕截圖…**（列的 **⋯** 選單，或將檔案夾拖放到列上）會讀取每種語言各有一個子檔案夾的檔案夾，例如包含 `en-US` 和 `de-DE` 的 fastlane `screenshots` 檔案夾，並一次為每種語言設定各自的螢幕截圖。尺寸與列不符的影像會被略過，專案中還沒有的語言的子檔案夾可以在輸入時加入。一次**還原**即可復原整個輸入。"
+          }
+        }
       }
     },
     "**Settings ▸ Export ▸ File layout**: **fastlane** writes one folder per App Store language (`en-US`, `de-DE`) with files numbered across rows, so the export folder drops straight into fastlane `deliver`." : {
       "localizations" : {
-
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Einstellungen ▸ Export ▸ Dateistruktur**: **fastlane** schreibt einen Ordner pro App-Store-Sprache (`en-US`, `de-DE`) mit zeilenübergreifend nummerierten Dateien, sodass der Exportordner direkt in fastlane `deliver` passt."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Ajustes ▸ Exportar ▸ Estructura de archivos**: **fastlane** crea una carpeta por idioma de App Store (`en-US`, `de-DE`) con archivos numerados de forma continua entre filas, para que la carpeta exportada sirva directamente a fastlane `deliver`."
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**تنظیمات ▸ صدور ▸ چیدمان فایل‌ها**: گزینه **fastlane** برای هر زبان App Store یک پوشه (`en-US`، `de-DE`) با فایل‌هایی که در همه ردیف‌ها پیوسته شماره‌گذاری شده‌اند می‌سازد، تا پوشه صدور مستقیم در fastlane `deliver` استفاده شود."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Réglages ▸ Exporter ▸ Organisation des fichiers** : **fastlane** crée un dossier par langue de l'App Store (`en-US`, `de-DE`) avec des fichiers numérotés sur l'ensemble des lignes, pour que le dossier exporté soit directement utilisable par fastlane `deliver`."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Impostazioni ▸ Esporta ▸ Struttura dei file**: **fastlane** crea una cartella per lingua dell'App Store (`en-US`, `de-DE`) con file numerati in modo continuo tra le righe, così la cartella esportata è pronta per fastlane `deliver`."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**設定 ▸ 書き出し ▸ ファイル構成**：**fastlane** を選ぶと、App Store の言語ごとに 1 フォルダ（`en-US`、`de-DE`）を作成し、ファイルに行をまたいだ連番を付けるので、書き出したフォルダをそのまま fastlane `deliver` で使えます。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**설정 ▸ 내보내기 ▸ 파일 구조**: **fastlane**은 App Store 언어마다 폴더 하나(`en-US`, `de-DE`)를 만들고 파일 번호를 행 전체에 걸쳐 이어 매기므로, 내보낸 폴더를 fastlane `deliver`에서 바로 사용할 수 있습니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Ajustes ▸ Exportar ▸ Estrutura de arquivos**: **fastlane** cria uma pasta por idioma da App Store (`en-US`, `de-DE`) com arquivos numerados de forma contínua entre as linhas, para que a pasta exportada vá direto para o fastlane `deliver`."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Настройки ▸ Экспорт ▸ Структура файлов**: вариант **fastlane** создаёт отдельную папку для каждого языка App Store (`en-US`, `de-DE`) со сквозной нумерацией файлов по всем строкам, так что папку экспорта можно сразу передать в fastlane `deliver`."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Ayarlar ▸ Dışa Aktar ▸ Dosya düzeni**: **fastlane**, her App Store dili için bir klasör (`en-US`, `de-DE`) oluşturur ve dosyaları satırlar boyunca sıralı numaralandırır; böylece dışa aktarma klasörü doğrudan fastlane `deliver` ile kullanılabilir."
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Параметри ▸ Експорт ▸ Структура файлів**: варіант **fastlane** створює окрему папку для кожної мови App Store (`en-US`, `de-DE`) з наскрізною нумерацією файлів у всіх рядках, тож папку експорту можна одразу передати у fastlane `deliver`."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**设置 ▸ 导出 ▸ 文件布局**：**fastlane** 会为每种 App Store 语言创建一个文件夹（`en-US`、`de-DE`），文件编号跨行连续，因此导出文件夹可直接用于 fastlane `deliver`。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**設定 ▸ 輸出 ▸ 檔案佈局**：**fastlane** 會為每種 App Store 語言建立一個檔案夾（`en-US`、`de-DE`），檔案編號跨列連續，因此輸出檔案夾可直接用於 fastlane `deliver`。"
+          }
+        }
       }
     },
     "**File layout** — Standard, or **fastlane** for `deliver`-ready language folders." : {
       "localizations" : {
-
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Dateistruktur** – Standard oder **fastlane** für Sprachordner, die direkt mit `deliver` funktionieren."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Estructura de archivos**: Estándar, o **fastlane** para carpetas por idioma listas para `deliver`."
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**چیدمان فایل‌ها** — استاندارد، یا **fastlane** برای پوشه‌های زبان آماده برای `deliver`."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Organisation des fichiers** — Standard, ou **fastlane** pour des dossiers par langue prêts pour `deliver`."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Struttura dei file**: Standard oppure **fastlane** per cartelle per lingua pronte per `deliver`."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**ファイル構成** — 標準、または `deliver` でそのまま使える言語別フォルダを作る **fastlane**。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**파일 구조** — 표준 또는 `deliver`에 바로 쓸 수 있는 언어별 폴더를 만드는 **fastlane**."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Estrutura de arquivos** — Padrão, ou **fastlane** para pastas por idioma prontas para o `deliver`."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Структура файлов** — «Стандартный» или **fastlane** для папок по языкам, готовых к `deliver`."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Dosya düzeni** — Standart veya `deliver` için hazır dil klasörleri oluşturan **fastlane**."
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Структура файлів** — «Стандартний» або **fastlane** для папок за мовами, готових до `deliver`."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**文件布局** — 标准，或 **fastlane**（生成可直接用于 `deliver` 的语言文件夹）。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**檔案佈局** — 標準，或 **fastlane**（產生可直接用於 `deliver` 的語言檔案夾）。"
+          }
+        }
       }
     },
     "Text color or gradient" : {
       "localizations" : {
-
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Textfarbe oder Verlauf"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Color o degradado del texto"
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "رنگ یا گرادیان متن"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Couleur ou dégradé du texte"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Colore o sfumatura del testo"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "テキストの色またはグラデーション"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "텍스트 색상 또는 그라디언트"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cor ou gradiente do texto"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Цвет или градиент текста"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Metin rengi veya renk geçişi"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Колір або градієнт тексту"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "文字颜色或渐变"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "文字顏色或漸層"
+          }
+        }
       }
     },
     "Crop Image" : {
       "localizations" : {
-
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bild zuschneiden"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Recortar imagen"
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "برش تصویر"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Recadrer l'image"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ritaglia immagine"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "画像をトリミング"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "이미지 자르기"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Recortar imagem"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Обрезать изображение"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Görüntüyü Kırp"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Обрізати зображення"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "裁剪图像"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "裁切影像"
+          }
+        }
       }
     },
     "None of this folder's languages are in the project yet. Turn on the ones to add below, and their screenshots import with them." : {
       "localizations" : {
-
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Keine der Sprachen in diesem Ordner ist bereits im Projekt. Aktiviere unten die Sprachen, die du hinzufügen möchtest – ihre Screenshots werden dann mit importiert."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ninguno de los idiomas de esta carpeta está todavía en el proyecto. Activa abajo los que quieras añadir y sus capturas se importarán con ellos."
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "هیچ‌یک از زبان‌های این پوشه هنوز در پروژه نیست. زبان‌هایی را که می‌خواهید اضافه کنید در پایین روشن کنید تا اسکرین‌شات‌هایشان هم وارد شوند."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aucune des langues de ce dossier n'est encore dans le projet. Activez ci-dessous celles à ajouter : leurs captures seront importées avec elles."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nessuna delle lingue di questa cartella è ancora nel progetto. Attiva qui sotto quelle da aggiungere e i loro screenshot verranno importati insieme."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "このフォルダの言語はまだどれもプロジェクトにありません。下で追加する言語をオンにすると、そのスクリーンショットも一緒に読み込まれます。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "이 폴더의 언어가 아직 프로젝트에 하나도 없습니다. 아래에서 추가할 언어를 켜면 해당 스크린샷도 함께 가져옵니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nenhum dos idiomas desta pasta está no projeto ainda. Ative abaixo os que quer adicionar, e as capturas de tela deles serão importadas junto."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ни одного языка из этой папки пока нет в проекте. Включите ниже те, которые нужно добавить, — их скриншоты импортируются вместе с ними."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bu klasördeki dillerin hiçbiri henüz projede değil. Eklemek istediklerinizi aşağıda açın; ekran görüntüleri de onlarla birlikte içe aktarılır."
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Жодної мови з цієї папки ще немає в проєкті. Увімкніть нижче ті, які треба додати, — їхні знімки екрана імпортуються разом із ними."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "此文件夹中的语言都还不在项目中。在下方打开要添加的语言，其截图会随之导入。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "此檔案夾中的語言都還不在專案中。在下方開啟要加入的語言，其螢幕截圖會隨之輸入。"
+          }
+        }
       }
     },
     "**Crop**: double-click an image (or use **Crop** in the properties bar) and drag or use the arrow keys to move the picture inside its frame; the zoom slider next to **Crop** enlarges it. A locked image can't be cropped. Press **Return** or **Esc**, or click elsewhere, to finish. **Reset Crop** (right-click) centers it again." : {
       "localizations" : {
-
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Zuschneiden**: Doppelklicke auf ein Bild (oder nutze **Zuschneiden** in der Eigenschaftenleiste) und zieh oder benutze die Pfeiltasten, um das Bild im Rahmen zu verschieben; der Zoomregler neben **Zuschneiden** vergrößert es. Ein gesperrtes Bild lässt sich nicht zuschneiden. Drücke **Return** oder **Esc** oder klicke woanders hin, um fertig zu werden. **Zuschnitt zurücksetzen** (Rechtsklick) zentriert es wieder."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Recortar**: haz doble clic en una imagen (o usa **Recortar** en la barra de propiedades) y arrastra o usa las teclas de flecha para mover la imagen dentro de su marco; el regulador de zoom junto a **Recortar** la amplía. Una imagen bloqueada no se puede recortar. Pulsa **Retorno** o **Esc**, o haz clic en otro sitio, para terminar. **Restablecer recorte** (clic secundario) la vuelve a centrar."
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**برش**: روی یک تصویر دوبار کلیک کنید (یا از **برش** در نوار خصوصیات استفاده کنید) و با کشیدن یا کلیدهای جهت‌نما تصویر را درون قابش جابه‌جا کنید؛ لغزنده بزرگ‌نمایی کنار **برش** آن را بزرگ‌تر می‌کند. تصویر قفل‌شده را نمی‌توان برش داد. برای پایان، **Return** یا **Esc** را فشار دهید یا جای دیگری کلیک کنید. **بازنشانی برش** (کلیک راست) دوباره آن را در مرکز قرار می‌دهد."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Recadrer** : double-cliquez sur une image (ou utilisez **Recadrer** dans la barre de propriétés), puis faites glisser ou utilisez les touches fléchées pour déplacer l'image dans son cadre ; le curseur de zoom à côté de **Recadrer** l'agrandit. Une image verrouillée ne peut pas être recadrée. Appuyez sur **Retour** ou **Échap**, ou cliquez ailleurs, pour terminer. **Réinitialiser le recadrage** (clic droit) la recentre."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Ritaglia**: fai doppio clic su un'immagine (o usa **Ritaglia** nella barra delle proprietà) e trascina o usa i tasti freccia per spostare l'immagine nella cornice; il cursore dello zoom accanto a **Ritaglia** la ingrandisce. Un'immagine bloccata non può essere ritagliata. Premi **A capo** o **Esc**, oppure fai clic altrove, per terminare. **Reimposta ritaglio** (clic destro) la ricentra."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**トリミング**：画像をダブルクリック（またはプロパティバーの**トリミング**を使用）し、ドラッグするか矢印キーで枠内の画像を移動します。**トリミング**の横にあるズームスライダで拡大できます。ロックされた画像はトリミングできません。終了するには **return** か **esc** キーを押すか、別の場所をクリックします。**トリミングをリセット**（右クリック）で中央に戻ります。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**자르기**: 이미지를 이중 클릭하고(또는 속성 막대에서 **자르기** 사용) 드래그하거나 화살표 키로 프레임 안의 사진을 이동합니다. **자르기** 옆의 확대/축소 슬라이더로 사진을 키울 수 있습니다. 잠긴 이미지는 자를 수 없습니다. 끝내려면 **Return** 또는 **Esc** 키를 누르거나 다른 곳을 클릭하세요. **자르기 재설정**(오른쪽 클릭)을 하면 다시 가운데로 맞춰집니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Recortar**: clique duas vezes em uma imagem (ou use **Recortar** na barra de propriedades) e arraste ou use as teclas de seta para mover a imagem dentro do quadro; o controle de zoom ao lado de **Recortar** a amplia. Uma imagem bloqueada não pode ser recortada. Pressione **Return** ou **Esc**, ou clique em outro lugar, para terminar. **Redefinir recorte** (clique com o botão direito) a centraliza de novo."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Обрезать**: дважды нажмите на изображение (или используйте **Обрезать** на панели свойств) и перетаскивайте его или двигайте клавишами со стрелками внутри рамки; ползунок масштаба рядом с **Обрезать** увеличивает его. Заблокированное изображение обрезать нельзя. Чтобы закончить, нажмите **Return** или **Esc** либо щёлкните в другом месте. **Сбросить обрезку** (правый клик) снова выравнивает его по центру."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Kırp**: bir görüntüye çift tıklayın (veya özellikler çubuğundaki **Kırp**'ı kullanın) ve resmi çerçevesi içinde taşımak için sürükleyin ya da ok tuşlarını kullanın; **Kırp**'ın yanındaki yakınlaştırma sürgüsü onu büyütür. Kilitli bir görüntü kırpılamaz. Bitirmek için **Return** veya **Esc** tuşuna basın ya da başka bir yere tıklayın. **Kırpmayı Sıfırla** (sağ tıklama) onu yeniden ortalar."
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Обрізати**: двічі клацніть зображення (або скористайтеся кнопкою **Обрізати** на панелі властивостей) і перетягуйте його чи рухайте клавішами зі стрілками всередині рамки; повзунок масштабу поруч із **Обрізати** збільшує його. Замкнене зображення обрізати не можна. Щоб завершити, натисніть **Return** або **Esc** чи клацніть деінде. **Скинути обрізання** (правий клік) знову вирівнює його по центру."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**裁剪**：连按图像（或使用属性栏中的**裁剪**），然后拖移或使用箭头键在框内移动图片；**裁剪**旁的缩放滑块可将其放大。已锁定的图像无法裁剪。按下 **Return** 或 **Esc** 键，或点按其他位置即可完成。**重置裁剪**（右键点按）会将其重新居中。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**裁切**：按兩下影像（或使用屬性列中的**裁切**），然後拖移或使用方向鍵在框內移動圖片；**裁切**旁的縮放滑桿可將其放大。已鎖定的影像無法裁切。按下 **Return** 或 **Esc** 鍵，或按一下其他位置即可完成。**重置裁切**（按右鍵）會將其重新置中。"
+          }
+        }
       }
     },
     "While cropping an image, the arrow keys move the picture inside its frame instead." : {
       "localizations" : {
-
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Beim Zuschneiden eines Bilds verschieben die Pfeiltasten stattdessen das Bild in seinem Rahmen."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mientras recortas una imagen, las teclas de flecha mueven la imagen dentro de su marco."
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "هنگام برش یک تصویر، کلیدهای جهت‌نما به‌جای آن، تصویر را درون قابش جابه‌جا می‌کنند."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pendant le recadrage d'une image, les touches fléchées déplacent plutôt l'image dans son cadre."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Durante il ritaglio di un'immagine, i tasti freccia spostano invece l'immagine nella cornice."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "画像のトリミング中は、矢印キーで枠内の画像が移動します。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "이미지를 자르는 동안에는 화살표 키가 대신 프레임 안의 사진을 이동합니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ao recortar uma imagem, as teclas de seta movem a imagem dentro do quadro."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Во время обрезки изображения клавиши со стрелками двигают картинку внутри рамки."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bir görüntüyü kırparken ok tuşları bunun yerine resmi çerçevesi içinde taşır."
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Під час обрізання зображення клавіші зі стрілками рухають картинку всередині рамки."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "裁剪图像时，箭头键会改为在框内移动图片。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "裁切影像時，方向鍵會改為在框內移動圖片。"
+          }
+        }
       }
     },
     "Text color — replaces the gradient fill" : {
       "localizations" : {
-
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Textfarbe – ersetzt die Verlaufsfüllung"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Color del texto: sustituye el relleno degradado"
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "رنگ متن — جایگزین پرکردن گرادیان می‌شود"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Couleur du texte — remplace le remplissage en dégradé"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Colore testo: sostituisce il riempimento sfumato"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "テキストの色 — グラデーションの塗りつぶしを置き換えます"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "텍스트 색상 — 그라디언트 채우기를 대체합니다"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cor do texto — substitui o preenchimento em gradiente"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Цвет текста — заменяет градиентную заливку"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Metin rengi — renk geçişi dolgusunun yerini alır"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Колір тексту — замінює градієнтне заповнення"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "文字颜色 — 将取代渐变填充"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "文字顏色 — 將取代漸層填滿"
+          }
+        }
       }
     }
   },
