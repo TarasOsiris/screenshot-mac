@@ -34,6 +34,8 @@ struct CanvasShapeView: View {
     var zoom: CGFloat = 1.0
     let isSelected: Bool
     var isMultiSelected: Bool = false
+    /// Crop mode: a drag pans the picture inside the frame instead of moving the shape.
+    var isCropping = false
     var screenshotImage: NSImage?
     /// Stable content identity for `screenshotImage` (its resource file name). Backs the 3D
     /// device snapshot cache key, which must not fall back to a recyclable object address.
@@ -61,6 +63,7 @@ struct CanvasShapeView: View {
 
     @State var addBumpScale: CGFloat = 1.0
     @State var dragOffset: CGSize = .zero
+    @State var cropPanOffset: CGSize = .zero
     @State var isDragging = false
     @State var isDropTargeted = false
     @State var isEditingText = false
@@ -325,6 +328,8 @@ struct CanvasShapeView: View {
             displayOutlineWidth: displayOutlineWidth,
             screenshotImage: screenshotImage,
             screenshotImageIdentity: screenshotImageIdentity,
+            imageCrop: liveImageCrop,
+            isCropping: isCropping && showsEditorHelpers,
             resourceState: resourceState,
             fillImage: fillImage,
             defaultDeviceBodyColor: defaultDeviceBodyColor,

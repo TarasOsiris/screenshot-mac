@@ -58,6 +58,8 @@ struct CanvasShapeModel: Identifiable, Codable, Equatable {
 
     // Ungrouped type-specific fields (no cohesive cluster).
     var imageFileName: String?
+    /// Zoom and pan of an image shape's picture; nil is the centered aspect fill.
+    var imageCrop: ImageCrop?
     var svgContent: String?
     var svgUseColor: Bool?
     var starPointCount: Int?
@@ -174,7 +176,7 @@ struct CanvasShapeModel: Identifiable, Codable, Equatable {
         case textAlign = "ta", textVerticalAlign = "tva", italic = "it", uppercase = "uc"
         case letterSpacing = "ls", lineSpacing = "lns", lineHeightMultiple = "lhm"
         case translationKey = "tk", shrinkToFit = "stf"
-        case imageFileName = "ifn"
+        case imageFileName = "ifn", imageCrop = "icr"
         case deviceCategory = "dc", deviceBodyColorData = "dbc"
         case deviceFrameId = "dfi", screenshotFileName = "sfn"
         case devicePitch = "dpt", deviceYaw = "dyw", deviceBodyMaterial = "dbm", deviceLighting = "dlt"
@@ -220,6 +222,7 @@ struct CanvasShapeModel: Identifiable, Codable, Equatable {
         translationKey = try c.decodeIfPresent(String.self, forKey: .translationKey)
         shrinkToFit = try c.decodeIfPresent(Bool.self, forKey: .shrinkToFit)
         imageFileName = try c.decodeIfPresent(String.self, forKey: .imageFileName)
+        imageCrop = try c.decodeIfPresent(ImageCrop.self, forKey: .imageCrop)
         deviceCategory = try c.decodeIfPresent(DeviceCategory.self, forKey: .deviceCategory)
         deviceBodyColorData = try c.decodeIfPresent(CodableColor.self, forKey: .deviceBodyColorData)
         deviceFrameId = try c.decodeIfPresent(String.self, forKey: .deviceFrameId)
@@ -275,6 +278,7 @@ struct CanvasShapeModel: Identifiable, Codable, Equatable {
         try c.encodeIfPresent(translationKey, forKey: .translationKey)
         if shrinkToFit == true { try c.encode(true, forKey: .shrinkToFit) }
         try c.encodeIfPresent(imageFileName, forKey: .imageFileName)
+        if let imageCrop, !imageCrop.isIdentity { try c.encode(imageCrop, forKey: .imageCrop) }
         try c.encodeIfPresent(deviceCategory, forKey: .deviceCategory)
         try c.encodeIfPresent(deviceBodyColorData, forKey: .deviceBodyColorData)
         try c.encodeIfPresent(deviceFrameId, forKey: .deviceFrameId)
@@ -523,6 +527,16 @@ struct CanvasShapeModel: Identifiable, Codable, Equatable {
     /// and text, whose glyphs are outlined.
     var supportsOutlineEditing: Bool {
         type.supportsOutline || type == .text || (type == .device && deviceCategory == .invisible)
+    }
+
+    /// Zoom over the aspect-fill fit; pan offsets are left for the renderer to re-clamp.
+    var imageCropScale: Double {
+        get { imageCrop?.scale ?? 1 }
+        set {
+            var crop = imageCrop ?? ImageCrop()
+            crop.scale = min(max(newValue, ImageCrop.scaleRange.lowerBound), ImageCrop.scaleRange.upperBound)
+            imageCrop = crop.isIdentity ? nil : crop
+        }
     }
 
     /// Text takes a color or gradient fill on its glyphs, but not an image.
@@ -888,6 +902,7 @@ struct CanvasShapeModel: Identifiable, Codable, Equatable {
         if shrinkToFit != oldBase.shrinkToFit { result.shrinkToFit = shrinkToFit }
 
         if imageFileName != oldBase.imageFileName { result.imageFileName = imageFileName }
+        if imageCrop != oldBase.imageCrop { result.imageCrop = imageCrop }
         if deviceCategory != oldBase.deviceCategory { result.deviceCategory = deviceCategory }
         if deviceBodyColorData != oldBase.deviceBodyColorData { result.deviceBodyColorData = deviceBodyColorData }
         if deviceFrameId != oldBase.deviceFrameId { result.deviceFrameId = deviceFrameId }

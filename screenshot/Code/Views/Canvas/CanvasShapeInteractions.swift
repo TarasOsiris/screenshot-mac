@@ -16,6 +16,7 @@ struct CanvasShapeInteractions {
     /// row: on macOS it is a `fileImporter`, i.e. a presentation host, and one per shape put a
     /// `MergePlatformItemsView` in the display list for every image and device on the canvas.
     var onRequestImagePicker: (() -> Void)?
+    var onBeginCrop: (() -> Void)?
     var onDragSnap: ((CanvasShapeModel, CGSize) -> SnapResult)?
     var onDragEnd: (() -> Void)?
     var onOptionDragDuplicate: ((UUID) -> UUID?)?

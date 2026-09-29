@@ -20,6 +20,8 @@ final class CanvasKeyCommandMonitor {
         var isEditingText: () -> Bool
         var nudge: (CGFloat, CGFloat) -> Void
         var delete: () -> Void
+        /// Ends crop mode; false when no image is being cropped, so Return passes through.
+        var endCrop: () -> Bool = { false }
     }
 
     /// `nonisolated(unsafe)` because `deinit` is nonisolated even on a `@MainActor` class, and it
@@ -45,6 +47,7 @@ final class CanvasKeyCommandMonitor {
             case PlatformKeyCode.UpArrow:    handlers.nudge(0, -step); return nil
             case PlatformKeyCode.DownArrow:  handlers.nudge(0, step); return nil
             case PlatformKeyCode.Delete, PlatformKeyCode.ForwardDelete: handlers.delete(); return nil
+            case PlatformKeyCode.Return: return handlers.endCrop() ? nil : event
             default: return event
             }
         }

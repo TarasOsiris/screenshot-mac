@@ -352,6 +352,7 @@ extension EditorRowView {
                         zoom: 1.0,
                         isSelected: isInSelection,
                         isMultiSelected: isMulti,
+                        isCropping: state.imageCrop.shapeId == shape.id,
                         screenshotImage: shape.displayImageFileName.flatMap { state.screenshotImages[$0] },
                         screenshotImageIdentity: shape.displayImageFileName,
                         resourceState: CanvasResourceState(shape.displayImageFileName, in: state),
@@ -377,6 +378,7 @@ extension EditorRowView {
                                 state.saveImage(image, for: shape.id, source: origin)
                             },
                             onRequestImagePicker: { requestImagePicker(for: shape.id) },
+                            onBeginCrop: { guard !state.viewMode.isViewMode else { return }; state.beginImageCrop(shape.id) },
                             onDragSnap: { draggedShape, rawOffset in
                                 let targets = dragSession.snapTargets {
                                     AlignmentService.makeSnapTargets(

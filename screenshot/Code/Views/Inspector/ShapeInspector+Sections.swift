@@ -151,6 +151,9 @@ extension ShapeInspector {
     private func imageSection(shape: CanvasShapeModel, fields: Set<LocaleOverrideField>) -> some View {
         InspectorSection(.shapeMedia, "Image", accessory: { overrideBadge(.media, fields) }) {
             replaceImageRow(title: shape.imageFileName != nil ? "Replace Image" : "Choose Image")
+            if state.canCropImage(shape) {
+                ImageCropControls(state: state, shapeId: shapeId, sliderWidth: UIMetrics.SliderWidth.standard)
+            }
         }
     }
 

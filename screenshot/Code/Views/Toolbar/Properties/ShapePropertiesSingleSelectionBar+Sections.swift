@@ -101,6 +101,11 @@ extension ShapePropertiesSingleSelectionBar {
                 onPickImage: { pickAndReplaceImage(for: shapeId) },
                 onImageSelected: { state.saveImage($0, for: shapeId, source: .picker) },
             )
+            if state.canCropImage(shape) {
+                ShapePropertiesSection {
+                    ImageCropControls(state: state, shapeId: shapeId)
+                }
+            }
         }
 
         if shape.type == .svg {

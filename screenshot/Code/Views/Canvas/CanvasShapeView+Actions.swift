@@ -55,6 +55,8 @@ extension CanvasShapeView {
         }
         if shape.type == .text {
             beginTextEditing()
+        } else if shape.type == .image, screenshotImage != nil, let onBeginCrop = interactions.onBeginCrop {
+            onBeginCrop()
         } else if shape.type == .device || shape.type == .image {
             interactions.onRequestImagePicker?()
         }
@@ -92,6 +94,11 @@ extension CanvasShapeView {
     }
 
     private func handleDragChanged(_ value: DragGesture.Value) {
+        if isCropping {
+            cropPanOffset = value.translation
+            PlatformCursor.hold(.closedHand, for: .shapeBody)
+            return
+        }
         guard !shape.resolvedIsLocked else {
             if !isDragging && !isMultiSelected {
                 interactions.onSelect()
@@ -128,8 +135,12 @@ extension CanvasShapeView {
         }
     }
 
-    private func handleDragEnded(_: DragGesture.Value) {
+    private func handleDragEnded(_ value: DragGesture.Value) {
         PlatformCursor.release(.shapeBody)
+        if isCropping {
+            commitCropPan()
+            return
+        }
         let finalOffset = dragOffset
         dragOffset = .zero
         isDragging = false
@@ -142,6 +153,38 @@ extension CanvasShapeView {
             interactions.onUpdate(updated)
         }
         interactions.onDragEnd?()
+    }
+
+    /// The crop with the in-progress pan applied, clamping left to the renderer.
+    var liveImageCrop: ImageCrop? {
+        guard cropPanOffset != .zero else { return shape.imageCrop }
+        let local = shapeLocalTranslation(cropPanOffset)
+        var crop = shape.imageCrop ?? ImageCrop()
+        crop.offsetX += local.width / max(displayScale * shape.width, 1)
+        crop.offsetY += local.height / max(displayScale * shape.height, 1)
+        return crop
+    }
+
+    private func commitCropPan() {
+        let crop = liveImageCrop
+        cropPanOffset = .zero
+        guard let crop, let image = screenshotImage, image.size.width > 0, image.size.height > 0 else { return }
+        var updated = shape
+        updated.imageCrop = crop.clamped(
+            imageAspect: image.size.width / image.size.height,
+            frameSize: CGSize(width: shape.width, height: shape.height)
+        )
+        guard updated.imageCrop != shape.imageCrop else { return }
+        interactions.onUpdate(updated)
+    }
+
+    /// A pan on a rotated shape moves the picture along the shape's own axes.
+    private func shapeLocalTranslation(_ translation: CGSize) -> CGSize {
+        let radians = -shape.rotation * .pi / 180
+        return CGSize(
+            width: translation.width * cos(radians) - translation.height * sin(radians),
+            height: translation.width * sin(radians) + translation.height * cos(radians)
+        )
     }
 
     func handleDrop(_ providers: [NSItemProvider]) -> Bool {

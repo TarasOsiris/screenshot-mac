@@ -178,6 +178,7 @@
         "stf": { "description": "shrinkToFit — text shapes only. When true, the text is scaled down (to no less than half size) until every line fits the box; computed per locale. Written only when true.", "type": "boolean" },
 
         "ifn": { "description": "imageFileName — filename in resources/ for image shapes.", "type": "string" },
+        "icr": { "description": "imageCrop — zoom and pan of an image shape's picture inside its frame. Absent = centered aspect fill. Written only when not the identity.", "type": "object", "properties": { "s": { "description": "scale over the aspect-fill fit, 1–5", "type": "number" }, "x": { "description": "horizontal offset as a fraction of the frame width (clamped at render so the picture covers the frame)", "type": "number" }, "y": { "description": "vertical offset as a fraction of the frame height", "type": "number" } } },
 
         "dc":  { "description": "deviceCategory — device kind for device shapes.", "$ref": "#/$defs/DeviceCategory" },
         "dbc": { "description": "deviceBodyColorData — device body color override.", "$ref": "#/$defs/Color" },

@@ -6,6 +6,8 @@ struct CanvasShapeContextMenuContent: View {
     var screenshotImage: NSImage?
     /// Raises the row's single image picker for this shape (see `CanvasShapeInteractions`).
     var onRequestImagePicker: (() -> Void)?
+    var onCropImage: (() -> Void)?
+    var onResetCrop: (() -> Void)?
     var onReplaceSvg: (() -> Void)?
     var onClearImage: (() -> Void)?
     var onRemoveBackground: (() -> Void)?
@@ -80,6 +82,12 @@ struct CanvasShapeContextMenuContent: View {
                     onClearImage?()
                 }
                 .disabled(shape.displayImageFileName == nil)
+                if let onCropImage, screenshotImage != nil {
+                    Button("Crop Image", systemImage: "crop", action: onCropImage)
+                }
+                if let onResetCrop, shape.imageCrop != nil {
+                    Button("Reset Crop", systemImage: "crop.rotate", action: onResetCrop)
+                }
                 if let screenshotImage {
                     Button("Restore Original Aspect Ratio", systemImage: "aspectratio") {
                         let imageSize = screenshotImage.size

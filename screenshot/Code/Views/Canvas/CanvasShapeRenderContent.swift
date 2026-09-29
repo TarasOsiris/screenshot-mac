@@ -30,6 +30,8 @@ struct CanvasShapeRenderContent: View {
     let displayOutlineWidth: CGFloat
     var screenshotImage: NSImage?
     var screenshotImageIdentity: String?
+    var imageCrop: ImageCrop?
+    var isCropping = false
     var resourceState: CanvasResourceState = .satisfied
     var fillImage: NSImage?
     var defaultDeviceBodyColor: Color
@@ -232,16 +234,26 @@ struct CanvasShapeRenderContent: View {
         withImageDropAffordances(
             ZStack {
                 if let screenshotImage {
+                    let crop = clampedCrop(for: screenshotImage)
+                    if isCropping {
+                        // Editor-only: the part of the picture the frame hides, so a pan has a target.
+                        croppedImage(screenshotImage, crop: crop)
+                            .frame(width: displayW, height: displayH)
+                            .opacity(0.35)
+                            .allowsHitTesting(false)
+                    }
                     // Frame before clip: `.aspectRatio(.fill)` resolves to the *overflowing* size,
                     // so clipping first crops nothing and the image spills past the shape's bounds
                     // — in the editor and in every exported pixel — with the outline following it.
-                    Image(nsImage: screenshotImage)
-                        .resizable()
-                        .interpolation(.high)
-                        .aspectRatio(contentMode: .fill)
+                    croppedImage(screenshotImage, crop: crop)
                         .frame(width: displayW, height: displayH)
                         .clipShape(clip)
                         .overlay { imageOutline(clip) }
+                        .overlay {
+                            if isCropping {
+                                clip.stroke(Color.accentColor, style: StrokeStyle(lineWidth: 2, dash: [6, 4]))
+                            }
+                        }
                 } else if showsEditorHelpers {
                     // Editor-only empty state: preview and export draw nothing for an image shape
                     // with no image. Safe to branch on here — unlike `deviceContent`, neither arm
@@ -250,6 +262,24 @@ struct CanvasShapeRenderContent: View {
                         .overlay { imageOutline(clip) }
                 }
             }
+        )
+    }
+
+    /// Zoom and pan as fractions of the frame, so the crop is the same at any display scale.
+    private func croppedImage(_ image: NSImage, crop: ImageCrop) -> some View {
+        Image(nsImage: image)
+            .resizable()
+            .interpolation(.high)
+            .aspectRatio(contentMode: .fill)
+            .scaleEffect(crop.scale)
+            .offset(x: crop.offsetX * displayW, y: crop.offsetY * displayH)
+    }
+
+    private func clampedCrop(for image: NSImage) -> ImageCrop {
+        guard let imageCrop, image.size.height > 0 else { return ImageCrop() }
+        return imageCrop.clamped(
+            imageAspect: image.size.width / image.size.height,
+            frameSize: CGSize(width: displayW, height: displayH)
         )
     }
 

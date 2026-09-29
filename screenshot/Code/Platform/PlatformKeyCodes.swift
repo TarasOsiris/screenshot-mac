@@ -10,4 +10,5 @@ nonisolated enum PlatformKeyCode {
     static let UpArrow: UInt16 = 0x7E
     static let Delete: UInt16 = 0x33
     static let ForwardDelete: UInt16 = 0x75
+    static let Return: UInt16 = 0x24
 }

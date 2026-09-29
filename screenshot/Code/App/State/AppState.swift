@@ -16,7 +16,13 @@ final class AppState {
     /// A/B alternatives to the Original rows. Document state: undone and saved with `rows`.
     var variants: [ScreenshotVariant] = []
     var selectedRowId: UUID?
-    var selectedShapeIds: Set<UUID> = []
+    var selectedShapeIds: Set<UUID> = [] {
+        didSet {
+            if let cropping = imageCrop.shapeId, selectedShapeIds != [cropping] { imageCrop.end() }
+        }
+    }
+    /// The image shape in crop mode, if any. See ImageCropSession.
+    let imageCrop = ImageCropSession()
     /// The canvas's in-progress inline text edit. See InlineTextEditSession.
     let textEdit: InlineTextEditSession
 
@@ -301,7 +307,12 @@ final class AppState {
             hasSelection: { [weak self] in self?.hasSelection ?? false },
             isEditingText: { [weak self] in self?.textEdit.isActive ?? false },
             nudge: { [weak self] dx, dy in self?.nudgeSelectedShapes(dx: dx, dy: dy) },
-            delete: { [weak self] in self?.deleteSelectedShape() }
+            delete: { [weak self] in self?.deleteSelectedShape() },
+            endCrop: { [weak self] in
+                guard let self, imageCrop.isActive else { return false }
+                imageCrop.end()
+                return true
+            }
         ))
     }
 

@@ -1725,6 +1725,41 @@ struct ExportServiceTests {
         try expectNearWhite(bitmap, at: (2, 2), label: "Paper outside the glyphs stays clear of the gradient")
     }
 
+    /// A zoomed, panned crop shows the chosen quadrant in export, identically in the editor, and
+    /// never lets the picture spill past the shape.
+    @Test func imageCropShowsThePannedQuadrantInEditorAndExport() throws {
+        let quadrants = makeQuadrantImage()
+        var row = makeTestRow(width: 400, height: 400, bgColor: .white)
+        var shape = CanvasShapeModel(type: .image, x: 100, y: 100, width: 200, height: 200)
+        shape.imageFileName = "quad.png"
+        // 2× with the picture pushed right and down as far as it goes: the top-left quadrant fills the frame.
+        shape.imageCrop = ImageCrop(scale: 2, offsetX: 0.5, offsetY: 0.5)
+        row.shapes = [shape]
+        let images = ["quad.png": quadrants]
+
+        let export = try renderTemplateBitmap(index: 0, row: row, screenshotImages: images)
+        let editor = try renderEditorBitmap(index: 0, row: row, screenshotImages: images)
+        for bitmap in [export, editor] {
+            try expectDominant(bitmap, at: (130, 130), channel: .r, label: "top-left of frame")
+            try expectDominant(bitmap, at: (270, 270), channel: .r, label: "bottom-right of frame")
+            try expectNearWhite(bitmap, at: (90, 90), label: "outside the shape")
+            try expectNearWhite(bitmap, at: (310, 310), label: "outside the shape")
+        }
+    }
+
+    private func makeQuadrantImage() -> NSImage {
+        let size = NSSize(width: 200, height: 200)
+        let image = NSImage(size: size)
+        image.lockFocus()
+        // AppKit's origin is bottom-left: y >= 100 is the top half.
+        NSColor(srgbRed: 0.9, green: 0, blue: 0, alpha: 1).setFill(); NSRect(x: 0, y: 100, width: 100, height: 100).fill()
+        NSColor(srgbRed: 0, green: 0.8, blue: 0, alpha: 1).setFill(); NSRect(x: 100, y: 100, width: 100, height: 100).fill()
+        NSColor(srgbRed: 0, green: 0, blue: 0.9, alpha: 1).setFill(); NSRect(x: 0, y: 0, width: 100, height: 100).fill()
+        NSColor(srgbRed: 0.9, green: 0.6, blue: 0, alpha: 1).setFill(); NSRect(x: 100, y: 0, width: 100, height: 100).fill()
+        image.unlockFocus()
+        return image
+    }
+
     private func inkPixelCount(_ bitmap: NSBitmapImageRep) throws -> Int {
         var count = 0
         for y in stride(from: 0, to: bitmap.pixelsHigh, by: 2) {
