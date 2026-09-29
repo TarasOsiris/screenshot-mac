@@ -178889,6 +178889,211 @@
       "localizations" : {
 
       }
+    },
+    "Import Localized Screenshots" : {
+      "localizations" : {
+
+      }
+    },
+    "Choose a folder with one subfolder per language, such as en-US and de-DE." : {
+      "localizations" : {
+
+      }
+    },
+    "Choose" : {
+      "localizations" : {
+
+      }
+    },
+    "Project Colors" : {
+      "localizations" : {
+
+      }
+    },
+    "Save colors here to reuse them anywhere in this project." : {
+      "localizations" : {
+
+      }
+    },
+    "Document Colors" : {
+      "localizations" : {
+
+      }
+    },
+    "Save the current color to this project" : {
+      "localizations" : {
+
+      }
+    },
+    "Add Current Color" : {
+      "localizations" : {
+
+      }
+    },
+    "Remove from Project Colors" : {
+      "localizations" : {
+
+      }
+    },
+    "Save to Project Colors" : {
+      "localizations" : {
+
+      }
+    },
+    "Standard" : {
+      "localizations" : {
+
+      }
+    },
+    "File layout" : {
+      "localizations" : {
+
+      }
+    },
+    "Example: en-US/01_Onboarding%@.%@ — ready for fastlane deliver. One folder per App Store language, numbered across rows." : {
+      "localizations" : {
+
+      }
+    },
+    "A gradient replaces the colors set on parts of the text." : {
+      "localizations" : {
+
+      }
+    },
+    "Import Localized Screenshots…" : {
+      "localizations" : {
+
+      }
+    },
+    "No screenshots in this folder match this row's languages and its %@ size. Name subfolders by language — for example en-US and de-DE — or add the language code to each file name." : {
+      "localizations" : {
+
+      }
+    },
+    "Skipped folders: %@" : {
+      "localizations" : {
+
+      }
+    },
+    "^[%lld image](inflect: true) skipped: not %@." : {
+      "localizations" : {
+
+      }
+    },
+    "Replaces ^[%lld screenshot](inflect: true) already in this row." : {
+      "localizations" : {
+
+      }
+    },
+    "^[%lld screenshot](inflect: true)" : {
+      "localizations" : {
+
+      }
+    },
+    "Languages not in this project" : {
+      "localizations" : {
+
+      }
+    },
+    "Add %@ (%@)" : {
+      "localizations" : {
+
+      }
+    },
+    "Import" : {
+      "localizations" : {
+
+      }
+    },
+    "Unlock the shape to crop it" : {
+      "localizations" : {
+
+      }
+    },
+    "Drag the picture to reposition it inside the frame (or double-click the image)" : {
+      "localizations" : {
+
+      }
+    },
+    "Zoom the picture inside its frame" : {
+      "localizations" : {
+
+      }
+    },
+    "Reset Crop" : {
+      "localizations" : {
+
+      }
+    },
+    "Crop" : {
+      "localizations" : {
+
+      }
+    },
+    "**Project Colors** — the palette button next to a color well opens this project's saved colors. **+** saves the current color, click a swatch to apply it, and right-click to remove one. **Document Colors** below lists the colors the project already uses." : {
+      "localizations" : {
+
+      }
+    },
+    "**Fill** can be a solid color or a **gradient** across the letters, and **Outline** draws a stroke around them. A gradient replaces any colors set on parts of the text." : {
+      "localizations" : {
+
+      }
+    },
+    "Double-click a **device** shape, or an empty **image** shape, to open the picker and swap its picture." : {
+      "localizations" : {
+
+      }
+    },
+    "Double-click an **image** shape that has a picture to crop it: drag to reposition, then press **Return**." : {
+      "localizations" : {
+
+      }
+    },
+    "Text that is too long for its box loses its last lines. Such a shape shows a dashed **orange outline** with a warning badge on the canvas, its cell in the translation table says *Doesn't fit*, and the App Store Connect and Google Play upload checks list it as a warning. Enlarge the box, shorten the text, or turn on **Shrink to Fit**." : {
+      "localizations" : {
+
+      }
+    },
+    "**Import Localized Screenshots…** (row ▸ **⋯** menu, or drop a folder onto a row) takes a folder with one subfolder per language, such as a fastlane `screenshots` folder with `en-US` and `de-DE`, and gives each language its own screenshots in one step. Images whose size doesn't match the row are skipped, and a subfolder for a language the project doesn't have can be added as you import. One **Undo** reverts the whole import." : {
+      "localizations" : {
+
+      }
+    },
+    "**Settings ▸ Export ▸ File layout**: **fastlane** writes one folder per App Store language (`en-US`, `de-DE`) with files numbered across rows, so the export folder drops straight into fastlane `deliver`." : {
+      "localizations" : {
+
+      }
+    },
+    "**File layout** — Standard, or **fastlane** for `deliver`-ready language folders." : {
+      "localizations" : {
+
+      }
+    },
+    "Text color or gradient" : {
+      "localizations" : {
+
+      }
+    },
+    "Crop Image" : {
+      "localizations" : {
+
+      }
+    },
+    "None of this folder's languages are in the project yet. Turn on the ones to add below, and their screenshots import with them." : {
+      "localizations" : {
+
+      }
+    },
+    "**Crop**: double-click an image (or use **Crop** in the properties bar) and drag or use the arrow keys to move the picture inside its frame; the zoom slider next to **Crop** enlarges it. A locked image can't be cropped. Press **Return** or **Esc**, or click elsewhere, to finish. **Reset Crop** (right-click) centers it again." : {
+      "localizations" : {
+
+      }
+    },
+    "While cropping an image, the arrow keys move the picture inside its frame instead." : {
+      "localizations" : {
+
+      }
     }
   },
   "version" : "1.0"

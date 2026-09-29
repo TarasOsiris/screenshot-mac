@@ -53,6 +53,20 @@ struct MultiShapeEditingTests {
         return shape
     }
 
+    @Test func multiTextColorBindingTurnsGradientTextBackToSolid() {
+        var gradient = textShape(.blue)
+        gradient.fillStyle = .gradient
+        let plain = textShape(.blue)
+        let (state, tempDir, editor, _) = makeEditor(adding: [gradient, plain])
+        defer { cleanupTestState(tempDir) }
+
+        editor.multiTextColorBinding().wrappedValue = .red
+
+        #expect(documentShape(state, gradient.id)?.resolvedFillStyle == .color)
+        #expect(documentShape(state, gradient.id)?.color.hexString == Color.red.hexString)
+        #expect(documentShape(state, plain.id)?.color.hexString == Color.red.hexString)
+    }
+
     @Test func multiTextColorBindingFansOutToEverySelectedTextShape() {
         let rich = textShape(.blue, richText: mixedColorRichText())
         let plain = textShape(.blue)

@@ -536,6 +536,24 @@ extension AppState {
         return await finishImport(combined, source: .folder, rowIndex: idx, activeId: activeId)
     }
 
+    /// Screenshots already set for a language that `importLocalizedScreenshots` would overwrite.
+    /// A language still showing the base image isn't counted — importing there adds, not replaces.
+    func screenshotsReplaced(by plan: LocaleFolderImportPlan, inRow rowId: UUID) -> Int {
+        guard let idx = rowIndex(for: rowId) else { return 0 }
+        let row = rows[idx]
+        let targets = templatesContainingDevices(inRowAt: idx)
+        return plan.batches.reduce(0) { total, batch in
+            let localeCode = resolveImportLocale(.locale(batch.localeCode))
+            let replaced = targets.prefix(batch.files.count).filter { templateIndex in
+                guard let shapeIndex = existingDeviceShapeIndex(in: row, templateIndex: templateIndex) else { return false }
+                let shape = row.shapes[shapeIndex]
+                guard let localeCode else { return shape.displayImageFileName != nil }
+                return localeState.override(forCode: localeCode, shapeId: shape.id)?.overrideImageFileName != nil
+            }
+            return total + replaced.count
+        }
+    }
+
     /// Reports, writes and cleans up after the document mutation has landed.
     private func finishImport(_ batch: StagedImport, source: ImageImportOrigin, rowIndex idx: Int, activeId: UUID) async -> Int {
         guard batch.imported > 0 else { return 0 }

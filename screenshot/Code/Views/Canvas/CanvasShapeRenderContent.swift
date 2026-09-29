@@ -186,7 +186,9 @@ struct CanvasShapeRenderContent: View {
             .foregroundStyle(.white)
             .frame(width: 18, height: 18)
             .background(Color.orange, in: Circle())
-            .offset(x: 9, y: 9)
+            // Straddles the bottom edge it overflows, inset from the corner so it clears the
+            // bottom-right resize handle's 20 pt hit area — that handle is how you fix it.
+            .offset(x: -15, y: 9)
             .accessibilityLabel(Text("Text doesn't fit"))
             .help(Text("Text doesn't fit in its box. Enlarge the box, shorten the text, or turn on Shrink to Fit."))
     }

@@ -122,6 +122,8 @@ extension MultiShapeEditing {
             get: { firstTextShape?.color ?? CanvasShapeModel.placeholder.color },
             set: { newValue in
                 state.updateShapes(state.selectedShapeIds) { shape in
+                    // Picking a solid color has to drop a gradient fill, or the change is invisible.
+                    if shape.resolvedFillStyle != .color { shape.fillStyle = nil }
                     RichTextUtils.applyColorUpdate(to: &shape, color: newValue)
                 }
             }

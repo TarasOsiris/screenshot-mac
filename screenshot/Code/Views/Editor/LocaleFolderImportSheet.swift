@@ -7,6 +7,8 @@ struct LocaleFolderImportRequest: Identifiable {
     let rowId: UUID
     let rowSize: CGSize
     let plan: LocaleFolderImportPlan
+    /// Languages added in the sheet have no screenshots yet, so toggling them can't change this.
+    let replacedCount: Int
 }
 
 struct LocaleFolderImportSheet: View {
@@ -45,7 +47,10 @@ struct LocaleFolderImportSheet: View {
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
 
-            if request.plan.batches.isEmpty {
+            if request.plan.batches.isEmpty, !addableLocales.isEmpty {
+                Text("None of this folder's languages are in the project yet. Turn on the ones to add below, and their screenshots import with them.")
+                    .fixedSize(horizontal: false, vertical: true)
+            } else if request.plan.batches.isEmpty {
                 Text("No screenshots in this folder match this row's languages and its \(sizeLabel) size. Name subfolders by language — for example en-US and de-DE — or add the language code to each file name.")
                     .fixedSize(horizontal: false, vertical: true)
             } else {
@@ -84,6 +89,14 @@ struct LocaleFolderImportSheet: View {
                 )
                 .foregroundStyle(.secondary)
                 .help(request.plan.skippedForSize.map(\.lastPathComponent).joined(separator: "\n"))
+            }
+
+            if request.replacedCount > 0 {
+                Label(
+                    "Replaces ^[\(request.replacedCount) screenshot](inflect: true) already in this row.",
+                    systemImage: "exclamationmark.triangle"
+                )
+                .foregroundStyle(.orange)
             }
 
             HStack {

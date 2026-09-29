@@ -355,6 +355,80 @@ struct AppStateTests {
         #expect(!um.canUndo)
     }
 
+    @Test func localizedFolderImportCountsOnlyScreenshotsAlreadySetPerLanguage() async throws {
+        let (state, tempDir) = makeState()
+        defer { cleanup(tempDir) }
+        let rowId = try #require(state.rows.first?.id)
+        let count = state.rows[0].templates.count
+        let files = (0..<count).map { URL(fileURLWithPath: "/tmp/\($0).png") }
+        let plan = LocaleFolderImportPlan(batches: [
+            .init(localeCode: "en", files: files),
+            .init(localeCode: "de", files: files),
+        ])
+        #expect(state.screenshotsReplaced(by: plan, inRow: rowId) == 0)
+
+        let images = (0..<count).map { _ in makeTestImage(width: 1206, height: 2622) }
+        await state.importLocalizedScreenshots(
+            [(localeCode: "en", sources: importSources(images))],
+            into: rowId,
+            addingLocales: [LocaleDefinition(code: "de", label: "German")]
+        )
+
+        // German still falls back to the base images, so importing it replaces nothing.
+        #expect(state.screenshotsReplaced(by: plan, inRow: rowId) == count)
+    }
+
+    @Test func arrowKeysPanThePictureInCropMode() throws {
+        let (state, tempDir) = makeState()
+        defer { cleanup(tempDir) }
+        var shape = CanvasShapeModel(type: .image, x: 100, y: 100, width: 200, height: 200)
+        shape.imageFileName = "crop.png"
+        shape.imageCrop = ImageCrop(scale: 2)
+        state.rows[0].shapes.append(shape)
+        state.screenshotImages["crop.png"] = makeTestImage(width: 200, height: 200)
+        state.beginImageCrop(shape.id)
+        #expect(state.imageCrop.shapeId == shape.id)
+        let um = try #require(state.undoManager)
+        um.removeAllActions()
+
+        state.nudgeSelectedShapes(dx: 10, dy: 0)
+        state.nudgeSelectedShapes(dx: 0, dy: -10)
+        state.finishNudgeIfNeeded()
+
+        let cropped = try #require(state.rows[0].shapes.first { $0.id == shape.id })
+        #expect(cropped.x == shape.x && cropped.y == shape.y)
+        #expect(cropped.imageCrop == ImageCrop(scale: 2, offsetX: 0.05, offsetY: -0.05))
+
+        um.undo()
+        #expect(state.rows[0].shapes.first { $0.id == shape.id }?.imageCrop == shape.imageCrop)
+        #expect(!um.canUndo)
+    }
+
+    @Test func enteringCropModeSplitsAMoveFromACropPanInUndo() throws {
+        let (state, tempDir) = makeState()
+        defer { cleanup(tempDir) }
+        var shape = CanvasShapeModel(type: .image, x: 100, y: 100, width: 200, height: 200)
+        shape.imageFileName = "crop.png"
+        shape.imageCrop = ImageCrop(scale: 2)
+        state.rows[0].shapes.append(shape)
+        state.screenshotImages["crop.png"] = makeTestImage(width: 200, height: 200)
+        state.selectShape(shape.id, in: state.rows[0].id)
+        let um = try #require(state.undoManager)
+        um.removeAllActions()
+
+        state.nudgeSelectedShapes(dx: 10, dy: 0)
+        state.beginImageCrop(shape.id)
+        state.nudgeSelectedShapes(dx: 10, dy: 0)
+        state.endImageCrop()
+
+        um.undo()
+        let afterFirstUndo = try #require(state.rows[0].shapes.first { $0.id == shape.id })
+        #expect(afterFirstUndo.x == shape.x + 10)
+        #expect(afterFirstUndo.imageCrop == shape.imageCrop)
+        um.undo()
+        #expect(state.rows[0].shapes.first { $0.id == shape.id }?.x == shape.x)
+    }
+
     @Test func batchImportImagesReusesExistingDeviceShapes() async throws {
         let (state, tempDir) = makeState()
         defer { cleanup(tempDir) }

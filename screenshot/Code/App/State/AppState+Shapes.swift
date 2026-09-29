@@ -412,22 +412,18 @@ extension AppState {
 
     func nudgeSelectedShapes(dx: CGFloat, dy: CGFloat) {
         guard let rowIdx = selectedRowIndex, !selectedShapeIds.isEmpty else { return }
+        if let cropId = imageCrop.shapeId {
+            nudgeImageCrop(cropId, rowIdx: rowIdx, dx: dx, dy: dy)
+            return
+        }
 
         let ids = selectedShapeIds
         let hasMovable = rows[rowIdx].shapes.contains { ids.contains($0.id) && !$0.resolvedIsLocked }
         guard hasMovable else { return }
 
-        // Capture undo state only at the start of a nudge sequence — and only when
-        // we know at least one shape will actually move, so a fully-locked nudge
-        // doesn't poison the baseline for a later, unrelated nudge.
-        if !edits.nudge.isActive {
-            commitAllPendingEdits()
-            let baseRow = rows[rowIdx]
-            edits.nudge.begin(id: rows[rowIdx].id) { [weak self] in
-                guard let self else { return }
-                self.registerUndoForRowWithBase(self.edits.nudgeActionName, baseRow: baseRow)
-            }
-        }
+        // Only once something will actually move, so a fully-locked nudge doesn't poison the
+        // baseline for a later, unrelated nudge.
+        beginNudgeIfNeeded(rowIdx: rowIdx)
         edits.nudgeActionName = ids.count > 1 ? "Move Shapes" : "Move Shape"
 
         for i in rows[rowIdx].shapes.indices {
@@ -438,6 +434,44 @@ extension AppState {
         }
         scheduleSave()
         edits.nudge.arm()
+    }
+
+    /// In crop mode the arrows pan the picture inside the frame, in canvas directions.
+    private func nudgeImageCrop(_ shapeId: UUID, rowIdx: Int, dx: CGFloat, dy: CGFloat) {
+        guard let shapeIdx = rows[rowIdx].shapes.firstIndex(where: { $0.id == shapeId }) else { return }
+        let shape = rows[rowIdx].shapes[shapeIdx]
+        // The frame a locale sees can differ from the base one; clamp against what's on screen,
+        // as the drag does.
+        let resolved = LocaleService.resolveShape(shape, localeState: localeState)
+        guard !resolved.resolvedIsLocked, resolved.width > 0, resolved.height > 0,
+              let fileName = resolved.displayImageFileName,
+              let image = screenshotImages[fileName] else { return }
+
+        let frameSize = CGSize(width: resolved.width, height: resolved.height)
+        let local = ResizeGeometry.localTranslation(CGSize(width: dx, height: dy), rotation: resolved.rotation)
+        var crop = (shape.imageCrop ?? ImageCrop()).clamped(imageSize: image.size, frameSize: frameSize)
+        crop.offsetX += local.width / resolved.width
+        crop.offsetY += local.height / resolved.height
+        let clamped = crop.clamped(imageSize: image.size, frameSize: frameSize)
+        let newCrop = clamped.isIdentity ? nil : clamped
+        guard newCrop != shape.imageCrop else { return }
+
+        beginNudgeIfNeeded(rowIdx: rowIdx)
+        edits.nudgeActionName = "Crop Image"
+        rows[rowIdx].shapes[shapeIdx].imageCrop = newCrop
+        scheduleSave()
+        edits.nudge.arm()
+    }
+
+    /// Captures the undo base at the start of a nudge burst; the burst commits as one step.
+    private func beginNudgeIfNeeded(rowIdx: Int) {
+        guard !edits.nudge.isActive else { return }
+        commitAllPendingEdits()
+        let baseRow = rows[rowIdx]
+        edits.nudge.begin(id: baseRow.id) { [weak self] in
+            guard let self else { return }
+            self.registerUndoForRowWithBase(self.edits.nudgeActionName, baseRow: baseRow)
+        }
     }
 
     /// Commits a pending arrow-key nudge as one undo step. No-op when no nudge is captured.

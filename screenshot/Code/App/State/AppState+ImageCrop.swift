@@ -11,13 +11,15 @@ extension AppState {
         let shape = LocaleService.resolveShape(rows[location.rowIndex].shapes[location.shapeIndex], localeState: localeState)
         guard canCropImage(shape), !shape.resolvedIsLocked,
               let fileName = shape.displayImageFileName, screenshotImages[fileName] != nil else { return }
+        // Arrow keys move the shape outside crop mode and the picture inside it — separate undo steps.
+        finishNudgeIfNeeded()
         selectShape(shapeId, in: rows[location.rowIndex].id)
         imageCrop.begin(shapeId)
     }
 
     func toggleImageCrop(_ shapeId: UUID) {
         if imageCrop.shapeId == shapeId {
-            imageCrop.end()
+            endImageCrop()
         } else {
             beginImageCrop(shapeId)
         }
@@ -27,6 +29,7 @@ extension AppState {
     @discardableResult
     func endImageCrop() -> Bool {
         guard imageCrop.isActive else { return false }
+        finishNudgeIfNeeded()
         imageCrop.end()
         return true
     }

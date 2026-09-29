@@ -175,7 +175,10 @@ extension EditorRowView {
         CrashReportingService.breadcrumb(.media, "locale folder planned", data: [
             "images": plan.imageCount, "locales": plan.batches.count, "skipped": plan.skippedForSize.count,
         ])
-        localeFolderImport = LocaleFolderImportRequest(folder: folder, rowId: row.id, rowSize: rowSize, plan: plan)
+        localeFolderImport = LocaleFolderImportRequest(
+            folder: folder, rowId: row.id, rowSize: rowSize, plan: plan,
+            replacedCount: state.screenshotsReplaced(by: plan, inRow: row.id)
+        )
     }
 
     func performLocaleFolderImport(_ request: LocaleFolderImportRequest, addingLocales: [LocaleDefinition]) {
