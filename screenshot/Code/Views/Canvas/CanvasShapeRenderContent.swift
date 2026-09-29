@@ -164,9 +164,15 @@ struct CanvasShapeRenderContent: View {
         .background { textBackgroundLayer }
         .scaleEffect(displayScale, anchor: .topLeading)
         .frame(width: displayW, height: displayH, alignment: .topLeading)
-        .overlay(alignment: .bottomTrailing) {
+        .overlay {
             if showsOverflow {
-                textOverflowBadge
+                // The box the text overflows, so it's clear which edge is the limit.
+                ZStack(alignment: .bottomTrailing) {
+                    Rectangle()
+                        .strokeBorder(Color.orange, style: StrokeStyle(lineWidth: 1, dash: [4, 3]))
+                        .allowsHitTesting(false)
+                    textOverflowBadge
+                }
             }
         }
     }
@@ -174,12 +180,13 @@ struct CanvasShapeRenderContent: View {
     /// Editor-only: TextKit drops the lines that don't fit, so without this a long translation
     /// just loses its last line with no sign anything is wrong.
     private var textOverflowBadge: some View {
-        Image(systemName: "exclamationmark.triangle.fill")
-            .font(.system(size: 11, weight: .semibold))
+        // A plain "!" centers in a circle; the triangle glyph's optical center sits low.
+        Image(systemName: "exclamationmark")
+            .font(.system(size: 11, weight: .heavy))
             .foregroundStyle(.white)
-            .padding(4)
+            .frame(width: 18, height: 18)
             .background(Color.orange, in: Circle())
-            .offset(x: 8, y: 8)
+            .offset(x: 9, y: 9)
             .accessibilityLabel(Text("Text doesn't fit"))
             .help(Text("Text doesn't fit in its box. Enlarge the box, shorten the text, or turn on Shrink to Fit."))
     }
