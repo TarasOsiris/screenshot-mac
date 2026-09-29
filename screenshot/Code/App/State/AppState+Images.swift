@@ -35,6 +35,8 @@ enum ImageImportOrigin: String, CaseIterable {
     /// Pasted from the system pasteboard.
     case paste
     case mcp
+    /// A folder whose subfolders or file names say which locale each screenshot belongs to.
+    case folder
     /// DEBUG-only simulator capture. Analytics is off in DEBUG, so this never ships —
     /// it exists so the path is labelled rather than silently inheriting the default.
     case simulator
@@ -501,7 +503,65 @@ extension AppState {
         let span = PerfSignpost.begin("AppState.batchImportImages", "images=\(sources.count)")
         defer { PerfSignpost.end("AppState.batchImportImages", span) }
 
-        let localeCode = resolveImportLocale(targetLocale)
+        let batch = stageBatchImport(
+            sources, intoRowAt: idx, rowId: rowId,
+            localeCode: resolveImportLocale(targetLocale), maxTemplatesPerRow: maxTemplatesPerRow
+        )
+        guard batch.imported > 0 else { return 0 }
+        captureImport(count: batch.imported, source: source, device: rows[idx].defaultDeviceCategory)
+
+        let staged = batch.staged
+        let replacedFiles = batch.replaced
+        await flushStagedImageWrites(staged, activeId: activeId)
+        // One document walk for the whole batch instead of one per replaced image.
+        cleanupUnreferencedImages(replacedFiles)
+        return batch.imported
+    }
+
+    /// Imports one batch per locale into a row as a single undo step. Base-locale batches should
+    /// come first, so a later locale never seeds the base image a base batch is about to set.
+    @discardableResult
+    func importLocalizedScreenshots(
+        _ batches: [(localeCode: String, sources: [ImageImportSource])],
+        into rowId: UUID,
+        addingLocales: [LocaleDefinition] = [],
+        maxTemplatesPerRow: Int? = nil
+    ) async -> Int {
+        guard let idx = rowIndex(for: rowId), let activeId = activeProjectId else { return 0 }
+        var staged: [StagedImageWrite] = []
+        var replaced: [String?] = []
+        var imported = 0
+        withUndo("Import Localized Screenshots") {
+            for locale in addingLocales where !localeState.hasLocale(locale.code) {
+                LocaleService.addLocale(&localeState, locale: locale)
+            }
+            for batch in batches {
+                let result = stageBatchImport(
+                    batch.sources, intoRowAt: idx, rowId: rowId,
+                    localeCode: resolveImportLocale(.locale(batch.localeCode)),
+                    maxTemplatesPerRow: maxTemplatesPerRow
+                )
+                staged += result.staged
+                replaced += result.replaced
+                imported += result.imported
+            }
+        }
+        guard imported > 0 else { return 0 }
+        captureImport(count: imported, source: .folder, device: rows[idx].defaultDeviceCategory)
+        await flushStagedImageWrites(staged, activeId: activeId)
+        cleanupUnreferencedImages(replaced)
+        return imported
+    }
+
+    /// The synchronous half of an import: the document mutation, in its own undo step unless an
+    /// outer transaction is open. File writes are returned for the caller to flush.
+    private func stageBatchImport(
+        _ sources: [ImageImportSource],
+        intoRowAt idx: Int,
+        rowId: UUID,
+        localeCode: String?,
+        maxTemplatesPerRow: Int?
+    ) -> (staged: [StagedImageWrite], replaced: [String?], imported: Int) {
         let templatesWithDevices = templatesContainingDevices(inRowAt: idx)
         // Templates an image can fill without creating a new one.
         let reusableCount = templatesWithDevices.isEmpty ? rows[idx].templates.count : templatesWithDevices.count
@@ -512,7 +572,7 @@ extension AppState {
                 sources = Array(sources.prefix(maxImages))
             }
         }
-        guard !sources.isEmpty else { return 0 }
+        guard !sources.isEmpty else { return ([], [], 0) }
 
         var staged: [StagedImageWrite] = []
         var replacedFiles: [String?] = []
@@ -540,12 +600,7 @@ extension AppState {
                 replacedFiles.append(replaced)
             }
         }
-        captureImport(count: sources.count, source: source, device: rows[idx].defaultDeviceCategory)
-
-        await flushStagedImageWrites(staged, activeId: activeId)
-        // One document walk for the whole batch instead of one per replaced image.
-        cleanupUnreferencedImages(replacedFiles)
-        return sources.count
+        return (staged, replacedFiles, sources.count)
     }
 
     /// Writes every staged resource, publishing each editor thumbnail as it lands so the row fills

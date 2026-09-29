@@ -107,6 +107,22 @@ enum ExportFileNaming {
         return "\(padded)_\(rowName)_\(localeSuffix)\(formattedFileSuffix(customSuffix)).\(format.fileExtension)"
     }
 
+    /// fastlane `deliver` layout: one folder per App Store language code, files numbered across
+    /// the whole locale so rows never collide — `deliver` sorts by name and assigns the device
+    /// from each image's pixel size, so neither needs to be in the path.
+    static func fastlaneFileName(number: Int, row: ScreenshotRow, customSuffix: String = "", format: ExportImageFormat = .png) -> String {
+        let padded = String(format: "%02d", number)
+        return "\(padded)_\(exportRowFileNameComponent(for: row))\(formattedFileSuffix(customSuffix)).\(format.fileExtension)"
+    }
+
+    static func fastlaneLocaleFolder(projectCode: String) -> String {
+        sanitizedFileName(ASCLanguageMatcher.appStoreLanguageCode(forProjectCode: projectCode) ?? projectCode)
+    }
+
+    static var preferredNamingScheme: ExportNamingScheme {
+        UserDefaults.standard.string(forKey: AppSettingsKeys.exportNamingScheme).flatMap(ExportNamingScheme.init) ?? .standard
+    }
+
     static func sanitizedRootFolderName(_ projectName: String) -> String {
         let trimmed = projectName.trimmingCharacters(in: .whitespacesAndNewlines)
         let candidate = trimmed.isEmpty ? "Screenshots" : trimmed
@@ -154,4 +170,11 @@ private extension String {
         }
         return out
     }
+}
+
+enum ExportNamingScheme: String, CaseIterable, Identifiable {
+    case standard
+    case fastlane
+
+    var id: String { rawValue }
 }

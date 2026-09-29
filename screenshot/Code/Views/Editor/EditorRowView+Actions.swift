@@ -162,6 +162,7 @@ extension EditorRowView {
             isSvgDialogPresented: $isSvgDialogPresented,
             addShapeFromMenu: addShapeFromMenu,
             exportRowScreenshots: exportRowScreenshots,
+            importLocalizedScreenshots: chooseLocaleFolder,
             exportRowImage: { exportRowImage(showcase: $0) },
             duplicateRow: duplicateRow,
             moveRowUp: moveRowUp,

@@ -62,20 +62,11 @@ enum ASCLocaleMatcher {
         appCodes: [String],
         to localizations: [ASCAppStoreVersionLocalization]
     ) -> [String: [ASCAppStoreVersionLocalization]] {
-        let lowered = appCodes.map { (code: $0, lower: $0.lowercased()) }
         var result: [String: [ASCAppStoreVersionLocalization]] = [:]
         for localization in localizations {
-            let ascLower = localization.attributes.locale.lowercased()
-            var bestCode: String?
-            var bestLength = -1
-            for (code, lower) in lowered {
-                let isMatch = ascLower == lower || ascLower.hasPrefix(lower + "-")
-                if isMatch && lower.count > bestLength {
-                    bestCode = code
-                    bestLength = lower.count
-                }
+            if let code = LocaleCodeMatcher.match(localization.attributes.locale, among: appCodes) {
+                result[code, default: []].append(localization)
             }
-            if let bestCode { result[bestCode, default: []].append(localization) }
         }
         return result
     }

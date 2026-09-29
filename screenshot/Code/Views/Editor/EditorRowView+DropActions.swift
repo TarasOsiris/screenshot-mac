@@ -33,6 +33,7 @@ extension EditorRowView {
 
     func handleCanvasDrop(_ providers: [NSItemProvider], at displayLocation: CGPoint, displayScale ds: CGFloat) -> Bool {
         guard !providers.isEmpty else { return false }
+        if routeFolderDrop(providers) { return true }
 
         var svgProviders: [NSItemProvider] = []
         var imageProviders: [NSItemProvider] = []
@@ -125,6 +126,77 @@ extension EditorRowView {
                 if imported < sources.count {
                     store.presentPaywall(for: .templateLimit)
                 }
+            }
+        }
+    }
+
+    // MARK: - Localized folder import
+
+    /// A single dropped folder is a localized import, not an image: Finder hands it over as a bare
+    /// file URL that the image loader would silently discard.
+    private func routeFolderDrop(_ providers: [NSItemProvider]) -> Bool {
+        #if os(macOS)
+        guard providers.count == 1, let provider = providers.first,
+              provider.hasItemConformingToTypeIdentifier(UTType.folder.identifier)
+                || provider.hasItemConformingToTypeIdentifier(UTType.directory.identifier),
+              !provider.hasItemConformingToTypeIdentifier(UTType.image.identifier)
+        else { return false }
+        let begin = beginLocaleFolderImport
+        _ = provider.loadObject(ofClass: URL.self) { @Sendable url, _ in
+            guard let url else { return }
+            Task { @MainActor in begin(url) }
+        }
+        return true
+        #else
+        return false
+        #endif
+    }
+
+    func chooseLocaleFolder() {
+        #if os(macOS)
+        let panel = NSOpenPanel()
+        panel.title = String(localized: "Import Localized Screenshots")
+        panel.message = String(localized: "Choose a folder with one subfolder per language, such as en-US and de-DE.")
+        panel.canChooseFiles = false
+        panel.canChooseDirectories = true
+        panel.allowsMultipleSelection = false
+        panel.prompt = String(localized: "Choose")
+        guard panel.runModal() == .OK, let folder = panel.url else { return }
+        beginLocaleFolderImport(folder)
+        #endif
+    }
+
+    func beginLocaleFolderImport(_ folder: URL) {
+        let rowSize = CGSize(width: row.templateWidth, height: row.templateHeight)
+        let plan = LocaleFolderImportPlanner.plan(
+            folder: folder,
+            projectLocaleCodes: state.localeState.locales.map(\.code),
+            rowSize: rowSize
+        )
+        CrashReportingService.breadcrumb(.media, "locale folder planned", data: [
+            "images": plan.imageCount, "locales": plan.batches.count, "skipped": plan.skippedForSize.count,
+        ])
+        localeFolderImport = LocaleFolderImportRequest(folder: folder, rowId: row.id, rowSize: rowSize, plan: plan)
+    }
+
+    func performLocaleFolderImport(_ request: LocaleFolderImportRequest, addingLocales: [LocaleDefinition]) {
+        let plan = addingLocales.isEmpty ? request.plan : LocaleFolderImportPlanner.plan(
+            folder: request.folder,
+            projectLocaleCodes: state.localeState.locales.map(\.code) + addingLocales.map(\.code),
+            rowSize: request.rowSize
+        )
+        let batches = plan.batches.map { batch in
+            (localeCode: batch.localeCode, sources: batch.files.compactMap { url in
+                NSImage(contentsOf: url).map { ImageImportSource(image: $0, sourceURL: url) }
+            })
+        }
+        let cap = store.isProUnlocked ? nil : PurchaseService.freeMaxTemplatesPerRow
+        Task { @MainActor in
+            let imported = await state.importLocalizedScreenshots(
+                batches, into: request.rowId, addingLocales: addingLocales, maxTemplatesPerRow: cap
+            )
+            if imported < plan.imageCount {
+                store.presentPaywall(for: .templateLimit)
             }
         }
     }

@@ -326,6 +326,35 @@ struct AppStateTests {
         #expect(state.rows.first!.shapes.first { $0.id == original.id } == original)
     }
 
+    @Test func localizedFolderImportIsOneUndoStepAcrossLocales() async throws {
+        let (state, tempDir) = makeState()
+        defer { cleanup(tempDir) }
+        let rowId = try #require(state.rows.first?.id)
+        let before = state.rows
+        let beforeLocales = state.localeState
+        let um = try #require(state.undoManager)
+        um.removeAllActions()
+
+        let count = state.rows[0].templates.count
+        let images = (0..<count).map { _ in makeTestImage(width: 1206, height: 2622) }
+        let imported = await state.importLocalizedScreenshots(
+            [(localeCode: "en", sources: importSources(images)), (localeCode: "de", sources: importSources(images))],
+            into: rowId,
+            addingLocales: [LocaleDefinition(code: "de", label: "German")]
+        )
+
+        #expect(imported == count * 2)
+        #expect(state.localeState.hasLocale("de"))
+        let devices = state.rows[0].shapes.filter { $0.type == .device }
+        #expect(devices.allSatisfy { $0.screenshotFileName != nil })
+        #expect(devices.allSatisfy { state.localeState.overrides["de"]?[$0.id.uuidString]?.overrideImageFileName != nil })
+
+        um.undo()
+        #expect(state.rows == before)
+        #expect(state.localeState == beforeLocales)
+        #expect(!um.canUndo)
+    }
+
     @Test func batchImportImagesReusesExistingDeviceShapes() async throws {
         let (state, tempDir) = makeState()
         defer { cleanup(tempDir) }

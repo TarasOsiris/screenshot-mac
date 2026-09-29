@@ -144,6 +144,54 @@ struct ExportAllTests {
         #expect(localizedEN != localizedDE)
     }
 
+    @Test func fastlaneLayoutNumbersAcrossRowsInAppStoreLocaleFolders() async throws {
+        let rowA = makeTextRow(label: "Onboarding", text: "Hello")
+        let rowB = makeTextRow(label: "Features", text: "World")
+        let tempDir = makeTemporaryDataDirectory(label: "export-fastlane-tests")
+        defer { try? FileManager.default.removeItem(at: tempDir) }
+
+        let export = try await ExportService.exportAll(
+            rows: [rowA, rowB],
+            projectName: "TestProject",
+            to: tempDir,
+            source: EmptyDiskRenderSource(localeState: makeLocaleState()),
+            namingScheme: .fastlane
+        )
+
+        let relative = Set(export.fileURLs.map { url in
+            url.pathComponents.suffix(2).joined(separator: "/")
+        })
+        #expect(relative == [
+            "en-US/01_Onboarding.png", "en-US/02_Onboarding.png", "en-US/03_Features.png", "en-US/04_Features.png",
+            "de-DE/01_Onboarding.png", "de-DE/02_Onboarding.png", "de-DE/03_Features.png", "de-DE/04_Features.png",
+        ])
+        for url in export.fileURLs {
+            #expect(FileManager.default.fileExists(atPath: url.path), "missing \(url.path)")
+            #expect(
+                url.deletingLastPathComponent().deletingLastPathComponent().standardizedFileURL.path
+                    == export.folderURL.standardizedFileURL.path,
+                "no row subfolders"
+            )
+        }
+    }
+
+    @Test func fastlaneLayoutSkipsALocaleThatClaimsTheSameStoreFolder() async throws {
+        let row = makeTextRow(label: "Onboarding", text: "Hello")
+        let tempDir = makeTemporaryDataDirectory(label: "export-fastlane-dupe-tests")
+        defer { try? FileManager.default.removeItem(at: tempDir) }
+        let localeState = LocaleState(
+            locales: [LocaleDefinition(code: "en", label: "English"), LocaleDefinition(code: "en-US", label: "English (US)")],
+            activeLocaleCode: "en",
+            overrides: [:]
+        )
+
+        let export = try await ExportService.exportAll(
+            rows: [row], projectName: "TestProject", to: tempDir,
+            source: EmptyDiskRenderSource(localeState: localeState), namingScheme: .fastlane
+        )
+        #expect(export.fileURLs.count == 2)
+    }
+
     /// exportAll now renders per-template; a blurred spanning background is the case
     /// that must keep using the full-width composed strip for parity.
     @Test func exportAllMatchesSingleTemplateRenderForBlurredSpanningRow() async throws {

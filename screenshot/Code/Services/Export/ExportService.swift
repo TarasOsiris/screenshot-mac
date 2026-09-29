@@ -29,6 +29,7 @@ struct ExportService {
         source: some RowRenderSource,
         localeFilter: String? = nil,
         customSuffix: String = "",
+        namingScheme: ExportNamingScheme = .standard,
         variants: [ScreenshotVariant] = [],
         onProgress: (@MainActor (Int) -> Void)? = nil
     ) async throws -> (folderURL: URL, fileURLs: [URL], unrenderable: [String]) {
@@ -50,11 +51,26 @@ struct ExportService {
         let allLocales = localeState.locales.isEmpty
             ? [LocaleDefinition(code: "en", label: "English")]
             : localeState.locales
-        let localesToExport: [LocaleDefinition]
+        var localesToExport: [LocaleDefinition]
         if let localeFilter, let match = allLocales.first(where: { $0.code == localeFilter }) {
             localesToExport = [match]
         } else {
             localesToExport = allLocales
+        }
+        let isFastlane = namingScheme == .fastlane
+        if isFastlane {
+            // `en` and `en-US` both land in `en-US/`; the second would overwrite the first's files.
+            var claimed = Set<String>()
+            localesToExport = localesToExport.filter {
+                claimed.insert(ExportFileNaming.fastlaneLocaleFolder(projectCode: $0.code)).inserted
+            }
+        }
+        // fastlane numbers continue across rows within a locale folder.
+        var fastlaneRowOffsets: [Int] = []
+        var templatesBefore = 0
+        for row in rows {
+            fastlaneRowOffsets.append(templatesBefore)
+            templatesBefore += row.templates.count
         }
 
         var completed = 0
@@ -82,7 +98,7 @@ struct ExportService {
 
         do {
             // Deduped per variant folder, since a variant's copy keeps its source row's label.
-            let multiRow = rows.count > 1
+            let multiRow = rows.count > 1 && !isFastlane
             var usedFolderNames: [String: Int] = [:]
             let rowFolderNames: [String] = rows.enumerated().map { rowIndex, row in
                 let baseName = ExportFileNaming.exportFolderName(for: row)
@@ -116,7 +132,12 @@ struct ExportService {
                 var rowDestFolders: [String: URL] = [:]
                 let variantRoot = variantFolders.map { rootFolder.appendingPathComponent($0[rowIndex]) } ?? rootFolder
                 for locale in localesToExport {
-                    let base = multiLocale ? variantRoot.appendingPathComponent(locale.code) : variantRoot
+                    let base: URL
+                    if isFastlane {
+                        base = variantRoot.appendingPathComponent(ExportFileNaming.fastlaneLocaleFolder(projectCode: locale.code))
+                    } else {
+                        base = multiLocale ? variantRoot.appendingPathComponent(locale.code) : variantRoot
+                    }
                     let folder = multiRow ? base.appendingPathComponent(rowFolderNames[rowIndex]) : base
                     if folder != rootFolder {
                         try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
@@ -162,7 +183,9 @@ struct ExportService {
 
                             let image = rowContext.templateImage(at: index)
                             let fileURLs: [URL] = group.map { locale in
-                                let filename = ExportFileNaming.screenshotFileName(row: row, localeCode: locale.code, index: index, customSuffix: customSuffix, format: format)
+                                let filename = isFastlane
+                                    ? ExportFileNaming.fastlaneFileName(number: fastlaneRowOffsets[rowIndex] + index + 1, row: row, customSuffix: customSuffix, format: format)
+                                    : ExportFileNaming.screenshotFileName(row: row, localeCode: locale.code, index: index, customSuffix: customSuffix, format: format)
                                 return destFolder(for: locale.code).appendingPathComponent(filename)
                             }
                             writtenFileURLs.append(contentsOf: fileURLs)

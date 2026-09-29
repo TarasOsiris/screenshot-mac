@@ -85,6 +85,10 @@ final class ExportFlowModel {
 
     private var customSuffix: String { defaults.string(forKey: AppSettingsKeys.exportCustomSuffix) ?? "" }
 
+    private var namingScheme: ExportNamingScheme {
+        defaults.string(forKey: AppSettingsKeys.exportNamingScheme).flatMap(ExportNamingScheme.init) ?? .standard
+    }
+
     private var revealAfterExport: Bool {
         defaults.object(forKey: AppSettingsKeys.openExportFolderOnSuccess) as? Bool ?? AppSettingsKeys.Default.openExportFolderOnSuccess
     }
@@ -248,6 +252,7 @@ final class ExportFlowModel {
             source: document,
             localeFilter: localeFilter,
             customSuffix: customSuffix,
+            namingScheme: namingScheme,
             variants: document.activeVariants,
             onProgress: { [weak self] completed in self?.progress = completed }
         )

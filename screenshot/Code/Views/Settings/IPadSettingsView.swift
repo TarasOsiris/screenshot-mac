@@ -12,6 +12,7 @@ struct IPadSettingsView: View {
     @AppStorage(AppSettingsKeys.defaultScreenshotSize) private var defaultScreenshotSize = AppSettingsKeys.Default.defaultScreenshotSize
     @AppStorage(AppSettingsKeys.exportFormat) private var exportFormat = AppSettingsKeys.Default.exportFormat
     @AppStorage(AppSettingsKeys.exportCustomSuffix) private var exportCustomSuffix = ""
+    @AppStorage(AppSettingsKeys.exportNamingScheme) private var exportNamingScheme = ExportNamingScheme.standard
     @AppStorage(AppSettingsKeys.defaultTemplateCount) private var defaultTemplateCount = AppSettingsKeys.Default.defaultTemplateCount
     @AppStorage(AppSettingsKeys.defaultZoomLevel) private var defaultZoomLevel = AppSettingsKeys.Default.defaultZoomLevel
     @AppStorage(AppSettingsKeys.confirmBeforeDeleting) private var confirmBeforeDeleting = AppSettingsKeys.Default.confirmBeforeDeleting
@@ -145,6 +146,10 @@ struct IPadSettingsView: View {
             Picker("Format", selection: $exportFormat) {
                 Text("PNG").tag("png")
                 Text("JPEG").tag("jpeg")
+            }
+            Picker("File layout", selection: $exportNamingScheme) {
+                Text("Standard").tag(ExportNamingScheme.standard)
+                Text("fastlane").tag(ExportNamingScheme.fastlane)
             }
             TextField("Custom filename suffix", text: $exportCustomSuffix, prompt: Text("optional"))
                 .textInputAutocapitalization(.never)

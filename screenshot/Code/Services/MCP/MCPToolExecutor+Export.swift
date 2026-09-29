@@ -52,6 +52,7 @@ extension MCPToolExecutor {
                 format: format,
                 source: checkout,
                 localeFilter: args.string("locale"),
+                namingScheme: try args.enumValue("naming", ExportNamingScheme.self) ?? .standard,
                 variants: checkout.document.variants.active
             )
             return try MCPResultEncoding.result(ExportResult(

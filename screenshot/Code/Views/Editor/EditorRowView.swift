@@ -27,6 +27,7 @@ struct EditorRowView: View {
     @State var activeAlert: RowAlert?
     @State var isSvgDialogPresented = false
     @State var svgReplaceTarget: CanvasShapeModel?
+    @State var localeFolderImport: LocaleFolderImportRequest?
     @State var contextMenuPointStore = ModelPointStore()
     /// Latched once this row has mounted its chrome, so a scroll that starts later cannot take it
     /// away again. Only a row realized *during* a scroll waits.
@@ -236,6 +237,19 @@ struct EditorRowView: View {
                     at: contextMenuPointStore.value
                 )
             }
+        }
+        .sheet(item: $localeFolderImport) { request in
+            LocaleFolderImportSheet(
+                request: request,
+                localeLabel: { code in
+                    state.localeState.locales.first { $0.code == code }?.flagLabel ?? code
+                },
+                onImport: { adding in
+                    localeFolderImport = nil
+                    performLocaleFolderImport(request, addingLocales: adding)
+                },
+                onCancel: { localeFolderImport = nil }
+            )
         }
         .sheet(item: $svgReplaceTarget) { target in
             SvgPasteDialog(

@@ -294,6 +294,7 @@ nonisolated enum MCPToolCatalog {
                 "folder_path": MCPSchema.string("Destination folder (must be writable by the app; omit to use a temp folder and copy files from there)"),
                 "format": MCPSchema.string("Image format (default png)", oneOf: ["png", "jpeg"]),
                 "locale": MCPSchema.string("Export only this locale code (default: all locales)"),
+                "naming": MCPSchema.string("File layout: standard (default) or fastlane — deliver-style <App Store locale>/<NN>_<row>.png", oneOf: ["standard", "fastlane"]),
             ], required: ["project_id"])
         ),
         Tool(

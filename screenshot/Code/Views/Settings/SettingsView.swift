@@ -26,6 +26,7 @@ struct SettingsView: View {
     @AppStorage(AppSettingsKeys.defaultScreenshotSize) private var defaultScreenshotSize = AppSettingsKeys.Default.defaultScreenshotSize
     @AppStorage(AppSettingsKeys.exportFormat) private var exportFormat = AppSettingsKeys.Default.exportFormat
     @AppStorage(AppSettingsKeys.exportCustomSuffix) private var exportCustomSuffix = ""
+    @AppStorage(AppSettingsKeys.exportNamingScheme) private var exportNamingScheme = ExportNamingScheme.standard
     @AppStorage(AppSettingsKeys.openExportFolderOnSuccess) private var openExportFolderOnSuccess = AppSettingsKeys.Default.openExportFolderOnSuccess
     /// Observation only — `ExportFolderBookmark` owns every read and write of the bookmark pair.
     @AppStorage(ExportFolderBookmark.pathKey) private var lastExportFolderPath = ""
@@ -316,12 +317,22 @@ struct SettingsView: View {
             }
 
             Section {
+                Picker("File layout", selection: $exportNamingScheme) {
+                    Text("Standard").tag(ExportNamingScheme.standard)
+                    Text("fastlane").tag(ExportNamingScheme.fastlane)
+                }
                 TextField("Custom filename suffix", text: $exportCustomSuffix, prompt: Text("optional"))
             } footer: {
                 let suffixPart = ExportFileNaming.formattedFileSuffix(exportCustomSuffix)
                 let ext = (ExportImageFormat(rawValue: exportFormat.lowercased()) ?? .png).fileExtension
-                Text("Example: 01_Onboarding_en\(suffixPart).\(ext)")
-                    .foregroundStyle(.secondary)
+                switch exportNamingScheme {
+                case .standard:
+                    Text("Example: 01_Onboarding_en\(suffixPart).\(ext)")
+                        .foregroundStyle(.secondary)
+                case .fastlane:
+                    Text("Example: en-US/01_Onboarding\(suffixPart).\(ext) — ready for fastlane deliver. One folder per App Store language, numbered across rows.")
+                        .foregroundStyle(.secondary)
+                }
             }
 
             Toggle("Reveal in Finder after export", isOn: $openExportFolderOnSuccess)

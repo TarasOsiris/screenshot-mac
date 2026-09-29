@@ -12,6 +12,7 @@ struct EditorRowMenuContent: View {
     @Binding var isSvgDialogPresented: Bool
     let addShapeFromMenu: (ShapeType) -> Void
     let exportRowScreenshots: () -> Void
+    let importLocalizedScreenshots: () -> Void
     let exportRowImage: (Bool) -> Void
     let duplicateRow: () -> Void
     let moveRowUp: () -> Void
@@ -43,6 +44,9 @@ struct EditorRowMenuContent: View {
                 }
             }
         }
+        #if os(macOS)
+        Button("Import Localized Screenshots…", systemImage: "folder.badge.plus", action: importLocalizedScreenshots)
+        #endif
         Menu {
             ForEach(ShapeType.allCases, id: \.self) { type in
                 Button {

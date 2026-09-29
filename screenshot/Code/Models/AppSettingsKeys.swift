@@ -15,6 +15,7 @@ nonisolated enum AppSettingsKeys {
     static let defaultScreenshotSize = "defaultScreenshotSize"
     static let exportFormat = "exportFormat"
     static let exportCustomSuffix = "exportCustomSuffix"
+    static let exportNamingScheme = "exportNamingScheme"
     static let openExportFolderOnSuccess = "openExportFolderOnSuccess"
     static let defaultTemplateCount = "defaultTemplateCount"
     static let defaultZoomLevel = "defaultZoomLevel"
