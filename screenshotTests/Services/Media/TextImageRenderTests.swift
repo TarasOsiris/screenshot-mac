@@ -206,13 +206,13 @@ struct TextImageRenderTests {
             verticalAlignment: TextVerticalAlign = .center, uppercase: Bool = false,
             letterSpacing: CGFloat? = nil, lineHeightMultiple: CGFloat? = nil,
             legacyLineSpacing: CGFloat? = nil, richTextData: String? = nil,
-            size: CGSize = TextImageRenderTests.size
+            size: CGSize = TextImageRenderTests.size, fontScale: CGFloat = 1
         ) -> String {
             TextLayoutStyle.textImageCacheKey(
                 size: size, scale: scale, text: text, font: font, color: color, alignment: alignment,
                 verticalAlignment: verticalAlignment, uppercase: uppercase, letterSpacing: letterSpacing,
                 lineHeightMultiple: lineHeightMultiple, legacyLineSpacing: legacyLineSpacing,
-                richTextData: richTextData
+                richTextData: richTextData, fontScale: fontScale
             )
         }
         let base = key()
@@ -228,6 +228,7 @@ struct TextImageRenderTests {
         #expect(key(lineHeightMultiple: 1.5) != base)
         #expect(key(legacyLineSpacing: 4) != base)
         #expect(key(richTextData: "abc") != base)
+        #expect(key(fontScale: 0.75) != base)
         #expect(key(size: CGSize(width: 241, height: 80)) != base)
         #expect(key(size: CGSize(width: 240.1, height: 80)) != key(size: CGSize(width: 240.4, height: 80)))
         #expect(

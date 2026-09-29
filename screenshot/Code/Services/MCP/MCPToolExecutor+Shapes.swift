@@ -171,6 +171,7 @@ extension MCPToolExecutor {
         if let frameId = args.string("device_frame_id") { shape.deviceFrameId = frameId }
         if let points = args.int("star_points") { shape.starPointCount = points }
         if let clip = args.bool("clip_to_template") { shape.clipToTemplate = clip }
+        if let shrink = args.bool("shrink_to_fit") { shape.shrinkToFit = shrink }
         if let locked = args.bool("locked") { shape.isLocked = locked }
     }
 }

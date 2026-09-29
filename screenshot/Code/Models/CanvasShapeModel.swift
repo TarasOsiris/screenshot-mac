@@ -81,6 +81,7 @@ struct CanvasShapeModel: Identifiable, Codable, Equatable {
         /// Catalog key this text shape sources its string from. `nil` means it owns its own string
         /// (key = `id`). When set, the shape shares another string's base text + translations.
         var translationKey: String?
+        var shrinkToFit: Bool?
     }
 
     /// A rounded-rect plate behind a `.text` shape's glyphs.
@@ -136,6 +137,7 @@ struct CanvasShapeModel: Identifiable, Codable, Equatable {
     nonisolated var lineSpacing: CGFloat? { get { textPayload.lineSpacing } set { textPayload.lineSpacing = newValue } }
     nonisolated var lineHeightMultiple: CGFloat? { get { textPayload.lineHeightMultiple } set { textPayload.lineHeightMultiple = newValue } }
     nonisolated var translationKey: String? { get { textPayload.translationKey } set { textPayload.translationKey = newValue } }
+    nonisolated var shrinkToFit: Bool? { get { textPayload.shrinkToFit } set { textPayload.shrinkToFit = newValue } }
 
     nonisolated var textBackgroundColorData: CodableColor? { get { textBackgroundPayload.colorData } set { textBackgroundPayload.colorData = newValue } }
     nonisolated var textBackgroundCornerRadius: CGFloat? { get { textBackgroundPayload.cornerRadius } set { textBackgroundPayload.cornerRadius = newValue } }
@@ -171,7 +173,7 @@ struct CanvasShapeModel: Identifiable, Codable, Equatable {
         case text = "txt", richText = "rt", fontName = "fn", fontSize = "fs", fontWeight = "fw"
         case textAlign = "ta", textVerticalAlign = "tva", italic = "it", uppercase = "uc"
         case letterSpacing = "ls", lineSpacing = "lns", lineHeightMultiple = "lhm"
-        case translationKey = "tk"
+        case translationKey = "tk", shrinkToFit = "stf"
         case imageFileName = "ifn"
         case deviceCategory = "dc", deviceBodyColorData = "dbc"
         case deviceFrameId = "dfi", screenshotFileName = "sfn"
@@ -216,6 +218,7 @@ struct CanvasShapeModel: Identifiable, Codable, Equatable {
         lineSpacing = try c.decodeIfPresent(CGFloat.self, forKey: .lineSpacing)
         lineHeightMultiple = try c.decodeIfPresent(CGFloat.self, forKey: .lineHeightMultiple)
         translationKey = try c.decodeIfPresent(String.self, forKey: .translationKey)
+        shrinkToFit = try c.decodeIfPresent(Bool.self, forKey: .shrinkToFit)
         imageFileName = try c.decodeIfPresent(String.self, forKey: .imageFileName)
         deviceCategory = try c.decodeIfPresent(DeviceCategory.self, forKey: .deviceCategory)
         deviceBodyColorData = try c.decodeIfPresent(CodableColor.self, forKey: .deviceBodyColorData)
@@ -270,6 +273,7 @@ struct CanvasShapeModel: Identifiable, Codable, Equatable {
         try c.encodeIfPresent(lineSpacing, forKey: .lineSpacing)
         try c.encodeIfPresent(lineHeightMultiple, forKey: .lineHeightMultiple)
         try c.encodeIfPresent(translationKey, forKey: .translationKey)
+        if shrinkToFit == true { try c.encode(true, forKey: .shrinkToFit) }
         try c.encodeIfPresent(imageFileName, forKey: .imageFileName)
         try c.encodeIfPresent(deviceCategory, forKey: .deviceCategory)
         try c.encodeIfPresent(deviceBodyColorData, forKey: .deviceBodyColorData)

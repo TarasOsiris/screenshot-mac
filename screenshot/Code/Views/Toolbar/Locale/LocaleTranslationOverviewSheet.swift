@@ -216,6 +216,10 @@ struct TranslationOverviewSheet: View {
                         text: localeTranslationBinding(state, shape: item.shape, localeCode: locale.code)
                     )
                 }
+                if state.textOverflows(translationKey: item.shape.textTranslationKey, localeCode: locale.code) {
+                    TextOverflowLabel()
+                        .font(.caption)
+                }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
 
@@ -317,6 +321,7 @@ struct TranslationOverviewSheet: View {
                         columnPadding: columnPadding,
                         isTranslating: isPendingTranslation(shapeId: item.shape.id, localeCode: locale.code),
                         canReset: override?.hasTextContent == true,
+                        overflows: state.textOverflows(translationKey: item.shape.textTranslationKey, localeCode: locale.code),
                         onTranslate: {
                             startCellTranslation(
                                 shapeId: item.shape.id,
@@ -396,6 +401,15 @@ struct TranslationOverviewSheet: View {
     }
 }
 
+/// Shown wherever a translation is too long for the box it lands in.
+struct TextOverflowLabel: View {
+    var body: some View {
+        Label("Doesn't fit", systemImage: "exclamationmark.triangle.fill")
+            .foregroundStyle(.orange)
+            .help("This text is too long for its box in this language. Enlarge the box, shorten the text, or turn on Shrink to Fit.")
+    }
+}
+
 #if os(macOS)
 /// Identifies the one matrix cell currently being edited. `localeCode == nil` is the base column.
 struct MatrixCellID: Hashable {
@@ -414,6 +428,7 @@ private struct TranslationMatrixCell: View {
     let columnPadding: CGFloat
     let isTranslating: Bool
     let canReset: Bool
+    let overflows: Bool
     let onTranslate: () -> Void
     let onReset: () -> Void
     @State private var isHovered = false
@@ -439,6 +454,10 @@ private struct TranslationMatrixCell: View {
                 )
                 .onTapGesture { editingCellId = cellId }
                 .accessibilityAddTraits(.isButton)
+            }
+            if overflows {
+                TextOverflowLabel()
+                    .font(.system(size: 10))
             }
             if isHovered {
                 HStack(spacing: 8) {

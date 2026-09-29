@@ -85,7 +85,7 @@ final class GPUploadFlowModel {
             packageName: packageName,
             plans: rowPlans,
             isDemoMode: credentials.isDemoMode
-        )
+        ) + TextOverflowCheck.uploadIssues(rows: listingRows, localeState: localeState)
     }
 
     func prefillPackageName() {

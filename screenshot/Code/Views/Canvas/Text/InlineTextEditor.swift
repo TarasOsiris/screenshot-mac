@@ -19,6 +19,7 @@ struct RasterizedDisplayTextView: View {
     var lineHeightMultiple: CGFloat?
     var legacyLineSpacing: CGFloat?
     var richTextData: String?
+    var fontScale: CGFloat = 1
     /// Supersample factor for the raster. Export and preview leave it at the default, which
     /// reproduces what the implicit rasterizer produced before; the editor passes its on-screen
     /// scale so a zoomed-in row stays sharp.
@@ -51,6 +52,7 @@ struct RasterizedDisplayTextView: View {
             lineHeightMultiple: lineHeightMultiple,
             legacyLineSpacing: legacyLineSpacing,
             richTextData: richTextData,
+            fontScale: fontScale,
             renderScale: renderScale,
             cachesResult: cachesRaster
         ) {
@@ -77,16 +79,6 @@ extension Font.Weight {
         case .heavy: return .heavy
         case .black: return .black
         default: return .regular
-        }
-    }
-}
-
-extension Optional where Wrapped == TextAlign {
-    var nsTextAlignment: NSTextAlignment {
-        switch self {
-        case .left: return .left
-        case .right: return .right
-        case .center, .none: return .center
         }
     }
 }

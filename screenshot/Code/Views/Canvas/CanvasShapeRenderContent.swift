@@ -107,6 +107,16 @@ struct CanvasShapeRenderContent: View {
         let verticalAlign = shape.textVerticalAlign ?? .center
         let uppercase = shape.uppercase ?? false
         let richText = showPlaceholder ? nil : shape.richText
+        let fitInput = TextFitInput(
+            size: CGSize(width: effectiveW, height: effectiveH), text: displayText, font: nsFont,
+            alignment: align, uppercase: uppercase, letterSpacing: shape.letterSpacing,
+            lineHeightMultiple: shape.lineHeightMultiple, legacyLineSpacing: shape.lineSpacing,
+            richTextData: richText
+        )
+        let shrinksToFit = shape.shrinkToFit == true && !showPlaceholder
+        let fontScale = shrinksToFit ? TextFitMeasurer.fitScale(fitInput) : 1
+        let showsOverflow = showsEditorHelpers && !showPlaceholder
+            && TextFitMeasurer.overflows(fitInput, shrinksToFit: shrinksToFit)
 
         // One raster for the editor, preview and export alike. The editor used to host a live
         // `TextLayoutNSView` per text shape; those NSViews joined AppKit's `_layoutViewTree`, the
@@ -124,6 +134,7 @@ struct CanvasShapeRenderContent: View {
             lineHeightMultiple: shape.lineHeightMultiple,
             legacyLineSpacing: shape.lineSpacing,
             richTextData: richText,
+            fontScale: fontScale,
             renderScale: textRenderScale,
             cachesRaster: !isLiveShapeEdit
         )
@@ -131,6 +142,24 @@ struct CanvasShapeRenderContent: View {
         .background { textBackgroundLayer }
         .scaleEffect(displayScale, anchor: .topLeading)
         .frame(width: displayW, height: displayH, alignment: .topLeading)
+        .overlay(alignment: .bottomTrailing) {
+            if showsOverflow {
+                textOverflowBadge
+            }
+        }
+    }
+
+    /// Editor-only: TextKit drops the lines that don't fit, so without this a long translation
+    /// just loses its last line with no sign anything is wrong.
+    private var textOverflowBadge: some View {
+        Image(systemName: "exclamationmark.triangle.fill")
+            .font(.system(size: 11, weight: .semibold))
+            .foregroundStyle(.white)
+            .padding(4)
+            .background(Color.orange, in: Circle())
+            .offset(x: 8, y: 8)
+            .accessibilityLabel(Text("Text doesn't fit"))
+            .help(Text("Text doesn't fit in its box. Enlarge the box, shorten the text, or turn on Shrink to Fit."))
     }
 
     /// Extra resolution for the editor only. Preview and export draw at model scale using the
@@ -302,15 +331,36 @@ struct CanvasShapeRenderContent: View {
             onSelectionChange: onSelectionChange
         )
 
+        // Shrink-to-fit edits the unscaled text in a proportionally larger box, then scales the
+        // whole view down, so the fonts written back to the shape are never the shrunk ones.
+        let fontScale = editorFontScale(font: nsFont)
+
         #if os(iOS)
-        editor.frame(width: displayW, height: displayH, alignment: .topLeading)
+        editor
+            .frame(width: displayW / fontScale, height: displayH / fontScale, alignment: .topLeading)
+            .scaleEffect(fontScale, anchor: .topLeading)
+            .frame(width: displayW, height: displayH, alignment: .topLeading)
         #else
         editor
-            .frame(width: effectiveW, height: effectiveH)
+            .frame(width: effectiveW / fontScale, height: effectiveH / fontScale)
+            .scaleEffect(fontScale, anchor: .topLeading)
+            .frame(width: effectiveW, height: effectiveH, alignment: .topLeading)
             .background { textBackgroundLayer }
             .scaleEffect(displayScale, anchor: .topLeading)
             .frame(width: displayW, height: displayH, alignment: .topLeading)
         #endif
+    }
+
+    /// The scale of the committed text, held for the whole edit: re-fitting per keystroke would
+    /// make the text jump under the caret.
+    private func editorFontScale(font: NSFont) -> CGFloat {
+        guard shape.shrinkToFit == true else { return 1 }
+        return TextFitMeasurer.fitScale(TextFitInput(
+            size: CGSize(width: effectiveW, height: effectiveH), text: shape.text ?? "", font: font,
+            alignment: shape.textAlign.nsTextAlignment, uppercase: shape.uppercase ?? false,
+            letterSpacing: shape.letterSpacing, lineHeightMultiple: shape.lineHeightMultiple,
+            legacyLineSpacing: shape.lineSpacing, richTextData: shape.richText
+        ))
     }
 
     /// Makes `base` an image drop target and puts the "add image" button and drop highlight over it.

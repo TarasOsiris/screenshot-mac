@@ -122,6 +122,13 @@ extension ShapeInspector {
                     .localeOverridden(.uppercase)
             }
 
+            EditorLabeledContent("Shrink to Fit") {
+                Toggle("Shrink to Fit", isOn: shapeBinding(shapeId, \.shrinkToFit, default: false))
+                    .labelsHidden()
+                    .toggleStyle(.switch)
+                    .help("Scale the text down so every line fits the box, in every language")
+            }
+
             EditorLabeledContent("Letter Spacing") {
                 TextLetterSpacingControl(state: state, shapeId: shapeId, sliderWidth: UIMetrics.SliderWidth.standard)
                     .localeOverridden(.letterSpacing)

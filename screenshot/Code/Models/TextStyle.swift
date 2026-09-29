@@ -53,3 +53,13 @@ extension CanvasShapeModel {
         return Alignment(horizontal: h, vertical: v)
     }
 }
+
+extension Optional where Wrapped == TextAlign {
+    var nsTextAlignment: NSTextAlignment {
+        switch self {
+        case .left: return .left
+        case .right: return .right
+        case .center, .none: return .center
+        }
+    }
+}

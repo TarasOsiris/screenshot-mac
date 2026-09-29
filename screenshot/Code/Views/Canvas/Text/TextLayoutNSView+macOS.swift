@@ -19,6 +19,7 @@ final class TextLayoutNSView: NSView {
     private var lastLineHeightMultiple: CGFloat?
     private var lastLegacyLineSpacing: CGFloat?
     private var lastRichTextData: String?
+    private var lastFontScale: CGFloat?
 
     override var isFlipped: Bool { true }
 
@@ -53,7 +54,8 @@ final class TextLayoutNSView: NSView {
         letterSpacing: CGFloat?,
         lineHeightMultiple: CGFloat?,
         legacyLineSpacing: CGFloat?,
-        richTextData: String? = nil
+        richTextData: String? = nil,
+        fontScale: CGFloat = 1
     ) {
         guard text != lastText
             || font != lastFont
@@ -65,6 +67,7 @@ final class TextLayoutNSView: NSView {
             || lineHeightMultiple != lastLineHeightMultiple
             || legacyLineSpacing != lastLegacyLineSpacing
             || richTextData != lastRichTextData
+            || fontScale != lastFontScale
         else { return }
 
         lastText = text
@@ -77,13 +80,14 @@ final class TextLayoutNSView: NSView {
         lastLineHeightMultiple = lineHeightMultiple
         lastLegacyLineSpacing = legacyLineSpacing
         lastRichTextData = richTextData
+        lastFontScale = fontScale
 
         self.verticalAlignment = verticalAlignment
         compactDelegate.lineHeightMultiple = lineHeightMultiple ?? 1.0
         self.verticalGlyphPadding = TextLayoutStyle.verticalGlyphPadding(
             lineHeightMultiple: lineHeightMultiple,
             legacyLineSpacing: legacyLineSpacing,
-            font: font
+            font: fontScale == 1 ? font : font.withSize(font.pointSize * fontScale)
         )
 
         textStorage.setAttributedString(RichTextUtils.buildAttributedString(
@@ -95,7 +99,8 @@ final class TextLayoutNSView: NSView {
             letterSpacing: letterSpacing,
             lineHeightMultiple: lineHeightMultiple,
             legacyLineSpacing: legacyLineSpacing,
-            uppercase: uppercase
+            uppercase: uppercase,
+            fontScale: fontScale
         ))
         needsDisplay = true
     }

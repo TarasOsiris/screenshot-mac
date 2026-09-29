@@ -88,6 +88,11 @@ extension ShapePropertiesSingleSelectionBar {
                 Toggle("Uppercase", isOn: shapeBinding(shapeId, \.uppercase, default: false))
                     .toggleStyle(.switch)
                     .compactControlSize()
+
+                Toggle("Shrink to Fit", isOn: shapeBinding(shapeId, \.shrinkToFit, default: false))
+                    .toggleStyle(.switch)
+                    .compactControlSize()
+                    .help("Scale the text down so every line fits the box, in every language")
             }
 
             Divider()
@@ -143,6 +148,7 @@ extension ShapePropertiesSingleSelectionBar {
                     Toggle("Italic", isOn: italicBinding(shapeId))
                 }
                 Toggle("Uppercase", isOn: shapeBinding(shapeId, \.uppercase, default: false))
+                Toggle("Shrink to Fit", isOn: shapeBinding(shapeId, \.shrinkToFit, default: false))
             }
 
             Section("Spacing") {

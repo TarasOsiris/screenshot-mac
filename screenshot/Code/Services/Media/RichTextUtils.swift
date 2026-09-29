@@ -61,6 +61,51 @@ enum RichTextUtils {
         letterSpacing: CGFloat?,
         lineHeightMultiple: CGFloat?,
         legacyLineSpacing: CGFloat?,
+        uppercase: Bool,
+        fontScale: CGFloat = 1
+    ) -> NSAttributedString {
+        let built = buildUnscaledAttributedString(
+            richText: richText, plainText: plainText, font: font, color: color, alignment: alignment,
+            letterSpacing: letterSpacing, lineHeightMultiple: lineHeightMultiple,
+            legacyLineSpacing: legacyLineSpacing, uppercase: uppercase
+        )
+        guard fontScale != 1, fontScale > 0, fontScale.isFinite else { return built }
+        return scaled(built, by: fontScale)
+    }
+
+    /// Shrinks every point-valued attribute together, so mixed-size rich text and its tracking keep
+    /// their proportions when shrink-to-fit scales the whole block.
+    static func scaled(_ attributed: NSAttributedString, by factor: CGFloat) -> NSAttributedString {
+        let result = NSMutableAttributedString(attributedString: attributed)
+        let fullRange = NSRange(location: 0, length: result.length)
+        result.enumerateAttributes(in: fullRange) { attributes, range, _ in
+            if let font = attributes[.font] as? NSFont {
+                result.addAttribute(.font, value: font.withSize(font.pointSize * factor), range: range)
+            }
+            if let kern = attributes[.kern] as? CGFloat {
+                result.addAttribute(.kern, value: kern * factor, range: range)
+            }
+            if let offset = attributes[.baselineOffset] as? CGFloat {
+                result.addAttribute(.baselineOffset, value: offset * factor, range: range)
+            }
+            if let paragraph = attributes[.paragraphStyle] as? NSParagraphStyle, paragraph.lineSpacing != 0,
+               let mutable = paragraph.mutableCopy() as? NSMutableParagraphStyle {
+                mutable.lineSpacing = paragraph.lineSpacing * factor
+                result.addAttribute(.paragraphStyle, value: mutable, range: range)
+            }
+        }
+        return result
+    }
+
+    private static func buildUnscaledAttributedString(
+        richText: String?,
+        plainText: String,
+        font: NSFont,
+        color: NSColor,
+        alignment: NSTextAlignment,
+        letterSpacing: CGFloat?,
+        lineHeightMultiple: CGFloat?,
+        legacyLineSpacing: CGFloat?,
         uppercase: Bool
     ) -> NSAttributedString {
         let displayText = uppercase ? plainText.uppercased() : plainText

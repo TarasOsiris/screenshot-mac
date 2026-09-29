@@ -18,6 +18,7 @@ extension ASCUploadFlowModel {
                 hint: String(localized: "To test them, use Export ▸ Upload A/B Test to App Store Connect.")
             ))
         }
+        issues += TextOverflowCheck.uploadIssues(rows: rows.filter(\.isOriginal), localeState: localeState)
         return issues
     }
 

@@ -1636,6 +1636,43 @@ struct ExportServiceTests {
         try expectNearWhite(editorBitmap, at: (380, 380), label: "Editor bottom-right should stay background")
     }
 
+    /// Shrink-to-fit changes what the text raster draws, so it must reach export through the same
+    /// raster the editor uses — and change the result against the unshrunk shape.
+    @Test func shrinkToFitTextMatchesEditorAndExport() throws {
+        func row(shrink: Bool) -> ScreenshotRow {
+            var row = makeTestRow(width: 400, height: 400, bgColor: .white)
+            var shape = CanvasShapeModel(
+                type: .text, x: 0, y: 0, width: 400, height: 120,
+                color: Color(red: 0.9, green: 0, blue: 0),
+                text: "WWWW WWWW WWWW", fontSize: 80, fontWeight: 700
+            )
+            shape.shrinkToFit = shrink
+            row.shapes = [shape]
+            return row
+        }
+        let shrunkExport = try renderTemplateBitmap(index: 0, row: row(shrink: true))
+        let shrunkEditor = try renderEditorBitmap(index: 0, row: row(shrink: true))
+        let plainExport = try renderTemplateBitmap(index: 0, row: row(shrink: false))
+
+        let exportInk = try inkPixelCount(shrunkExport)
+        let editorInk = try inkPixelCount(shrunkEditor)
+        #expect(exportInk > 0)
+        // The editor rasterizes text at 1×, export at 2×, so edge antialiasing alone moves the count a few percent.
+        #expect(abs(exportInk - editorInk) <= max(20, exportInk * 15 / 100), "editor \(editorInk) vs export \(exportInk)")
+        #expect(abs(exportInk - (try inkPixelCount(plainExport))) > exportInk / 10, "Shrinking must change what is drawn")
+    }
+
+    private func inkPixelCount(_ bitmap: NSBitmapImageRep) throws -> Int {
+        var count = 0
+        for y in stride(from: 0, to: bitmap.pixelsHigh, by: 2) {
+            for x in stride(from: 0, to: bitmap.pixelsWide, by: 2) {
+                let c = try pixelColor(bitmap, at: (x, y))
+                if c.g < 0.5 { count += 1 }
+            }
+        }
+        return count
+    }
+
     // MARK: - Helpers
 
     private static let testBlue = Color(red: 0, green: 0, blue: 0.9)

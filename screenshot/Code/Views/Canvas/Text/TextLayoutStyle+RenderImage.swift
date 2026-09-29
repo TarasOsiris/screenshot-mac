@@ -49,6 +49,7 @@ extension TextLayoutStyle {
         lineHeightMultiple: CGFloat?,
         legacyLineSpacing: CGFloat?,
         richTextData: String? = nil,
+        fontScale: CGFloat = 1,
         renderScale: CGFloat = defaultTextRenderScale,
         cachesResult: Bool = true
     ) -> NSImage? {
@@ -60,7 +61,7 @@ extension TextLayoutStyle {
             size: size, scale: scale, text: text, font: font, color: color, alignment: alignment,
             verticalAlignment: verticalAlignment, uppercase: uppercase, letterSpacing: letterSpacing,
             lineHeightMultiple: lineHeightMultiple, legacyLineSpacing: legacyLineSpacing,
-            richTextData: richTextData
+            richTextData: richTextData, fontScale: fontScale
         ) as NSString
         if let cached = textImageCache.object(forKey: cacheKey) {
             return cached
@@ -69,7 +70,7 @@ extension TextLayoutStyle {
             size: size, scale: scale, text: text, font: font, color: color, alignment: alignment,
             verticalAlignment: verticalAlignment, uppercase: uppercase, letterSpacing: letterSpacing,
             lineHeightMultiple: lineHeightMultiple, legacyLineSpacing: legacyLineSpacing,
-            richTextData: richTextData
+            richTextData: richTextData, fontScale: fontScale
         ) else { return nil }
         // A continuous style edit (a tracking/size slider) puts a changing value in the key, so
         // every tick is a guaranteed miss whose raster is dead on the next one. Storing them would
@@ -104,7 +105,8 @@ extension TextLayoutStyle {
         letterSpacing: CGFloat?,
         lineHeightMultiple: CGFloat?,
         legacyLineSpacing: CGFloat?,
-        richTextData: String?
+        richTextData: String?,
+        fontScale: CGFloat
     ) -> NSImage? {
         let view = TextLayoutNSView(frame: NSRect(origin: .zero, size: size))
         view.configure(
@@ -117,7 +119,8 @@ extension TextLayoutStyle {
             letterSpacing: letterSpacing,
             lineHeightMultiple: lineHeightMultiple,
             legacyLineSpacing: legacyLineSpacing,
-            richTextData: richTextData
+            richTextData: richTextData,
+            fontScale: fontScale
         )
         view.layoutSubtreeIfNeeded()
         guard let rep = NSBitmapImageRep(
@@ -162,7 +165,8 @@ extension TextLayoutStyle {
         letterSpacing: CGFloat?,
         lineHeightMultiple: CGFloat?,
         legacyLineSpacing: CGFloat?,
-        richTextData: String?
+        richTextData: String?,
+        fontScale: CGFloat
     ) -> NSImage? {
         let attributed = RichTextUtils.buildAttributedString(
             richText: richTextData,
@@ -173,7 +177,8 @@ extension TextLayoutStyle {
             letterSpacing: letterSpacing,
             lineHeightMultiple: lineHeightMultiple,
             legacyLineSpacing: legacyLineSpacing,
-            uppercase: uppercase
+            uppercase: uppercase,
+            fontScale: fontScale
         )
         let textStorage = NSTextStorage(attributedString: attributed)
         let layoutManager = NSLayoutManager()
@@ -192,7 +197,7 @@ extension TextLayoutStyle {
         let padding = verticalGlyphPadding(
             lineHeightMultiple: lineHeightMultiple,
             legacyLineSpacing: legacyLineSpacing,
-            font: font
+            font: fontScale == 1 ? font : font.withSize(font.pointSize * fontScale)
         )
         let yOffset = verticalOffset(
             containerHeight: size.height,
@@ -238,7 +243,7 @@ extension TextLayoutStyle {
         size: CGSize, scale: CGFloat, text: String, font: NSFont, color: NSColor,
         alignment: NSTextAlignment, verticalAlignment: TextVerticalAlign, uppercase: Bool,
         letterSpacing: CGFloat?, lineHeightMultiple: CGFloat?, legacyLineSpacing: CGFloat?,
-        richTextData: String?
+        richTextData: String?, fontScale: CGFloat = 1
     ) -> String {
         return [
             "\(scalarToken(size.width))x\(scalarToken(size.height))",
@@ -250,6 +255,7 @@ extension TextLayoutStyle {
             lineHeightMultiple.map(scalarToken) ?? "-",
             legacyLineSpacing.map(scalarToken) ?? "-",
             richTextData ?? "-",
+            scalarToken(fontScale),
         ].joined(separator: "|")
     }
 }

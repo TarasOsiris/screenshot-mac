@@ -240,6 +240,7 @@ nonisolated enum MCPToolCatalog {
                 "device_frame_id": MCPSchema.string("Device frame id (device shapes)"),
                 "star_points": MCPSchema.integer("Number of points (star shapes)"),
                 "clip_to_template": MCPSchema.boolean("Clip the shape to its template column"),
+                "shrink_to_fit": MCPSchema.boolean("Shrink text so every line fits the box in every locale (text shapes)"),
                 "locked": MCPSchema.boolean("Lock the shape against canvas interaction"),
                 "z_order": MCPSchema.string("Move within the stacking order", oneOf: ["front", "back"]),
             ], required: ["shape_id"])

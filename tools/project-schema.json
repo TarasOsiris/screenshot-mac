@@ -175,6 +175,7 @@
         "lns": { "description": "lineSpacing — points.", "type": "number" },
         "lhm": { "description": "lineHeightMultiple.", "type": "number" },
         "tk": { "description": "translationKey — catalog key this text shape sources its string from. Absent = owns its own string (key = id); present = reuses a shared string (translations live in the sibling translations.xcstrings under this key).", "type": "string" },
+        "stf": { "description": "shrinkToFit — text shapes only. When true, the text is scaled down (to no less than half size) until every line fits the box; computed per locale. Written only when true.", "type": "boolean" },
 
         "ifn": { "description": "imageFileName — filename in resources/ for image shapes.", "type": "string" },
 

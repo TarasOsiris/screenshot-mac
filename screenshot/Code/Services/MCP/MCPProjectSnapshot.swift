@@ -69,6 +69,9 @@ struct MCPShapeSnapshot: Encodable {
     let starPoints: Int?
     let locked: Bool?
     let clipToTemplate: Bool?
+    let shrinkToFit: Bool?
+    /// Locales whose text loses lines in this box — what an agent should fix after translating.
+    let textOverflowLocales: [String]?
 }
 
 struct MCPTemplateSnapshot: Encodable {
@@ -189,6 +192,11 @@ enum MCPSnapshotBuilder {
             }
         }
 
+        let overflowLocales = localeState.locales.map(\.code).filter {
+            TextOverflowCheck.overflows(shape, localeCode: $0, localeState: localeState,
+                                        availableFontFamilies: PlatformFonts.familyNameSet)
+        }
+
         return MCPShapeSnapshot(
             id: shape.id.uuidString,
             type: shape.type.rawValue,
@@ -214,7 +222,9 @@ enum MCPSnapshotBuilder {
             imageFile: shape.imageFileName,
             starPoints: shape.starPointCount,
             locked: shape.isLocked,
-            clipToTemplate: shape.clipToTemplate
+            clipToTemplate: shape.clipToTemplate,
+            shrinkToFit: shape.shrinkToFit,
+            textOverflowLocales: overflowLocales.isEmpty ? nil : overflowLocales
         )
     }
 
