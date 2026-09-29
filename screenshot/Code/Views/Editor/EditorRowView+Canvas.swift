@@ -99,6 +99,7 @@ extension EditorRowView {
                                     liveShapeEdit: state.liveShapeEdit,
                                     liveShapeGeometry: state.liveShapeGeometry,
                                     textEditingShapeId: textEditingShapeId,
+                                    cropTarget: cropTarget(in: resolved),
                                     onUpdate: { state.updateShape($0) }
                                 )
                                 .frame(
@@ -558,6 +559,17 @@ extension EditorRowView {
         .onDrop(of: [.image, .svg, .fileURL], isTargeted: nil) { providers, location in
             handleCanvasDrop(providers, at: location, displayScale: ds)
         }
+    }
+}
+
+// MARK: - Crop
+
+extension EditorRowView {
+    func cropTarget(in resolvedShapes: [CanvasShapeModel]) -> CanvasCropTarget? {
+        guard let shapeId = state.imageCrop.shapeId,
+              let fileName = resolvedShapes.first(where: { $0.id == shapeId })?.displayImageFileName,
+              let image = state.screenshotImages[fileName] else { return nil }
+        return CanvasCropTarget(shapeId: shapeId, imageSize: image.size)
     }
 }
 

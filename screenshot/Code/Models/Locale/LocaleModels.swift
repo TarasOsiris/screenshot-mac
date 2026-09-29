@@ -106,13 +106,15 @@ nonisolated struct ShapeLocaleOverride: Codable, Equatable {
     var lineHeightMultiple: CGFloat?
 
     var overrideImageFileName: String?
+    /// Identity when the locale shows the picture uncropped under a cropped base; nil inherits.
+    var imageCrop: ImageCrop?
 
     enum CodingKeys: String, CodingKey {
         case offsetX = "ox", offsetY = "oy", offsetWidth = "ow", offsetHeight = "oh"
         case text = "txt", richText = "rt", clearsRichText = "crt", fontName = "fn", fontSize = "fs", fontWeight = "fw"
         case textAlign = "ta", italic = "it", uppercase = "uc"
         case letterSpacing = "ls", lineSpacing = "lns", lineHeightMultiple = "lhm"
-        case overrideImageFileName = "oifn"
+        case overrideImageFileName = "oifn", imageCrop = "icr"
     }
 
     init(
@@ -123,7 +125,8 @@ nonisolated struct ShapeLocaleOverride: Codable, Equatable {
         textAlign: TextAlign? = nil, italic: Bool? = nil,
         uppercase: Bool? = nil, letterSpacing: CGFloat? = nil,
         lineSpacing: CGFloat? = nil, lineHeightMultiple: CGFloat? = nil,
-        overrideImageFileName: String? = nil
+        overrideImageFileName: String? = nil,
+        imageCrop: ImageCrop? = nil
     ) {
         self.offsetX = offsetX; self.offsetY = offsetY
         self.offsetWidth = offsetWidth; self.offsetHeight = offsetHeight
@@ -133,6 +136,7 @@ nonisolated struct ShapeLocaleOverride: Codable, Equatable {
         self.uppercase = uppercase; self.letterSpacing = letterSpacing
         self.lineSpacing = lineSpacing; self.lineHeightMultiple = lineHeightMultiple
         self.overrideImageFileName = overrideImageFileName
+        self.imageCrop = imageCrop
     }
 
     /// Whether this override carries translated text — plain `text` or formatted `richText`.
@@ -168,7 +172,7 @@ nonisolated struct ShapeLocaleOverride: Codable, Equatable {
             && text == nil && richText == nil && clearsRichText != true && fontName == nil && fontSize == nil && fontWeight == nil
             && textAlign == nil && italic == nil && uppercase == nil
             && letterSpacing == nil && lineSpacing == nil && lineHeightMultiple == nil
-            && overrideImageFileName == nil
+            && overrideImageFileName == nil && imageCrop == nil
     }
 }
 
@@ -181,7 +185,7 @@ nonisolated enum LocaleOverrideField: CaseIterable {
     case text
     case font, fontSize, fontWeight, textAlign, italic, uppercase
     case letterSpacing, lineSpacing, lineHeight
-    case image
+    case image, crop
 
     func isSet(in override: ShapeLocaleOverride) -> Bool {
         switch self {
@@ -200,6 +204,7 @@ nonisolated enum LocaleOverrideField: CaseIterable {
         case .lineSpacing: override.lineSpacing != nil
         case .lineHeight: override.lineHeightMultiple != nil
         case .image: override.overrideImageFileName != nil
+        case .crop: override.imageCrop != nil
         }
     }
 
@@ -220,6 +225,7 @@ nonisolated enum LocaleOverrideField: CaseIterable {
         case .lineSpacing: override.lineSpacing = nil
         case .lineHeight: override.lineHeightMultiple = nil
         case .image: override.overrideImageFileName = nil
+        case .crop: override.imageCrop = nil
         }
     }
 }
@@ -239,7 +245,7 @@ extension LocaleOverrideField {
         case .text: .translation
         case .font, .fontSize, .fontWeight, .textAlign, .italic, .uppercase,
              .letterSpacing, .lineSpacing, .lineHeight: .typography
-        case .image: .media
+        case .image, .crop: .media
         }
     }
 }

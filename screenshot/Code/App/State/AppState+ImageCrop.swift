@@ -33,7 +33,8 @@ extension AppState {
 
     func resetImageCrop(_ shapeId: UUID) {
         guard let location = shapeLocation(for: shapeId) else { return }
-        var shape = rows[location.rowIndex].shapes[location.shapeIndex]
+        // Resolved, so a non-base locale resets its own crop instead of writing the base frame over its override.
+        var shape = LocaleService.resolveShape(rows[location.rowIndex].shapes[location.shapeIndex], localeState: localeState)
         guard shape.imageCrop != nil, !shape.resolvedIsLocked else { return }
         shape.imageCrop = nil
         updateShape(shape)

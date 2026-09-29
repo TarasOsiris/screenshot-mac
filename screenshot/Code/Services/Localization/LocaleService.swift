@@ -151,6 +151,9 @@ enum LocaleService {
         if base.type == .device || base.type == .image {
             result.displayImageFileName = base.displayImageFileName
         }
+        if base.type == .image {
+            result.imageCrop = base.imageCrop
+        }
     }
 
     /// Build the override that expresses `resolved` as a delta from `base`. nil if identical.
@@ -186,6 +189,9 @@ enum LocaleService {
             if resolved.displayImageFileName != base.displayImageFileName {
                 override.overrideImageFileName = resolved.displayImageFileName
             }
+        }
+        if resolved.type == .image, resolved.imageCrop != base.imageCrop {
+            override.imageCrop = resolved.imageCrop ?? ImageCrop()
         }
 
         return override.isEmpty ? nil : override
@@ -367,6 +373,7 @@ enum LocaleService {
             if let lineSpacing = style.lineSpacing { result.lineSpacing = lineSpacing }
             if let lineHeightMultiple = style.lineHeightMultiple { result.lineHeightMultiple = lineHeightMultiple }
             if let fileName = style.overrideImageFileName { result.displayImageFileName = fileName }
+            if let crop = style.imageCrop { result.imageCrop = crop.storedValue }
         }
         if let textOverride {
             if let text = textOverride.text {

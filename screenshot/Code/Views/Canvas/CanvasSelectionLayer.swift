@@ -28,6 +28,8 @@ struct CanvasSelectionLayer: View {
     /// properties bar and the inspector can show it. See `LiveShapeGeometrySession`.
     let liveShapeGeometry: LiveShapeGeometrySession
     let textEditingShapeId: UUID?
+    /// The image shape in crop mode, whose handles trim the picture instead of resizing it.
+    var cropTarget: CanvasCropTarget?
     let onUpdate: (CanvasShapeModel) -> Void
 
     private let handleDiameter: CGFloat = 8
@@ -88,7 +90,9 @@ struct CanvasSelectionLayer: View {
                 rotationDelta: rotationBinding(for: shape),
                 resizeState: resizeBinding(for: shape),
                 dragSession: dragSession,
+                isCropping: cropTarget?.shapeId == shape.id,
                 resolveResize: resolveResize,
+                finalizeResize: finalizeResize,
                 onResizeEnded: dragSession.endSnapping,
                 onUpdate: onUpdate
             )
@@ -110,6 +114,11 @@ struct CanvasSelectionLayer: View {
         translation: CGSize,
         lockAspectRatio: Bool
     ) -> ResizeState {
+        if let crop = cropTarget, crop.shapeId == base.id {
+            // Free-form and unsnapped: the picture's edges, not other shapes', bound a crop window.
+            let raw = ResizeGeometry.resize(shape: base, edge: edge, translation: translation, lockAspectRatio: false)
+            return ResizeGeometry.cropResize(raw, base: base, edge: edge, imageSize: crop.imageSize)
+        }
         let (state, guides) = ResizeGeometry.snappedResize(
             shape: base,
             edge: edge,
@@ -131,6 +140,19 @@ struct CanvasSelectionLayer: View {
         }
         dragSession.publishGuides(guides)
         return state
+    }
+
+    /// Crop mode rewrites the crop alongside the frame so the picture stays where it was.
+    private func finalizeResize(original: CanvasShapeModel, resized: CanvasShapeModel) -> CanvasShapeModel {
+        guard let cropTarget, cropTarget.shapeId == original.id else { return resized }
+        var updated = resized
+        updated.imageCrop = (original.imageCrop ?? ImageCrop()).refitted(
+            from: CGRect(x: original.x, y: original.y, width: original.width, height: original.height),
+            to: CGRect(x: resized.x, y: resized.y, width: resized.width, height: resized.height),
+            rotation: original.rotation,
+            imageSize: cropTarget.imageSize
+        ).storedValue
+        return updated
     }
 
     /// A setter, not a `body`, so publishing the readout here is legal — and it is the one place
@@ -236,4 +258,9 @@ struct ShapeChromeFrame: ViewModifier {
             .position(x: displayRect.midX, y: displayRect.midY)
             .allowsHitTesting(false)
     }
+}
+
+struct CanvasCropTarget: Equatable {
+    let shapeId: UUID
+    let imageSize: CGSize
 }

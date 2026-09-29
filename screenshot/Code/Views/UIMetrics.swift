@@ -120,6 +120,12 @@ enum UIMetrics {
         /// Stronger tint behind the selected row's header strip. Layers over
         /// `accentRowSelection`, so the header reads ≈ 0.21 effective vs the ~0.10 body.
         static let accentRowHeader: Double = 0.12
+        /// The hidden part of a picture in crop mode, dimmed (and desaturated) so the kept area pops.
+        static let cropGhost: Double = 0.3
+        static let cropGhostSaturation: Double = 0.4
+        /// Thirds grid over a crop window. On `.white` deliberately: it overlays the picture itself,
+        /// which the appearance doesn't tint — the photo-editor convention.
+        static let cropGrid: Double = 0.55
     }
 
     enum Stroke {
@@ -363,6 +369,10 @@ enum UIMetrics {
         /// Hit area of a shape's resize handle; canvas chrome near a corner must stay clear of it.
         static let resizeHitSize: CGFloat = 20
         static let overflowBadgeSize: CGFloat = 18
+        static let cropBracketArm: CGFloat = 12
+        static let cropBracketThickness: CGFloat = 3
+        /// Space between a cropping frame and the hint pill floating over it.
+        static let cropHintGap: CGFloat = 18
     }
 
     enum GradientEditor {

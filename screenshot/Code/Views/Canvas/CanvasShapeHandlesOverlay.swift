@@ -12,8 +12,12 @@ struct CanvasShapeHandlesOverlay: View {
     /// Holds the gesture's pre-resize base — see `CanvasDragSession.resizeBase` — and its snap
     /// state. Only written here, never read in `body`, so this registers no per-tick dependency.
     let dragSession: CanvasDragSession
+    /// Crop mode: bracket handles that trim the picture, no rotate handle.
+    let isCropping: Bool
     /// Turns a handle's model-space translation into the frame to show, snapping included.
     let resolveResize: (_ base: CanvasShapeModel, _ edge: ResizeEdge, _ translation: CGSize, _ lockAspectRatio: Bool) -> ResizeState
+    /// Last word on the committed shape, given the pre-resize one — crop mode refits the picture here.
+    let finalizeResize: (_ original: CanvasShapeModel, _ resized: CanvasShapeModel) -> CanvasShapeModel
     let onResizeEnded: () -> Void
     let onUpdate: (CanvasShapeModel) -> Void
 
@@ -28,6 +32,9 @@ struct CanvasShapeHandlesOverlay: View {
         )
         if !shape.resolvedIsLocked {
             resizeHandles
+            if isCropping {
+                CropModeHint(displayRect: displayRect, rotation: currentRotation)
+            }
         }
     }
 
@@ -46,7 +53,9 @@ struct CanvasShapeHandlesOverlay: View {
             resizeHandle(edge: .bottom)
             resizeHandle(edge: .left)
             resizeHandle(edge: .right)
-            rotateHandleContent
+            if !isCropping {
+                rotateHandleContent
+            }
         }
         .frame(width: displayW, height: displayH)
         .rotationEffect(.degrees(currentRotation))
@@ -148,11 +157,16 @@ struct CanvasShapeHandlesOverlay: View {
                 .frame(width: hitSize, height: hitSize)
                 .contentShape(Rectangle())
 
-            Circle()
-                .fill(Color.white)
-                .strokeBorder(Color.accentColor, lineWidth: 1.5 / zoom)
-                .frame(width: handleSize, height: handleSize)
-                .allowsHitTesting(false)
+            if isCropping {
+                CropHandleGlyph(edge: edge, zoom: zoom)
+                    .allowsHitTesting(false)
+            } else {
+                Circle()
+                    .fill(Color.white)
+                    .strokeBorder(Color.accentColor, lineWidth: 1.5 / zoom)
+                    .frame(width: handleSize, height: handleSize)
+                    .allowsHitTesting(false)
+            }
         }
         .cursorHover(resizeCursor(for: edge), for: .resizeHandle(edge))
         .position(position)
@@ -189,7 +203,7 @@ struct CanvasShapeHandlesOverlay: View {
                         updated.y = resizeState.newY
                         updated.width = resizeState.newW
                         updated.height = resizeState.newH
-                        onUpdate(updated)
+                        onUpdate(finalizeResize(shape, updated))
                     }
                     dragSession.resizeBase[shape.id] = nil
                     resizeState = nil

@@ -153,6 +153,7 @@ extension ShapeInspector {
             replaceImageRow(title: shape.imageFileName != nil ? "Replace Image" : "Choose Image")
             if state.canCropImage(shape) {
                 ImageCropControls(state: state, shapeId: shapeId, sliderWidth: UIMetrics.SliderWidth.standard)
+                    .localeOverridden(.crop)
             }
         }
     }

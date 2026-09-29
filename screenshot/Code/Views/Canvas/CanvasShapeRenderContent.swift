@@ -34,6 +34,8 @@ struct CanvasShapeRenderContent: View {
     var isCropping = false
     /// A resize drag is in progress: every tick is a new box, so nothing it measures is worth caching.
     var isResizing = false
+    /// A crop pan is in flight: the rule-of-thirds grid shows over the window.
+    var isCropPanning = false
     var resourceState: CanvasResourceState = .satisfied
     var fillImage: NSImage?
     var defaultDeviceBodyColor: Color
@@ -250,8 +252,10 @@ struct CanvasShapeRenderContent: View {
                         // Editor-only: the part of the picture the frame hides, so a pan has a target.
                         croppedImage(screenshotImage, crop: crop)
                             .frame(width: displayW, height: displayH)
-                            .opacity(0.35)
+                            .saturation(UIMetrics.Opacity.cropGhostSaturation)
+                            .opacity(UIMetrics.Opacity.cropGhost)
                             .allowsHitTesting(false)
+                        cropPictureBounds(screenshotImage, crop: crop)
                     }
                     // Frame before clip: `.aspectRatio(.fill)` resolves to the *overflowing* size,
                     // so clipping first crops nothing and the image spills past the shape's bounds
@@ -261,8 +265,8 @@ struct CanvasShapeRenderContent: View {
                         .clipShape(clip)
                         .overlay { imageOutline(clip) }
                         .overlay {
-                            if isCropping {
-                                clip.stroke(Color.accentColor, style: StrokeStyle(lineWidth: 2, dash: [6, 4]))
+                            if isCropping && (isResizing || isCropPanning) {
+                                CropThirdsGrid()
                             }
                         }
                 } else if showsEditorHelpers {
@@ -284,6 +288,16 @@ struct CanvasShapeRenderContent: View {
             .aspectRatio(contentMode: .fill)
             .scaleEffect(crop.scale)
             .offset(x: crop.offsetX * displayW, y: crop.offsetY * displayH)
+    }
+
+    /// How far the window can grow: a dashed hairline around the whole picture.
+    private func cropPictureBounds(_ image: NSImage, crop: ImageCrop) -> some View {
+        let picture = crop.pictureRect(imageSize: image.size, frameSize: CGSize(width: displayW, height: displayH))
+        return Rectangle()
+            .strokeBorder(Color.accentColor.opacity(UIMetrics.Opacity.accentBorder), style: StrokeStyle(lineWidth: 1, dash: [4, 3]))
+            .frame(width: picture.width, height: picture.height)
+            .offset(x: picture.midX, y: picture.midY)
+            .allowsHitTesting(false)
     }
 
     private func clampedCrop(for image: NSImage) -> ImageCrop {

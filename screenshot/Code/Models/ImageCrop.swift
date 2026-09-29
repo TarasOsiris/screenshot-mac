@@ -49,6 +49,55 @@ nonisolated struct ImageCrop: Codable, Equatable {
         return crop
     }
 
+    /// Where the whole picture sits, in the frame's own axes with the origin at the frame's center.
+    func pictureRect(imageSize: CGSize, frameSize: CGSize) -> CGRect {
+        let crop = clamped(imageSize: imageSize, frameSize: frameSize)
+        guard imageSize.width > 0, imageSize.height > 0, frameSize.width > 0, frameSize.height > 0 else {
+            return CGRect(x: -frameSize.width / 2, y: -frameSize.height / 2, width: frameSize.width, height: frameSize.height)
+        }
+        let fill = Self.aspectFillSize(imageAspect: imageSize.width / imageSize.height, frameSize: frameSize)
+        let width = fill.width * crop.scale
+        let height = fill.height * crop.scale
+        return CGRect(
+            x: crop.offsetX * frameSize.width - width / 2,
+            y: crop.offsetY * frameSize.height - height / 2,
+            width: width,
+            height: height
+        )
+    }
+
+    /// The crop that keeps the picture where it is on the canvas when the frame moves from
+    /// `oldFrame` to `newFrame` — both unrotated model rects of a shape turned by `rotation`.
+    func refitted(from oldFrame: CGRect, to newFrame: CGRect, rotation: Double, imageSize: CGSize) -> ImageCrop {
+        guard newFrame.width > 0, newFrame.height > 0, imageSize.width > 0, imageSize.height > 0 else { return self }
+        let picture = pictureRect(imageSize: imageSize, frameSize: oldFrame.size)
+        let local = Self.localOffset(from: oldFrame, to: newFrame, rotation: rotation)
+        let fill = Self.aspectFillSize(imageAspect: imageSize.width / imageSize.height, frameSize: newFrame.size)
+        let crop = ImageCrop(
+            scale: picture.width / fill.width,
+            offsetX: (picture.midX - local.width) / newFrame.width,
+            offsetY: (picture.midY - local.height) / newFrame.height
+        ).clamped(imageSize: imageSize, frameSize: newFrame.size)
+        // Round-off from the round trip must not leave a phantom crop on an untouched picture.
+        let epsilon = 1e-9
+        return ImageCrop(
+            scale: abs(crop.scale - 1) < epsilon ? 1 : crop.scale,
+            offsetX: abs(crop.offsetX) < epsilon ? 0 : crop.offsetX,
+            offsetY: abs(crop.offsetY) < epsilon ? 0 : crop.offsetY
+        )
+    }
+
+    /// `newFrame`'s center relative to `oldFrame`'s, along the shape's own rotated axes.
+    static func localOffset(from oldFrame: CGRect, to newFrame: CGRect, rotation: Double) -> CGSize {
+        let dx = newFrame.midX - oldFrame.midX
+        let dy = newFrame.midY - oldFrame.midY
+        let radians = rotation * .pi / 180
+        return CGSize(
+            width: dx * cos(radians) + dy * sin(radians),
+            height: -dx * sin(radians) + dy * cos(radians)
+        )
+    }
+
     /// The value a shape stores: nil for the identity crop.
     var storedValue: ImageCrop? { isIdentity ? nil : self }
 

@@ -449,15 +449,16 @@ extension AppState {
 
         let frameSize = CGSize(width: resolved.width, height: resolved.height)
         let local = ResizeGeometry.localTranslation(CGSize(width: dx, height: dy), rotation: resolved.rotation)
-        let newCrop = (shape.imageCrop ?? ImageCrop())
+        var updated = resolved
+        updated.imageCrop = (resolved.imageCrop ?? ImageCrop())
             .panned(by: local, frameSize: frameSize, imageSize: image.size)
             .clamped(imageSize: image.size, frameSize: frameSize)
             .storedValue
-        guard newCrop != shape.imageCrop else { return }
+        guard updated.imageCrop != resolved.imageCrop else { return }
 
         beginNudgeIfNeeded(rowIdx: rowIdx, target: shapeId)
         edits.nudgeActionName = "Crop Image"
-        rows[rowIdx].shapes[shapeIdx].imageCrop = newCrop
+        rows[rowIdx].shapes[shapeIdx] = LocaleService.splitUpdate(base: shape, updated: updated, localeState: &localeState)
         scheduleSave()
         edits.nudge.arm()
     }
@@ -470,9 +471,11 @@ extension AppState {
         guard !edits.nudge.isActive else { return }
         commitAllPendingEdits()
         let baseRow = rows[rowIdx]
+        // A crop pan in a non-base locale writes its override, so the base locale state is part of the step.
+        let baseLocaleState = localeState
         edits.nudge.begin(id: target) { [weak self] in
             guard let self else { return }
-            self.registerUndoForRowWithBase(self.edits.nudgeActionName, baseRow: baseRow)
+            self.registerUndoForRowWithBase(self.edits.nudgeActionName, baseRow: baseRow, baseLocaleState: baseLocaleState)
         }
     }
 

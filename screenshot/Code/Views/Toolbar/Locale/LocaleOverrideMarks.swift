@@ -21,6 +21,7 @@ extension LocaleOverrideField {
         case .lineSpacing: String(localized: "Line Spacing")
         case .lineHeight: String(localized: "Line Height")
         case .image: String(localized: "Image")
+        case .crop: String(localized: "Crop")
         }
     }
 

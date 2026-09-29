@@ -183016,6 +183016,334 @@
           }
         }
       }
+    },
+    "While cropping, the corner and edge brackets trim the frame and the picture stays where it is. The dashed outline shows how far each edge can go." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Beim Zuschneiden beschneiden die Klammern an Ecken und Kanten den Rahmen, während das Bild an seinem Platz bleibt. Der gestrichelte Umriss zeigt, wie weit sich jede Kante ziehen lässt."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Al recortar, los soportes de las esquinas y los bordes recortan el marco y la imagen se queda donde está. El contorno discontinuo muestra hasta dónde puede llegar cada borde."
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "هنگام برش، دستگیره‌های گوشه و لبه قاب را کوتاه می‌کنند و تصویر سر جایش می‌ماند. خط‌چین نشان می‌دهد هر لبه تا کجا می‌تواند برود."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pendant le recadrage, les poignées des coins et des bords rognent le cadre et l'image reste en place. Le contour en pointillés indique jusqu'où chaque bord peut aller."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Durante il ritaglio, le maniglie agli angoli e ai bordi ritagliano la cornice e l'immagine resta dov'è. Il contorno tratteggiato mostra fin dove può arrivare ogni bordo."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "トリミング中は、角と辺のハンドルで枠を切り詰めても画像はその場に留まります。破線の輪郭は、各辺をどこまで広げられるかを示します。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "자르는 동안 모서리와 가장자리 핸들로 프레임을 잘라도 사진은 제자리에 있습니다. 점선 윤곽은 각 가장자리를 어디까지 넓힐 수 있는지 보여 줍니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ao recortar, as alças dos cantos e das bordas aparam o quadro e a imagem fica onde está. O contorno tracejado mostra até onde cada borda pode ir."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "При обрезке уголки и маркеры на сторонах подрезают рамку, а изображение остаётся на месте. Пунктирный контур показывает, насколько далеко можно отвести каждую сторону."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kırparken köşe ve kenar tutamaçları çerçeveyi kırpar, resim ise yerinde kalır. Kesikli çizgi her kenarın ne kadar uzağa gidebileceğini gösterir."
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Під час обрізання кутові та бічні маркери підрізають рамку, а зображення лишається на місці. Пунктирний контур показує, наскільки далеко можна відвести кожну сторону."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "裁剪时，拖动角落和边缘的控制柄可修剪边框，图片保持原位不动。虚线轮廓显示每条边最远可以拖到哪里。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "裁切時，拖移角落和邊緣的控制點可修剪邊框，圖片保持原位不動。虛線輪廓顯示每條邊最遠可以拖到哪裡。"
+          }
+        }
+      }
+    },
+    "Drag to reposition · Return to finish" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zum Verschieben ziehen · Return zum Beenden"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Arrastra para recolocar · Retorno para terminar"
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "برای جابه‌جایی بکشید · Return برای پایان"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Faites glisser pour repositionner · Retour pour terminer"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Trascina per riposizionare · A capo per terminare"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ドラッグで位置を調整 · return キーで完了"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "드래그하여 위치 조정 · Return 키로 완료"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Arraste para reposicionar · Return para concluir"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Перетащите для перемещения · Return — готово"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Konumlandırmak için sürükleyin · Bitirmek için Return"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Перетягніть для переміщення · Return — готово"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "拖移以调整位置 · 按 Return 键完成"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "拖移以調整位置 · 按 Return 鍵完成"
+          }
+        }
+      }
+    },
+    "Drag to reposition" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zum Verschieben ziehen"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Arrastra para recolocar"
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "برای جابه‌جایی بکشید"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Faites glisser pour repositionner"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Trascina per riposizionare"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ドラッグで位置を調整"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "드래그하여 위치 조정"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Arraste para reposicionar"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Перетащите для перемещения"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Konumlandırmak için sürükleyin"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Перетягніть для переміщення"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "拖移以调整位置"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "拖移以調整位置"
+          }
+        }
+      }
+    },
+    "An image's **Crop** can differ by language too, so a translated screenshot can be framed on its own." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Auch der **Zuschnitt** eines Bilds kann je nach Sprache abweichen, sodass ein übersetzter Screenshot eigenständig gerahmt werden kann."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "El **recorte** de una imagen también puede variar según el idioma, para encuadrar por separado una captura traducida."
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**برش** یک تصویر هم می‌تواند برای هر زبان متفاوت باشد، تا بتوانید اسکرین‌شات ترجمه‌شده را جداگانه قاب‌بندی کنید."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Le **recadrage** d'une image peut aussi varier selon la langue, pour cadrer séparément une capture traduite."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Anche il **ritaglio** di un'immagine può variare in base alla lingua, così uno screenshot tradotto può essere inquadrato a sé."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "画像の**トリミング**も言語ごとに変えられるので、翻訳したスクリーンショットを個別に切り取れます。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "이미지의 **자르기**도 언어별로 다르게 설정할 수 있어, 번역된 스크린샷을 따로 맞출 수 있습니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O **recorte** de uma imagem também pode variar por idioma, para enquadrar separadamente uma captura traduzida."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Обрезка** изображения тоже может отличаться для каждого языка, так что переведённый скриншот можно кадрировать отдельно."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bir resmin **kırpması** da dile göre farklı olabilir; böylece çevrilmiş bir ekran görüntüsü ayrı olarak çerçevelenebilir."
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Обрізання** зображення теж може відрізнятися для кожної мови, тож перекладений скриншот можна кадрувати окремо."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "图像的**裁剪**也可以按语言设置，让翻译后的截图单独取景。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "影像的**裁切**也可以依語言設定，讓翻譯後的截圖單獨取景。"
+          }
+        }
+      }
     }
   },
   "version" : "1.0"

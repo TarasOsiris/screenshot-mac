@@ -444,6 +444,36 @@ struct AppStateTests {
         #expect(state.rows[0].shapes.first { $0.id == shape.id }?.imageCrop == shape.imageCrop)
     }
 
+    @Test func cropInANonBaseLocaleStaysInThatLocale() throws {
+        let (state, tempDir) = makeState()
+        defer { cleanup(tempDir) }
+        let shape = addCroppableImage(to: state)
+        state.addLocale(.init(code: "de", label: "German"))
+        state.setActiveLocale("de")
+        state.beginImageCrop(shape.id)
+        let um = try #require(state.undoManager)
+        um.removeAllActions()
+
+        state.nudgeSelectedShapes(dx: 10, dy: 0)
+        state.finishNudgeIfNeeded()
+
+        let base = try #require(state.rows[0].shapes.first { $0.id == shape.id })
+        #expect(base.imageCrop == shape.imageCrop)
+        #expect(LocaleService.resolveShape(base, localeState: state.localeState).imageCrop == ImageCrop(scale: 2, offsetX: 0.05))
+
+        // Reset clears the German crop to the uncropped picture without touching the base's.
+        state.resetImageCrop(shape.id)
+        let afterReset = try #require(state.rows[0].shapes.first { $0.id == shape.id })
+        #expect(afterReset.imageCrop == shape.imageCrop)
+        #expect(LocaleService.resolveShape(afterReset, localeState: state.localeState).imageCrop == nil)
+
+        um.undo()
+        um.undo()
+        let restored = try #require(state.rows[0].shapes.first { $0.id == shape.id })
+        #expect(LocaleService.resolveShape(restored, localeState: state.localeState).imageCrop == shape.imageCrop)
+        #expect(state.localeState.overrides["de"]?[shape.id.uuidString] == nil)
+    }
+
     @Test func batchImportImagesReusesExistingDeviceShapes() async throws {
         let (state, tempDir) = makeState()
         defer { cleanup(tempDir) }

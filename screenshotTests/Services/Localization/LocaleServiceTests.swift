@@ -543,6 +543,24 @@ struct LocaleServiceTests {
 
 struct LocaleOverrideFieldTests {
 
+    /// An uncropped locale under a cropped base has to be stored as an explicit identity, since a
+    /// nil override means "inherit the base crop".
+    @Test func uncroppedLocaleUnderACroppedBaseRoundTrips() throws {
+        var base = CanvasShapeModel(type: .image, x: 0, y: 0, width: 10, height: 10)
+        base.imageCrop = ImageCrop(scale: 3, offsetX: 0.2)
+        var resolved = base
+        resolved.imageCrop = nil
+
+        let override = try #require(LocaleService.makeOverride(base: base, resolved: resolved))
+        #expect(override.imageCrop == ImageCrop())
+        let state = LocaleState(
+            locales: [.init(code: "en", label: "English"), .init(code: "fr", label: "French")],
+            activeLocaleCode: "fr",
+            overrides: ["fr": [base.id.uuidString: override]]
+        )
+        #expect(LocaleService.resolveShape(base, localeState: state).imageCrop == nil)
+    }
+
     /// Every `LocaleOverrideField` is reachable from `makeOverride` — a case that no override can
     /// ever set would mark and offer to reset a property that doesn't exist.
     ///
@@ -580,6 +598,7 @@ struct LocaleOverrideFieldTests {
         imageBase.imageFileName = "base.png"
         var imageResolved = imageBase
         imageResolved.imageFileName = "other.png"
+        imageResolved.imageCrop = ImageCrop(scale: 2)
 
         let covered = (LocaleService.makeOverride(base: textBase, resolved: textResolved)?.overriddenFields ?? [])
             .union(LocaleService.makeOverride(base: imageBase, resolved: imageResolved)?.overriddenFields ?? [])
@@ -600,7 +619,7 @@ struct LocaleOverrideFieldTests {
             "text", "richText", "clearsRichText",
             "fontName", "fontSize", "fontWeight", "textAlign", "italic", "uppercase",
             "letterSpacing", "lineSpacing", "lineHeightMultiple",
-            "overrideImageFileName",
+            "overrideImageFileName", "imageCrop",
         ])
     }
 
@@ -610,7 +629,7 @@ struct LocaleOverrideFieldTests {
             text: "t", fontName: "F", fontSize: 12, fontWeight: 700,
             textAlign: .right, italic: true, uppercase: true,
             letterSpacing: 1, lineSpacing: 2, lineHeightMultiple: 1.5,
-            overrideImageFileName: "i.png"
+            overrideImageFileName: "i.png", imageCrop: ImageCrop(scale: 2)
         )
         #expect(full.overriddenFields == Set(LocaleOverrideField.allCases))
 
