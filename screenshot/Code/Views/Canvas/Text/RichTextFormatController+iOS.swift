@@ -32,7 +32,7 @@ final class RichTextFormatController {
     func applyAction(_ action: RichTextFormatAction) {
         guard let textView else { return }
         let storage = textView.textStorage
-        let range = textView.selectedRange
+        let range = textView.clampedSelectedRange
         let priorShouldEncode = shouldEncodeRichText
 
         if range.length > 0 {
@@ -128,7 +128,7 @@ final class RichTextFormatController {
 
     private func refreshSelectionState() {
         guard let textView else { return }
-        let range = textView.selectedRange
+        let range = textView.clampedSelectedRange
         let rawAttrs: [NSAttributedString.Key: Any]? = range.length > 0
             ? textView.textStorage.attributes(at: range.location, effectiveRange: nil)
             : textView.typingAttributes

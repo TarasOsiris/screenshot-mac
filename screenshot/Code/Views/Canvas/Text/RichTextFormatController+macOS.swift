@@ -25,7 +25,7 @@ final class RichTextFormatController {
 
     func applyAction(_ action: RichTextFormatAction) {
         guard let textView, let storage = textView.textStorage else { return }
-        let range = textView.selectedRange()
+        let range = textView.clampedSelectedRange
         let priorShouldEncode = shouldEncodeRichText
 
         if range.length > 0 {

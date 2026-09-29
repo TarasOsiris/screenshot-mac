@@ -172,7 +172,8 @@ struct InlineTextEditor: NSViewRepresentable {
         (textView as? CommitTextView)?.verticalGlyphPadding = glyphPadding
 
         if preserveSelection {
-            textView.selectedRanges = selectedRanges
+            let length = textView.textStorage?.length ?? 0
+            textView.selectedRanges = selectedRanges.map { NSValue(range: $0.rangeValue.clamped(toLength: length)) }
         }
     }
 
@@ -204,9 +205,12 @@ struct InlineTextEditor: NSViewRepresentable {
                 storage.deleteCharacters(in: excess)
             }
             if parent.uppercase && !parent.isRichTextMode {
-                let uppercased = textView.string.uppercased()
-                if textView.string != uppercased {
-                    let selectedRanges = textView.selectedRanges
+                let original = textView.string
+                let uppercased = original.uppercased()
+                if original != uppercased {
+                    let selectedRanges = textView.selectedRanges.map {
+                        NSValue(range: $0.rangeValue.mappedThroughUppercasing(original))
+                    }
                     textView.string = uppercased
                     textView.selectedRanges = selectedRanges
                 }
@@ -247,7 +251,7 @@ struct InlineTextEditor: NSViewRepresentable {
 
         func textViewDidChangeSelection(_ notification: Notification) {
             guard let textView = notification.object as? NSTextView else { return }
-            let selection = textView.selectedRange()
+            let selection = textView.clampedSelectedRange
             let (attrs, range): ([NSAttributedString.Key: Any]?, NSRange?) = selection.length > 0
                 ? (textView.textStorage?.attributes(at: selection.location, effectiveRange: nil), selection)
                 : (textView.typingAttributes, nil)
@@ -260,6 +264,10 @@ struct InlineTextEditor: NSViewRepresentable {
             hasReceivedTextChange && richTextData == lastEmittedRichTextData
         }
     }
+}
+
+extension NSTextView {
+    var clampedSelectedRange: NSRange { selectedRange().clamped(toLength: textStorage?.length ?? 0) }
 }
 
 #endif

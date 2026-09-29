@@ -78,7 +78,7 @@ struct UITextViewEditor: UIViewRepresentable {
         if !textView.attributedText.isEqual(to: newAttr) {
             let selection = textView.selectedRange
             textView.attributedText = newAttr
-            textView.selectedRange = selection
+            textView.selectedRange = selection.clamped(toLength: textView.textStorage.length)
         }
         textView.typingAttributes = baseTypingAttributes()
         applyVerticalLayout(to: textView, context: context)
@@ -135,9 +135,10 @@ struct UITextViewEditor: UIViewRepresentable {
 
         func textViewDidChange(_ textView: UITextView) {
             if parent.uppercase, !parent.isRichTextMode {
-                let upper = textView.text.uppercased()
-                if textView.text != upper {
-                    let selection = textView.selectedRange
+                let original = textView.text ?? ""
+                let upper = original.uppercased()
+                if original != upper {
+                    let selection = textView.selectedRange.mappedThroughUppercasing(original)
                     textView.text = upper
                     textView.selectedRange = selection
                 }
@@ -161,7 +162,7 @@ struct UITextViewEditor: UIViewRepresentable {
         }
 
         func textViewDidChangeSelection(_ textView: UITextView) {
-            let selection = textView.selectedRange
+            let selection = textView.clampedSelectedRange
             let (rawAttrs, range): ([NSAttributedString.Key: Any]?, NSRange?) = selection.length > 0
                 ? (textView.textStorage.attributes(at: selection.location, effectiveRange: nil), selection)
                 : (textView.typingAttributes, nil)
@@ -179,5 +180,9 @@ struct UITextViewEditor: UIViewRepresentable {
             parent.onCommit()
         }
     }
+}
+
+extension UITextView {
+    var clampedSelectedRange: NSRange { selectedRange.clamped(toLength: textStorage.length) }
 }
 #endif
