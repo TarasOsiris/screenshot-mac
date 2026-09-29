@@ -178834,6 +178834,61 @@
           }
         }
       }
+    },
+    "Doesn't fit" : {
+      "localizations" : {
+
+      }
+    },
+    "This text is too long for its box in this language. Enlarge the box, shorten the text, or turn on Shrink to Fit." : {
+      "localizations" : {
+
+      }
+    },
+    "Shrink to Fit" : {
+      "localizations" : {
+
+      }
+    },
+    "Scale the text down so every line fits the box, in every language" : {
+      "localizations" : {
+
+      }
+    },
+    "Text doesn't fit its box in %@." : {
+      "localizations" : {
+
+      }
+    },
+    "Enlarge the text box, shorten the translation, or turn on Shrink to Fit." : {
+      "localizations" : {
+
+      }
+    },
+    "**Shrink to Fit** scales the text down just enough for every line to fit its box. It is worked out per language, so a long German translation shrinks while the English headline stays full size." : {
+      "localizations" : {
+
+      }
+    },
+    "Text that is too long for its box loses its last lines. Such a shape shows an **orange warning triangle** on the canvas, its cell in the translation table says *Doesn't fit*, and the App Store Connect and Google Play upload checks list it as a warning. Enlarge the box, shorten the text, or turn on **Shrink to Fit**." : {
+      "localizations" : {
+
+      }
+    },
+    "Text doesn't fit" : {
+      "localizations" : {
+
+      }
+    },
+    "Text doesn't fit in its box. Enlarge the box, shorten the text, or turn on Shrink Text to Fit." : {
+      "localizations" : {
+
+      }
+    },
+    "Text doesn't fit in its box. Enlarge the box, shorten the text, or turn on Shrink to Fit." : {
+      "localizations" : {
+
+      }
     }
   },
   "version" : "1.0"
