@@ -59,12 +59,30 @@ struct MultiShapeEditingTests {
         let plain = textShape(.blue)
         let (state, tempDir, editor, _) = makeEditor(adding: [gradient, plain])
         defer { cleanupTestState(tempDir) }
+        #expect(editor.selectedTextHasGradient)
 
         editor.multiTextColorBinding().wrappedValue = .red
+        #expect(!editor.selectedTextHasGradient)
 
         #expect(documentShape(state, gradient.id)?.resolvedFillStyle == .color)
         #expect(documentShape(state, gradient.id)?.color.hexString == Color.red.hexString)
         #expect(documentShape(state, plain.id)?.color.hexString == Color.red.hexString)
+    }
+
+    @Test func multiTextColorWellShowsTheGradientRatherThanTheHiddenSolidColor() {
+        var gradient = textShape(.blue)
+        gradient.fillStyle = .gradient
+        gradient.fillGradientConfig = GradientConfig(color1: .orange, color2: .purple)
+        let (state, tempDir, editor, undoManager) = makeEditor(adding: [gradient])
+        defer { cleanupTestState(tempDir) }
+
+        let binding = editor.multiTextColorBinding()
+        #expect(CodableColor(binding.wrappedValue) == CodableColor(.orange))
+
+        // The picker echoing the displayed color back must leave the gradient alone.
+        binding.wrappedValue = binding.wrappedValue
+        #expect(!undoManager.canUndo)
+        #expect(documentShape(state, gradient.id)?.resolvedFillStyle == .gradient)
     }
 
     @Test func multiTextColorBindingFansOutToEverySelectedTextShape() {

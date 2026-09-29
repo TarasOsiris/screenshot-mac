@@ -179094,6 +179094,11 @@
       "localizations" : {
 
       }
+    },
+    "Text color — replaces the gradient fill" : {
+      "localizations" : {
+
+      }
     }
   },
   "version" : "1.0"

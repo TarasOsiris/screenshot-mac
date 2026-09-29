@@ -117,10 +117,26 @@ extension MultiShapeEditing {
         )
     }
 
+    /// True when a selected text shape paints with a gradient, which a solid pick replaces.
+    var selectedTextHasGradient: Bool {
+        selectedShapes.contains { $0.type == .text && $0.resolvedFillStyle != .color }
+    }
+
+    /// Gradient text never shows its stored solid color, so the well shows the gradient's first stop.
+    private var displayedTextColor: Color {
+        guard let shape = firstTextShape else { return CanvasShapeModel.placeholder.color }
+        if shape.resolvedFillStyle == .gradient, let stop = shape.fillGradientConfig?.stops.min() {
+            return stop.color
+        }
+        return shape.color
+    }
+
     func multiTextColorBinding() -> Binding<Color> {
         Binding(
-            get: { firstTextShape?.color ?? CanvasShapeModel.placeholder.color },
+            get: { displayedTextColor },
             set: { newValue in
+                // A ColorPicker writing back what it was handed must not flatten a gradient.
+                guard CodableColor(newValue) != CodableColor(displayedTextColor) else { return }
                 state.updateShapes(state.selectedShapeIds) { shape in
                     // Picking a solid color has to drop a gradient fill, or the change is invisible.
                     if shape.resolvedFillStyle != .color { shape.fillStyle = nil }
