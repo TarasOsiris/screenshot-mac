@@ -23,8 +23,13 @@ extension AppState {
     func keepSelectionVisible() {
         let filter = effectiveVariantFilter
         guard let id = selectedRowId, let idx = rowIndex(for: id), !filter.includes(rows[idx]) else { return }
-        let nearest = rows[idx...].first(where: filter.includes) ?? rows[..<idx].last(where: filter.includes)
-        selectRow(nearest?.id)
+        selectRow(nearestVisibleRow(from: idx)?.id)
+    }
+
+    /// The first row at or after `index` the filter shows, else the last one before it.
+    func nearestVisibleRow(from index: Int) -> ScreenshotRow? {
+        let filter = effectiveVariantFilter
+        return rows[index...].first(where: filter.includes) ?? rows[..<index].last(where: filter.includes)
     }
 
     // MARK: - Screenshot slots

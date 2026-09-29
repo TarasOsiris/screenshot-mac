@@ -34,8 +34,8 @@ struct CanvasShapeRenderContent: View {
     var isCropping = false
     /// A resize drag is in progress: every tick is a new box, so nothing it measures is worth caching.
     var isResizing = false
-    /// A crop pan is in flight: the rule-of-thirds grid shows over the window.
-    var isCropPanning = false
+    /// A crop handle or pan is in flight: the rule-of-thirds grid shows over the window.
+    var showsCropGrid = false
     var resourceState: CanvasResourceState = .satisfied
     var fillImage: NSImage?
     var defaultDeviceBodyColor: Color
@@ -265,7 +265,7 @@ struct CanvasShapeRenderContent: View {
                         .clipShape(clip)
                         .overlay { imageOutline(clip) }
                         .overlay {
-                            if isCropping && (isResizing || isCropPanning) {
+                            if showsCropGrid {
                                 CropThirdsGrid()
                             }
                         }

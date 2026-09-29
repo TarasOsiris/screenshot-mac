@@ -125,7 +125,7 @@ struct ExportCoordinatorTests {
                         relativeTo: nil, bookmarkDataIsStale: &isStale)
             Issue.record("a deleted folder's bookmark should not resolve")
         } catch {
-            #expect(ExportFolderService.isExpectedResolveFailure(error))
+            #expect(ExportFolderService.isExpectedResolveFailure(error) || ExportFolderService.bookmarkTargetIsGone(stored))
         }
         #expect(store.resolve() == nil)
         #expect(!store.hasDestination)
@@ -138,6 +138,17 @@ struct ExportCoordinatorTests {
         #expect(ExportFolderService.isExpectedResolveFailure(wrapped))
         #expect(ExportFolderService.isExpectedResolveFailure(CocoaError(.fileReadNoPermission)))
         #expect(!ExportFolderService.isExpectedResolveFailure(CocoaError(.fileReadCorruptFile)))
+    }
+
+    /// A bare 259 is expected only when the bookmark parses and names a folder that is gone.
+    @Test func onlyAParseableBookmarkToAMissingFolderCountsAsGone() throws {
+        #expect(!ExportFolderService.bookmarkTargetIsGone(Data([0x00, 0x01, 0x02, 0x03])))
+
+        let dir = makeTemporaryDataDirectory(label: "export-bookmark-corrupt")
+        let bookmark = try dir.bookmarkData(options: [], includingResourceValuesForKeys: nil, relativeTo: nil)
+        #expect(!ExportFolderService.bookmarkTargetIsGone(bookmark))
+        try FileManager.default.removeItem(at: dir)
+        #expect(ExportFolderService.bookmarkTargetIsGone(bookmark))
     }
 
     @Test func folderInTheTrashIsNotADestination() {

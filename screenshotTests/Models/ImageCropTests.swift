@@ -60,15 +60,12 @@ struct ImageCropTests {
     /// The picture's four corners on the canvas, for comparing before and after a refit.
     private func pictureCorners(_ crop: ImageCrop, frame: CGRect, rotation: Double, imageSize: CGSize) -> [CGPoint] {
         let rect = crop.pictureRect(imageSize: imageSize, frameSize: frame.size)
-        let radians = rotation * .pi / 180
         return [
-            CGPoint(x: rect.minX, y: rect.minY), CGPoint(x: rect.maxX, y: rect.minY),
-            CGPoint(x: rect.minX, y: rect.maxY), CGPoint(x: rect.maxX, y: rect.maxY),
-        ].map { p in
-            CGPoint(
-                x: frame.midX + p.x * cos(radians) - p.y * sin(radians),
-                y: frame.midY + p.x * sin(radians) + p.y * cos(radians)
-            )
+            CGSize(width: rect.minX, height: rect.minY), CGSize(width: rect.maxX, height: rect.minY),
+            CGSize(width: rect.minX, height: rect.maxY), CGSize(width: rect.maxX, height: rect.maxY),
+        ].map { corner in
+            let canvas = ShapeRotation.toCanvas(corner, degrees: rotation)
+            return CGPoint(x: frame.midX + canvas.width, y: frame.midY + canvas.height)
         }
     }
 
@@ -79,7 +76,7 @@ struct ImageCropTests {
     }
 
     @Test(arguments: [0.0, 30.0])
-    func handleDragsTrimTheWindowAndLeaveThePictureWhereItWas(rotation: Double) {
+    func handleDragsTrimTheWindowAndLeaveThePictureWhereItWas(rotation: Double) throws {
         let imageSize = CGSize(width: 400, height: 300)
         let frame = CGRect(x: 100, y: 200, width: 200, height: 200)
         let shape = imageShape(frame: frame, rotation: rotation, crop: ImageCrop(scale: 1.5, offsetX: 0.1, offsetY: -0.05))
@@ -88,7 +85,7 @@ struct ImageCropTests {
         for edge in ResizeEdge.allCases {
             let raw = ResizeGeometry.resize(shape: shape, edge: edge, translation: CGSize(width: 37, height: -23), lockAspectRatio: false)
             let state = ResizeGeometry.cropResize(raw, base: shape, edge: edge, imageSize: imageSize)
-            let crop = shape.imageCrop!.refitted(from: frame, to: state.frame, rotation: rotation, imageSize: imageSize)
+            let crop = try #require(state.imageCrop)
             expectClose(pictureCorners(crop, frame: state.frame, rotation: rotation, imageSize: imageSize), before)
             #expect(crop.scale >= ImageCrop.scaleRange.lowerBound && crop.scale <= ImageCrop.scaleRange.upperBound)
         }

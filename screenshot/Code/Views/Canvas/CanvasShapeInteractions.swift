@@ -6,7 +6,7 @@ import SwiftUI
 /// The context menu is deliberately not here. Its actions used to ride along as ~25 more closures
 /// allocated for every shape on every row body evaluation, and the menu itself was materialized
 /// into `NSMenuItem`s per shape. Both now happen once per row, at menu-open time — see
-/// `EditorRowView.shapeContextMenu(for:facts:)`.
+/// `EditorRowView.shapeContextMenu(for:facts:isCropping:)`.
 struct CanvasShapeInteractions {
     var onSelect: () -> Void = {}
     var onShiftSelect: (() -> Void)?

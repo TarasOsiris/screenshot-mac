@@ -127,9 +127,9 @@ extension AppState {
 
     /// Row-scoped undo with a pre-captured base row. Looks up the row by ID on undo/redo,
     /// so it's safe even if row indices shift (though callers should only use this when row count is stable).
-    func registerUndoForRowWithBase(_ actionName: String, baseRow: ScreenshotRow, baseLocaleState: LocaleState? = nil) {
+    func registerUndoForRowWithBase(_ actionName: String, baseRow: ScreenshotRow, baseLocaleState: LocaleState) {
         CrashReportingService.breadcrumb(.edit, actionName, data: ["shapes": baseRow.shapes.count])
-        registerRowSnapshot(actionName, rowId: baseRow.id, baseRow: baseRow, baseLocaleState: baseLocaleState ?? localeState)
+        registerRowSnapshot(actionName, rowId: baseRow.id, baseRow: baseRow, baseLocaleState: baseLocaleState)
     }
 
     /// Row-scoped counterpart to `registerSnapshot`: restores a single row by ID and

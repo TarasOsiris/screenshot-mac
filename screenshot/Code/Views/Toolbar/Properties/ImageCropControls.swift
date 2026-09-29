@@ -1,42 +1,64 @@
 import SwiftUI
 
-/// Crop mode, zoom and reset for an image shape — shared by the properties bar and the inspector.
+/// Crop mode, zoom and reset for an image shape on one line of the properties bar. The inspector
+/// lays out the same leaves (`ImageCropModeButton`, `ImageCropResetButton`) in its own rows.
 struct ImageCropControls: View, ShapeEditing {
     let state: AppState
     let shapeId: UUID
-    var sliderWidth: CGFloat = UIMetrics.SliderWidth.standard
 
     var body: some View {
-        let isCropping = state.imageCrop.shapeId == shapeId
-        let shape = resolvedDocumentShape(shapeId)
-        let hasCrop = shape?.imageCrop != nil
-        let isLocked = shape?.resolvedIsLocked ?? false
+        let isLocked = resolvedDocumentShape(shapeId)?.resolvedIsLocked ?? false
         HStack(spacing: 8) {
-            Toggle(isOn: Binding(
-                get: { isCropping },
-                set: { _ in state.toggleImageCrop(shapeId) }
-            )) {
-                Label("Crop", systemImage: "crop")
-            }
-            .toggleStyle(.button)
-            .help(isLocked
-                ? Text("Unlock the shape to crop it")
-                : Text("Drag the picture to reposition it inside the frame (or double-click the image)"))
-
+            ImageCropModeButton(state: state, shapeId: shapeId)
             Image(systemName: "minus.magnifyingglass")
                 .foregroundStyle(.secondary)
             Slider(value: shapeBinding(shapeId, \.imageCropScale, continuous: true), in: ImageCrop.scaleRange)
-                .frame(width: sliderWidth)
+                .frame(width: UIMetrics.SliderWidth.standard)
                 .help("Zoom the picture inside its frame")
+                .disabled(isLocked)
             Image(systemName: "plus.magnifyingglass")
                 .foregroundStyle(.secondary)
+            ImageCropResetButton(state: state, shapeId: shapeId)
+        }
+        .controlSize(.small)
+    }
+}
 
-            ActionButton(icon: "arrow.counterclockwise", tooltip: "Reset Crop", frameSize: UIMetrics.IconButton.frameSize, disabled: !hasCrop) {
-                state.resetImageCrop(shapeId)
+/// Enters and leaves crop mode; prominent while cropping, so the control says which mode the
+/// canvas is in.
+struct ImageCropModeButton: View, ShapeEditing {
+    let state: AppState
+    let shapeId: UUID
+
+    var body: some View {
+        let isCropping = state.imageCrop.shapeId == shapeId
+        // Locking ends crop mode, so the button never needs to stay reachable on a locked shape.
+        let isLocked = resolvedDocumentShape(shapeId)?.resolvedIsLocked ?? false
+        Button {
+            state.toggleImageCrop(shapeId)
+        } label: {
+            if isCropping {
+                Label("Done", systemImage: "checkmark")
+            } else {
+                Label("Crop", systemImage: "crop")
             }
         }
-        // Locking ends crop mode, so nothing here needs to stay reachable on a locked shape.
+        .buttonStyle(ProminenceButtonStyle(isProminent: isCropping))
         .disabled(isLocked)
-        .controlSize(.small)
+        .help(isLocked
+            ? Text("Unlock the shape to crop it")
+            : Text("Drag the picture to reposition it inside the frame (or double-click the image)"))
+    }
+}
+
+struct ImageCropResetButton: View, ShapeEditing {
+    let state: AppState
+    let shapeId: UUID
+
+    var body: some View {
+        let canReset = resolvedDocumentShape(shapeId).map(state.canResetImageCrop) ?? false
+        ActionButton(icon: "arrow.counterclockwise", tooltip: "Reset Crop", frameSize: UIMetrics.IconButton.frameSize, disabled: !canReset) {
+            state.resetImageCrop(shapeId)
+        }
     }
 }

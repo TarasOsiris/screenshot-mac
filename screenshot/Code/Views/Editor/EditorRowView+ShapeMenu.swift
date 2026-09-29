@@ -28,7 +28,8 @@ extension EditorRowView {
     /// needs a menu built *in response to* the click — an on-demand `NSMenu` on macOS.
     func shapeContextMenu(
         for shape: CanvasShapeModel,
-        facts: CanvasSelectionFacts
+        facts: CanvasSelectionFacts,
+        isCropping: Bool
     ) -> CanvasShapeContextMenuContent {
         let isInSelection = selectedShapeIds.contains(shape.id)
         let isMulti = isInSelection && facts.isMultiSelection
@@ -38,8 +39,10 @@ extension EditorRowView {
             isMultiSelected: isMulti,
             screenshotImage: shape.displayImageFileName.flatMap { state.screenshotImages[$0] },
             onRequestImagePicker: { requestImagePicker(for: shape.id) },
-            onCropImage: shape.type == .image ? { state.beginImageCrop(shape.id) } : nil,
+            onCropImage: shape.type == .image ? { state.toggleImageCrop(shape.id) } : nil,
+            isCropping: isCropping,
             onResetCrop: shape.type == .image ? { state.resetImageCrop(shape.id) } : nil,
+            canResetCrop: { state.canResetImageCrop(shape) },
             onReplaceSvg: shape.type == .svg ? { requestSvgReplace(for: shape) } : nil,
             onClearImage: {
                 state.clearImage(for: shape.id)

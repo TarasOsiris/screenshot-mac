@@ -14,7 +14,11 @@ nonisolated struct ImageCrop: Codable, Equatable {
         case scale = "s", offsetX = "x", offsetY = "y"
     }
 
-    var isIdentity: Bool { scale == 1 && offsetX == 0 && offsetY == 0 }
+    /// Tolerant, so round-off from a refit can't leave a phantom crop on an untouched picture.
+    var isIdentity: Bool {
+        let epsilon = 1e-9
+        return abs(scale - 1) < epsilon && abs(offsetX) < epsilon && abs(offsetY) < epsilon
+    }
 
     /// Scale clamped to its range and offsets clamped so the zoomed image still covers the frame.
     /// `imageAspect` is width / height of the picture being cropped.
@@ -73,29 +77,22 @@ nonisolated struct ImageCrop: Codable, Equatable {
         let picture = pictureRect(imageSize: imageSize, frameSize: oldFrame.size)
         let local = Self.localOffset(from: oldFrame, to: newFrame, rotation: rotation)
         let fill = Self.aspectFillSize(imageAspect: imageSize.width / imageSize.height, frameSize: newFrame.size)
-        let crop = ImageCrop(
+        return ImageCrop(
             scale: picture.width / fill.width,
             offsetX: (picture.midX - local.width) / newFrame.width,
             offsetY: (picture.midY - local.height) / newFrame.height
         ).clamped(imageSize: imageSize, frameSize: newFrame.size)
-        // Round-off from the round trip must not leave a phantom crop on an untouched picture.
-        let epsilon = 1e-9
-        return ImageCrop(
-            scale: abs(crop.scale - 1) < epsilon ? 1 : crop.scale,
-            offsetX: abs(crop.offsetX) < epsilon ? 0 : crop.offsetX,
-            offsetY: abs(crop.offsetY) < epsilon ? 0 : crop.offsetY
-        )
+    }
+
+    /// The frame that shows the whole picture exactly where it sits now — what undoing the crop means
+    /// once the handles have trimmed the frame.
+    func uncroppedFrame(of frame: CGRect, rotation: Double, imageSize: CGSize) -> CGRect {
+        ShapeRotation.canvasFrame(ofLocal: pictureRect(imageSize: imageSize, frameSize: frame.size), in: frame, degrees: rotation)
     }
 
     /// `newFrame`'s center relative to `oldFrame`'s, along the shape's own rotated axes.
     static func localOffset(from oldFrame: CGRect, to newFrame: CGRect, rotation: Double) -> CGSize {
-        let dx = newFrame.midX - oldFrame.midX
-        let dy = newFrame.midY - oldFrame.midY
-        let radians = rotation * .pi / 180
-        return CGSize(
-            width: dx * cos(radians) + dy * sin(radians),
-            height: -dx * sin(radians) + dy * cos(radians)
-        )
+        ShapeRotation.toLocal(CGSize(width: newFrame.midX - oldFrame.midX, height: newFrame.midY - oldFrame.midY), degrees: rotation)
     }
 
     /// The value a shape stores: nil for the identity crop.

@@ -7,7 +7,10 @@ struct CanvasShapeContextMenuContent: View {
     /// Raises the row's single image picker for this shape (see `CanvasShapeInteractions`).
     var onRequestImagePicker: (() -> Void)?
     var onCropImage: (() -> Void)?
+    var isCropping = false
     var onResetCrop: (() -> Void)?
+    /// Evaluated when the menu opens: it compares the frame with the whole picture.
+    var canResetCrop: () -> Bool = { false }
     var onReplaceSvg: (() -> Void)?
     var onClearImage: (() -> Void)?
     var onRemoveBackground: (() -> Void)?
@@ -83,9 +86,13 @@ struct CanvasShapeContextMenuContent: View {
                 }
                 .disabled(shape.displayImageFileName == nil)
                 if let onCropImage, screenshotImage != nil {
-                    Button("Crop Image", systemImage: "crop", action: onCropImage)
+                    if isCropping {
+                        Button("Done Cropping", systemImage: "checkmark", action: onCropImage)
+                    } else {
+                        Button("Crop Image", systemImage: "crop", action: onCropImage)
+                    }
                 }
-                if let onResetCrop, shape.imageCrop != nil {
+                if let onResetCrop, canResetCrop() {
                     Button("Reset Crop", systemImage: "crop.rotate", action: onResetCrop)
                 }
                 if let screenshotImage {

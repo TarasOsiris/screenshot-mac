@@ -157,13 +157,8 @@ extension CanvasShapeView {
 
     /// The crop with the in-progress pan applied.
     var liveImageCrop: ImageCrop? {
-        if isCropping, let resizeState, let image = screenshotImage {
-            return (shape.imageCrop ?? ImageCrop()).refitted(
-                from: CGRect(x: shape.x, y: shape.y, width: shape.width, height: shape.height),
-                to: resizeState.frame,
-                rotation: shape.rotation,
-                imageSize: image.size
-            )
+        if let crop = resizeState?.imageCrop {
+            return crop
         }
         guard cropPanOffset != .zero else { return shape.imageCrop }
         let local = ResizeGeometry.localTranslation(cropPanOffset, rotation: shape.rotation)

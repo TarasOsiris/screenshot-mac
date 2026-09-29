@@ -150,10 +150,27 @@ extension ShapeInspector {
     @ViewBuilder
     private func imageSection(shape: CanvasShapeModel, fields: Set<LocaleOverrideField>) -> some View {
         InspectorSection(.shapeMedia, "Image", accessory: { overrideBadge(.media, fields) }) {
-            replaceImageRow(title: shape.imageFileName != nil ? "Replace Image" : "Choose Image")
             if state.canCropImage(shape) {
-                ImageCropControls(state: state, shapeId: shapeId, sliderWidth: UIMetrics.SliderWidth.standard)
-                    .localeOverridden(.crop)
+                // The section header already says "Image", and the row has to fit the crop button too.
+                HStack(spacing: 8) {
+                    replaceImageRow(title: "Replace…")
+                    ImageCropModeButton(state: state, shapeId: shapeId)
+                        .localeOverridden(.crop)
+                    Spacer(minLength: 0)
+                    ImageCropResetButton(state: state, shapeId: shapeId)
+                }
+                PopoverSliderRow(
+                    label: "Zoom",
+                    value: shapeBinding(shapeId, \.imageCropScale, continuous: true),
+                    range: ImageCrop.scaleRange,
+                    layout: .formRow,
+                    format: { String(format: "%.1f×", $0) }
+                )
+                .help("Zoom the picture inside its frame")
+                .disabled(shape.resolvedIsLocked)
+                .localeOverridden(.crop)
+            } else {
+                replaceImageRow(title: shape.imageFileName != nil ? "Replace Image" : "Choose Image")
             }
         }
     }

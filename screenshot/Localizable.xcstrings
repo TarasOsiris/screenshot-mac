@@ -182771,84 +182771,84 @@
         }
       }
     },
-    "**Crop**: double-click an image (or use **Crop** in the properties bar) and drag or use the arrow keys to move the picture inside its frame; the zoom slider next to **Crop** enlarges it. A locked image can't be cropped. Press **Return** or **Esc**, or click elsewhere, to finish. **Reset Crop** (right-click) centers it again." : {
+    "**Crop**: double-click an image (or use **Crop** in the properties bar) and drag or use the arrow keys to move the picture inside its frame; the zoom slider next to **Crop** enlarges it. A locked image can't be cropped. Press **Return** or **Esc**, click **Done**, or click elsewhere, to finish. **Reset Crop** (right-click) shows the whole picture again." : {
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "**Zuschneiden**: Doppelklicke auf ein Bild (oder nutze **Zuschneiden** in der Eigenschaftenleiste) und zieh oder benutze die Pfeiltasten, um das Bild im Rahmen zu verschieben; der Zoomregler neben **Zuschneiden** vergrößert es. Ein gesperrtes Bild lässt sich nicht zuschneiden. Drücke **Return** oder **Esc** oder klicke woanders hin, um fertig zu werden. **Zuschnitt zurücksetzen** (Rechtsklick) zentriert es wieder."
+            "value" : "**Zuschneiden**: Doppelklicke auf ein Bild (oder nutze **Zuschneiden** in der Eigenschaftenleiste) und zieh oder benutze die Pfeiltasten, um das Bild im Rahmen zu verschieben; der Zoomregler neben **Zuschneiden** vergrößert es. Ein gesperrtes Bild lässt sich nicht zuschneiden. Drücke **Return** oder **Esc**, klicke auf **Fertig** oder klicke woanders hin, um fertig zu werden. **Zuschnitt zurücksetzen** (Rechtsklick) zeigt wieder das ganze Bild."
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "**Recortar**: haz doble clic en una imagen (o usa **Recortar** en la barra de propiedades) y arrastra o usa las teclas de flecha para mover la imagen dentro de su marco; el regulador de zoom junto a **Recortar** la amplía. Una imagen bloqueada no se puede recortar. Pulsa **Retorno** o **Esc**, o haz clic en otro sitio, para terminar. **Restablecer recorte** (clic secundario) la vuelve a centrar."
+            "value" : "**Recortar**: haz doble clic en una imagen (o usa **Recortar** en la barra de propiedades) y arrastra o usa las teclas de flecha para mover la imagen dentro de su marco; el regulador de zoom junto a **Recortar** la amplía. Una imagen bloqueada no se puede recortar. Pulsa **Retorno** o **Esc**, haz clic en **Hecho** o haz clic en otro sitio para terminar. **Restablecer recorte** (clic secundario) vuelve a mostrar la imagen completa."
           }
         },
         "fa" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "**برش**: روی یک تصویر دوبار کلیک کنید (یا از **برش** در نوار خصوصیات استفاده کنید) و با کشیدن یا کلیدهای جهت‌نما تصویر را درون قابش جابه‌جا کنید؛ لغزنده بزرگ‌نمایی کنار **برش** آن را بزرگ‌تر می‌کند. تصویر قفل‌شده را نمی‌توان برش داد. برای پایان، **Return** یا **Esc** را فشار دهید یا جای دیگری کلیک کنید. **بازنشانی برش** (کلیک راست) دوباره آن را در مرکز قرار می‌دهد."
+            "value" : "**برش**: روی یک تصویر دوبار کلیک کنید (یا از **برش** در نوار خصوصیات استفاده کنید) و با کشیدن یا کلیدهای جهت‌نما تصویر را درون قابش جابه‌جا کنید؛ لغزنده بزرگ‌نمایی کنار **برش** آن را بزرگ‌تر می‌کند. تصویر قفل‌شده را نمی‌توان برش داد. برای پایان، **Return** یا **Esc** را فشار دهید، روی **انجام شد** کلیک کنید یا جای دیگری کلیک کنید. **بازنشانی برش** (کلیک راست) دوباره کل تصویر را نشان می‌دهد."
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "**Recadrer** : double-cliquez sur une image (ou utilisez **Recadrer** dans la barre de propriétés), puis faites glisser ou utilisez les touches fléchées pour déplacer l'image dans son cadre ; le curseur de zoom à côté de **Recadrer** l'agrandit. Une image verrouillée ne peut pas être recadrée. Appuyez sur **Retour** ou **Échap**, ou cliquez ailleurs, pour terminer. **Réinitialiser le recadrage** (clic droit) la recentre."
+            "value" : "**Recadrer** : double-cliquez sur une image (ou utilisez **Recadrer** dans la barre de propriétés), puis faites glisser ou utilisez les touches fléchées pour déplacer l'image dans son cadre ; le curseur de zoom à côté de **Recadrer** l'agrandit. Une image verrouillée ne peut pas être recadrée. Appuyez sur **Retour** ou **Échap**, cliquez sur **Terminé** ou cliquez ailleurs pour terminer. **Réinitialiser le recadrage** (clic droit) affiche à nouveau l'image entière."
           }
         },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "**Ritaglia**: fai doppio clic su un'immagine (o usa **Ritaglia** nella barra delle proprietà) e trascina o usa i tasti freccia per spostare l'immagine nella cornice; il cursore dello zoom accanto a **Ritaglia** la ingrandisce. Un'immagine bloccata non può essere ritagliata. Premi **A capo** o **Esc**, oppure fai clic altrove, per terminare. **Reimposta ritaglio** (clic destro) la ricentra."
+            "value" : "**Ritaglia**: fai doppio clic su un'immagine (o usa **Ritaglia** nella barra delle proprietà) e trascina o usa i tasti freccia per spostare l'immagine nella cornice; il cursore dello zoom accanto a **Ritaglia** la ingrandisce. Un'immagine bloccata non può essere ritagliata. Premi **A capo** o **Esc**, fai clic su **Fine** oppure fai clic altrove per terminare. **Reimposta ritaglio** (clic destro) mostra di nuovo l'immagine intera."
           }
         },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "**トリミング**：画像をダブルクリック（またはプロパティバーの**トリミング**を使用）し、ドラッグするか矢印キーで枠内の画像を移動します。**トリミング**の横にあるズームスライダで拡大できます。ロックされた画像はトリミングできません。終了するには **return** か **esc** キーを押すか、別の場所をクリックします。**トリミングをリセット**（右クリック）で中央に戻ります。"
+            "value" : "**トリミング**：画像をダブルクリック（またはプロパティバーの**トリミング**を使用）し、ドラッグするか矢印キーで枠内の画像を移動します。**トリミング**の横にあるズームスライダで拡大できます。ロックされた画像はトリミングできません。終了するには **return** か **esc** キーを押すか、**完了**をクリックするか、別の場所をクリックします。**トリミングをリセット**（右クリック）で画像全体が再び表示されます。"
           }
         },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "**자르기**: 이미지를 이중 클릭하고(또는 속성 막대에서 **자르기** 사용) 드래그하거나 화살표 키로 프레임 안의 사진을 이동합니다. **자르기** 옆의 확대/축소 슬라이더로 사진을 키울 수 있습니다. 잠긴 이미지는 자를 수 없습니다. 끝내려면 **Return** 또는 **Esc** 키를 누르거나 다른 곳을 클릭하세요. **자르기 재설정**(오른쪽 클릭)을 하면 다시 가운데로 맞춰집니다."
+            "value" : "**자르기**: 이미지를 이중 클릭하고(또는 속성 막대에서 **자르기** 사용) 드래그하거나 화살표 키로 프레임 안의 사진을 이동합니다. **자르기** 옆의 확대/축소 슬라이더로 사진을 키울 수 있습니다. 잠긴 이미지는 자를 수 없습니다. 끝내려면 **Return** 또는 **Esc** 키를 누르거나, **완료**를 클릭하거나, 다른 곳을 클릭하세요. **자르기 재설정**(오른쪽 클릭)을 하면 사진 전체가 다시 표시됩니다."
           }
         },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "**Recortar**: clique duas vezes em uma imagem (ou use **Recortar** na barra de propriedades) e arraste ou use as teclas de seta para mover a imagem dentro do quadro; o controle de zoom ao lado de **Recortar** a amplia. Uma imagem bloqueada não pode ser recortada. Pressione **Return** ou **Esc**, ou clique em outro lugar, para terminar. **Redefinir recorte** (clique com o botão direito) a centraliza de novo."
+            "value" : "**Recortar**: clique duas vezes em uma imagem (ou use **Recortar** na barra de propriedades) e arraste ou use as teclas de seta para mover a imagem dentro do quadro; o controle de zoom ao lado de **Recortar** a amplia. Uma imagem bloqueada não pode ser recortada. Pressione **Return** ou **Esc**, clique em **Concluído** ou clique em outro lugar para terminar. **Redefinir recorte** (clique com o botão direito) mostra a imagem inteira de novo."
           }
         },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "**Обрезать**: дважды нажмите на изображение (или используйте **Обрезать** на панели свойств) и перетаскивайте его или двигайте клавишами со стрелками внутри рамки; ползунок масштаба рядом с **Обрезать** увеличивает его. Заблокированное изображение обрезать нельзя. Чтобы закончить, нажмите **Return** или **Esc** либо щёлкните в другом месте. **Сбросить обрезку** (правый клик) снова выравнивает его по центру."
+            "value" : "**Обрезать**: дважды нажмите на изображение (или используйте **Обрезать** на панели свойств) и перетаскивайте его или двигайте клавишами со стрелками внутри рамки; ползунок масштаба рядом с **Обрезать** увеличивает его. Заблокированное изображение обрезать нельзя. Чтобы закончить, нажмите **Return** или **Esc**, нажмите **Готово** либо щёлкните в другом месте. **Сбросить обрезку** (правый клик) снова показывает изображение целиком."
           }
         },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "**Kırp**: bir görüntüye çift tıklayın (veya özellikler çubuğundaki **Kırp**'ı kullanın) ve resmi çerçevesi içinde taşımak için sürükleyin ya da ok tuşlarını kullanın; **Kırp**'ın yanındaki yakınlaştırma sürgüsü onu büyütür. Kilitli bir görüntü kırpılamaz. Bitirmek için **Return** veya **Esc** tuşuna basın ya da başka bir yere tıklayın. **Kırpmayı Sıfırla** (sağ tıklama) onu yeniden ortalar."
+            "value" : "**Kırp**: bir görüntüye çift tıklayın (veya özellikler çubuğundaki **Kırp**'ı kullanın) ve resmi çerçevesi içinde taşımak için sürükleyin ya da ok tuşlarını kullanın; **Kırp**'ın yanındaki yakınlaştırma sürgüsü onu büyütür. Kilitli bir görüntü kırpılamaz. Bitirmek için **Return** veya **Esc** tuşuna basın, **Bitti**'ye tıklayın ya da başka bir yere tıklayın. **Kırpmayı Sıfırla** (sağ tıklama) resmin tamamını yeniden gösterir."
           }
         },
         "uk" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "**Обрізати**: двічі клацніть зображення (або скористайтеся кнопкою **Обрізати** на панелі властивостей) і перетягуйте його чи рухайте клавішами зі стрілками всередині рамки; повзунок масштабу поруч із **Обрізати** збільшує його. Замкнене зображення обрізати не можна. Щоб завершити, натисніть **Return** або **Esc** чи клацніть деінде. **Скинути обрізання** (правий клік) знову вирівнює його по центру."
+            "value" : "**Обрізати**: двічі клацніть зображення (або скористайтеся кнопкою **Обрізати** на панелі властивостей) і перетягуйте його чи рухайте клавішами зі стрілками всередині рамки; повзунок масштабу поруч із **Обрізати** збільшує його. Замкнене зображення обрізати не можна. Щоб завершити, натисніть **Return** або **Esc**, клацніть **Готово** чи клацніть деінде. **Скинути обрізання** (правий клік) знову показує зображення повністю."
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "**裁剪**：连按图像（或使用属性栏中的**裁剪**），然后拖移或使用箭头键在框内移动图片；**裁剪**旁的缩放滑块可将其放大。已锁定的图像无法裁剪。按下 **Return** 或 **Esc** 键，或点按其他位置即可完成。**重置裁剪**（右键点按）会将其重新居中。"
+            "value" : "**裁剪**：连按图像（或使用属性栏中的**裁剪**），然后拖移或使用箭头键在框内移动图片；**裁剪**旁的缩放滑块可将其放大。已锁定的图像无法裁剪。按下 **Return** 或 **Esc** 键、点按**完成**，或点按其他位置即可完成。**重置裁剪**（右键点按）会重新显示整张图片。"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "**裁切**：按兩下影像（或使用屬性列中的**裁切**），然後拖移或使用方向鍵在框內移動圖片；**裁切**旁的縮放滑桿可將其放大。已鎖定的影像無法裁切。按下 **Return** 或 **Esc** 鍵，或按一下其他位置即可完成。**重置裁切**（按右鍵）會將其重新置中。"
+            "value" : "**裁切**：按兩下影像（或使用屬性列中的**裁切**），然後拖移或使用方向鍵在框內移動圖片；**裁切**旁的縮放滑桿可將其放大。已鎖定的影像無法裁切。按下 **Return** 或 **Esc** 鍵、按一下**完成**，或按一下其他位置即可完成。**重置裁切**（按右鍵）會重新顯示整張圖片。"
           }
         }
       }
@@ -183341,6 +183341,88 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "影像的**裁切**也可以依語言設定，讓翻譯後的截圖單獨取景。"
+          }
+        }
+      }
+    },
+    "Done Cropping" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zuschneiden beenden"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Terminar recorte"
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "پایان برش"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Terminer le recadrage"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fine ritaglio"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "トリミングを完了"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "자르기 완료"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Concluir recorte"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Завершить обрезку"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kırpmayı Bitir"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Завершити обрізання"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "完成裁剪"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "完成裁切"
           }
         }
       }

@@ -444,6 +444,47 @@ struct AppStateTests {
         #expect(state.rows[0].shapes.first { $0.id == shape.id }?.imageCrop == shape.imageCrop)
     }
 
+    @Test func resetCropGrowsTheFrameBackAroundTheWholePicture() throws {
+        let (state, tempDir) = makeState()
+        defer { cleanup(tempDir) }
+        // 2× zoom panned right by a quarter frame: the 400×400 picture is centred 50 right of the frame.
+        var shape = addCroppableImage(to: state)
+        shape.imageCrop = ImageCrop(scale: 2, offsetX: 0.25)
+        state.rows[0].shapes[state.rows[0].shapes.count - 1] = shape
+        #expect(state.canResetImageCrop(shape))
+
+        state.resetImageCrop(shape.id)
+
+        let reset = try #require(state.rows[0].shapes.first { $0.id == shape.id })
+        #expect(reset.imageCrop == nil)
+        #expect(reset.x == 50 && reset.y == 0)
+        #expect(reset.width == 400 && reset.height == 400)
+        #expect(!state.canResetImageCrop(reset))
+    }
+
+    @Test func resetCropWithoutADecodedPictureStillClearsTheCrop() throws {
+        let (state, tempDir) = makeState()
+        defer { cleanup(tempDir) }
+        let shape = addCroppableImage(to: state)
+        state.screenshotImages["crop.png"] = nil
+
+        state.resetImageCrop(shape.id)
+
+        let reset = try #require(state.rows[0].shapes.first { $0.id == shape.id })
+        #expect(reset.imageCrop == nil)
+        #expect(reset.frameRect == shape.frameRect)
+    }
+
+    @Test func anUncroppedPictureThatOverflowsItsFrameHasNothingToReset() throws {
+        let (state, tempDir) = makeState()
+        defer { cleanup(tempDir) }
+        var shape = addCroppableImage(to: state)
+        shape.imageCrop = nil
+        shape.height = 100
+        state.rows[0].shapes[state.rows[0].shapes.count - 1] = shape
+        #expect(!state.canResetImageCrop(shape))
+    }
+
     @Test func cropInANonBaseLocaleStaysInThatLocale() throws {
         let (state, tempDir) = makeState()
         defer { cleanup(tempDir) }
@@ -465,7 +506,10 @@ struct AppStateTests {
         state.resetImageCrop(shape.id)
         let afterReset = try #require(state.rows[0].shapes.first { $0.id == shape.id })
         #expect(afterReset.imageCrop == shape.imageCrop)
-        #expect(LocaleService.resolveShape(afterReset, localeState: state.localeState).imageCrop == nil)
+        #expect(afterReset.width == shape.width)
+        let resolvedReset = LocaleService.resolveShape(afterReset, localeState: state.localeState)
+        #expect(resolvedReset.imageCrop == nil)
+        #expect(resolvedReset.width == 400)
 
         um.undo()
         um.undo()

@@ -331,7 +331,7 @@ struct CanvasShapeView: View {
             imageCrop: liveImageCrop,
             isCropping: isCropping && showsEditorHelpers,
             isResizing: resizeState != nil,
-            isCropPanning: cropPanOffset != .zero,
+            showsCropGrid: isCropping && showsEditorHelpers && (resizeState != nil || cropPanOffset != .zero),
             resourceState: resourceState,
             fillImage: fillImage,
             defaultDeviceBodyColor: defaultDeviceBodyColor,

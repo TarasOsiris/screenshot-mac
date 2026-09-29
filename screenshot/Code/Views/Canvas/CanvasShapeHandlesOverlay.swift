@@ -16,8 +16,6 @@ struct CanvasShapeHandlesOverlay: View {
     let isCropping: Bool
     /// Turns a handle's model-space translation into the frame to show, snapping included.
     let resolveResize: (_ base: CanvasShapeModel, _ edge: ResizeEdge, _ translation: CGSize, _ lockAspectRatio: Bool) -> ResizeState
-    /// Last word on the committed shape, given the pre-resize one — crop mode refits the picture here.
-    let finalizeResize: (_ original: CanvasShapeModel, _ resized: CanvasShapeModel) -> CanvasShapeModel
     let onResizeEnded: () -> Void
     let onUpdate: (CanvasShapeModel) -> Void
 
@@ -203,7 +201,10 @@ struct CanvasShapeHandlesOverlay: View {
                         updated.y = resizeState.newY
                         updated.width = resizeState.newW
                         updated.height = resizeState.newH
-                        onUpdate(finalizeResize(shape, updated))
+                        if let crop = resizeState.imageCrop {
+                            updated.imageCrop = crop.storedValue
+                        }
+                        onUpdate(updated)
                     }
                     dragSession.resizeBase[shape.id] = nil
                     resizeState = nil

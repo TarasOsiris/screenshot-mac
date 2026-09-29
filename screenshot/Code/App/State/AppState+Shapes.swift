@@ -444,21 +444,25 @@ extension AppState {
         // as the drag does.
         let resolved = LocaleService.resolveShape(shape, localeState: localeState)
         guard !resolved.resolvedIsLocked, resolved.width > 0, resolved.height > 0,
-              let fileName = resolved.displayImageFileName,
-              let image = screenshotImages[fileName] else { return }
+              let imageSize = displayImageSize(of: resolved) else { return }
 
-        let frameSize = CGSize(width: resolved.width, height: resolved.height)
+        let frameSize = resolved.frameRect.size
         let local = ResizeGeometry.localTranslation(CGSize(width: dx, height: dy), rotation: resolved.rotation)
         var updated = resolved
         updated.imageCrop = (resolved.imageCrop ?? ImageCrop())
-            .panned(by: local, frameSize: frameSize, imageSize: image.size)
-            .clamped(imageSize: image.size, frameSize: frameSize)
+            .panned(by: local, frameSize: frameSize, imageSize: imageSize)
+            .clamped(imageSize: imageSize, frameSize: frameSize)
             .storedValue
         guard updated.imageCrop != resolved.imageCrop else { return }
 
         beginNudgeIfNeeded(rowIdx: rowIdx, target: shapeId)
         edits.nudgeActionName = "Crop Image"
-        rows[rowIdx].shapes[shapeIdx] = LocaleService.splitUpdate(base: shape, updated: updated, localeState: &localeState)
+        if localeState.isBaseLocale {
+            // Skips `localeState`'s mutation notice, which would re-render every row per key repeat.
+            rows[rowIdx].shapes[shapeIdx].imageCrop = updated.imageCrop
+        } else {
+            rows[rowIdx].shapes[shapeIdx] = LocaleService.splitUpdate(base: shape, updated: updated, localeState: &localeState)
+        }
         scheduleSave()
         edits.nudge.arm()
     }

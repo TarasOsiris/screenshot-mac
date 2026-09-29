@@ -69,7 +69,9 @@ enum ExportFolderService {
                 CrashReportingService.breadcrumb(.export, "Saved export folder's volume is not mounted")
                 return .unavailable
             }
-            if isExpectedResolveFailure(error) {
+            // A sandboxed resolve of a deleted folder can report a bare 259, the same code as
+            // garbage bytes, so whether the folder is gone is asked of the bookmark, not the error.
+            if isExpectedResolveFailure(error) || bookmarkTargetIsGone(data) {
                 CrashReportingService.breadcrumb(.export, "Saved export folder no longer resolves")
             } else {
                 CrashReportingService.report(.exportFolderBookmarkFailed, error: error, extra: ["stage": "resolve"])
@@ -96,6 +98,20 @@ enum ExportFolderService {
             return true
         default:
             return ((error as NSError).userInfo[NSUnderlyingErrorKey] as? Error).map(isExpectedResolveFailure) ?? false
+        }
+    }
+
+    /// The bookmark still parses and names a path that no longer exists. Unparseable bytes are our
+    /// bug, and so is a path the sandbox merely won't let us stat — `fileExists` can't tell those apart.
+    static func bookmarkTargetIsGone(_ bookmark: Data) -> Bool {
+        guard let path = URL.resourceValues(forKeys: [.pathKey], fromBookmarkData: bookmark)?.path else { return false }
+        do {
+            _ = try FileManager.default.attributesOfItem(atPath: path)
+            return false
+        } catch CocoaError.fileNoSuchFile, CocoaError.fileReadNoSuchFile {
+            return true
+        } catch {
+            return false
         }
     }
 

@@ -78,6 +78,8 @@ struct AppStateVariantTests {
         defer { cleanup(tempDir) }
         let source = try #require(state.rows.first)
         let variantId = try #require(state.createVariant(fromRow: source.id))
+        // The copy would hold the variant's slot for this size, and a second row of it is refused.
+        state.deleteRows([state.rows[1].id])
 
         state.setRowVariant(source.id, to: variantId)
         #expect(state.rows[0].variantId == variantId)
@@ -170,6 +172,8 @@ struct AppStateVariantTests {
         let first = try #require(state.rows.first)
         let variantId = try #require(state.createVariant(fromRow: first.id))
         state.duplicateRow(state.rows[1].id, into: nil)
+        // A second size, since a variant holds one row per size.
+        state.resizeRow(at: 2, newWidth: 2048, newHeight: 2732)
         state.duplicateRow(state.rows[2].id, into: variantId)
         // Original, B, Original, B
         #expect(state.rows.map(\.variantId) == [nil, variantId, nil, variantId])
@@ -369,12 +373,15 @@ struct AppStateVariantTests {
         defer { cleanup(tempDir) }
         let source = try #require(state.rows.first)
         let variantId = try #require(state.createVariant(fromRow: source.id))
-        #expect(state.variantSlotOccupancy().clashing.isEmpty)
+        // Resized off the default size, so the row added below can join the variant.
+        state.resizeRow(at: 1, newWidth: 2048, newHeight: 2732)
+        let copyId = state.rows[1].id
 
-        state.addRowBelow(state.rows[1].id)
-        let added = try #require(state.rows.first { $0.variantId == variantId && $0.id != state.rows[1].id })
+        state.addRowBelow(copyId)
+        let added = try #require(state.rows.first { $0.variantId == variantId && $0.id != copyId })
+        #expect(state.variantSlotOccupancy().clashing.isEmpty)
         let rowIndex = try #require(state.rowIndex(for: added.id))
-        state.resizeRow(at: rowIndex, newWidth: source.templateWidth, newHeight: source.templateHeight)
+        state.resizeRow(at: rowIndex, newWidth: 2048, newHeight: 2732)
 
         #expect(state.variantSlotOccupancy().clashing == Set(state.rows.inVariant(variantId).map(\.id)))
     }

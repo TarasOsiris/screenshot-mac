@@ -216,7 +216,7 @@ extension HelpSection {
                 .heading("Image"),
                 .bullet("Select the shape, then click the image well in the properties bar to pick a file, or drag and drop directly onto the shape."),
                 .bullet("**Remove Background** (right-click) cuts the subject out of the image on your Mac — nothing is uploaded anywhere."),
-                .bullet("**Crop**: double-click an image (or use **Crop** in the properties bar) and drag or use the arrow keys to move the picture inside its frame; the zoom slider next to **Crop** enlarges it. A locked image can't be cropped. Press **Return** or **Esc**, or click elsewhere, to finish. **Reset Crop** (right-click) centers it again."),
+                .bullet("**Crop**: double-click an image (or use **Crop** in the properties bar) and drag or use the arrow keys to move the picture inside its frame; the zoom slider next to **Crop** enlarges it. A locked image can't be cropped. Press **Return** or **Esc**, click **Done**, or click elsewhere, to finish. **Reset Crop** (right-click) shows the whole picture again."),
                 .bullet("While cropping, the corner and edge brackets trim the frame and the picture stays where it is. The dashed outline shows how far each edge can go."),
                 .bullet("**Restore Original Aspect Ratio** (right-click) undoes stretching by fitting the height to the current width."),
                 .bullet("**Show in Finder** (right-click an image or a device that has a screenshot in it) reveals the picture file the project is using."),

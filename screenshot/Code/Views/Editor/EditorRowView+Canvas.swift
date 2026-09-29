@@ -99,7 +99,8 @@ extension EditorRowView {
                                     liveShapeEdit: state.liveShapeEdit,
                                     liveShapeGeometry: state.liveShapeGeometry,
                                     textEditingShapeId: textEditingShapeId,
-                                    cropTarget: cropTarget(in: resolved),
+                                    imageCrop: state.imageCrop,
+                                    imageSize: { state.displayImageSize(of: $0) },
                                     onUpdate: { state.updateShape($0) }
                                 )
                                 .frame(
@@ -345,6 +346,7 @@ extension EditorRowView {
                 // Everything below reads the *live* shape, so a properties-bar slider drag
                 // re-evaluates this one shape rather than the whole row. See `LiveShapeContent`.
                 LiveShapeContent(baseShape: baseShape, session: state.liveShapeEdit) { shape in
+                    let isCropping = state.imageCrop.shapeId == shape.id
                     CanvasShapeView(
                         shape: shape,
                         displayScale: ds,
@@ -353,7 +355,7 @@ extension EditorRowView {
                         zoom: 1.0,
                         isSelected: isInSelection,
                         isMultiSelected: isMulti,
-                        isCropping: state.imageCrop.shapeId == shape.id,
+                        isCropping: isCropping,
                         screenshotImage: shape.displayImageFileName.flatMap { state.screenshotImages[$0] },
                         screenshotImageIdentity: shape.displayImageFileName,
                         resourceState: CanvasResourceState(shape.displayImageFileName, in: state),
@@ -365,7 +367,7 @@ extension EditorRowView {
                         allowSynchronousSvgRender: false,
                         dragSession: dragSession,
                         availableFontFamilies: state.availableFontFamilySet,
-                        contextMenuContent: { shapeContextMenu(for: shape, facts: facts) },
+                        contextMenuContent: { shapeContextMenu(for: shape, facts: facts, isCropping: isCropping) },
                         interactions: CanvasShapeInteractions(
                             // View mode: shapes are inert. The FAB sits in an overlay above the
                             // canvas, but the shape tap is a `.simultaneousGesture` that co-recognizes
@@ -559,17 +561,6 @@ extension EditorRowView {
         .onDrop(of: [.image, .svg, .fileURL], isTargeted: nil) { providers, location in
             handleCanvasDrop(providers, at: location, displayScale: ds)
         }
-    }
-}
-
-// MARK: - Crop
-
-extension EditorRowView {
-    func cropTarget(in resolvedShapes: [CanvasShapeModel]) -> CanvasCropTarget? {
-        guard let shapeId = state.imageCrop.shapeId,
-              let fileName = resolvedShapes.first(where: { $0.id == shapeId })?.displayImageFileName,
-              let image = state.screenshotImages[fileName] else { return nil }
-        return CanvasCropTarget(shapeId: shapeId, imageSize: image.size)
     }
 }
 

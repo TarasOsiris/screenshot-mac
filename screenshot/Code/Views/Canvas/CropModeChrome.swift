@@ -23,6 +23,7 @@ struct CropHandleGlyph: View {
         let inwardX: CGFloat = sides.x == .min ? 1 : -1
         let inwardY: CGFloat = sides.y == .min ? 1 : -1
         let center = CGPoint(x: arm, y: arm)
+        let halfBar = arm * 0.6
         var path = Path()
         switch (sides.x, sides.y) {
         case (.some, .some):
@@ -30,11 +31,11 @@ struct CropHandleGlyph: View {
             path.addLine(to: center)
             path.addLine(to: CGPoint(x: center.x + arm * inwardX, y: center.y))
         case (.some, nil):
-            path.move(to: CGPoint(x: center.x, y: center.y - arm * 0.6))
-            path.addLine(to: CGPoint(x: center.x, y: center.y + arm * 0.6))
+            path.move(to: CGPoint(x: center.x, y: center.y - halfBar))
+            path.addLine(to: CGPoint(x: center.x, y: center.y + halfBar))
         default:
-            path.move(to: CGPoint(x: center.x - arm * 0.6, y: center.y))
-            path.addLine(to: CGPoint(x: center.x + arm * 0.6, y: center.y))
+            path.move(to: CGPoint(x: center.x - halfBar, y: center.y))
+            path.addLine(to: CGPoint(x: center.x + halfBar, y: center.y))
         }
         return path
     }

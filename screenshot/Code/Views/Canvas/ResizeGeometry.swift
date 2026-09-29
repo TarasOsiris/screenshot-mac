@@ -5,6 +5,8 @@ struct ResizeState {
     var newY: CGFloat
     var newW: CGFloat
     var newH: CGFloat
+    /// Crop mode only: the crop that keeps the picture still inside this frame.
+    var imageCrop: ImageCrop?
 
     var frame: CGRect { CGRect(x: newX, y: newY, width: newW, height: newH) }
 
@@ -127,61 +129,53 @@ enum ResizeGeometry {
         edge: ResizeEdge,
         imageSize: CGSize
     ) -> ResizeState {
-        let baseFrame = CGRect(x: base.x, y: base.y, width: base.width, height: base.height)
-        let picture = (base.imageCrop ?? ImageCrop()).pictureRect(imageSize: imageSize, frameSize: baseFrame.size)
+        let baseFrame = base.frameRect
+        let baseCrop = base.imageCrop ?? ImageCrop()
+        let picture = baseCrop.pictureRect(imageSize: imageSize, frameSize: baseFrame.size)
         let center = ImageCrop.localOffset(from: baseFrame, to: state.frame, rotation: base.rotation)
-        var minX = max(center.width - state.newW / 2, picture.minX)
-        var maxX = min(center.width + state.newW / 2, picture.maxX)
-        var minY = max(center.height - state.newH / 2, picture.minY)
-        var maxY = min(center.height + state.newH / 2, picture.maxY)
+        var x = (min: max(center.width - state.newW / 2, picture.minX), max: min(center.width + state.newW / 2, picture.maxX))
+        var y = (min: max(center.height - state.newH / 2, picture.minY), max: min(center.height + state.newH / 2, picture.maxY))
 
         // Growing one axis to the limit is enough: the zoom is the tighter of the two ratios.
         let limit = 1 / ImageCrop.scaleRange.upperBound
-        let ratioX = (maxX - minX) / max(picture.width, 1)
-        let ratioY = (maxY - minY) / max(picture.height, 1)
+        let ratioX = (x.max - x.min) / max(picture.width, 1)
+        let ratioY = (y.max - y.min) / max(picture.height, 1)
         let sides = edge.movingSides
         if ratioX < limit && ratioY < limit {
-            let growX = sides.x != nil && (ratioX >= ratioY || sides.y == nil)
-            // Grow away from the pinned side, but push that side instead of leaving the picture.
-            if growX {
-                let width = picture.width * limit
-                if sides.x == .min {
-                    minX = max(maxX - width, picture.minX)
-                    maxX = minX + width
-                } else {
-                    maxX = min(minX + width, picture.maxX)
-                    minX = maxX - width
-                }
-            } else if sides.y != nil {
-                let height = picture.height * limit
-                if sides.y == .min {
-                    minY = max(maxY - height, picture.minY)
-                    maxY = minY + height
-                } else {
-                    maxY = min(minY + height, picture.maxY)
-                    minY = maxY - height
-                }
+            if let side = sides.x, ratioX >= ratioY || sides.y == nil {
+                grow(&x, to: picture.width * limit, moving: side, within: picture.minX...picture.maxX)
+            } else if let side = sides.y {
+                grow(&y, to: picture.height * limit, moving: side, within: picture.minY...picture.maxY)
             }
         }
 
-        let localCenter = CGPoint(x: (minX + maxX) / 2, y: (minY + maxY) / 2)
-        let radians = base.rotation * .pi / 180
-        let centerX = baseFrame.midX + localCenter.x * cos(radians) - localCenter.y * sin(radians)
-        let centerY = baseFrame.midY + localCenter.x * sin(radians) + localCenter.y * cos(radians)
-        let width = maxX - minX
-        let height = maxY - minY
-        return ResizeState(newX: centerX - width / 2, newY: centerY - height / 2, newW: width, newH: height)
+        let local = CGRect(x: x.min, y: y.min, width: x.max - x.min, height: y.max - y.min)
+        let frame = ShapeRotation.canvasFrame(ofLocal: local, in: baseFrame, degrees: base.rotation)
+        return ResizeState(
+            newX: frame.minX, newY: frame.minY, newW: frame.width, newH: frame.height,
+            imageCrop: baseCrop.refitted(from: baseFrame, to: frame, rotation: base.rotation, imageSize: imageSize)
+        )
+    }
+
+    /// Lengthens a span away from its pinned side, pushing that side instead of leaving `bounds`.
+    private static func grow(
+        _ span: inout (min: CGFloat, max: CGFloat),
+        to length: CGFloat,
+        moving side: AlignmentService.ResizeSide,
+        within bounds: ClosedRange<CGFloat>
+    ) {
+        if side == .min {
+            span.min = max(span.max - length, bounds.lowerBound)
+            span.max = span.min + length
+        } else {
+            span.max = min(span.min + length, bounds.upperBound)
+            span.min = span.max - length
+        }
     }
 
     /// A screen-space drag expressed along a shape's own rotated axes.
     static func localTranslation(_ translation: CGSize, rotation: Double) -> CGSize {
-        let radians = rotation * .pi / 180
-        let cosA = cos(radians)
-        let sinA = sin(radians)
-        return CGSize(
-            width: translation.width * cosA + translation.height * sinA,
-            height: -translation.width * sinA + translation.height * cosA
-        )
+        ShapeRotation.toLocal(translation, degrees: rotation)
     }
 
     static func resize(

@@ -122,8 +122,9 @@ extension AppState {
             rows.removeAll { ids.contains($0.id) }
             cleanupOrphanedTranslationOverrides()
             if wasSelectedRow {
-                selectRow(rows[min(firstIdx, rows.count - 1)].id)
-                keepSelectionVisible()
+                // Pick a visible row directly: selecting a hidden one would widen the filter to All.
+                let fallback = min(firstIdx, rows.count - 1)
+                selectRow((nearestVisibleRow(from: fallback) ?? rows[fallback]).id)
             } else {
                 normalizeSelection()
             }

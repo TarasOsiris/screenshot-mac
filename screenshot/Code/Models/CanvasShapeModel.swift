@@ -473,6 +473,9 @@ struct CanvasShapeModel: Identifiable, Codable, Equatable {
         fillStyle ?? .color
     }
 
+    /// The unrotated frame; `rotation` turns it about its center.
+    nonisolated var frameRect: CGRect { CGRect(x: x, y: y, width: width, height: height) }
+
     /// Axis-aligned bounding box accounting for rotation.
     nonisolated var aabb: (minX: CGFloat, minY: CGFloat, maxX: CGFloat, maxY: CGFloat) {
         let cx = x + width / 2

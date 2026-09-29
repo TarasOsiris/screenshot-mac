@@ -150,9 +150,7 @@ enum LocaleService {
         }
         if base.type == .device || base.type == .image {
             result.displayImageFileName = base.displayImageFileName
-        }
-        if base.type == .image {
-            result.imageCrop = base.imageCrop
+            if base.type == .image { result.imageCrop = base.imageCrop }
         }
     }
 
