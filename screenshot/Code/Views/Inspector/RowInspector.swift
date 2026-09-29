@@ -364,6 +364,9 @@ struct RowInspector: View {
             .toggleStyle(.checkbox)
             .scaledFont(UIMetrics.FontSize.body)
             .controlSize(.small)
+            // Long localized labels (ru/uk "Rectangles") would otherwise break mid-word in these narrow columns.
+            .lineLimit(1)
+            .minimumScaleFactor(0.8)
             #else
             // iPad needs comfortable touch targets — full-width buttons at regular size.
             HStack(spacing: 12) {

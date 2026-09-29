@@ -152,8 +152,7 @@ VERBATIM_ALLOWED = {
 # English loanwords that are the correct translation in one language but would be a miss in others.
 LANGUAGE_VERBATIM_ALLOWED = {
     "it": {
-        "%@ · 1 screenshot", "1 screenshot", "1 set", "Email: %@", "File", "Font", "Preset",
-        "Privacy Policy", "[Privacy Policy](https://screenshotbro.app/privacy)", "screenshot",
+        "%@ · 1 screenshot", "1 screenshot", "1 set", "Email: %@", "Font", "Preset", "screenshot",
     },
     "tr": {"1 set", "Android Tablet", "Font", "Minimal", "Platform"},
 }

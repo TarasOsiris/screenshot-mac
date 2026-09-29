@@ -406,7 +406,7 @@
         "it" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "[Privacy Policy](https://screenshotbro.app/privacy)"
+            "value" : "[Informativa sulla privacy](https://screenshotbro.app/privacy)"
           }
         },
         "ja" : {
@@ -1544,7 +1544,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "**加入螢幕截圖**和**加入元素**——不必離開標題列即可加入範本欄或形狀。"
+            "value" : "**加入螢幕截圖**和**加入元素**——不必離開列標題即可加入範本欄或形狀。"
           }
         }
       }
@@ -1655,7 +1655,7 @@
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "**Телефон Android**, **Abstract Pixel 9** и **Планшет Android** — абстрактные рамки, которые подстраиваются под соотношение сторон перетащенных скриншотов."
+            "value" : "**Телефон Android**, **Абстрактный Pixel 9** и **Планшет Android** — абстрактные рамки, которые подстраиваются под соотношение сторон перетащенных скриншотов."
           }
         },
         "tr" : {
@@ -1667,7 +1667,7 @@
         "uk" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "**Android Phone**, **Abstract Pixel 9** і **Android Tablet** — абстрактні рамки, що підлаштовуються під пропорції перетягнутих знімків екрана."
+            "value" : "**Android-телефон**, **Абстрактний Pixel 9** і **Android-планшет** — абстрактні рамки, що підлаштовуються під пропорції перетягнутих знімків екрана."
           }
         },
         "zh-Hans" : {
@@ -1983,7 +1983,7 @@
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "**Оформление** — Авто / Светлое / Темное."
+            "value" : "**Оформление** — Авто / Светлый / Темный."
           }
         },
         "tr" : {
@@ -1995,7 +1995,7 @@
         "uk" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "**Вигляд** — Авто / Світлий / Темний."
+            "value" : "**Вигляд** — Автоматично / Світлий / Темний."
           }
         },
         "zh-Hans" : {
@@ -2159,7 +2159,7 @@
         "uk" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Пресети **пропорцій**: **Соцмережі** (1,91:1), **Квадрат**, **Портрет** (4:5), **Сторіс** (9:16), **YouTube** (16:9) і **Pinterest** (2:3)."
+            "value" : "Пресети **пропорцій**: **Соцмережі** (1,91:1), **Квадрат**, **Книжкова** (4:5), **Сторіс** (9:16), **YouTube** (16:9) і **Pinterest** (2:3)."
           }
         },
         "zh-Hans" : {
@@ -2610,7 +2610,7 @@
         "it" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "**Centra** posiziona una forma al centro verticale, orizzontale o esatto del suo screenshot."
+            "value" : "**Centro** posiziona una forma al centro verticale, orizzontale o esatto del suo screenshot."
           }
         },
         "ja" : {
@@ -2634,7 +2634,7 @@
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "**По центру** размещает фигуру по вертикали, по горизонтали или точно в центре ее скриншота."
+            "value" : "Меню **Центр** размещает фигуру по вертикали, по горизонтали или точно в центре ее скриншота."
           }
         },
         "tr" : {
@@ -2646,7 +2646,7 @@
         "uk" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "**Центрувати** розміщує фігуру по вертикалі, по горизонталі або точно в центрі її знімка екрана."
+            "value" : "Меню **Центр** розміщує фігуру по вертикалі, по горизонталі або точно в центрі її знімка екрана."
           }
         },
         "zh-Hans" : {
@@ -2909,7 +2909,7 @@
         "it" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "**Continua**: l'intera riga come un'unica immagine larga, con i modelli affiancati."
+            "value" : "**Riga continua**: l'intera riga come un'unica immagine larga, con i modelli affiancati."
           }
         },
         "ja" : {
@@ -4645,19 +4645,19 @@
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "**Тень** — выберите фигуру, нажмите **Тень** на панели свойств и выберите **Мягкая**, **Средняя** или **Сильная** либо задайте цвет, **размытие**, **смещение по X**, **смещение по Y** и непрозрачность вручную. **Сбросить** восстанавливает значения по умолчанию. Работает и при выделении нескольких фигур."
+            "value" : "**Тень** — выберите фигуру, нажмите **Тень** на панели свойств и выберите **Мягкий**, **Средний** или **Сильный** либо задайте цвет, **размытие**, **смещение по X**, **смещение по Y** и непрозрачность вручную. **Сбросить** восстанавливает значения по умолчанию. Работает и при выделении нескольких фигур."
           }
         },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "**Gölge** — bir şekil seçin, ardından özellikler çubuğunda **Gölge**'ye tıklayıp **Yumuşak**, **Orta** veya **Güçlü**'yü seçin ya da rengi, **bulanıklığı**, **X kayması**'nı, **Y kayması**'nı ve opaklığı elle ayarlayın. **Sıfırla** varsayılanları geri yükler. Birden çok şekil seçiliyken de çalışır."
+            "value" : "**Gölge** — bir şekil seçin, ardından özellikler çubuğunda **Gölge**'ye tıklayıp **Yumuşak**, **Orta** veya **Güçlü**'yü seçin ya da rengi, **bulanıklığı**, **X Kayması**'nı, **Y Kayması**'nı ve opaklığı elle ayarlayın. **Sıfırla** varsayılanları geri yükler. Birden çok şekil seçiliyken de çalışır."
           }
         },
         "uk" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "**Тінь** — виберіть фігуру, натисніть **Тінь** на панелі властивостей і виберіть **М’яка**, **Середня** чи **Сильна** або задайте колір, **розмиття**, **зсув X**, **зсув Y** і непрозорість вручну. **Скинути** повертає стандартні значення. Працює й тоді, коли вибрано кілька фігур."
+            "value" : "**Тінь** — виберіть фігуру, клацніть **Тінь** на панелі властивостей і виберіть **М’який**, **Середній** чи **Сильний** або задайте колір, **розмиття**, **зсув X**, **зсув Y** і непрозорість вручну. **Скинути** повертає стандартні значення. Працює й тоді, коли вибрано кілька фігур."
           }
         },
         "zh-Hans" : {
@@ -5764,7 +5764,7 @@
         "it" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "**Esporta riga**: Screenshot, Continua o Vetrina, solo per questa riga."
+            "value" : "**Esporta riga**: Screenshot, Riga continua o Vetrina, solo per questa riga."
           }
         },
         "ja" : {
@@ -5952,19 +5952,19 @@
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "**Заполнить** — масштабирует с полным покрытием; все, что не помещается, обрезается."
+            "value" : "**Заливка** — масштабирует с полным покрытием; все, что не помещается, обрезается."
           }
         },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "**Doldur** — alanı kaplayacak şekilde ölçekler; sığmayan kısımları kırpar."
+            "value" : "**Dolgu** — alanı kaplayacak şekilde ölçekler; sığmayan kısımları kırpar."
           }
         },
         "uk" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "**Заповнити** — масштабує, щоб покрити всю площу; обрізає все, що не вміщається."
+            "value" : "**Заповнення** — масштабує, щоб покрити всю площу; обрізає все, що не вміщається."
           }
         },
         "zh-Hans" : {
@@ -6058,7 +6058,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "**符合**——縮放以顯示整張影像；會留下透明的邊框。"
+            "value" : "**符合**——縮放以顯示整張影像；多出的空間會保持透明。"
           }
         }
       }
@@ -7886,7 +7886,7 @@
         "it" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "**Uniforma a questa** copia la **Posizione**, le **Dimensioni** o entrambe della forma su cui hai fatto clic destro sul resto della selezione."
+            "value" : "**Uniforma a questa** applica al resto della selezione la **Posizione**, le **Dimensioni** o entrambe della forma su cui hai fatto clic destro."
           }
         },
         "ja" : {
@@ -9188,7 +9188,7 @@
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "**Отрисовывать превью**, чтобы действительно видеть текущий холст, и **экспортировать** готовые скриншоты."
+            "value" : "**Отрисовывать превью**, чтобы агент действительно видел текущий холст, и **экспортировать** готовые скриншоты."
           }
         },
         "tr" : {
@@ -10712,7 +10712,7 @@
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "**Размер скриншота** — в **Пресетах** перечислены разрешения, которые принимает каждый магазин, сгруппированные по устройствам. Переключитесь на **Свой**, чтобы ввести любой размер от 100 до 5000 пикс."
+            "value" : "**Размер скриншота** — в режиме **Пресеты** перечислены разрешения, которые принимает каждый магазин, сгруппированные по устройствам. Переключитесь на **Свой**, чтобы ввести любой размер от 100 до 5000 пикс."
           }
         },
         "tr" : {
@@ -11292,7 +11292,7 @@
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "**Ayarlar ▸ Genel ▸ Tanılama Bilgilerini Kopyala**, e-postaya yapıştırılmış olarak — sürümünüzü, kurulumunuzu ve kilitlenme raporlarınızı bulmamızı sağlayan kimliği içerir. Proje içeriği içermez."
+            "value" : "**Ayarlar ▸ Genel ▸ Tanılama Bilgilerini Kopyala** ile kopyaladığınız bilgiler, e-postaya yapıştırılmış olarak — sürümünüzü, kurulumunuzu ve kilitlenme raporlarınızı bulmamızı sağlayan kimliği içerir. Proje içeriği içermez."
           }
         },
         "uk" : {
@@ -12260,7 +12260,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "**為常用專案加上星號。****為專案加上星號**——在工具列的 ⋯ 選單中，或在「專案」畫面上對卡片按右鍵——即可將其置頂於選擇器中。"
+            "value" : "**為常用專案加上星號**。**為專案加上星號**——在工具列的 ⋯ 選單中，或在「專案」畫面上對卡片按右鍵——即可將其置頂於選擇器中。"
           }
         }
       }
@@ -12728,13 +12728,13 @@
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "**Фон текста** превращает заголовок в плашку: выберите **Сплошной**, **Капсула**, **Контур** или **Выделение**, затем настройте цвет, отступ, радиус углов, непрозрачность и обводку."
+            "value" : "**Фон текста** превращает заголовок в плашку: выберите **Сплошной**, **Капсула**, **Обводка** или **Маркер**, затем настройте цвет, отступ, радиус углов, непрозрачность и обводку."
           }
         },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "**Metin arka planı** bir başlığı rozete dönüştürür: **Düz**, **Hap**, **Dış Çizgi** veya **Vurgu**'yu seçin, ardından rengi, iç boşluğu, köşe yarıçapını, opaklığı ve dış çizgiyi ayarlayın."
+            "value" : "**Metin arka planı** bir başlığı rozete dönüştürür: **Düz**, **Kapsül**, **Dış Çizgi** veya **Vurgu**'yu seçin, ardından rengi, iç boşluğu, köşe yarıçapını, opaklığı ve dış çizgiyi ayarlayın."
           }
         },
         "uk" : {
@@ -13707,7 +13707,7 @@
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "**Видимость** — скрыть в этой строке целый тип фигур (весь текст, все устройства, все SVG…); **Показать все** / **Скрыть все** переключают все типы сразу. Скрытые типы не попадают и в **экспорт**, а не только в редактор. **Границы** рисует разделительные линии между шаблонами и видны только в редакторе."
+            "value" : "**Видимость** — скрыть в этой строке целый тип фигур (весь текст, все устройства, все SVG…); **Показать все** / **Скрыть все** переключают все типы сразу. Скрытые типы не попадают и в **экспорт**, а не только в редактор. **Границы** — разделительные линии между шаблонами; они видны только в редакторе."
           }
         },
         "tr" : {
@@ -13900,7 +13900,7 @@
         "it" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "**X**, **Y**, **L** e **A** all'inizio della barra delle proprietà impostano a mano posizione e dimensioni. X si misura dal bordo sinistro del modello in cui si trova la forma. Ogni dispositivo tranne una cornice invisibile mantiene le proporzioni, quindi inserendo una larghezza l'altezza si adegua di conseguenza."
+            "value" : "**X**, **Y**, **W** e **H** (larghezza e altezza) all'inizio della barra delle proprietà impostano a mano posizione e dimensioni. X si misura dal bordo sinistro del modello in cui si trova la forma. Ogni dispositivo tranne una cornice invisibile mantiene le proporzioni, quindi inserendo una larghezza l'altezza si adegua di conseguenza."
           }
         },
         "ja" : {
@@ -15332,7 +15332,7 @@
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%@ в %@, %@ и %@."
+            "value" : "%@ · %@ · %@ · %@."
           }
         },
         "tr" : {
@@ -15344,7 +15344,7 @@
         "uk" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%@ для %@, %@ і %@."
+            "value" : "%@ · %@ · %@ · %@."
           }
         },
         "zh-Hans" : {
@@ -15414,7 +15414,7 @@
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%@ в %@."
+            "value" : "%@ · %@."
           }
         },
         "tr" : {
@@ -15426,7 +15426,7 @@
         "uk" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%@ для %@."
+            "value" : "%@ · %@."
           }
         },
         "zh-Hans" : {
@@ -15666,7 +15666,7 @@
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%@ нельзя загрузить в версию %@."
+            "value" : "%@ нельзя загрузить в версию для %@."
           }
         },
         "tr" : {
@@ -15772,7 +15772,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%@ 已在 App Store Connect 中做出的更改未被還原。"
+            "value" : "%@已在 App Store Connect 中做出的更改未被還原。"
           }
         }
       }
@@ -16129,7 +16129,7 @@
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%@ доступно этому сервисному аккаунту."
+            "value" : "Приложение «%@» доступно этому сервисному аккаунту."
           }
         },
         "tr" : {
@@ -16264,7 +16264,7 @@
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%@ использует шрифты, файлы которых еще не загружены."
+            "value" : "В проекте «%@» используются шрифты, файлы которых еще не загружены."
           }
         },
         "tr" : {
@@ -16346,7 +16346,7 @@
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%@ был открыт в приложении, пока выполнялось это изменение. Повторите попытку."
+            "value" : "Проект «%@» был открыт в приложении во время этого изменения. Повторите попытку."
           }
         },
         "tr" : {
@@ -16428,7 +16428,7 @@
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%@ был загружен частично до остановки последней синхронизации. Обновите проверку, чтобы заново сравнить этот набор, — завершенные наборы повторно загружаться не будут."
+            "value" : "Набор %@ был загружен частично до остановки последней синхронизации. Обновите проверку, чтобы заново сравнить этот набор, — завершенные наборы повторно загружаться не будут."
           }
         },
         "tr" : {
@@ -16516,7 +16516,7 @@
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%@, %@ и %@."
+            "value" : "%@ · %@ · %@."
           }
         },
         "tr" : {
@@ -16528,7 +16528,7 @@
         "uk" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%@, %@ і %@."
+            "value" : "%@ · %@ · %@."
           }
         },
         "zh-Hans" : {
@@ -16951,7 +16951,7 @@
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%lld %@"
+            "value" : "%2$@: %1$lld"
           }
         },
         "tr" : {
@@ -22768,7 +22768,7 @@
         "uk" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "^[Фігур: %lld](inflect: true) — перевизначено для %@; натисніть, щоб вибрати їх"
+            "value" : "^[Фігур: %lld](inflect: true) — перевизначено для %@; клацніть, щоб вибрати їх"
           }
         },
         "zh-Hans" : {
@@ -28275,7 +28275,7 @@
         "uk" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Реальний розмір"
+            "value" : "Фактичний розмір"
           }
         },
         "zh-Hans" : {
@@ -28480,7 +28480,7 @@
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Добавить %@"
+            "value" : "Добавить: %@"
           }
         },
         "tr" : {
@@ -30144,7 +30144,7 @@
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Добавить скриншот после"
+            "value" : "Добавить скриншот после этого"
           }
         },
         "tr" : {
@@ -30226,7 +30226,7 @@
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Добавить скриншот перед"
+            "value" : "Добавить скриншот перед этим"
           }
         },
         "tr" : {
@@ -30308,7 +30308,7 @@
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Добавьте скриншоты из Фото или Файлов, затем добавьте текст, фигуры и рамку устройства."
+            "value" : "Добавьте скриншоты из «Фото» или «Файлов», затем разместите текст, фигуры и рамку устройства."
           }
         },
         "tr" : {
@@ -31082,7 +31082,7 @@
         "uk" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Додайте Issuer ID, Key ID і ключ .p8 у Параметри → App Store Connect."
+            "value" : "Додайте Issuer ID, Key ID і ключ .p8 у розділі «Параметри → App Store Connect»."
           }
         },
         "zh-Hans" : {
@@ -31292,7 +31292,7 @@
         "it" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Aggiungi, modifica, sposta e rimuovi righe, colonne modello e forme."
+            "value" : "Aggiungere, modificare, spostare e rimuovere righe, colonne modello e forme."
           }
         },
         "ja" : {
@@ -31732,13 +31732,13 @@
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Ayarla"
+            "value" : "İnce Ayar"
           }
         },
         "uk" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Налаштувати"
+            "value" : "Налаштування"
           }
         },
         "zh-Hans" : {
@@ -32049,7 +32049,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "底部對齊"
+            "value" : "靠下對齊"
           }
         }
       }
@@ -32131,7 +32131,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "置中對齊"
+            "value" : "水平置中對齊"
           }
         }
       }
@@ -32541,7 +32541,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "頂部對齊"
+            "value" : "靠上對齊"
           }
         }
       }
@@ -33015,7 +33015,7 @@
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Hepsi tamam"
+            "value" : "Tamamlandı"
           }
         },
         "uk" : {
@@ -33197,7 +33197,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "其他所有語言都會重新以它為基準，作為翻譯。"
+            "value" : "其他所有語言都會改以它為基準，成為它的翻譯。"
           }
         }
       }
@@ -33419,7 +33419,7 @@
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Разрешите доступ к Фото в Настройках, чтобы сохранять в галерею."
+            "value" : "Разрешите доступ к «Фото» в Настройках, чтобы сохранять изображения в медиатеку."
           }
         },
         "tr" : {
@@ -35646,7 +35646,7 @@
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "App Store Connect, %2$@ için %1$@ öğesine izin vermiyor. Bu genellikle uygulama sürümünün o aygıt ailesini desteklemediği anlamına gelir. Bu satırı hariç tutun, uygulamanın kabul ettiği bir ekran türü seçin ya da uygulamanın aygıt desteğini güncelleyin ve tekrar deneyin."
+            "value" : "App Store Connect, %2$@ için %1$@ ekran türüne izin vermiyor. Bu genellikle uygulama sürümünün o aygıt ailesini desteklemediği anlamına gelir. Bu satırı hariç tutun, uygulamanın kabul ettiği bir ekran türü seçin ya da uygulamanın aygıt desteğini güncelleyin ve tekrar deneyin."
           }
         },
         "uk" : {
@@ -36079,7 +36079,7 @@
         "it" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "App Store Connect ha restituito %lld durante il tentativo di %@."
+            "value" : "App Store Connect ha restituito %lld durante l'operazione: %@."
           }
         },
         "ja" : {
@@ -36127,7 +36127,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "App Store Connect 在嘗試 %2$@ 時傳回 %1$lld。"
+            "value" : "App Store Connect 在執行「%2$@」時傳回 %1$lld。"
           }
         }
       }
@@ -36818,7 +36818,7 @@
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "\"%@\" öğesini silmek istediğinizden emin misiniz?"
+            "value" : "\"%@\" satırını silmek istediğinizden emin misiniz?"
           }
         },
         "uk" : {
@@ -36900,7 +36900,7 @@
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "\"%@\" öğesini silmek istediğinizden emin misiniz? Bu işlem geri alınamaz."
+            "value" : "\"%@\" projesini silmek istediğinizden emin misiniz? Bu işlem geri alınamaz."
           }
         },
         "uk" : {
@@ -37732,7 +37732,7 @@
         "uk" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Авто"
+            "value" : "Автоматично"
           }
         },
         "zh-Hans" : {
@@ -42057,7 +42057,7 @@
         "it" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Centra"
+            "value" : "Centro"
           }
         },
         "ja" : {
@@ -42081,7 +42081,7 @@
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "По центру"
+            "value" : "Центр"
           }
         },
         "tr" : {
@@ -42093,7 +42093,7 @@
         "uk" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Центрувати"
+            "value" : "Центр"
           }
         },
         "zh-Hans" : {
@@ -42790,7 +42790,7 @@
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Выберите категорию устройства: **iPhone**, **iPad Pro 11\"**, **iPad Pro 13\"**, **MacBook**, **Телефон Android**, **Abstract Pixel 9**, **Планшет Android** или **Невидимая** (абстрактный макет без видимой рамки)."
+            "value" : "Выберите категорию устройства: **iPhone**, **iPad Pro 11\"**, **iPad Pro 13\"**, **MacBook**, **Телефон Android**, **Абстрактный Pixel 9**, **Планшет Android** или **Невидимая** (абстрактный макет без видимой рамки)."
           }
         },
         "tr" : {
@@ -42802,7 +42802,7 @@
         "uk" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Виберіть категорію пристрою: **iPhone**, **iPad Pro 11\"**, **iPad Pro 13\"**, **MacBook**, **Android Phone**, **Abstract Pixel 9**, **Android Tablet** або **Невидимий** (абстрактний макет без видимої рамки)."
+            "value" : "Виберіть категорію пристрою: **iPhone**, **iPad Pro 11\"**, **iPad Pro 13\"**, **MacBook**, **Android-телефон**, **Абстрактний Pixel 9**, **Android-планшет** або **Невидимий** (абстрактний макет без видимої рамки)."
           }
         },
         "zh-Hans" : {
@@ -44712,7 +44712,7 @@
         "uk" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Натисніть **Додати шаблон** (кнопка **+** у правому кінці рядка)."
+            "value" : "Натисніть **Додати знімок екрана** (кнопка **+** у правому кінці рядка)."
           }
         },
         "zh-Hans" : {
@@ -44847,7 +44847,7 @@
         "uk" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Натисніть **Експортувати** на панелі інструментів або **⌘E**, щоб відрендерити поточний проєкт у збережену папку експорту. Якщо папку не задано, Screenshot Bro попросить її вибрати."
+            "value" : "Натисніть **Експорт** на панелі інструментів або **⌘E**, щоб відрендерити поточний проєкт у збережену папку експорту. Якщо папку не задано, Screenshot Bro попросить її вибрати."
           }
         },
         "zh-Hans" : {
@@ -45404,7 +45404,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "裁切至外框"
+            "value" : "裁切至範本"
           }
         }
       }
@@ -47999,7 +47999,7 @@
         "it" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Continua"
+            "value" : "Riga continua"
           }
         },
         "ja" : {
@@ -49446,7 +49446,7 @@
         "it" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Impossibile %@ per %@ (%@) in %@."
+            "value" : "Operazione non riuscita (%@) per %@ (%@) in %@."
           }
         },
         "ja" : {
@@ -49482,7 +49482,7 @@
         "uk" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Не вдалося %@ для %@ (%@), мова: %@."
+            "value" : "Помилка під час дії «%@» для %@ (%@), мова: %@."
           }
         },
         "zh-Hans" : {
@@ -49494,7 +49494,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "無法在 %4$@ 中為 %2$@（%3$@）%1$@。"
+            "value" : "無法在 %4$@ 中為 %2$@（%3$@）執行「%1$@」。"
           }
         }
       }
@@ -52119,7 +52119,7 @@
         "it" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Crea una chiave con l'autorizzazione a modificare i metadati dell'app. Per il caricamento degli screenshot si usano di solito i ruoli Titolare account, Amministratore o Gestione app. Scarica il file della chiave privata `.p8` (puoi scaricarlo una sola volta)."
+            "value" : "Crea una chiave con l'autorizzazione a modificare i metadati dell'app. Per il caricamento degli screenshot si usano di solito i ruoli Titolare dell'account, Amministratore o Gestore app. Scarica il file della chiave privata `.p8` (puoi scaricarlo una sola volta)."
           }
         },
         "ja" : {
@@ -52553,13 +52553,13 @@
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Создать из"
+            "value" : "Способ создания"
           }
         },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Şundan Oluştur"
+            "value" : "Başlangıç"
           }
         },
         "uk" : {
@@ -52857,7 +52857,7 @@
         "it" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Crea progetti (anche dai modelli inclusi), rinominali, eliminali e passa dall'uno all'altro."
+            "value" : "Creare progetti (anche dai modelli inclusi), rinominarli, eliminarli e passare dall'uno all'altro."
           }
         },
         "ja" : {
@@ -53596,7 +53596,7 @@
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Mevcut App Store"
+            "value" : "Şu Anda App Store'da"
           }
         },
         "uk" : {
@@ -54979,7 +54979,7 @@
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Темное"
+            "value" : "Темный"
           }
         },
         "tr" : {
@@ -55138,7 +55138,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "縮小字體大小"
+            "value" : "縮小字體"
           }
         }
       }
@@ -56433,7 +56433,7 @@
         "uk" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Видаляйте рядки із заголовка рядка або меню рядка. У Параметри ▸ Загальні є перемикач підтвердження."
+            "value" : "Видаляйте рядки із заголовка рядка або меню рядка. У розділі «Параметри ▸ Загальні» є перемикач підтвердження."
           }
         },
         "zh-Hans" : {
@@ -56561,7 +56561,7 @@
         "it" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Elimina selezionati"
+            "value" : "Elimina selezionate"
           }
         },
         "ja" : {
@@ -56831,7 +56831,7 @@
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Удаленные проекты хранятся 30 дней как **надгробия** (tombstones), чтобы синхронизация iCloud могла корректно разрешать конфликты. Через 30 дней надгробие (и все изображения) удаляются окончательно."
+            "value" : "Удаленные проекты хранятся 30 дней как **метки удаления** (tombstones), чтобы синхронизация iCloud могла корректно разрешать конфликты. Через 30 дней метка удаления (и все изображения) удаляются окончательно."
           }
         },
         "tr" : {
@@ -56913,7 +56913,7 @@
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Удаления отслеживаются как **надгробия** в течение 30 дней, поэтому удаление на Mac A правильно передается на Mac B, даже если в момент удаления тот был офлайн."
+            "value" : "Удаления отслеживаются как **метки удаления** в течение 30 дней, поэтому удаление на Mac A правильно передается на Mac B, даже если в момент удаления тот был офлайн."
           }
         },
         "tr" : {
@@ -57651,7 +57651,7 @@
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Снять выделение со всего"
+            "value" : "Снять выбор со всех"
           }
         },
         "tr" : {
@@ -57733,7 +57733,7 @@
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Снять выделение со всего (Esc)"
+            "value" : "Снять выделение со всех фигур (Esc)"
           }
         },
         "tr" : {
@@ -58800,7 +58800,7 @@
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "iCloud Eşzamanlamayı Kapat"
+            "value" : "iCloud Eşzamanlamasını Kapat"
           }
         },
         "uk" : {
@@ -60130,7 +60130,7 @@
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Загрузить"
+            "value" : "Сохранить"
           }
         },
         "tr" : {
@@ -62802,7 +62802,7 @@
         "it" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Durante il ridimensionamento, il rendering viene rallentato per migliorare le prestazioni: rilascia il mouse per vedere il risultato finale nitido."
+            "value" : "Durante il ridimensionamento, il rendering viene differito per migliorare le prestazioni: rilascia il mouse per vedere il risultato finale nitido."
           }
         },
         "ja" : {
@@ -62990,7 +62990,7 @@
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Каждый холст — это один скриншот для App Store. Дважды коснитесь устройства, чтобы выбрать изображение из Фото или Файлов."
+            "value" : "Каждый холст — это один скриншот для App Store. Дважды коснитесь устройства, чтобы выбрать изображение из «Фото» или «Файлов»."
           }
         },
         "tr" : {
@@ -63570,7 +63570,7 @@
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Her satırda bir dahil etme anahtarı, bir **Şu türde yükle** görüntü türü (satırın boyutundan otomatik algılanır — ⓘ düğmesi Play'in kabul ettiği boyutları gösterir) ve her dil için bir onay kutusu bulunur."
+            "value" : "Her satırda bir dahil etme anahtarı, bir **Yükleme türü** seçimi (satırın boyutundan otomatik algılanır — ⓘ düğmesi Play'in kabul ettiği boyutları gösterir) ve her dil için bir onay kutusu bulunur."
           }
         },
         "uk" : {
@@ -63974,7 +63974,7 @@
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Изменить"
+            "value" : "Правка"
           }
         },
         "tr" : {
@@ -65562,7 +65562,7 @@
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "iCloud Eşzamanlamayı Aç"
+            "value" : "iCloud Eşzamanlamasını Aç"
           }
         },
         "uk" : {
@@ -67761,7 +67761,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "到期日 %@"
+            "value" : "%@到期"
           }
         }
       }
@@ -67831,7 +67831,7 @@
         "uk" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Експортувати"
+            "value" : "Експорт"
           }
         },
         "zh-Hans" : {
@@ -69647,7 +69647,7 @@
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Экспортировать скриншоты в %@ (⌘E)"
+            "value" : "Экспортировать скриншоты в папку: %@ (⌘E)"
           }
         },
         "tr" : {
@@ -69659,7 +69659,7 @@
         "uk" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Експортувати знімки екрана в %@ (⌘E)"
+            "value" : "Експортувати знімки екрана в папку «%@» (⌘E)"
           }
         },
         "zh-Hans" : {
@@ -70034,7 +70034,7 @@
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Dışa aktarıldı"
+            "value" : "Dışa Aktarıldı"
           }
         },
         "uk" : {
@@ -70174,7 +70174,7 @@
         "it" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Esportazione di %lld di %lld righe"
+            "value" : "Esportazione di %lld righe su %lld"
           }
         },
         "ja" : {
@@ -70614,7 +70614,7 @@
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Dışa aktarılıyor..."
+            "value" : "Dışa Aktarılıyor..."
           }
         },
         "uk" : {
@@ -70696,7 +70696,7 @@
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Dışa aktarılıyor…"
+            "value" : "Dışa Aktarılıyor…"
           }
         },
         "uk" : {
@@ -70830,7 +70830,7 @@
         "it" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Impossibile %@: %@"
+            "value" : "Operazione non riuscita (%@): %@"
           }
         },
         "ja" : {
@@ -70866,7 +70866,7 @@
         "uk" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Не вдалося %@: %@"
+            "value" : "Помилка дії «%@»: %@"
           }
         },
         "zh-Hans" : {
@@ -70878,7 +70878,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "無法 %@：%@"
+            "value" : "無法執行「%@」：%@"
           }
         }
       }
@@ -70912,7 +70912,7 @@
         "it" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Impossibile %@: codifica dell'immagine non riuscita."
+            "value" : "Operazione non riuscita (%@): impossibile codificare l'immagine."
           }
         },
         "ja" : {
@@ -70948,7 +70948,7 @@
         "uk" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Не вдалося %@: не вдалося закодувати зображення."
+            "value" : "Помилка дії «%@»: не вдалося закодувати зображення."
           }
         },
         "zh-Hans" : {
@@ -70960,7 +70960,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "無法 %@：無法編碼影像。"
+            "value" : "無法執行「%@」：無法編碼影像。"
           }
         }
       }
@@ -71896,7 +71896,7 @@
         "it" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "File"
+            "value" : "Archivio"
           }
         },
         "ja" : {
@@ -72166,19 +72166,19 @@
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Заполнить"
+            "value" : "Заливка"
           }
         },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Doldur"
+            "value" : "Dolgu"
           }
         },
         "uk" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Заповнити"
+            "value" : "Заповнення"
           }
         },
         "zh-Hans" : {
@@ -72260,7 +72260,7 @@
         "uk" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Колір заливки"
+            "value" : "Колір заповнення"
           }
         },
         "zh-Hans" : {
@@ -72330,19 +72330,19 @@
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Режимы заливки: **Заполнить** (обрезка по размеру), **Вписать** (с полями), **Растянуть** (с искажением), **Мозаика** (повтор). В режиме мозаики доступны настройки интервала, смещения и масштаба."
+            "value" : "Режимы заливки: **Заливка** (обрезка по размеру), **Вписать** (с полями), **Растянуть** (с искажением), **Мозаика** (повтор). В режиме мозаики доступны настройки интервала, смещения и масштаба."
           }
         },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Dolgu modları: **Doldur** (sığacak şekilde kırpar), **Sığdır** (boşluk bırakır), **Uzat** (bozar), **Döşe** (tekrarlar). Döşe modu aralık, kayma ve ölçek denetimlerini açar."
+            "value" : "Dolgu modları: **Dolgu** (sığacak şekilde kırpar), **Sığdır** (boşluk bırakır), **Uzat** (bozar), **Döşe** (tekrarlar). Döşe modu aralık, kayma ve ölçek denetimlerini açar."
           }
         },
         "uk" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Режими заповнення: **Заповнити** (обрізати під розмір), **Вмістити** (зі смугами), **Розтягнути** (зі спотворенням), **Мозаїка** (повторювати). Режим мозаїки відкриває параметри проміжку, зсуву й масштабу."
+            "value" : "Режими заповнення: **Заповнення** (обрізати під розмір), **Вмістити** (зі смугами), **Розтягнути** (зі спотворенням), **Мозаїка** (повторювати). Режим мозаїки відкриває параметри проміжку, зсуву й масштабу."
           }
         },
         "zh-Hans" : {
@@ -72354,7 +72354,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "填滿模式：**填滿**（裁切以符合）、**符合**（加上邊框）、**延展**（變形）、**拼貼**（重複）。拼貼模式可使用間距、偏移和縮放控制項目。"
+            "value" : "填滿模式：**填滿**（裁切以符合）、**符合**（保留透明空白）、**延展**（變形）、**拼貼**（重複）。拼貼模式可使用間距、偏移和縮放控制項目。"
           }
         }
       }
@@ -72388,7 +72388,7 @@
         "it" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Fine"
+            "value" : "Finitura"
           }
         },
         "ja" : {
@@ -72418,13 +72418,13 @@
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Bitir"
+            "value" : "Yüzey"
           }
         },
         "uk" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Завершити"
+            "value" : "Покриття"
           }
         },
         "zh-Hans" : {
@@ -72436,7 +72436,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "完成"
+            "value" : "質感"
           }
         }
       }
@@ -72834,7 +72834,7 @@
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%@ öğesini düzenleyiciye sığdır"
+            "value" : "%@ satırını düzenleyiciye sığdır"
           }
         },
         "uk" : {
@@ -74521,7 +74521,7 @@
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Бесплатно"
+            "value" : "Бесплатный"
           }
         },
         "tr" : {
@@ -74545,7 +74545,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "免費"
+            "value" : "免費版"
           }
         }
       }
@@ -74668,7 +74668,7 @@
         "uk" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Безкоштовний план містить один проєкт із 3 рядками по 5 шаблонів — досить, щоб випустити першу програму. Перейдіть на вищий план тут будь-коли, щоб отримати необмежену кількість проєктів, рядків і шаблонів."
+            "value" : "Безкоштовний план містить один проєкт із 3 рядками по 5 шаблонів — досить, щоб випустити першу програму. Перейдіть на Pro тут будь-коли, щоб отримати необмежену кількість проєктів, рядків і шаблонів."
           }
         },
         "zh-Hans" : {
@@ -75066,7 +75066,7 @@
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Бесплатно: %@"
+            "value" : "Бесплатный: %@"
           }
         },
         "tr" : {
@@ -75090,7 +75090,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "免費：%@"
+            "value" : "免費版：%@"
           }
         }
       }
@@ -76167,7 +76167,7 @@
         "it" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Google Play ha restituito %lld durante il tentativo di %@."
+            "value" : "Google Play ha restituito %lld durante l'operazione: %@."
           }
         },
         "ja" : {
@@ -76215,7 +76215,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Google Play 在嘗試 %2$@ 時傳回 %1$lld。"
+            "value" : "Google Play 在執行「%2$@」時傳回 %1$lld。"
           }
         }
       }
@@ -77843,7 +77843,7 @@
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Выделение"
+            "value" : "Маркер"
           }
         },
         "tr" : {
@@ -79179,7 +79179,7 @@
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Если перетащенный файл невозможно прочитать — поврежденное изображение или разметку SVG, которую Screenshot Bro не может разобрать, — теперь об этом сообщается, а не ничего не происходит молча."
+            "value" : "Если перетащенный файл невозможно прочитать — поврежденное изображение или разметку SVG, которую Screenshot Bro не может разобрать, — теперь приложение сообщает об этом, а не молча ничего не делает."
           }
         },
         "tr" : {
@@ -80059,7 +80059,7 @@
         "uk" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Якщо проблема стосується проєкту, скористайтеся **Параметри ▸ Загальні ▸ Сховище ▸ Створити резервну копію…** і додайте отриману копію, щоб ми змогли відтворити проблему на тих самих даних."
+            "value" : "Якщо проблема стосується проєкту, виберіть **Параметри ▸ Загальні ▸ Сховище ▸ Створити резервну копію…** і додайте отриману копію, щоб ми змогли відтворити проблему на тих самих даних."
           }
         },
         "zh-Hans" : {
@@ -80276,7 +80276,7 @@
         "uk" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Якщо ви тут уперше, інтерактивний огляд проведе вас редактором, коли відкриється ваш перший проєкт. Щоб пройти його знову пізніше, скористайтеся **Параметри ▸ Загальні ▸ Огляд редактора ▸ Повторити огляд**."
+            "value" : "Якщо ви тут уперше, інтерактивний огляд проведе вас редактором, коли відкриється ваш перший проєкт. Щоб пройти його знову пізніше, виберіть **Параметри ▸ Загальні ▸ Огляд редактора ▸ Повторити огляд**."
           }
         },
         "zh-Hans" : {
@@ -80505,7 +80505,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "如果你只看到一列，可能是因為你使用的是**免費**方案（限制：每個專案 3 列）。升級為 Pro 即可移除此限制。請參閱「**免費版與 Pro**」。"
+            "value" : "如果你只看到一列，可能是因為你使用的是**免費版**（限制：每個專案 3 列）。升級為 Pro 即可移除此限制。請參閱「**免費版與 Pro**」。"
           }
         }
       }
@@ -81465,7 +81465,7 @@
         "it" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Importa screenshot nelle cornici del dispositivo, aggiungi e traduci lingue e imposta il testo per ogni lingua."
+            "value" : "Importare screenshot nelle cornici dei dispositivi, aggiungere e tradurre lingue e impostare il testo per ogni lingua."
           }
         },
         "ja" : {
@@ -81718,7 +81718,7 @@
         "uk" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Імпортуйте ключ JSON сервісного облікового запису Google у Параметри → Google Play."
+            "value" : "Імпортуйте ключ JSON сервісного облікового запису Google у розділі «Параметри → Google Play»."
           }
         },
         "zh-Hans" : {
@@ -81882,7 +81882,7 @@
         "uk" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Імпортуйте ключ JSON свого сервісного облікового запису в Параметри → Google Play."
+            "value" : "Імпортуйте ключ JSON свого сервісного облікового запису в розділі «Параметри → Google Play»."
           }
         },
         "zh-Hans" : {
@@ -82966,7 +82966,7 @@
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%@ öğesini dahil et"
+            "value" : "Dahil et: %@"
           }
         },
         "uk" : {
@@ -83206,13 +83206,13 @@
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Включено"
+            "value" : "Что входит"
           }
         },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Dahil"
+            "value" : "Dahil Olanlar"
           }
         },
         "uk" : {
@@ -83312,7 +83312,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "放大字體大小"
+            "value" : "放大字體"
           }
         }
       }
@@ -84865,7 +84865,7 @@
         "it" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Chiave"
+            "value" : "Principale"
           }
         },
         "ja" : {
@@ -84901,7 +84901,7 @@
         "uk" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Ключ"
+            "value" : "Основне"
           }
         },
         "zh-Hans" : {
@@ -85926,7 +85926,7 @@
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "яз."
+            "value" : "языки"
           }
         },
         "tr" : {
@@ -86654,7 +86654,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "左"
+            "value" : "靠左"
           }
         }
       }
@@ -87040,7 +87040,7 @@
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Навсегда"
+            "value" : "Бессрочный доступ"
           }
         },
         "tr" : {
@@ -87122,7 +87122,7 @@
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Светлое"
+            "value" : "Светлый"
           }
         },
         "tr" : {
@@ -87672,7 +87672,7 @@
         "it" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Caricamento immagini %lld di %lld"
+            "value" : "Caricamento immagini: %lld di %lld"
           }
         },
         "ja" : {
@@ -88048,7 +88048,7 @@
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "яз."
+            "value" : "языки"
           }
         },
         "tr" : {
@@ -90223,7 +90223,7 @@
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Средняя"
+            "value" : "Средний"
           }
         },
         "tr" : {
@@ -90235,7 +90235,7 @@
         "uk" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Середня"
+            "value" : "Середній"
           }
         },
         "zh-Hans" : {
@@ -94060,7 +94060,7 @@
         "it" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Nessuna connessione a internet durante il tentativo di %@."
+            "value" : "Nessuna connessione a internet durante l'operazione: %@."
           }
         },
         "ja" : {
@@ -94108,7 +94108,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "嘗試 %@ 時沒有網際網路連線。"
+            "value" : "執行「%@」時沒有網際網路連線。"
           }
         }
       }
@@ -94933,7 +94933,7 @@
         "it" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Non è stato trovato alcun acquisto di Screenshot Bro Pro per questo Apple Account."
+            "value" : "Non è stato trovato alcun acquisto di Screenshot Bro Pro per questo Account Apple."
           }
         },
         "ja" : {
@@ -95373,7 +95373,7 @@
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Yok"
+            "value" : "Hiçbiri"
           }
         },
         "uk" : {
@@ -97745,7 +97745,7 @@
         "it" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Opacità, rotazione (in gradi, modificabile come testo), raggio del bordo, contorno (colore + spessore) e **Ritaglia sulla cornice** (ritaglia tutto ciò che fuoriesce dal modello)."
+            "value" : "Opacità, rotazione (in gradi, modificabile come testo), raggio degli angoli, contorno (colore + spessore) e **Ritaglia sulla cornice** (ritaglia tutto ciò che fuoriesce dal modello)."
           }
         },
         "ja" : {
@@ -97793,7 +97793,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "不透明度、旋轉（以度為單位，可輸入文字編輯）、圓角半徑、外框線（顏色 + 寬度），以及**裁切至外框**（裁切超出範本的任何內容）。"
+            "value" : "不透明度、旋轉（以度為單位，可輸入文字編輯）、圓角半徑、外框線（顏色 + 寬度），以及**裁切至範本**（裁切超出範本的任何內容）。"
           }
         }
       }
@@ -97939,7 +97939,7 @@
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%@ öğesini App Store Connect'te aç"
+            "value" : "App Store Connect'te aç: %@"
           }
         },
         "uk" : {
@@ -99404,7 +99404,7 @@
         "it" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Aprirlo"
+            "value" : "Aprire la vetrina"
           }
         },
         "ja" : {
@@ -100137,7 +100137,7 @@
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Контур"
+            "value" : "Обводка"
           }
         },
         "tr" : {
@@ -103032,7 +103032,7 @@
         "it" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Scegli quali righe includere (con **Tutte** / **Nessuna**), poi usa i chip numerati per togliere singoli screenshot dalla composizione: il contatore mostra quanti screenshot della riga sono inclusi."
+            "value" : "Scegli quali righe includere (con **Tutti** / **Nessuno**), poi usa i chip numerati per togliere singoli screenshot dalla composizione: il contatore mostra quanti screenshot della riga sono inclusi."
           }
         },
         "ja" : {
@@ -103068,7 +103068,7 @@
         "uk" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Виберіть, які рядки включити (кнопки **Усі** / **Жодного**), а потім нумерованими кнопками вилучайте окремі знімки екрана з композиції — лічильник показує, скільки знімків рядка включено."
+            "value" : "Виберіть, які рядки включити (кнопки **Усі** / **Немає**), а потім нумерованими кнопками вилучайте окремі знімки екрана з композиції — лічильник показує, скільки знімків рядка включено."
           }
         },
         "zh-Hans" : {
@@ -103308,7 +103308,7 @@
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Hap"
+            "value" : "Kapsül"
           }
         },
         "uk" : {
@@ -103525,7 +103525,7 @@
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Bundan Sonraya Yerleştir"
+            "value" : "Bunun Sonrasına Yerleştir"
           }
         },
         "uk" : {
@@ -104515,7 +104515,7 @@
         "uk" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Вам зручніша бічна панель? Увімкніть **Редагувати вибрані фігури в інспекторі** в Параметри ▸ Загальні. Тоді ті самі елементи керування переходять в інспектор як розділи, що згортаються (сховайте інспектор — і панель повернеться), для кількох вибраних фігур з’являються кнопки вирівнювання й розподілу, а меню **Вставити** на панелі інструментів додає фігури."
+            "value" : "Вам зручніша бічна панель? Увімкніть **Редагувати вибрані фігури в інспекторі** в розділі «Параметри ▸ Загальні». Тоді ті самі елементи керування переходять в інспектор як розділи, що згортаються (сховайте інспектор — і панель повернеться), для кількох вибраних фігур з’являються кнопки вирівнювання й розподілу, а меню **Вставити** на панелі інструментів додає фігури."
           }
         },
         "zh-Hans" : {
@@ -104650,7 +104650,7 @@
         "uk" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Бажаєте налаштувати вручну? Скористайтеся **Скопіювати конфігурацію (JSON)** для стандартного запису `mcpServers` або скопіюйте **URL сервера** й **Токен доступу** окремо та додайте їх у своєму клієнті."
+            "value" : "Бажаєте налаштувати вручну? Натисніть **Скопіювати конфігурацію (JSON)** для стандартного запису `mcpServers` або скопіюйте **URL сервера** й **Токен доступу** окремо та додайте їх у своєму клієнті."
           }
         },
         "zh-Hans" : {
@@ -105897,7 +105897,7 @@
         "it" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Privacy Policy"
+            "value" : "Informativa sulla privacy"
           }
         },
         "ja" : {
@@ -106384,7 +106384,7 @@
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Pro — ежемесячно"
+            "value" : "Pro — месячная подписка"
           }
         },
         "tr" : {
@@ -106548,7 +106548,7 @@
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Pro — еженедельно"
+            "value" : "Pro — недельная подписка"
           }
         },
         "tr" : {
@@ -106630,7 +106630,7 @@
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Pro — ежегодно"
+            "value" : "Pro — годовая подписка"
           }
         },
         "tr" : {
@@ -106712,7 +106712,7 @@
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Сообщения о переходе на Pro зависят от контекста: при добавлении 4-й строки вы увидите другое сообщение, чем при добавлении 6-го шаблона, так что всегда ясно, какое ограничение вы достигли."
+            "value" : "Сообщения о переходе на Pro зависят от контекста: при добавлении 4-й строки вы увидите другое сообщение, чем при добавлении 6-го шаблона, так что всегда ясно, какого ограничения вы достигли."
           }
         },
         "tr" : {
@@ -107708,7 +107708,7 @@
         "uk" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Порядок проєктів можна задати як **За датою створення** або **За алфавітом** у Параметри ▸ Загальні."
+            "value" : "Порядок проєктів можна задати як **За датою створення** або **За алфавітом** у розділі «Параметри ▸ Загальні»."
           }
         },
         "zh-Hans" : {
@@ -108060,7 +108060,7 @@
         "uk" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Проєкти автоматично зберігаються через 0,3 секунди після останньої зміни. Зберігати вручну не потрібно. Щоб створити разову резервну копію, скористайтеся **Параметри ▸ Загальні ▸ Сховище ▸ Створити резервну копію…**."
+            "value" : "Проєкти автоматично зберігаються через 0,3 секунди після останньої зміни. Зберігати вручну не потрібно. Щоб створити разову резервну копію, виберіть **Параметри ▸ Загальні ▸ Сховище ▸ Створити резервну копію…**."
           }
         },
         "zh-Hans" : {
@@ -112939,7 +112939,7 @@
         "it" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Sostituisci tutti gli screenshot salta il confronto: tutto ciò che si trova attualmente in questi set viene eliminato e 1 screenshot viene caricato di nuovo con un nuovo ID asset. Più rapido da preparare, più lento da caricare."
+            "value" : "“Sostituisci tutti gli screenshot” salta il confronto: tutto ciò che si trova attualmente in questi set viene eliminato e 1 screenshot viene caricato di nuovo con un nuovo ID asset. Più rapido da preparare, più lento da caricare."
           }
         },
         "ja" : {
@@ -113021,7 +113021,7 @@
         "it" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Sostituisci tutti gli screenshot salta il confronto: tutto ciò che si trova attualmente in questi set viene eliminato e tutti i %lld screenshot vengono caricati di nuovo con nuovi ID asset. Più rapido da preparare, più lento da caricare."
+            "value" : "“Sostituisci tutti gli screenshot” salta il confronto: tutto ciò che si trova attualmente in questi set viene eliminato e tutti i %lld screenshot vengono caricati di nuovo con nuovi ID asset. Più rapido da preparare, più lento da caricare."
           }
         },
         "ja" : {
@@ -114183,7 +114183,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "重置 %@"
+            "value" : "重置%@"
           }
         }
       }
@@ -116990,7 +116990,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "重複使用翻譯自"
+            "value" : "重複使用以下翻譯"
           }
         }
       }
@@ -117710,7 +117710,7 @@
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Temel Dile Dön"
+            "value" : "Temel Dile Geri Dön"
           }
         },
         "uk" : {
@@ -118273,7 +118273,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "右"
+            "value" : "靠右"
           }
         }
       }
@@ -118519,7 +118519,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "對多重選取的形狀按右鍵 ▸ **對齊所選項目**，可靠左／置中／靠右、頂部／垂直置中／底部對齊，另有**水平分佈**和**垂直分佈**。"
+            "value" : "對多重選取的形狀按右鍵 ▸ **對齊所選項目**，可靠左／水平置中／靠右、靠上／垂直置中／靠下對齊，另有**水平分佈**和**垂直分佈**。"
           }
         }
       }
@@ -119374,7 +119374,7 @@
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "строк"
+            "value" : "строки"
           }
         },
         "tr" : {
@@ -119984,7 +119984,7 @@
         "uk" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Працює"
+            "value" : "Запущено"
           }
         },
         "zh-Hans" : {
@@ -122206,7 +122206,7 @@
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Ekran Görüntüsünün Ortası"
+            "value" : "Ekran Görüntüsünün Ortasına"
           }
         },
         "uk" : {
@@ -122856,7 +122856,7 @@
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "скриншотов"
+            "value" : "скриншоты"
           }
         },
         "tr" : {
@@ -125346,7 +125346,7 @@
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "выбранную папку"
+            "value" : "выбранная папка"
           }
         },
         "tr" : {
@@ -126489,7 +126489,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "設定**設定 ▸ 輸出 ▸ 輸出資料夾**，讓 **⌘E** 直接輸出而不再詢問。"
+            "value" : "在**設定 ▸ 輸出 ▸ 輸出資料夾**中指定資料夾，**⌘E** 就會直接輸出而不再詢問。"
           }
         }
       }
@@ -126957,7 +126957,7 @@
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "наборов"
+            "value" : "наборы"
           }
         },
         "tr" : {
@@ -127039,7 +127039,7 @@
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Наборы сгруппированы по версиям и устройствам — откройте язык, чтобы сравнить текущие скриншоты в App Store с предлагаемыми. Языки, которые уже совпадают, скрыты под **Показать неизмененные**, а **Выбрать все измененные** / **Снять выделение со всего** определяют, что будет синхронизировано."
+            "value" : "Наборы сгруппированы по версиям и устройствам — откройте язык, чтобы сравнить текущие скриншоты в App Store с предлагаемыми. Языки, которые уже совпадают, скрыты под **Показать неизмененные**, а **Выбрать все измененные** / **Снять выбор со всех** определяют, что будет синхронизировано."
           }
         },
         "tr" : {
@@ -129090,7 +129090,7 @@
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Показать доступные только для чтения (%lld)"
+            "value" : "Показать нередактируемые (%lld)"
           }
         },
         "tr" : {
@@ -130403,7 +130403,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "對齊與對齊參考線"
+            "value" : "貼齊與對齊參考線"
           }
         }
       }
@@ -130461,7 +130461,7 @@
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Мягкая"
+            "value" : "Мягкий"
           }
         },
         "tr" : {
@@ -130473,7 +130473,7 @@
         "uk" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "М’яка"
+            "value" : "М’який"
           }
         },
         "zh-Hans" : {
@@ -131692,7 +131692,7 @@
         "uk" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Позначені зірочкою проєкти піднімаються на початок списку вибору. Решта йдуть у порядку, заданому в Параметри ▸ Загальні."
+            "value" : "Позначені зірочкою проєкти піднімаються на початок списку вибору. Решта йдуть у порядку, заданому в розділі «Параметри ▸ Загальні»."
           }
         },
         "zh-Hans" : {
@@ -132529,7 +132529,7 @@
         "it" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Interruzione…"
+            "value" : "Arresto…"
           }
         },
         "ja" : {
@@ -132881,7 +132881,7 @@
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Сильная"
+            "value" : "Сильный"
           }
         },
         "tr" : {
@@ -132893,7 +132893,7 @@
         "uk" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Сильна"
+            "value" : "Сильний"
           }
         },
         "zh-Hans" : {
@@ -133021,7 +133021,7 @@
         "it" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Dagli stile"
+            "value" : "Personalizza lo stile"
           }
         },
         "ja" : {
@@ -133186,13 +133186,13 @@
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Abonelikler Apple Kimliğiniz üzerinden yönetilir; iptaller Sistem Ayarları ▸ Apple Kimliği ▸ Abonelikler bölümünden yapılır."
+            "value" : "Abonelikler Apple Hesabınız üzerinden yönetilir; iptaller Sistem Ayarları ▸ Apple Hesabı ▸ Abonelikler bölümünden yapılır."
           }
         },
         "uk" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Підписками керують через ваш Apple ID; скасувати можна в Системні параметри ▸ Apple ID ▸ Підписки."
+            "value" : "Підписками керують через ваш Apple ID; скасувати підписку можна в розділі «Системні параметри ▸ Apple ID ▸ Підписки»."
           }
         },
         "zh-Hans" : {
@@ -134252,7 +134252,7 @@
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Şuna Geç"
+            "value" : "Geçiş Yap"
           }
         },
         "uk" : {
@@ -135828,7 +135828,7 @@
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Системное"
+            "value" : "Системный"
           }
         },
         "tr" : {
@@ -135840,7 +135840,7 @@
         "uk" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Системна"
+            "value" : "Як у системі"
           }
         },
         "zh-Hans" : {
@@ -136672,7 +136672,7 @@
         "it" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Verifica…"
+            "value" : "Verifica in corso…"
           }
         },
         "ja" : {
@@ -137815,13 +137815,13 @@
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "**Меню ⋯** содержит действия для шаблона: **Quick Look**, **Сохранить как PNG…**, **Переместить влево / Переместить вправо**, **Добавить скриншот перед / после**, **Дублировать скриншот ▸ Поместить после этого / Поместить в конец** и **Удалить скриншот**."
+            "value" : "**Меню ⋯** содержит действия для шаблона: **Quick Look**, **Сохранить как PNG…**, **Переместить влево / Переместить вправо**, **Добавить скриншот перед этим / после этого**, **Дублировать скриншот ▸ Поместить после этого / Поместить в конец** и **Удалить скриншот**."
           }
         },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "**⋯ menüsü** şablon bazında işlemler sunar: **Hızlı Bakış**, **PNG Olarak Kaydet…**, **Sola Taşı / Sağa Taşı**, **Öncesine / Sonrasına Ekran Görüntüsü Ekle**, **Ekran Görüntüsünü Çoğalt ▸ Bundan Sonraya Yerleştir / Sona Yerleştir** ve **Ekran Görüntüsünü Sil**."
+            "value" : "**⋯ menüsü** şablon bazında işlemler sunar: **Hızlı Bakış**, **PNG Olarak Kaydet…**, **Sola Taşı / Sağa Taşı**, **Öncesine / Sonrasına Ekran Görüntüsü Ekle**, **Ekran Görüntüsünü Çoğalt ▸ Bunun Sonrasına Yerleştir / Sona Yerleştir** ve **Ekran Görüntüsünü Sil**."
           }
         },
         "uk" : {
@@ -138044,7 +138044,7 @@
         "uk" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Зразок **Заливка** відкриває той самий редактор, що й тло, тож прямокутник, коло, зірка чи текстовий бейдж можуть мати **градієнт або зображення**, а не лише суцільний колір."
+            "value" : "Зразок **Заповнення** відкриває той самий редактор, що й тло, тож прямокутник, коло, зірка чи текстовий бейдж можуть мати **градієнт або зображення**, а не лише суцільний колір."
           }
         },
         "zh-Hans" : {
@@ -138717,7 +138717,7 @@
         "it" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "La barra mostra tutti i pulsanti che ci stanno. Se rimpicciolisci lo zoom o restringi la finestra, elimina quelli meno prioritari, quindi un controllo può sembrare sparito: il menu **⋯** non viene mai eliminato e contiene sempre l'insieme completo."
+            "value" : "La barra mostra tutti i pulsanti che ci stanno. Se riduci lo zoom o restringi la finestra, elimina quelli meno prioritari, quindi un controllo può sembrare sparito: il menu **⋯** non viene mai eliminato e contiene sempre l'insieme completo."
           }
         },
         "ja" : {
@@ -139045,7 +139045,7 @@
         "it" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "La connessione non è riuscita durante il tentativo di %@."
+            "value" : "La connessione non è riuscita durante l'operazione: %@."
           }
         },
         "ja" : {
@@ -139093,7 +139093,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "嘗試 %@ 時連線失敗。"
+            "value" : "執行「%@」時連線失敗。"
           }
         }
       }
@@ -141208,7 +141208,7 @@
         "uk" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Сервісний обліковий запис відхилено. Перевірте ключ у Параметри → Google Play."
+            "value" : "Сервісний обліковий запис відхилено. Перевірте ключ у розділі «Параметри → Google Play»."
           }
         },
         "zh-Hans" : {
@@ -141425,7 +141425,7 @@
         "uk" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Масштаб на панелі інструментів змінюється від 25% до 300% з кроком 25%, а в спливній панелі є дії **Вмістити в редактор** і **Реальний розмір**."
+            "value" : "Масштаб на панелі інструментів змінюється від 25% до 300% з кроком 25%, а в спливній панелі є дії **Вмістити в редактор** і **Фактичний розмір**."
           }
         },
         "zh-Hans" : {
@@ -143172,7 +143172,7 @@
         "uk" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Цей рядок вивантажує знімків екрана: %lld. App Store Connect приймає %lld–%lld, але більшість програм показують щонайменше %lld."
+            "value" : "Кількість знімків екрана, які вивантажує цей рядок: %lld. App Store Connect приймає %lld–%lld, але більшість програм показують щонайменше %lld."
           }
         },
         "zh-Hans" : {
@@ -147273,7 +147273,7 @@
         "it" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Attivarlo"
+            "value" : "Attivare il server"
           }
         },
         "ja" : {
@@ -147543,13 +147543,13 @@
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Не проверено"
+            "value" : "Не отмечено"
           }
         },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "İşaretsiz"
+            "value" : "İşaretlenmedi"
           }
         },
         "uk" : {
@@ -149101,19 +149101,19 @@
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Улучшить"
+            "value" : "Переход на Pro"
           }
         },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Yükselt"
+            "value" : "Yükseltme"
           }
         },
         "uk" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Перейти на вищий план"
+            "value" : "Перехід на Pro"
           }
         },
         "zh-Hans" : {
@@ -149406,7 +149406,7 @@
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Şu türde yükle"
+            "value" : "Yükleme türü"
           }
         },
         "uk" : {
@@ -149593,7 +149593,7 @@
         "it" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Carica confronta ogni screenshot con lo store e modifica solo ciò che è diverso, mantenendo gli ID asset App Store delle corrispondenze esatte."
+            "value" : "“Carica” confronta ogni screenshot con lo store e modifica solo ciò che è diverso, mantenendo gli ID asset App Store delle corrispondenze esatte."
           }
         },
         "ja" : {
@@ -149839,7 +149839,7 @@
         "it" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Caricamento non riuscito durante il tentativo di %@."
+            "value" : "Caricamento non riuscito durante l'operazione: %@."
           }
         },
         "ja" : {
@@ -149887,7 +149887,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "嘗試 %@ 時上傳失敗。"
+            "value" : "執行「%@」時上傳失敗。"
           }
         }
       }
@@ -151069,7 +151069,7 @@
         "it" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Usa una chiave API di App Store Connect con accesso alla modifica dei metadati dell'app. Per il caricamento degli screenshot si usano di solito i ruoli Titolare account, Amministratore o Gestione app."
+            "value" : "Usa una chiave API di App Store Connect con accesso alla modifica dei metadati dell'app. Per il caricamento degli screenshot si usano di solito i ruoli Titolare dell'account, Amministratore o Gestore app."
           }
         },
         "ja" : {
@@ -153303,7 +153303,7 @@
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "версий"
+            "value" : "версии"
           }
         },
         "tr" : {
@@ -153573,7 +153573,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "顯示方式"
+            "value" : "檢視"
           }
         }
       }
@@ -154615,7 +154615,7 @@
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Что включено"
+            "value" : "Что входит"
           }
         },
         "tr" : {
@@ -155184,7 +155184,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "當它們都是同一種類時，也會提供該種類的控制項目，並將每項更改套用到每個形狀：裝置的**更改裝置**；文字的字體／字重／顏色／對齊方式／斜體／大寫；圓角半徑、星形尖角、SVG 自訂顏色、外框線、陰影、不透明度、旋轉，以及**裁切至外框**。"
+            "value" : "當它們都是同一種類時，也會提供該種類的控制項目，並將每項更改套用到每個形狀：裝置的**更改裝置**；文字的字體／字重／顏色／對齊方式／斜體／大寫；圓角半徑、星形尖角、SVG 自訂顏色、外框線、陰影、不透明度、旋轉，以及**裁切至範本**。"
           }
         }
       }
@@ -156420,7 +156420,7 @@
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Çalışıyor…"
+            "value" : "İşleniyor…"
           }
         },
         "uk" : {
@@ -157210,7 +157210,7 @@
         "it" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Acquisto completato: Screenshot Bro Pro è sbloccato su questo Apple Account."
+            "value" : "Acquisto completato: Screenshot Bro Pro è sbloccato su questo Account Apple."
           }
         },
         "ja" : {
@@ -157456,7 +157456,7 @@
         "it" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Il tuo sblocco è gestito dall'App Store per questo Apple Account."
+            "value" : "Il tuo sblocco è gestito dall'App Store per questo Account Apple."
           }
         },
         "ja" : {
@@ -158604,7 +158604,7 @@
         "it" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Tutto ciò che bloccherebbe il caricamento è elencato in un banner sopra il piano, una riga per ogni riga del progetto: ogni lingua ancora senza una lingua App Store viene nominata su quell'unica riga, senza ripetizioni. Quando basta una sola modifica per risolvere, la riga include un pulsante **Correggi** che la applica: seleziona le lingue App Store già corrispondenti alla riga oppure passa la riga al tipo di display rilevato."
+            "value" : "Tutto ciò che bloccherebbe il caricamento è elencato in un banner sopra il piano, una voce per ogni riga: ogni lingua ancora senza una lingua App Store viene nominata in quell'unica voce, senza ripetizioni. Quando basta una sola modifica per risolvere, la voce include un pulsante **Correggi** che la applica: seleziona le lingue App Store già corrispondenti alla riga oppure passa la riga al tipo di display rilevato."
           }
         },
         "ja" : {
@@ -158792,7 +158792,7 @@
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Я создал Screenshot Bro и сам каждый день пользуюсь им, чтобы делать скриншоты для App Store для других своих приложений. Если он помогает и вам, быстрая оценка в App Store поддержит жизнь этого приложения."
+            "value" : "Я создал Screenshot Bro и сам каждый день делаю в нем скриншоты для App Store для других своих приложений. Если он помогает и вам, быстрая оценка в App Store поможет приложению жить дальше."
           }
         },
         "tr" : {
@@ -159120,13 +159120,13 @@
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Небольшая просьба?"
+            "value" : "Можно небольшую просьбу?"
           }
         },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Küçük bir iyilik?"
+            "value" : "Küçük bir ricam var"
           }
         },
         "uk" : {
@@ -159284,7 +159284,7 @@
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Создавайте повторяющиеся по вашему расписанию привычки."
+            "value" : "Создавайте повторяющиеся дела по своему расписанию."
           }
         },
         "tr" : {
@@ -163068,7 +163068,7 @@
         "uk" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Щоб протестувати їх, скористайтеся Експорт ▸ Вивантажити A/B-тест в App Store Connect."
+            "value" : "Щоб протестувати їх, виберіть «Експорт ▸ Вивантажити A/B-тест в App Store Connect»."
           }
         },
         "zh-Hans" : {
@@ -163818,7 +163818,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "以 ^[%3$lld 種語言](inflect: true)將 ^[%1$lld 個處理組](inflect: true)上傳至 %2$@。"
+            "value" : "以 ^[%3$lld 種語言](inflect: true)將 ^[%1$lld 個處理組](inflect: true)上傳至%2$@。"
           }
         }
       }
@@ -164508,7 +164508,7 @@
         "it" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Più di una riga è %@. Un trattamento accetta una riga per dimensione di screenshot: spostane una in un'altra variante o escludila da App Store Connect."
+            "value" : "Più di una riga usa %@. Un trattamento accetta una riga per dimensione di screenshot: spostane una in un'altra variante o escludila da App Store Connect."
           }
         },
         "ja" : {
@@ -167672,7 +167672,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "新的實驗「%@」，"
+            "value" : "新實驗「%@」"
           }
         }
       }
@@ -167952,7 +167952,7 @@
         "it" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "App Store Connect ha già un invio per la revisione %@ non inviato. Invialo o rimuovilo prima lì: questa app non vi aggiungerà nulla, così nient'altro finisce in revisione per errore."
+            "value" : "App Store Connect ha già un invio per la revisione %@ non ancora inoltrato. Inoltralo o rimuovilo prima lì: questa app non vi aggiungerà nulla, così nient'altro finisce in revisione per errore."
           }
         },
         "ja" : {
@@ -169956,7 +169956,7 @@
         "uk" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Разом із ним буде видалено: %@. Цю дію можна відмінити."
+            "value" : "Рядки цього варіанта теж буде видалено (%@). Цю дію можна відмінити."
           }
         },
         "zh-Hans" : {
@@ -169968,7 +169968,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "其 %@ 也會被刪除。你可以還原此動作。"
+            "value" : "其%@也會被刪除。你可以還原此動作。"
           }
         }
       }
@@ -170114,13 +170114,13 @@
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Daha Fazla"
+            "value" : "Diğer"
           }
         },
         "uk" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Ще"
+            "value" : "Інші"
           }
         },
         "zh-Hans" : {
@@ -170600,7 +170600,7 @@
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Шаблоны сгруппированы по стилю — **Минимализм**, **Игривый**, **Журнальный**, **Градиент**, **Красочный**, **Темное** и **Витрина устройств**. Почти все содержат строки для iPhone, iPad и Android; если устройств меньше, они указаны на карточке. Дважды нажмите карточку, чтобы сразу создать проект."
+            "value" : "Шаблоны сгруппированы по стилю — **Минимализм**, **Игривый**, **Журнальный**, **Градиент**, **Красочный**, **Темный** и **Витрина устройств**. Почти все содержат строки для iPhone, iPad и Android; если устройств меньше, они указаны на карточке. Дважды нажмите карточку, чтобы сразу создать проект."
           }
         },
         "tr" : {
