@@ -103,9 +103,8 @@ extension AppState {
 
     /// Esc: a shape selection steps back to its row, and a row selection to nothing.
     func stepBackSelection() {
-        if imageCrop.isActive {
-            imageCrop.end()
-        } else if hasSelection {
+        guard !endImageCrop() else { return }
+        if hasSelection {
             selectedShapeIds = []
         } else if selectedRowId != nil {
             deselectAll()

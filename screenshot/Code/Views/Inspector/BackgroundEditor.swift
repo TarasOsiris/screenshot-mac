@@ -39,6 +39,7 @@ struct BackgroundEditor: View {
     var onRemoveImage: (() -> Void)?
     var onDropImage: ((NSImage) -> Void)?
     var onDropSvg: ((String) -> Void)?
+    /// False hides the Image style, which is also the only place an image can be dropped or picked.
     var allowsImage = true
 
     #if os(macOS)

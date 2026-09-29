@@ -83,6 +83,7 @@ struct TranslationOverviewSheet: View {
         let items = state.textShapesForTranslationMatrix()
         let baseLocale = state.localeState.locales.first
         let translationLocales = Array(state.localeState.locales.dropFirst())
+        let overflowing = state.overflowingTranslations()
 
         return VStack(spacing: 0) {
             VStack(alignment: .leading, spacing: 4) {
@@ -109,7 +110,7 @@ struct TranslationOverviewSheet: View {
                     LazyVStack(spacing: 0, pinnedViews: [.sectionHeaders]) {
                         Section {
                             ForEach(items, id: \.shape.id) { item in
-                                translationRow(item: item, locales: translationLocales)
+                                translationRow(item: item, locales: translationLocales, overflowing: overflowing)
                             }
                         } header: {
                             translationHeaderRow(baseLocale: baseLocale, locales: translationLocales)
@@ -135,6 +136,7 @@ struct TranslationOverviewSheet: View {
     private var platformContent: some View {
         let items = state.textShapesForTranslationMatrix()
         let translationLocales = Array(state.localeState.locales.dropFirst())
+        let overflowing = state.overflowingTranslations()
 
         return Group {
             if items.isEmpty {
@@ -154,7 +156,7 @@ struct TranslationOverviewSheet: View {
                     ForEach(items, id: \.shape.id) { item in
                         Section {
                             ForEach(translationLocales) { locale in
-                                iosTranslationRow(item: item, locale: locale)
+                                iosTranslationRow(item: item, locale: locale, overflowing: overflowing)
                             }
                         } header: {
                             iosSectionHeader(item: item)
@@ -189,7 +191,8 @@ struct TranslationOverviewSheet: View {
     @ViewBuilder
     private func iosTranslationRow(
         item: (shape: CanvasShapeModel, rowLabel: String),
-        locale: LocaleDefinition
+        locale: LocaleDefinition,
+        overflowing: Set<TranslationCell>
     ) -> some View {
         let baseText = item.shape.text ?? ""
         let override = state.translationOverrideForDisplay(shape: item.shape, localeCode: locale.code)
@@ -216,7 +219,7 @@ struct TranslationOverviewSheet: View {
                         text: localeTranslationBinding(state, shape: item.shape, localeCode: locale.code)
                     )
                 }
-                if state.textOverflows(translationKey: item.shape.textTranslationKey, localeCode: locale.code) {
+                if overflowing.contains(TranslationCell(translationKey: item.shape.textTranslationKey, localeCode: locale.code)) {
                     TextOverflowLabel()
                         .font(.caption)
                 }
@@ -302,7 +305,8 @@ struct TranslationOverviewSheet: View {
 
     private func translationRow(
         item: (shape: CanvasShapeModel, rowLabel: String),
-        locales: [LocaleDefinition]
+        locales: [LocaleDefinition],
+        overflowing: Set<TranslationCell>
     ) -> some View {
         VStack(spacing: 0) {
             HStack(spacing: 0) {
@@ -321,7 +325,7 @@ struct TranslationOverviewSheet: View {
                         columnPadding: columnPadding,
                         isTranslating: isPendingTranslation(shapeId: item.shape.id, localeCode: locale.code),
                         canReset: override?.hasTextContent == true,
-                        overflows: state.textOverflows(translationKey: item.shape.textTranslationKey, localeCode: locale.code),
+                        overflows: overflowing.contains(TranslationCell(translationKey: item.shape.textTranslationKey, localeCode: locale.code)),
                         onTranslate: {
                             startCellTranslation(
                                 shapeId: item.shape.id,

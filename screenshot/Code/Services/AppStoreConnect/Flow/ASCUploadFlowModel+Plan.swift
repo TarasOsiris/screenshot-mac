@@ -19,7 +19,7 @@ extension ASCUploadFlowModel {
             ))
         }
         if let document {
-            issues += TextOverflowCheck.uploadIssues(rows: rows.filter(\.uploadsToAppStoreListing), source: document)
+            issues += textOverflowIssues.issues(rows: rows.filter(\.uploadsToAppStoreListing), source: document)
         }
         return issues
     }

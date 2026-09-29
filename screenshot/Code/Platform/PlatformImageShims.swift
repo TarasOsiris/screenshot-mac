@@ -10,6 +10,11 @@ nonisolated extension UIImage {
         self.init(contentsOfFile: url.path)
     }
 
+    /// AppKit defers reading the file; UIKit has no lazy form, so this reads it.
+    convenience init?(byReferencing url: URL) {
+        self.init(contentsOfFile: url.path)
+    }
+
     /// A blank transparent image of the given size. On macOS `NSImage(size:)` yields an empty
     /// canvas that callers draw into; on iOS the draw-into call sites are guarded, so this is
     /// only used for placeholder/empty images.

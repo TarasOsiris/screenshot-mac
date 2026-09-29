@@ -68,6 +68,7 @@ final class ASCUploadFlowModel {
 
     @ObservationIgnored let api: any ASCUploadAPI
     @ObservationIgnored private(set) weak var document: (any ASCUploadDocument)?
+    @ObservationIgnored let textOverflowIssues = TextOverflowIssueCache()
     @ObservationIgnored var uploadTask: Task<Void, Never>?
 
     /// Called after `step` advances. iPad pushes onto its `NavigationStack` path here; macOS does

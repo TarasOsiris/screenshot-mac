@@ -20,7 +20,7 @@ struct LocaleFolderImportSheet: View {
 
     /// One entry per language: `fr-FR` and `fr-CA` can both resolve to one preset, and adding it
     /// twice would plan — and import — its screenshots twice.
-    private var addableLocales: [(folders: String, locale: LocaleDefinition)] {
+    private var addableLocales: [(folders: [String], locale: LocaleDefinition)] {
         var order: [String] = []
         var byCode: [String: (folders: [String], locale: LocaleDefinition)] = [:]
         for folder in request.plan.unmatchedLocaleFolders {
@@ -33,10 +33,11 @@ struct LocaleFolderImportSheet: View {
                 byCode[locale.code]?.folders.append(folder)
             }
         }
-        return order.compactMap { byCode[$0] }.map { ($0.folders.joined(separator: ", "), $0.locale) }
+        return order.compactMap { byCode[$0] }
     }
 
     var body: some View {
+        let addableLocales = self.addableLocales
         VStack(alignment: .leading, spacing: 14) {
             Text("Import Localized Screenshots")
                 .font(.headline)
@@ -64,13 +65,13 @@ struct LocaleFolderImportSheet: View {
                         .font(.subheadline.weight(.semibold))
                     ForEach(addableLocales, id: \.locale.code) { entry in
                         Toggle(isOn: addBinding(entry.locale.code)) {
-                            Text("Add \(entry.locale.flagLabel) (\(entry.folders))")
+                            Text("Add \(entry.locale.flagLabel) (\(entry.folders.joined(separator: ", ")))")
                         }
                     }
                 }
             }
 
-            let addable = Set(addableLocales.flatMap { $0.folders.components(separatedBy: ", ") })
+            let addable = Set(addableLocales.flatMap(\.folders))
             let ignored = request.plan.unmatchedLocaleFolders.filter { !addable.contains($0) }
             if !ignored.isEmpty {
                 Label("Skipped folders: \(ignored.joined(separator: ", "))", systemImage: "questionmark.folder")

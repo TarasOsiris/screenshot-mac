@@ -22,15 +22,18 @@ nonisolated struct CodableColor: Codable, Equatable {
     // Encode as hex string: "#RRGGBB" (opaque) or "#RRGGBBAA"
     func encode(to encoder: Encoder) throws {
         var container = encoder.singleValueContainer()
+        try container.encode(hexKey)
+    }
+
+    /// The 8-bit form the file stores — and so the precision at which two colors are the same.
+    var hexKey: String {
         let r = Int(round(red * 255))
         let g = Int(round(green * 255))
         let b = Int(round(blue * 255))
         let a = Int(round(opacity * 255))
-        if a == 255 {
-            try container.encode(String(format: "#%02X%02X%02X", r, g, b))
-        } else {
-            try container.encode(String(format: "#%02X%02X%02X%02X", r, g, b, a))
-        }
+        return a == 255
+            ? String(format: "#%02X%02X%02X", r, g, b)
+            : String(format: "#%02X%02X%02X%02X", r, g, b, a)
     }
 
     /// Parses "#RRGGBB" / "#RRGGBBAA" (the encode format above); the "#" is optional.

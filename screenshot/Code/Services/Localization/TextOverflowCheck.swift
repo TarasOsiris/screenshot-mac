@@ -2,49 +2,23 @@ import Foundation
 
 /// Where a text shape's string loses lines once it is resolved for a locale — the case a long
 /// translation creates and the canvas otherwise shows only by quietly dropping the last line.
+/// Measures with fonts as found; wrap calls in the document's `withResolvedFonts` when the
+/// project may not be the one open in the editor.
 enum TextOverflowCheck {
-    /// Measures with fonts as `overflows` finds them; wrap calls in the document's
-    /// `withResolvedFonts` when the project may not be the one open in the editor.
-    static func overflows(
-        _ shape: CanvasShapeModel,
-        localeCode: String,
-        localeState: LocaleState,
-        availableFontFamilies: Set<String>
-    ) -> Bool {
-        guard shape.type == .text else { return false }
-        let resolved = LocaleService.resolveShape(shape, localeCode: localeCode, localeState: localeState)
-        guard !(resolved.text ?? "").isEmpty else { return false }
-        return TextFitMeasurer.overflows(
-            TextFitInput(shape: resolved, availableFontFamilies: availableFontFamilies),
-            shrinksToFit: resolved.shrinkToFit == true
-        )
-    }
-
+    /// Project locale codes, in project order, whose text overflows this shape's box.
     static func overflowingLocaleCodes(
         of shape: CanvasShapeModel,
         localeState: LocaleState,
         availableFontFamilies: Set<String>
     ) -> [String] {
         guard shape.type == .text else { return [] }
-        return localeState.locales.map(\.code).filter {
-            overflows(shape, localeCode: $0, localeState: localeState, availableFontFamilies: availableFontFamilies)
-        }
-    }
-
-    /// Checks every shape that shares the key, since one string can sit in boxes of different sizes.
-    static func overflows(
-        translationKey: String,
-        localeCode: String,
-        rows: [ScreenshotRow],
-        localeState: LocaleState,
-        availableFontFamilies: Set<String>
-    ) -> Bool {
-        rows.contains { row in
-            row.shapes.contains { shape in
-                shape.type == .text && shape.textTranslationKey == translationKey
-                    && overflows(shape, localeCode: localeCode, localeState: localeState,
-                                 availableFontFamilies: availableFontFamilies)
-            }
+        return localeState.locales.map(\.code).filter { code in
+            let resolved = LocaleService.resolveShape(shape, localeCode: code, localeState: localeState)
+            guard !(resolved.text ?? "").isEmpty else { return false }
+            return TextFitMeasurer.overflows(
+                TextFitInput(shape: resolved, availableFontFamilies: availableFontFamilies),
+                shrinksToFit: resolved.shrinkToFit == true
+            )
         }
     }
 
@@ -53,11 +27,28 @@ enum TextOverflowCheck {
         localeState: LocaleState,
         availableFontFamilies: Set<String>
     ) -> [String] {
-        localeState.locales.map(\.code).filter { code in
-            row.shapes.contains {
-                overflows($0, localeCode: code, localeState: localeState, availableFontFamilies: availableFontFamilies)
+        let overflowing = Set(row.shapes.flatMap {
+            overflowingLocaleCodes(of: $0, localeState: localeState, availableFontFamilies: availableFontFamilies)
+        })
+        return localeState.locales.map(\.code).filter(overflowing.contains)
+    }
+
+    /// Every (translation key, locale) whose text overflows in any box that shows it — one string
+    /// can sit in boxes of different sizes. One pass for a whole translation table.
+    static func overflowingTranslations(
+        rows: [ScreenshotRow],
+        localeState: LocaleState,
+        availableFontFamilies: Set<String>
+    ) -> Set<TranslationCell> {
+        var cells = Set<TranslationCell>()
+        for row in rows {
+            for shape in row.shapes where shape.type == .text {
+                for code in overflowingLocaleCodes(of: shape, localeState: localeState, availableFontFamilies: availableFontFamilies) {
+                    cells.insert(TranslationCell(translationKey: shape.textTranslationKey, localeCode: code))
+                }
             }
         }
+        return cells
     }
 
     /// Warnings, never errors: a clipped line is a design problem, not a reason the store would
@@ -75,25 +66,32 @@ enum TextOverflowCheck {
             )
         }
     }
+}
 
-    /// The upload flows read their issue list from computed properties that re-run on every body
-    /// evaluation; a project with hundreds of text × locale pairs outruns the measurer's cache, so
-    /// the last answer is kept for as long as the document is unchanged.
-    static func uploadIssues(rows: [ScreenshotRow], source: some RowRenderSource) -> [UploadIssue] {
-        let input = MemoInput(rows: rows, localeState: source.localeState, families: source.availableFontFamilySet)
-        if let memo, memo.input == input { return memo.issues }
-        let issues = source.withResolvedFonts {
-            uploadIssues(rows: rows, localeState: input.localeState, availableFontFamilies: input.families)
-        }
-        memo = (input, issues)
-        return issues
-    }
+struct TranslationCell: Hashable {
+    let translationKey: String
+    let localeCode: String
+}
 
-    private struct MemoInput: Equatable {
+/// The upload flows read their issues from computed properties that re-run on every body
+/// evaluation; each flow keeps its last answer for as long as the document is unchanged.
+@MainActor
+final class TextOverflowIssueCache {
+    private struct Input: Equatable {
         let rows: [ScreenshotRow]
         let localeState: LocaleState
         let families: Set<String>
     }
 
-    private static var memo: (input: MemoInput, issues: [UploadIssue])?
+    private var last: (input: Input, issues: [UploadIssue])?
+
+    func issues(rows: [ScreenshotRow], source: some RowRenderSource) -> [UploadIssue] {
+        let input = Input(rows: rows, localeState: source.localeState, families: source.availableFontFamilySet)
+        if let last, last.input == input { return last.issues }
+        let issues = source.withResolvedFonts {
+            TextOverflowCheck.uploadIssues(rows: rows, localeState: input.localeState, availableFontFamilies: input.families)
+        }
+        last = (input, issues)
+        return issues
+    }
 }

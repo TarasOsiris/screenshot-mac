@@ -33,7 +33,7 @@ struct PaletteColorPicker: View {
                 }
                 .buttonStyle(.borderless)
                 .help("Project Colors")
-                .popover(isPresented: $isPalettePresented, arrowEdge: .bottom) {
+                .barPopover(isPresented: $isPalettePresented, title: "Project Colors") {
                     PaletteSwatchesView(state: state, selection: $selection)
                 }
             }
@@ -44,6 +44,9 @@ struct PaletteColorPicker: View {
 private struct PaletteSwatchesView: View {
     let state: AppState
     @Binding var selection: Color
+    /// Taken when the popover opens: the walk covers every shape, and edits made from inside the
+    /// popover shouldn't re-run it.
+    @State private var documentColors: [CodableColor] = []
 
     private let columns = Array(repeating: GridItem(.fixed(UIMetrics.ColorSwatch.preview), spacing: 6), count: 6)
 
@@ -73,7 +76,6 @@ private struct PaletteSwatchesView: View {
                 swatchGrid(state.palette, removable: true)
             }
 
-            let documentColors = state.documentColors()
             if !documentColors.isEmpty {
                 Divider()
                 Text("Document Colors")
@@ -83,6 +85,7 @@ private struct PaletteSwatchesView: View {
         }
         .padding(12)
         .frame(width: 6 * UIMetrics.ColorSwatch.preview + 5 * 6 + 24)
+        .onAppear { documentColors = state.documentColors() }
     }
 
     private func swatchGrid(_ colors: [CodableColor], removable: Bool) -> some View {
@@ -109,6 +112,7 @@ private struct PaletteSwatchesView: View {
                     } else {
                         Button("Save to Project Colors", systemImage: "plus") {
                             state.addPaletteColor(color.color)
+                            documentColors.removeAll { AppState.sameColor($0, color) }
                         }
                     }
                 }

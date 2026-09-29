@@ -119,10 +119,6 @@ enum ExportFileNaming {
         sanitizedFileName(ASCLanguageMatcher.appStoreLanguageCode(forProjectCode: projectCode) ?? projectCode)
     }
 
-    static var preferredNamingScheme: ExportNamingScheme {
-        UserDefaults.standard.string(forKey: AppSettingsKeys.exportNamingScheme).flatMap(ExportNamingScheme.init) ?? .standard
-    }
-
     static func sanitizedRootFolderName(_ projectName: String) -> String {
         let trimmed = projectName.trimmingCharacters(in: .whitespacesAndNewlines)
         let candidate = trimmed.isEmpty ? "Screenshots" : trimmed
@@ -177,4 +173,11 @@ enum ExportNamingScheme: String, CaseIterable, Identifiable {
     case fastlane
 
     var id: String { rawValue }
+
+    var title: String {
+        switch self {
+        case .standard: String(localized: "Standard")
+        case .fastlane: "fastlane"
+        }
+    }
 }

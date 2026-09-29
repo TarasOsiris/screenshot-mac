@@ -159,13 +159,10 @@ extension CanvasShapeView {
     /// stored offset left over from a higher zoom would otherwise swallow the first part of a drag.
     var liveImageCrop: ImageCrop? {
         guard cropPanOffset != .zero else { return shape.imageCrop }
-        let local = shapeLocalTranslation(cropPanOffset)
+        let local = ResizeGeometry.localTranslation(cropPanOffset, rotation: shape.rotation)
         var crop = shape.imageCrop ?? ImageCrop()
-        if let image = screenshotImage, image.size.width > 0, image.size.height > 0 {
-            crop = crop.clamped(
-                imageAspect: image.size.width / image.size.height,
-                frameSize: CGSize(width: shape.width, height: shape.height)
-            )
+        if let image = screenshotImage {
+            crop = crop.clamped(imageSize: image.size, frameSize: CGSize(width: shape.width, height: shape.height))
         }
         crop.offsetX += local.width / max(displayScale * shape.width, 1)
         crop.offsetY += local.height / max(displayScale * shape.height, 1)
@@ -175,24 +172,12 @@ extension CanvasShapeView {
     private func commitCropPan() {
         let crop = liveImageCrop
         cropPanOffset = .zero
-        guard let crop, let image = screenshotImage, image.size.width > 0, image.size.height > 0 else { return }
+        guard let crop, let image = screenshotImage else { return }
         var updated = shape
-        let clamped = crop.clamped(
-            imageAspect: image.size.width / image.size.height,
-            frameSize: CGSize(width: shape.width, height: shape.height)
-        )
+        let clamped = crop.clamped(imageSize: image.size, frameSize: CGSize(width: shape.width, height: shape.height))
         updated.imageCrop = clamped.isIdentity ? nil : clamped
         guard updated.imageCrop != shape.imageCrop else { return }
         interactions.onUpdate(updated)
-    }
-
-    /// A pan on a rotated shape moves the picture along the shape's own axes.
-    private func shapeLocalTranslation(_ translation: CGSize) -> CGSize {
-        let radians = -shape.rotation * .pi / 180
-        return CGSize(
-            width: translation.width * cos(radians) - translation.height * sin(radians),
-            height: translation.width * sin(radians) + translation.height * cos(radians)
-        )
     }
 
     func handleDrop(_ providers: [NSItemProvider]) -> Bool {

@@ -161,17 +161,8 @@ extension EditorRowView {
     }
 
     func chooseLocaleFolder() {
-        #if os(macOS)
-        let panel = NSOpenPanel()
-        panel.title = String(localized: "Import Localized Screenshots")
-        panel.message = String(localized: "Choose a folder with one subfolder per language, such as en-US and de-DE.")
-        panel.canChooseFiles = false
-        panel.canChooseDirectories = true
-        panel.allowsMultipleSelection = false
-        panel.prompt = String(localized: "Choose")
-        guard panel.runModal() == .OK, let folder = panel.url else { return }
+        guard let folder = FilePicker.pickLocalizedScreenshotsFolder() else { return }
         beginLocaleFolderImport(folder)
-        #endif
     }
 
     func beginLocaleFolderImport(_ folder: URL) {
@@ -200,7 +191,7 @@ extension EditorRowView {
         // `sourceURL`, so reading every file here would only stall the main thread.
         let batches = plan.batches.map { batch in
             (localeCode: batch.localeCode, sources: batch.files.compactMap { url in
-                Self.lazyImage(at: url).map { ImageImportSource(image: $0, sourceURL: url) }
+                (NSImage(byReferencing: url) as NSImage?).map { ImageImportSource(image: $0, sourceURL: url) }
             })
         }
         let sourceCount = batches.reduce(0) { $0 + $1.sources.count }
@@ -215,13 +206,6 @@ extension EditorRowView {
         }
     }
 
-    private static func lazyImage(at url: URL) -> NSImage? {
-        #if os(macOS)
-        NSImage(byReferencing: url)
-        #else
-        NSImage(contentsOfFile: url.path)
-        #endif
-    }
 }
 
 /// Carries the drop's provider and continuations across NSItemProvider's background callback;

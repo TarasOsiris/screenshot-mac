@@ -33,6 +33,23 @@ enum FilePicker {
         #endif
     }
 
+    /// A folder of localized screenshots, one subfolder per language.
+    static func pickLocalizedScreenshotsFolder() -> URL? {
+        #if os(macOS)
+        let panel = NSOpenPanel()
+        panel.title = String(localized: "Import Localized Screenshots")
+        panel.message = String(localized: "Choose a folder with one subfolder per language, such as en-US and de-DE.")
+        panel.canChooseFiles = false
+        panel.canChooseDirectories = true
+        panel.allowsMultipleSelection = false
+        panel.prompt = String(localized: "Choose")
+        guard CrashReportingService.withAppHangTrackingPaused({ panel.runModal() }) == .OK else { return nil }
+        return panel.url
+        #else
+        return nil
+        #endif
+    }
+
     /// A single raster image, already read through the security-scoped URL.
     static func pickImage() async -> NSImage? {
         #if os(macOS)

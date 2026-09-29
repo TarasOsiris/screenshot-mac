@@ -507,15 +507,7 @@ extension AppState {
             sources, intoRowAt: idx, rowId: rowId,
             localeCode: resolveImportLocale(targetLocale), maxTemplatesPerRow: maxTemplatesPerRow
         )
-        guard batch.imported > 0 else { return 0 }
-        captureImport(count: batch.imported, source: source, device: rows[idx].defaultDeviceCategory)
-
-        let staged = batch.staged
-        let replacedFiles = batch.replaced
-        await flushStagedImageWrites(staged, activeId: activeId)
-        // One document walk for the whole batch instead of one per replaced image.
-        cleanupUnreferencedImages(replacedFiles)
-        return batch.imported
+        return await finishImport(batch, source: source, rowIndex: idx, activeId: activeId)
     }
 
     /// Imports one batch per locale into a row as a single undo step. Base-locale batches should
@@ -528,29 +520,30 @@ extension AppState {
         maxTemplatesPerRow: Int? = nil
     ) async -> Int {
         guard let idx = rowIndex(for: rowId), let activeId = activeProjectId else { return 0 }
-        var staged: [StagedImageWrite] = []
-        var replaced: [String?] = []
-        var imported = 0
+        var combined = StagedImport()
         withUndo("Import Localized Screenshots") {
             for locale in addingLocales where !localeState.hasLocale(locale.code) {
                 LocaleService.addLocale(&localeState, locale: locale)
             }
             for batch in batches {
-                let result = stageBatchImport(
+                combined += stageBatchImport(
                     batch.sources, intoRowAt: idx, rowId: rowId,
                     localeCode: resolveImportLocale(.locale(batch.localeCode)),
                     maxTemplatesPerRow: maxTemplatesPerRow
                 )
-                staged += result.staged
-                replaced += result.replaced
-                imported += result.imported
             }
         }
-        guard imported > 0 else { return 0 }
-        captureImport(count: imported, source: .folder, device: rows[idx].defaultDeviceCategory)
-        await flushStagedImageWrites(staged, activeId: activeId)
-        cleanupUnreferencedImages(replaced)
-        return imported
+        return await finishImport(combined, source: .folder, rowIndex: idx, activeId: activeId)
+    }
+
+    /// Reports, writes and cleans up after the document mutation has landed.
+    private func finishImport(_ batch: StagedImport, source: ImageImportOrigin, rowIndex idx: Int, activeId: UUID) async -> Int {
+        guard batch.imported > 0 else { return 0 }
+        captureImport(count: batch.imported, source: source, device: rows[idx].defaultDeviceCategory)
+        await flushStagedImageWrites(batch.staged, activeId: activeId)
+        // One document walk for the whole batch instead of one per replaced image.
+        cleanupUnreferencedImages(batch.replaced)
+        return batch.imported
     }
 
     /// The synchronous half of an import: the document mutation, in its own undo step unless an
@@ -561,7 +554,7 @@ extension AppState {
         rowId: UUID,
         localeCode: String?,
         maxTemplatesPerRow: Int?
-    ) -> (staged: [StagedImageWrite], replaced: [String?], imported: Int) {
+    ) -> StagedImport {
         let templatesWithDevices = templatesContainingDevices(inRowAt: idx)
         // Templates an image can fill without creating a new one.
         let reusableCount = templatesWithDevices.isEmpty ? rows[idx].templates.count : templatesWithDevices.count
@@ -572,7 +565,7 @@ extension AppState {
                 sources = Array(sources.prefix(maxImages))
             }
         }
-        guard !sources.isEmpty else { return ([], [], 0) }
+        guard !sources.isEmpty else { return StagedImport() }
 
         var staged: [StagedImageWrite] = []
         var replacedFiles: [String?] = []
@@ -600,7 +593,7 @@ extension AppState {
                 replacedFiles.append(replaced)
             }
         }
-        return (staged, replacedFiles, sources.count)
+        return StagedImport(staged: staged, replaced: replacedFiles, imported: sources.count)
     }
 
     /// Writes every staged resource, publishing each editor thumbnail as it lands so the row fills
@@ -703,4 +696,17 @@ extension AppState {
         return best?.index
     }
 
+}
+
+/// The document half of an import, waiting for its files to be written.
+fileprivate struct StagedImport {
+    var staged: [StagedImageWrite] = []
+    var replaced: [String?] = []
+    var imported = 0
+
+    static func += (lhs: inout StagedImport, rhs: StagedImport) {
+        lhs.staged += rhs.staged
+        lhs.replaced += rhs.replaced
+        lhs.imported += rhs.imported
+    }
 }

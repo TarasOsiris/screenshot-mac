@@ -33,6 +33,12 @@ nonisolated struct ImageCrop: Codable, Equatable {
         )
     }
 
+    /// `clamped(imageAspect:frameSize:)` for a picture of `imageSize`; a degenerate size clamps
+    /// the scale alone.
+    func clamped(imageSize: CGSize, frameSize: CGSize) -> ImageCrop {
+        clamped(imageAspect: imageSize.height > 0 ? imageSize.width / imageSize.height : 0, frameSize: frameSize)
+    }
+
     static func aspectFillSize(imageAspect: CGFloat, frameSize: CGSize) -> CGSize {
         let frameAspect = frameSize.width / frameSize.height
         return imageAspect > frameAspect

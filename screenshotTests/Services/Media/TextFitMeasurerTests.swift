@@ -78,8 +78,7 @@ struct TextFitMeasurerTests {
         let shape = CanvasShapeModel(type: .text, width: 400, height: 70, text: "Edit fast", fontSize: 40, fontWeight: 700)
         let state = localizedState(for: shape, german: "Bearbeite deine Bildschirmfotos blitzschnell und mühelos")
         let families = PlatformFonts.familyNameSet
-        #expect(!TextOverflowCheck.overflows(shape, localeCode: "en", localeState: state, availableFontFamilies: families))
-        #expect(TextOverflowCheck.overflows(shape, localeCode: "de", localeState: state, availableFontFamilies: families))
+        #expect(TextOverflowCheck.overflowingLocaleCodes(of: shape, localeState: state, availableFontFamilies: families) == ["de"])
 
         var row = ScreenshotRow(templates: [ScreenshotTemplate()], templateWidth: 400, templateHeight: 800)
         row.shapes = [shape]
@@ -87,13 +86,15 @@ struct TextFitMeasurerTests {
         let issues = TextOverflowCheck.uploadIssues(rows: [row], localeState: state, availableFontFamilies: families)
         #expect(issues.count == 1)
         #expect(issues.first?.severity == .warning)
+        #expect(TextOverflowCheck.overflowingTranslations(rows: [row], localeState: state, availableFontFamilies: families)
+            == [TranslationCell(translationKey: shape.textTranslationKey, localeCode: "de")])
     }
 
     @Test func shrinkToFitClearsTheOverflow() {
         var shape = CanvasShapeModel(type: .text, width: 400, height: 70, text: "Edit fast", fontSize: 40, fontWeight: 700)
         shape.shrinkToFit = true
         let state = localizedState(for: shape, german: "Bearbeite Bildschirmfotos blitzschnell")
-        #expect(!TextOverflowCheck.overflows(shape, localeCode: "de", localeState: state, availableFontFamilies: PlatformFonts.familyNameSet))
+        #expect(TextOverflowCheck.overflowingLocaleCodes(of: shape, localeState: state, availableFontFamilies: PlatformFonts.familyNameSet).isEmpty)
     }
 
     @Test func shrinkToFitRoundTripsAndDefaultsOff() throws {

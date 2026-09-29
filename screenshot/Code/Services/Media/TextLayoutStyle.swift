@@ -49,6 +49,47 @@ struct TextStroke: Equatable {
 
     /// Whole points of margin the raster needs so the band isn't clipped at the box edge.
     var rasterPadding: CGFloat { ceil(max(0, width)) }
+
+    static func paddedSize(_ size: CGSize, for stroke: TextStroke?) -> CGSize {
+        let pad = stroke?.rasterPadding ?? 0
+        return CGSize(width: size.width + 2 * pad, height: size.height + 2 * pad)
+    }
+}
+
+/// The TextKit stack every text raster and fit measurement lays out with, so a fit check makes
+/// exactly the line breaks the raster it predicts will make.
+final class TextLayoutStack {
+    let storage = NSTextStorage()
+    let layoutManager = NSLayoutManager()
+    let container: NSTextContainer
+    /// Held here: `NSLayoutManager.delegate` is weak.
+    private let compactDelegate = CompactLineLayoutDelegate()
+
+    var lineHeightMultiple: CGFloat {
+        get { compactDelegate.lineHeightMultiple }
+        set { compactDelegate.lineHeightMultiple = newValue }
+    }
+
+    init(containerSize: CGSize = .zero, lineHeightMultiple: CGFloat? = nil) {
+        container = NSTextContainer(size: containerSize)
+        container.lineFragmentPadding = 0
+        container.lineBreakMode = .byWordWrapping
+        compactDelegate.lineHeightMultiple = lineHeightMultiple ?? 1.0
+        layoutManager.delegate = compactDelegate
+        layoutManager.addTextContainer(container)
+        storage.addLayoutManager(layoutManager)
+    }
+
+    /// Highlights, then the outline, then the glyph fill on top.
+    func draw(range: NSRange, at origin: CGPoint, stroke: TextStroke?) {
+        layoutManager.drawBackground(forGlyphRange: range, at: origin)
+        if let stroke {
+            TextLayoutStyle.applyStroke(to: storage, color: stroke.color, width: stroke.width)
+            layoutManager.drawGlyphs(forGlyphRange: range, at: origin)
+            TextLayoutStyle.removeStroke(from: storage)
+        }
+        layoutManager.drawGlyphs(forGlyphRange: range, at: origin)
+    }
 }
 
 /// Replaces the glyph fill for the gradient layers.
@@ -231,6 +272,37 @@ enum TextLayoutStyle {
             attributes[.kern] = letterSpacing
         }
         return attributes
+    }
+
+    static func scaledFont(_ font: NSFont, by factor: CGFloat) -> NSFont {
+        factor == 1 ? font : font.withSize(font.pointSize * factor)
+    }
+
+    // MARK: - Cache-key tokens
+
+    /// Lossless scalar tokens prevent fractional model-space dimensions and subtly different
+    /// styling values from aliasing to one cache entry. `String(format:)` rounding is unsafe here:
+    /// even two bounds that round to the same point can require different backing-pixel sizes.
+    static func scalarToken(_ value: CGFloat) -> String {
+        String(Double(value).bitPattern, radix: 16)
+    }
+
+    /// Weight is not recoverable from `fontName` alone for a variable font resolved to an instance,
+    /// so it goes in the key explicitly — two weights of one family must not collide.
+    static func fontWeightToken(_ font: NSFont) -> String {
+        #if os(macOS)
+        let traits = font.fontDescriptor.object(forKey: .traits) as? [NSFontDescriptor.TraitKey: Any]
+        #else
+        let traits = font.fontDescriptor.object(forKey: .traits) as? [UIFontDescriptor.TraitKey: Any]
+        #endif
+        return (traits?[.weight] as? CGFloat).map(scalarToken) ?? "-"
+    }
+
+    static func colorToken(_ color: NSColor) -> String {
+        let cgColor = color.cgColor
+        let colorSpace = String(describing: cgColor.colorSpace?.name)
+        let components = (cgColor.components ?? []).map(scalarToken).joined(separator: ",")
+        return "\(colorSpace),\(cgColor.numberOfComponents),\(components)"
     }
 
     // MARK: - Glyph outline

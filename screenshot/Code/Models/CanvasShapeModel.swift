@@ -523,10 +523,9 @@ struct CanvasShapeModel: Identifiable, Codable, Equatable {
         type == .rectangle || type == .image || (type == .device && deviceCategory == .invisible)
     }
 
-    /// `ShapeType.supportsOutline` plus the invisible device, whose frame is drawn as an outline,
-    /// and text, whose glyphs are outlined.
+    /// `ShapeType.supportsOutline` plus the invisible device, whose frame is drawn as an outline.
     var supportsOutlineEditing: Bool {
-        type.supportsOutline || type == .text || (type == .device && deviceCategory == .invisible)
+        type.supportsOutline || (type == .device && deviceCategory == .invisible)
     }
 
     /// Zoom over the aspect-fill fit; pan offsets are left for the renderer to re-clamp.
@@ -539,8 +538,6 @@ struct CanvasShapeModel: Identifiable, Codable, Equatable {
         }
     }
 
-    /// Text takes a color or gradient fill on its glyphs, but not an image.
-    var supportsFillEditing: Bool { type.supportsFill || type == .text }
 
     var resolvedDevicePitch: Double {
         guard supportsDeviceModelRotation else { return 0 }

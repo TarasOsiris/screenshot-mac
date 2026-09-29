@@ -2,10 +2,7 @@
 import AppKit
 
 final class TextLayoutNSView: NSView {
-    private let textStorage = NSTextStorage()
-    private let layoutManager = NSLayoutManager()
-    private let textContainer = NSTextContainer(size: .zero)
-    private let compactDelegate = CompactLineLayoutDelegate()
+    private let stack = TextLayoutStack()
     private var verticalAlignment: TextVerticalAlign = .center
     private var verticalGlyphPadding: CGFloat = 0
 
@@ -39,11 +36,6 @@ final class TextLayoutNSView: NSView {
         wantsLayer = true
         layer?.backgroundColor = NSColor.clear.cgColor
         layer?.isOpaque = false
-        textContainer.lineFragmentPadding = 0
-        textContainer.lineBreakMode = .byWordWrapping
-        layoutManager.addTextContainer(textContainer)
-        layoutManager.delegate = compactDelegate
-        textStorage.addLayoutManager(layoutManager)
     }
 
     func configure(
@@ -94,14 +86,14 @@ final class TextLayoutNSView: NSView {
         lastGlyphFill = glyphFill
 
         self.verticalAlignment = verticalAlignment
-        compactDelegate.lineHeightMultiple = lineHeightMultiple ?? 1.0
+        stack.lineHeightMultiple = lineHeightMultiple ?? 1.0
         self.verticalGlyphPadding = TextLayoutStyle.verticalGlyphPadding(
             lineHeightMultiple: lineHeightMultiple,
             legacyLineSpacing: legacyLineSpacing,
-            font: fontScale == 1 ? font : font.withSize(font.pointSize * fontScale)
+            font: TextLayoutStyle.scaledFont(font, by: fontScale)
         )
 
-        textStorage.setAttributedString(TextLayoutStyle.overridingForeground(RichTextUtils.buildAttributedString(
+        stack.storage.setAttributedString(TextLayoutStyle.overridingForeground(RichTextUtils.buildAttributedString(
             richText: richTextData,
             plainText: text,
             font: font,
@@ -121,16 +113,16 @@ final class TextLayoutNSView: NSView {
 
     override func layout() {
         super.layout()
-        textContainer.size = bounds.insetBy(dx: contentInset, dy: contentInset).size
+        stack.container.size = bounds.insetBy(dx: contentInset, dy: contentInset).size
         needsDisplay = true
     }
 
     override func draw(_ dirtyRect: NSRect) {
         super.draw(dirtyRect)
 
-        layoutManager.ensureLayout(for: textContainer)
-        let glyphRange = layoutManager.glyphRange(for: textContainer)
-        let usedRect = layoutManager.usedRect(for: textContainer)
+        stack.layoutManager.ensureLayout(for: stack.container)
+        let glyphRange = stack.layoutManager.glyphRange(for: stack.container)
+        let usedRect = stack.layoutManager.usedRect(for: stack.container)
         let yOffset = TextLayoutStyle.verticalOffset(
             containerHeight: bounds.height - 2 * contentInset,
             contentHeight: usedRect.height,
@@ -138,14 +130,7 @@ final class TextLayoutNSView: NSView {
             alignment: verticalAlignment
         )
 
-        let origin = NSPoint(x: contentInset, y: contentInset + yOffset)
-        layoutManager.drawBackground(forGlyphRange: glyphRange, at: origin)
-        if let stroke {
-            TextLayoutStyle.applyStroke(to: textStorage, color: stroke.color, width: stroke.width)
-            layoutManager.drawGlyphs(forGlyphRange: glyphRange, at: origin)
-            TextLayoutStyle.removeStroke(from: textStorage)
-        }
-        layoutManager.drawGlyphs(forGlyphRange: glyphRange, at: origin)
+        stack.draw(range: glyphRange, at: NSPoint(x: contentInset, y: contentInset + yOffset), stroke: stroke)
     }
 }
 #endif

@@ -32,6 +32,8 @@ struct CanvasShapeRenderContent: View {
     var screenshotImageIdentity: String?
     var imageCrop: ImageCrop?
     var isCropping = false
+    /// A resize drag is in progress: every tick is a new box, so nothing it measures is worth caching.
+    var isResizing = false
     var resourceState: CanvasResourceState = .satisfied
     var fillImage: NSImage?
     var defaultDeviceBodyColor: Color
@@ -109,18 +111,14 @@ struct CanvasShapeRenderContent: View {
         let verticalAlign = shape.textVerticalAlign ?? .center
         let uppercase = shape.uppercase ?? false
         let richText = showPlaceholder ? nil : shape.richText
-        let fitInput = TextFitInput(
-            size: CGSize(width: effectiveW, height: effectiveH), text: displayText, font: nsFont,
-            alignment: align, uppercase: uppercase, letterSpacing: shape.letterSpacing,
-            lineHeightMultiple: shape.lineHeightMultiple, legacyLineSpacing: shape.lineSpacing,
-            richTextData: richText
-        )
+        var textInput = fitInput(font: nsFont)
+        textInput.text = displayText
+        textInput.richTextData = richText
         let shrinksToFit = shape.shrinkToFit == true && !showPlaceholder
-        // A resize drag moves the effective box away from the stored one on every tick.
-        let isLive = isLiveShapeEdit || effectiveW != shape.width || effectiveH != shape.height
-        let fontScale = shrinksToFit ? TextFitMeasurer.fitScale(fitInput, cachesResult: !isLive) : 1
+        let isLive = isLiveShapeEdit || isResizing
+        let fontScale = shrinksToFit ? TextFitMeasurer.fitScale(textInput, cachesResult: !isLive) : 1
         let showsOverflow = showsEditorHelpers && !showPlaceholder && !isLive
-            && TextFitMeasurer.overflows(fitInput, shrinksToFit: shrinksToFit)
+            && TextFitMeasurer.overflows(textInput, shrinksToFit: shrinksToFit)
 
         let stroke = showPlaceholder ? nil : textStroke
         func raster(glyphFill: TextGlyphFill?, stroke: TextStroke?) -> RasterizedDisplayTextView {
@@ -140,7 +138,7 @@ struct CanvasShapeRenderContent: View {
                 stroke: stroke,
                 glyphFill: glyphFill,
                 renderScale: textRenderScale,
-                cachesRaster: !isLiveShapeEdit
+                cachesRaster: !isLive
             )
         }
 
@@ -151,8 +149,10 @@ struct CanvasShapeRenderContent: View {
         return ZStack(alignment: .topLeading) {
             if shape.resolvedFillStyle == .gradient && !showPlaceholder {
                 // Highlights and the outline, with no glyph fill, so the gradient shows through the
-                // glyphs only.
-                raster(glyphFill: .clear, stroke: stroke)
+                // glyphs only. Plain text has neither, and would rasterize an empty layer.
+                if stroke != nil || shape.hasRichText {
+                    raster(glyphFill: .clear, stroke: stroke)
+                }
                 shape.fillView(image: nil, modelSize: CGSize(width: effectiveW, height: effectiveH))
                     .frame(width: effectiveW, height: effectiveH)
                     .mask { raster(glyphFill: .mask, stroke: nil) }
@@ -278,11 +278,7 @@ struct CanvasShapeRenderContent: View {
     }
 
     private func clampedCrop(for image: NSImage) -> ImageCrop {
-        guard let imageCrop, image.size.height > 0 else { return ImageCrop() }
-        return imageCrop.clamped(
-            imageAspect: image.size.width / image.size.height,
-            frameSize: CGSize(width: displayW, height: displayH)
-        )
+        (imageCrop ?? ImageCrop()).clamped(imageSize: image.size, frameSize: CGSize(width: displayW, height: displayH))
     }
 
     /// Border drawn inside the image's rounded-rect bounds — same "band from the edge inward"
@@ -410,12 +406,15 @@ struct CanvasShapeRenderContent: View {
     /// make the text jump under the caret.
     private func editorFontScale(font: NSFont) -> CGFloat {
         guard shape.shrinkToFit == true else { return 1 }
-        return TextFitMeasurer.fitScale(TextFitInput(
-            size: CGSize(width: effectiveW, height: effectiveH), text: shape.text ?? "", font: font,
-            alignment: shape.textAlign.nsTextAlignment, uppercase: shape.uppercase ?? false,
-            letterSpacing: shape.letterSpacing, lineHeightMultiple: shape.lineHeightMultiple,
-            legacyLineSpacing: shape.lineSpacing, richTextData: shape.richText
-        ))
+        return TextFitMeasurer.fitScale(fitInput(font: font))
+    }
+
+    /// The shape's text laid out in the box it currently occupies, which a resize drag moves away
+    /// from the stored size.
+    private func fitInput(font: NSFont) -> TextFitInput {
+        var input = TextFitInput(shape: shape, font: font)
+        input.size = CGSize(width: effectiveW, height: effectiveH)
+        return input
     }
 
     /// Makes `base` an image drop target and puts the "add image" button and drop highlight over it.

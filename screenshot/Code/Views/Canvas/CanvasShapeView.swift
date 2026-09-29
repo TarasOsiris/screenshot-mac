@@ -330,6 +330,7 @@ struct CanvasShapeView: View {
             screenshotImageIdentity: screenshotImageIdentity,
             imageCrop: liveImageCrop,
             isCropping: isCropping && showsEditorHelpers,
+            isResizing: resizeState != nil,
             resourceState: resourceState,
             fillImage: fillImage,
             defaultDeviceBodyColor: defaultDeviceBodyColor,

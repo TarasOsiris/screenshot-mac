@@ -346,16 +346,18 @@ struct CanvasShapeModelTests {
     }
 
     @Test func fillAndOutlineSupport() {
-        // Vector shapes support both; images support outline (a border) but not fill;
-        // everything else supports neither.
+        // Vector shapes support both, with image fills; text fills and outlines its glyphs but
+        // takes no image fill; images support outline (a border) but not fill; the rest neither.
         for type in ShapeType.allCases {
             switch type {
             case .rectangle, .circle, .star:
-                #expect(type.supportsFill && type.supportsOutline)
+                #expect(type.supportsFill && type.supportsOutline && type.supportsFillImage)
+            case .text:
+                #expect(type.supportsFill && type.supportsOutline && !type.supportsFillImage)
             case .image:
-                #expect(!type.supportsFill && type.supportsOutline)
-            case .text, .device, .svg:
-                #expect(!type.supportsFill && !type.supportsOutline)
+                #expect(!type.supportsFill && type.supportsOutline && !type.supportsFillImage)
+            case .device, .svg:
+                #expect(!type.supportsFill && !type.supportsOutline && !type.supportsFillImage)
             }
         }
     }
@@ -427,12 +429,12 @@ struct CanvasShapeModelTests {
         #expect(ShapeType.shapeMenuTypes == [.rectangle, .circle, .star])
     }
 
-    @Test func outlineSupportedOnlyForBasicShapes() {
+    @Test func outlineSupportedForBasicShapesAndText() {
         #expect(ShapeType.rectangle.supportsOutline == true)
         #expect(ShapeType.circle.supportsOutline == true)
         #expect(ShapeType.star.supportsOutline == true)
         #expect(ShapeType.image.supportsOutline == true)
-        #expect(ShapeType.text.supportsOutline == false)
+        #expect(ShapeType.text.supportsOutline == true)
         #expect(ShapeType.device.supportsOutline == false)
         #expect(ShapeType.svg.supportsOutline == false)
     }

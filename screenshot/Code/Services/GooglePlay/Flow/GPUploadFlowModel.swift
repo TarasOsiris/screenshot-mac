@@ -48,6 +48,7 @@ final class GPUploadFlowModel {
     /// Where the recents list lives. Injected so a test run never writes into the real one.
     @ObservationIgnored private let defaults: UserDefaults
     @ObservationIgnored private(set) weak var document: (any GPUploadDocument)?
+    @ObservationIgnored let textOverflowIssues = TextOverflowIssueCache()
     @ObservationIgnored var uploadTask: Task<Void, Never>?
 
     /// Keeps the iPad `NavigationStack` path in step with `step`. Same shape as
@@ -87,7 +88,7 @@ final class GPUploadFlowModel {
             isDemoMode: credentials.isDemoMode
         )
         guard let document else { return issues }
-        return issues + TextOverflowCheck.uploadIssues(rows: listingRows, source: document)
+        return issues + textOverflowIssues.issues(rows: listingRows, source: document)
     }
 
     func prefillPackageName() {

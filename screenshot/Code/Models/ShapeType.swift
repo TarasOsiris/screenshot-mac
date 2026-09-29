@@ -49,17 +49,22 @@ nonisolated enum ShapeType: String, Codable, CaseIterable {
     /// Shape types grouped under the "Shapes" menu in the toolbar.
     static let shapeMenuTypes: [ShapeType] = [.rectangle, .circle, .star]
 
+    /// Text's outline strokes the glyphs rather than a box edge.
     var supportsOutline: Bool {
         switch self {
-        case .rectangle, .circle, .star, .image: true
-        case .text, .device, .svg: false
+        case .rectangle, .circle, .star, .image, .text: true
+        case .device, .svg: false
         }
     }
 
+    /// Text's fill paints the glyphs, with a color or a gradient.
     var supportsFill: Bool {
         switch self {
-        case .rectangle, .circle, .star: true
-        case .text, .image, .device, .svg: false
+        case .rectangle, .circle, .star, .text: true
+        case .image, .device, .svg: false
         }
     }
+
+    /// Whether the fill may be an image; text glyphs can't take one.
+    var supportsFillImage: Bool { supportsFill && self != .text }
 }

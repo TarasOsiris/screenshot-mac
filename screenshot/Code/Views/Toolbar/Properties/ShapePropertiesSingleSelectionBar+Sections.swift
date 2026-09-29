@@ -38,7 +38,7 @@ extension ShapePropertiesSingleSelectionBar {
 
     @ViewBuilder
     func fillSection(shape: CanvasShapeModel, shapeId: UUID) -> some View {
-        if shape.supportsFillEditing {
+        if shape.type.supportsFill {
             ShapePropertiesSection {
                 ShapeFillSwatchButton(
                     shape: shape,
@@ -54,7 +54,7 @@ extension ShapePropertiesSingleSelectionBar {
                     onPickImage: { isReplacingFillImage = true },
                     onRemoveImage: { state.removeShapeFillImage(for: shapeId) },
                     onDropImage: { image in state.saveShapeFillImage(image, for: shapeId) },
-                    allowsImage: shape.type.supportsFill
+                    allowsImage: shape.type.supportsFillImage
                 )
                 .help(shape.type == .text ? "Text color or gradient" : "Fill")
             }

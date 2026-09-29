@@ -1,5 +1,5 @@
 import Foundation
-import ImageIO
+import UniformTypeIdentifiers
 
 /// Which screenshots in a folder go to which project locale.
 struct LocaleFolderImportPlan: Equatable {
@@ -22,14 +22,12 @@ struct LocaleFolderImportPlan: Equatable {
 /// Reads a folder laid out per locale — `en-US/01.png` (fastlane `deliver`),
 /// `en-US/images/phoneScreenshots/1.png` (fastlane `supply`), or flat `01_de.png` names.
 enum LocaleFolderImportPlanner {
-    static let imageExtensions: Set<String> = ["png", "jpg", "jpeg", "heic", "webp", "tif", "tiff"]
-
     static func plan(
         folder: URL,
         projectLocaleCodes: [String],
         rowSize: CGSize,
         fileManager: FileManager = .default,
-        pixelSize: (URL) -> CGSize? = { LocaleFolderImportPlanner.pixelSize(of: $0) }
+        pixelSize: (URL) -> CGSize? = ImageDownsampler.pixelSize(at:)
     ) -> LocaleFolderImportPlan {
         var filesByLocale: [String: [URL]] = [:]
         var unmatched: [String] = []
@@ -81,7 +79,7 @@ enum LocaleFolderImportPlanner {
     /// An exact name first, then the App Store's own code for the language (`en` → `en-US`), then
     /// the first in Finder order.
     private static func preferredFolder(_ folders: [URL], for projectCode: String) -> URL {
-        let names = folders.map { $0.lastPathComponent.replacingOccurrences(of: "_", with: "-").lowercased() }
+        let names = folders.map { LocaleCodeMatcher.normalized($0.lastPathComponent) }
         if let exact = names.firstIndex(of: projectCode.lowercased()) { return folders[exact] }
         if let storeCode = ASCLanguageMatcher.appStoreLanguageCode(forProjectCode: projectCode)?.lowercased(),
            let store = names.firstIndex(of: storeCode) {
@@ -123,7 +121,7 @@ enum LocaleFolderImportPlanner {
     }
 
     private static func isImage(_ url: URL) -> Bool {
-        imageExtensions.contains(url.pathExtension.lowercased())
+        UTType(filenameExtension: url.pathExtension)?.conforms(to: .image) == true
     }
 
     private static func isDirectory(_ url: URL) -> Bool {
@@ -135,15 +133,4 @@ enum LocaleFolderImportPlanner {
         abs(size.width - rowSize.width) <= 1 && abs(size.height - rowSize.height) <= 1
     }
 
-    /// Reads the header only — decoding every screenshot in a fastlane folder just to learn its
-    /// size would cost seconds.
-    static func pixelSize(of url: URL) -> CGSize? {
-        guard let source = CGImageSourceCreateWithURL(url as CFURL, nil),
-              let properties = CGImageSourceCopyPropertiesAtIndex(source, 0, nil) as? [CFString: Any],
-              let width = properties[kCGImagePropertyPixelWidth] as? Int,
-              let height = properties[kCGImagePropertyPixelHeight] as? Int else { return nil }
-        let orientation = properties[kCGImagePropertyOrientation] as? Int ?? 1
-        // EXIF orientations 5–8 are rotated a quarter turn; the imported image is upright.
-        return orientation >= 5 ? CGSize(width: height, height: width) : CGSize(width: width, height: height)
-    }
 }

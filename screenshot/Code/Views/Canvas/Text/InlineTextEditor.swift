@@ -61,12 +61,12 @@ struct RasterizedDisplayTextView: View {
             cachesResult: cachesRaster
         ) {
             // An outline is rasterized into a margin around the box; hang it outside the frame.
-            let pad = stroke?.rasterPadding ?? 0
+            let padded = TextStroke.paddedSize(size, for: stroke)
             Image(nsImage: image)
                 .resizable()
                 .interpolation(.high)
-                .frame(width: size.width + 2 * pad, height: size.height + 2 * pad)
-                .padding(-pad)
+                .frame(width: padded.width, height: padded.height)
+                .padding(-(stroke?.rasterPadding ?? 0))
         } else {
             Color.clear
         }

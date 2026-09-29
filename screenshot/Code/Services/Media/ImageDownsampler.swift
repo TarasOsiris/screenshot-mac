@@ -20,6 +20,17 @@ nonisolated enum ImageDownsampler {
     private static var sourceOptions: CFDictionary { [kCGImageSourceShouldCache: false] as CFDictionary }
 
     /// Returns a downsampled thumbnail for editor display, falling back to the original image.
+    /// The upright pixel size from the file header, without decoding the image.
+    static func pixelSize(at url: URL) -> CGSize? {
+        guard let source = CGImageSourceCreateWithURL(url as CFURL, sourceOptions),
+              let properties = CGImageSourceCopyPropertiesAtIndex(source, 0, sourceOptions) as? [CFString: Any],
+              let width = properties[kCGImagePropertyPixelWidth] as? Int,
+              let height = properties[kCGImagePropertyPixelHeight] as? Int else { return nil }
+        let orientation = properties[kCGImagePropertyOrientation] as? Int ?? 1
+        // EXIF orientations 5–8 are rotated a quarter turn; an imported image is made upright.
+        return orientation >= 5 ? CGSize(width: height, height: width) : CGSize(width: width, height: height)
+    }
+
     static func editorThumbnail(for image: NSImage) -> NSImage {
         guard let tiffData = image.tiffRepresentation else { return image }
         return downsampledImage(from: tiffData, maxDimension: editorImageMaxDimension) ?? image

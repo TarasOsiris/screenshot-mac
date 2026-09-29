@@ -65,13 +65,6 @@ struct ExportService {
                 claimed.insert(ExportFileNaming.fastlaneLocaleFolder(projectCode: $0.code)).inserted
             }
         }
-        // fastlane numbers continue across rows within a locale folder.
-        var fastlaneRowOffsets: [Int] = []
-        var templatesBefore = 0
-        for row in rows {
-            fastlaneRowOffsets.append(templatesBefore)
-            templatesBefore += row.templates.count
-        }
 
         var completed = 0
         var writtenFileURLs: [URL] = []
@@ -114,6 +107,8 @@ struct ExportService {
             // Backgrounds are locale-independent, so the (blur-only) precomposed row
             // strip is shared across every group of the row.
             for (rowIndex, row) in rows.enumerated() {
+                // fastlane numbers continue across rows within a locale folder.
+                let fastlaneOffset = isFastlane ? rows.prefix(rowIndex).reduce(0) { $0 + $1.templates.count } : 0
                 var neutralLocales: [LocaleDefinition] = []
                 var localeGroups: [[LocaleDefinition]] = []
                 for locale in localesToExport {
@@ -184,7 +179,7 @@ struct ExportService {
                             let image = rowContext.templateImage(at: index)
                             let fileURLs: [URL] = group.map { locale in
                                 let filename = isFastlane
-                                    ? ExportFileNaming.fastlaneFileName(number: fastlaneRowOffsets[rowIndex] + index + 1, row: row, customSuffix: customSuffix, format: format)
+                                    ? ExportFileNaming.fastlaneFileName(number: fastlaneOffset + index + 1, row: row, customSuffix: customSuffix, format: format)
                                     : ExportFileNaming.screenshotFileName(row: row, localeCode: locale.code, index: index, customSuffix: customSuffix, format: format)
                                 return destFolder(for: locale.code).appendingPathComponent(filename)
                             }

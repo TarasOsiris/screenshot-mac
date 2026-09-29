@@ -1,27 +1,16 @@
-#if os(macOS)
-import AppKit
-#else
-import UIKit
-#endif
+import Foundation
 
 extension AppState {
+    /// Cheap enough for a container body: no locale resolve, no image-dictionary read.
     func canCropImage(_ shape: CanvasShapeModel) -> Bool {
-        shape.type == .image && imageAspect(for: shape) != nil
-    }
-
-    /// Width / height of the picture the shape shows in the active locale.
-    func imageAspect(for shape: CanvasShapeModel) -> CGFloat? {
-        let resolved = LocaleService.resolveShape(shape, localeState: localeState)
-        guard let fileName = resolved.displayImageFileName,
-              let size = screenshotImages[fileName]?.size,
-              size.width > 0, size.height > 0 else { return nil }
-        return size.width / size.height
+        shape.type == .image && shape.displayImageFileName != nil
     }
 
     func beginImageCrop(_ shapeId: UUID) {
         guard let location = shapeLocation(for: shapeId) else { return }
-        let shape = rows[location.rowIndex].shapes[location.shapeIndex]
-        guard canCropImage(shape), !shape.resolvedIsLocked else { return }
+        let shape = LocaleService.resolveShape(rows[location.rowIndex].shapes[location.shapeIndex], localeState: localeState)
+        guard canCropImage(shape), !shape.resolvedIsLocked,
+              let fileName = shape.displayImageFileName, screenshotImages[fileName] != nil else { return }
         selectShape(shapeId, in: rows[location.rowIndex].id)
         imageCrop.begin(shapeId)
     }
@@ -32,6 +21,14 @@ extension AppState {
         } else {
             beginImageCrop(shapeId)
         }
+    }
+
+    /// Esc and Return leave crop mode first; false when there was none to leave.
+    @discardableResult
+    func endImageCrop() -> Bool {
+        guard imageCrop.isActive else { return false }
+        imageCrop.end()
+        return true
     }
 
     func resetImageCrop(_ shapeId: UUID) {

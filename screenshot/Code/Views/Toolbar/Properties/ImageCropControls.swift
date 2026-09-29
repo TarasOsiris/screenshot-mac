@@ -27,14 +27,9 @@ struct ImageCropControls: View, ShapeEditing {
             Image(systemName: "plus.magnifyingglass")
                 .foregroundStyle(.secondary)
 
-            Button {
+            ActionButton(icon: "arrow.counterclockwise", tooltip: "Reset Crop", frameSize: UIMetrics.IconButton.frameSize, disabled: !hasCrop) {
                 state.resetImageCrop(shapeId)
-            } label: {
-                Image(systemName: "arrow.counterclockwise")
             }
-            .buttonStyle(.borderless)
-            .disabled(!hasCrop)
-            .help("Reset Crop")
         }
         .controlSize(.small)
     }

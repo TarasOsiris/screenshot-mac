@@ -48,7 +48,7 @@ struct ShapeFillSwatchButton: View {
                     onChanged: onChanged,
                     onPickImage: onPickImage,
                     onRemoveImage: onRemoveImage,
-                    onDropImage: allowsImage ? onDropImage : nil,
+                    onDropImage: onDropImage,
                     allowsImage: allowsImage
                 )
             }

@@ -310,11 +310,7 @@ final class AppState {
             isEditingText: { [weak self] in self?.textEdit.isActive ?? false },
             nudge: { [weak self] dx, dy in self?.nudgeSelectedShapes(dx: dx, dy: dy) },
             delete: { [weak self] in self?.deleteSelectedShape() },
-            endCrop: { [weak self] in
-                guard let self, imageCrop.isActive else { return false }
-                imageCrop.end()
-                return true
-            }
+            endCrop: { [weak self] in self?.endImageCrop() ?? false }
         ))
     }
 

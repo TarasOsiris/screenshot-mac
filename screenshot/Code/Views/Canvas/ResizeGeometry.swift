@@ -119,6 +119,17 @@ enum ResizeGeometry {
         )
     }
 
+    /// A screen-space drag expressed along a shape's own rotated axes.
+    static func localTranslation(_ translation: CGSize, rotation: Double) -> CGSize {
+        let radians = rotation * .pi / 180
+        let cosA = cos(radians)
+        let sinA = sin(radians)
+        return CGSize(
+            width: translation.width * cosA + translation.height * sinA,
+            height: -translation.width * sinA + translation.height * cosA
+        )
+    }
+
     static func resize(
         shape: CanvasShapeModel,
         edge: ResizeEdge,

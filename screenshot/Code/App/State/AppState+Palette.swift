@@ -22,8 +22,7 @@ extension AppState {
         var counts: [String: (color: CodableColor, count: Int)] = [:]
         func add(_ color: CodableColor?) {
             guard let color, color.opacity > 0 else { return }
-            let key = Self.colorKey(color)
-            counts[key, default: (color, 0)].count += 1
+            counts[color.hexKey, default: (color, 0)].count += 1
         }
         for row in rows {
             add(row.backgroundColorData)
@@ -38,22 +37,16 @@ extension AppState {
                 shape.fillGradientConfig?.stops.forEach { add($0.colorData) }
             }
         }
-        let saved = Set(palette.map(Self.colorKey))
-        return counts.values
-            .filter { !saved.contains(Self.colorKey($0.color)) }
-            .sorted { $0.count != $1.count ? $0.count > $1.count : Self.colorKey($0.color) < Self.colorKey($1.color) }
+        let saved = Set(palette.map(\.hexKey))
+        return counts
+            .filter { !saved.contains($0.key) }
+            .sorted { $0.value.count != $1.value.count ? $0.value.count > $1.value.count : $0.key < $1.key }
             .prefix(limit)
-            .map(\.color)
+            .map(\.value.color)
     }
 
-    /// Equal at 8-bit precision — what the picker can actually distinguish and what the file stores.
+    /// Equal at the 8-bit precision the file stores.
     static func sameColor(_ lhs: CodableColor, _ rhs: CodableColor) -> Bool {
-        colorKey(lhs) == colorKey(rhs)
-    }
-
-    private static func colorKey(_ color: CodableColor) -> String {
-        [color.red, color.green, color.blue, color.opacity]
-            .map { String(format: "%02x", Int(($0 * 255).rounded())) }
-            .joined()
+        lhs.hexKey == rhs.hexKey
     }
 }

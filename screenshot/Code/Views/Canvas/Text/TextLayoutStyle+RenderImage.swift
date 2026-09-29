@@ -112,8 +112,7 @@ extension TextLayoutStyle {
         stroke: TextStroke?,
         glyphFill: TextGlyphFill?
     ) -> NSImage? {
-        let pad = stroke?.rasterPadding ?? 0
-        let canvasSize = CGSize(width: size.width + 2 * pad, height: size.height + 2 * pad)
+        let canvasSize = TextStroke.paddedSize(size, for: stroke)
         let view = TextLayoutNSView(frame: NSRect(origin: .zero, size: canvasSize))
         view.configure(
             text: text,
@@ -190,24 +189,15 @@ extension TextLayoutStyle {
             uppercase: uppercase,
             fontScale: fontScale
         ), with: glyphFill)
-        let textStorage = NSTextStorage(attributedString: attributed)
-        let layoutManager = NSLayoutManager()
-        let compactDelegate = CompactLineLayoutDelegate()
-        compactDelegate.lineHeightMultiple = lineHeightMultiple ?? 1.0
-        layoutManager.delegate = compactDelegate
-        let textContainer = NSTextContainer(size: size)
-        textContainer.lineFragmentPadding = 0
-        textContainer.lineBreakMode = .byWordWrapping
-        layoutManager.addTextContainer(textContainer)
-        textStorage.addLayoutManager(layoutManager)
-
-        layoutManager.ensureLayout(for: textContainer)
-        let glyphRange = layoutManager.glyphRange(for: textContainer)
-        let usedRect = layoutManager.usedRect(for: textContainer)
+        let stack = TextLayoutStack(containerSize: size, lineHeightMultiple: lineHeightMultiple)
+        stack.storage.setAttributedString(attributed)
+        stack.layoutManager.ensureLayout(for: stack.container)
+        let glyphRange = stack.layoutManager.glyphRange(for: stack.container)
+        let usedRect = stack.layoutManager.usedRect(for: stack.container)
         let padding = verticalGlyphPadding(
             lineHeightMultiple: lineHeightMultiple,
             legacyLineSpacing: legacyLineSpacing,
-            font: fontScale == 1 ? font : font.withSize(font.pointSize * fontScale)
+            font: scaledFont(font, by: fontScale)
         )
         let yOffset = verticalOffset(
             containerHeight: size.height,
@@ -217,44 +207,11 @@ extension TextLayoutStyle {
         )
 
         let pad = stroke?.rasterPadding ?? 0
-        let canvasSize = CGSize(width: size.width + 2 * pad, height: size.height + 2 * pad)
-        return PlatformImageRenderer.image(size: canvasSize, scale: scale) {
-            let origin = CGPoint(x: pad, y: pad + yOffset)
-            layoutManager.drawBackground(forGlyphRange: glyphRange, at: origin)
-            if let stroke {
-                applyStroke(to: textStorage, color: stroke.color, width: stroke.width)
-                layoutManager.drawGlyphs(forGlyphRange: glyphRange, at: origin)
-                removeStroke(from: textStorage)
-            }
-            layoutManager.drawGlyphs(forGlyphRange: glyphRange, at: origin)
+        return PlatformImageRenderer.image(size: TextStroke.paddedSize(size, for: stroke), scale: scale) {
+            stack.draw(range: glyphRange, at: CGPoint(x: pad, y: pad + yOffset), stroke: stroke)
         }
     }
     #endif
-
-    /// Weight is not recoverable from `fontName` alone for a variable font resolved to an instance,
-    /// so it goes in the key explicitly — two weights of one family must not collide.
-    private static func fontWeightToken(_ font: NSFont) -> String {
-        #if os(macOS)
-        let traits = font.fontDescriptor.object(forKey: .traits) as? [NSFontDescriptor.TraitKey: Any]
-        #else
-        let traits = font.fontDescriptor.object(forKey: .traits) as? [UIFontDescriptor.TraitKey: Any]
-        #endif
-        return (traits?[.weight] as? CGFloat).map(scalarToken) ?? "-"
-    }
-
-    /// Lossless scalar tokens prevent fractional model-space dimensions and subtly different
-    /// styling values from aliasing to one cache entry. `String(format:)` rounding is unsafe here:
-    /// even two bounds that round to the same point can require different backing-pixel sizes.
-    private static func scalarToken(_ value: CGFloat) -> String {
-        String(Double(value).bitPattern, radix: 16)
-    }
-
-    private static func colorToken(_ color: NSColor) -> String {
-        let cgColor = color.cgColor
-        let colorSpace = String(describing: cgColor.colorSpace?.name)
-        let components = (cgColor.components ?? []).map(scalarToken).joined(separator: ",")
-        return "\(colorSpace),\(cgColor.numberOfComponents),\(components)"
-    }
 
     static func textImageCacheKey(
         size: CGSize, scale: CGFloat, text: String, font: NSFont, color: NSColor,

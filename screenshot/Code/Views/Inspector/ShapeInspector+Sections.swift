@@ -220,7 +220,7 @@ extension ShapeInspector {
 
     @ViewBuilder
     func fillSection(shape: CanvasShapeModel) -> some View {
-        if shape.supportsFillEditing {
+        if shape.type.supportsFill {
             InspectorSection(.shapeFill, "Fill") {
                 BackgroundEditor(
                     backgroundStyle: fillStyleBinding(shapeId),
@@ -231,8 +231,8 @@ extension ShapeInspector {
                     onChanged: { state.scheduleSave() },
                     onPickImage: { isReplacingFillImage = true },
                     onRemoveImage: { state.removeShapeFillImage(for: shapeId) },
-                    onDropImage: shape.type.supportsFill ? { image in state.saveShapeFillImage(image, for: shapeId) } : nil,
-                    allowsImage: shape.type.supportsFill
+                    onDropImage: { image in state.saveShapeFillImage(image, for: shapeId) },
+                    allowsImage: shape.type.supportsFillImage
                 )
                 if shape.type == .text && shape.resolvedFillStyle == .gradient && shape.hasRichText {
                     Text("A gradient replaces the colors set on parts of the text.")

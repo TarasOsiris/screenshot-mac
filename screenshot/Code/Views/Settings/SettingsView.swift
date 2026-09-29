@@ -318,8 +318,7 @@ struct SettingsView: View {
 
             Section {
                 Picker("File layout", selection: $exportNamingScheme) {
-                    Text("Standard").tag(ExportNamingScheme.standard)
-                    Text("fastlane").tag(ExportNamingScheme.fastlane)
+                    ForEach(ExportNamingScheme.allCases) { Text($0.title).tag($0) }
                 }
                 TextField("Custom filename suffix", text: $exportCustomSuffix, prompt: Text("optional"))
             } footer: {

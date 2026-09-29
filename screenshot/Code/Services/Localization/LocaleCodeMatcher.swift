@@ -3,8 +3,13 @@ import Foundation
 /// Matches a store- or folder-style locale code (`de-DE`, `en_US`) to the project locale that owns
 /// it: an exact match wins, otherwise the longest project code that is a language prefix of it.
 enum LocaleCodeMatcher {
+    /// `en_US` and `EN-us` compare as `en-us`.
+    static func normalized(_ code: String) -> String {
+        code.replacingOccurrences(of: "_", with: "-").lowercased()
+    }
+
     static func match(_ code: String, among projectCodes: [String]) -> String? {
-        let lower = code.replacingOccurrences(of: "_", with: "-").lowercased()
+        let lower = normalized(code)
         var best: String?
         var bestLength = -1
         for projectCode in projectCodes {
