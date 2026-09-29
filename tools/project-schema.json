@@ -28,6 +28,11 @@
       "description": "variants — A/B variants in display order; omitted when the project has none.",
       "type": "array",
       "items": { "$ref": "#/$defs/ScreenshotVariant" }
+    },
+    "pal": {
+      "description": "palette — the project's saved colors, offered in every color picker; omitted when empty.",
+      "type": "array",
+      "items": { "$ref": "#/$defs/Color" }
     }
   },
   "$defs": {

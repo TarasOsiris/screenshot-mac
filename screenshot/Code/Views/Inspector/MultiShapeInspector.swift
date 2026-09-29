@@ -87,7 +87,7 @@ struct MultiShapeInspector: View, MultiShapeEditing {
             }
 
             EditorLabeledContent("Color") {
-                ColorPicker("Color", selection: multiTextColorBinding(), supportsOpacity: false)
+                PaletteColorPicker("Color", selection: multiTextColorBinding(), supportsOpacity: false)
                     .labelsHidden()
             }
 

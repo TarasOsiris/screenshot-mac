@@ -15,6 +15,8 @@ final class AppState {
     var localeState: LocaleState = .default
     /// A/B alternatives to the Original rows. Document state: undone and saved with `rows`.
     var variants: [ScreenshotVariant] = []
+    /// The project's saved colors. Document state: undone and saved with `rows`.
+    var palette: [CodableColor] = []
     var selectedRowId: UUID?
     var selectedShapeIds: Set<UUID> = [] {
         didSet {

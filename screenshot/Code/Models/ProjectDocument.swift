@@ -14,11 +14,18 @@ struct ProjectDocument: Equatable {
     var rows: [ScreenshotRow]
     var localeState: LocaleState
     var variants: [ScreenshotVariant]
+    var palette: [CodableColor]
 
-    init(rows: [ScreenshotRow], localeState: LocaleState = .default, variants: [ScreenshotVariant] = []) {
+    init(
+        rows: [ScreenshotRow],
+        localeState: LocaleState = .default,
+        variants: [ScreenshotVariant] = [],
+        palette: [CodableColor] = []
+    ) {
         self.rows = rows
         self.localeState = localeState
         self.variants = variants
+        self.palette = palette
     }
 
     init(_ data: ProjectData) {
@@ -26,10 +33,11 @@ struct ProjectDocument: Equatable {
         self.localeState = data.localeState ?? .default
         var seen = Set<UUID>()
         self.variants = data.variants.filter { seen.insert($0.id).inserted }.recoveringVariants(namedBy: data.rows)
+        self.palette = data.palette
     }
 
     func projectData(name: String?) -> ProjectData {
-        ProjectData(rows: rows, localeState: localeState, name: name, variants: variants)
+        ProjectData(rows: rows, localeState: localeState, name: name, variants: variants, palette: palette)
     }
 }
 

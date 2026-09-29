@@ -15,7 +15,7 @@ struct InspectorOutlineRows: View {
 
         if showsDetails {
             EditorLabeledContent("Color") {
-                ColorPicker("Outline", selection: color, supportsOpacity: false)
+                PaletteColorPicker("Outline", selection: color, supportsOpacity: false)
                     .labelsHidden()
             }
             PopoverSliderRow(label: "Width", value: width, range: 1...50, layout: .formRow)

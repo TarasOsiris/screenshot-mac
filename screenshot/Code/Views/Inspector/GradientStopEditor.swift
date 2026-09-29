@@ -70,7 +70,7 @@ struct GradientStopEditor: View {
 
             HStack(spacing: 8) {
                 if let selectedId = effectiveSelectedStopId {
-                    ColorPicker(
+                    PaletteColorPicker(
                         "",
                         selection: selectedColorBinding(for: selectedId),
                         supportsOpacity: false

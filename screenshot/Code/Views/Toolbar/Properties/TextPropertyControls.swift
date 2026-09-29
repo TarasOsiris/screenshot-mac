@@ -249,13 +249,12 @@ struct TextBackgroundControls: View, ShapeEditing {
 
             if isOn.wrappedValue {
                 EditorLabeledContent("Color") {
-                    ColorPicker(
+                    PaletteColorPicker(
                         "",
                         selection: shapeBinding(shapeId, \.textBackgroundColor, default: CanvasShapeModel.defaultTextBackgroundColor),
-                        supportsOpacity: true
+                        supportsOpacity: true, wellWidth: UIMetrics.ColorSwatch.inline
                     )
                     .labelsHidden()
-                    .frame(width: UIMetrics.ColorSwatch.inline)
                 }
 
                 PopoverSliderField(
@@ -286,7 +285,7 @@ struct TextBackgroundControls: View, ShapeEditing {
 
                 if hasOutline.wrappedValue {
                     EditorLabeledContent("Outline") {
-                        ColorPicker(
+                        PaletteColorPicker(
                             "",
                             selection: shapeBinding(
                                 shapeId,

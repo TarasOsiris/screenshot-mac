@@ -65,7 +65,7 @@ struct BackgroundEditor: View {
             HStack {
                 Text("Color")
                 Spacer()
-                ColorPicker("", selection: $bgColor.onSet { onChanged() }, supportsOpacity: false)
+                PaletteColorPicker("", selection: $bgColor.onSet { onChanged() }, supportsOpacity: false)
                     .labelsHidden()
                     .accessibilityLabel("Color")
                     .iPadColorSwatchFrame()

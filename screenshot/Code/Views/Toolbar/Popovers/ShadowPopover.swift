@@ -68,7 +68,7 @@ struct ShadowControls: View {
                 }
             }
             Section("Adjust") {
-                ColorPicker("Color", selection: colorBinding, supportsOpacity: false)
+                PaletteColorPicker("Color", selection: colorBinding, supportsOpacity: false)
                 detailSliders
             }
         }
@@ -128,7 +128,7 @@ struct ShadowControls: View {
             Text("Color")
                 .foregroundStyle(.secondary)
                 .frame(width: 60, alignment: .leading)
-            ColorPicker("", selection: colorBinding, supportsOpacity: false)
+            PaletteColorPicker("", selection: colorBinding, supportsOpacity: false)
                 .labelsHidden()
                 .accessibilityLabel("Color")
             Spacer()

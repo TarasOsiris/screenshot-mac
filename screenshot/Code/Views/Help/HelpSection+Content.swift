@@ -141,6 +141,7 @@ extension HelpSection {
                 .bullet("**Screenshot Size** — **Presets** lists the resolutions each store accepts, grouped by device. Switch to **Custom** to type any size from 100 to 5000 px."),
                 .bullet("**Orientation** flips the row between portrait and landscape by swapping width and height."),
                 .bullet("**Background** — color, gradient, or image, plus a **Blur** slider. See the **Backgrounds** topic."),
+                .bullet("**Project Colors** — the palette button next to a color well opens this project's saved colors. **+** saves the current color, click a swatch to apply it, and right-click to remove one. **Document Colors** below lists the colors the project already uses."),
                 .bullet("**Stretch across all screenshots** — when on, the background spans the entire row width across all templates. When off, every template paints the same background independently. It needs at least two templates."),
                 .bullet("**Visibility** — hide a whole shape type (all text, all devices, all SVGs…) in this row, with **Show All** / **Hide All** to flip every type at once. Hidden types are left out of the **export** too, not just the editor. **Borders** draws the divider lines between templates and is editor-only."),
                 .bullet("**Exclude when uploading to App Store Connect** — keeps the row in your project and in folder exports, but leaves it out of an App Store Connect upload. Useful for an Android row, or a row you are still working on."),

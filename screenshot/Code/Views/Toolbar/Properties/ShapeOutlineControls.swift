@@ -15,9 +15,8 @@ struct ShapeOutlineControls: View {
             .help(hasOutline.wrappedValue ? String(localized: "Disable outline") : String(localized: "Enable outline"))
 
         if hasOutline.wrappedValue {
-            ColorPicker("", selection: outlineColor, supportsOpacity: false)
+            PaletteColorPicker("", selection: outlineColor, supportsOpacity: false, wellWidth: UIMetrics.ColorSwatch.inline)
                 .labelsHidden()
-                .frame(width: UIMetrics.ColorSwatch.inline)
                 .padding(.horizontal, 4)
                 .help("Outline")
                 .accessibilityLabel("Outline")

@@ -260,11 +260,12 @@ extension AppState {
     /// The document view of the open project. The walks themselves live on `ProjectDocument` so a
     /// project the editor does not have open answers them identically.
     var document: ProjectDocument {
-        get { ProjectDocument(rows: rows, localeState: localeState, variants: variants) }
+        get { ProjectDocument(rows: rows, localeState: localeState, variants: variants, palette: palette) }
         set {
             rows = newValue.rows
             localeState = newValue.localeState
             variants = newValue.variants
+            palette = newValue.palette
         }
     }
 

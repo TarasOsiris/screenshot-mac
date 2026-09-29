@@ -119,22 +119,26 @@ nonisolated struct ProjectData: Codable {
     /// real names. Only refreshed when the project is saved, so a rename while closed leaves it stale.
     var name: String?
     var variants: [ScreenshotVariant]
+    /// Colors the user saved for this project, offered in every color picker.
+    var palette: [CodableColor]
 
     enum CodingKeys: String, CodingKey {
-        case rows = "r", localeState = "ls", modifiedAt = "m", name = "n", variants = "v"
+        case rows = "r", localeState = "ls", modifiedAt = "m", name = "n", variants = "v", palette = "pal"
     }
 
     init(
         rows: [ScreenshotRow],
         localeState: LocaleState? = nil,
         name: String? = nil,
-        variants: [ScreenshotVariant] = []
+        variants: [ScreenshotVariant] = [],
+        palette: [CodableColor] = []
     ) {
         self.rows = rows
         self.localeState = localeState
         self.modifiedAt = Date()
         self.name = name
         self.variants = variants
+        self.palette = palette
     }
 
     init(from decoder: Decoder) throws {
@@ -145,6 +149,8 @@ nonisolated struct ProjectData: Codable {
         name = try c.decodeIfPresent(String.self, forKey: .name)
         variants = ((try? c.decodeIfPresent([LossyDecodable<ScreenshotVariant>].self, forKey: .variants)) ?? nil)?
             .compactMap(\.value) ?? []
+        palette = ((try? c.decodeIfPresent([LossyDecodable<CodableColor>].self, forKey: .palette)) ?? nil)?
+            .compactMap(\.value) ?? []
     }
 
     func encode(to encoder: Encoder) throws {
@@ -154,6 +160,7 @@ nonisolated struct ProjectData: Codable {
         try c.encode(modifiedAt, forKey: .modifiedAt)
         try c.encodeIfPresent(name, forKey: .name)
         if !variants.isEmpty { try c.encode(variants, forKey: .variants) }
+        if !palette.isEmpty { try c.encode(palette, forKey: .palette) }
     }
 }
 

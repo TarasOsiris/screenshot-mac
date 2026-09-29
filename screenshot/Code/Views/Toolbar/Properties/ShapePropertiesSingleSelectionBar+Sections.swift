@@ -60,9 +60,8 @@ extension ShapePropertiesSingleSelectionBar {
             }
         } else if shape.type != .device && shape.type != .svg && shape.type != .image {
             ShapePropertiesSection {
-                ColorPicker("Fill color", selection: shapeBinding(shapeId, \.color), supportsOpacity: false)
+                PaletteColorPicker("Fill color", selection: shapeBinding(shapeId, \.color), supportsOpacity: false, wellWidth: UIMetrics.ColorSwatch.inline)
                     .labelsHidden()
-                    .frame(width: UIMetrics.ColorSwatch.inline)
                     .help("Fill color")
             }
         }
