@@ -524,7 +524,7 @@ final class AppStoreConnectScreenshotSyncService {
         }
         let total = Self.applyStepCount(remaining)
         var completed = 0
-        progress(UploadProgress(totalSteps: total, completedSteps: 0, currentLabel: "Starting screenshot sync…"))
+        progress(UploadProgress(totalSteps: total, completedSteps: 0, currentLabel: String(localized: "Starting screenshot sync…")))
         // Counts and ASC display types only — set labels are built from row labels, which are
         // user content and must never leave the device.
         CrashReportingService.breadcrumb(.upload, "ASC apply started", data: [
@@ -589,7 +589,7 @@ final class AppStoreConnectScreenshotSyncService {
                         finalIdsByLocalIndex[proposedIndex] = remoteId
                         deliveries.append(.assumedComplete(remoteId))
                     } else {
-                        progress(UploadProgress(totalSteps: total, completedSteps: completed, currentLabel: "Uploading \(local.fileName)"))
+                        progress(UploadProgress(totalSteps: total, completedSteps: completed, currentLabel: String(localized: "Uploading \(local.fileName)", comment: "Upload progress. The placeholder names the screenshot being uploaded.")))
                         let data = try Data(contentsOf: local.fileURL)
                         markMutated()
                         let uploaded = try await upload(
@@ -649,7 +649,7 @@ final class AppStoreConnectScreenshotSyncService {
                 recordApplied(setResult, planId: planId)
                 activeSet = nil
             }
-            progress(UploadProgress(totalSteps: total, completedSteps: total, currentLabel: "Done"))
+            progress(UploadProgress(totalSteps: total, completedSteps: total, currentLabel: String(localized: "Done")))
             CrashReportingService.breadcrumb(.upload, "ASC apply finished", data: ["sets": results.count])
             discardPlan(planId)
             return ASCScreenshotSyncResult(planId: planId, sets: results, didMutate: didMutate)

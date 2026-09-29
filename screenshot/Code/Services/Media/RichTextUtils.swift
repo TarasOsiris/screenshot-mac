@@ -161,10 +161,10 @@ enum RichTextUtils {
 
     static func fontWeightLabel(_ weight: Int) -> String {
         switch weight {
-        case 300: return String(localized: "Light")
-        case 500: return String(localized: "Medium")
-        case 700: return String(localized: "Bold")
-        default: return String(localized: "Regular")
+        case 300: return String(localized: "fontWeight.light", defaultValue: "Light", comment: "Font weight name in the text weight picker")
+        case 500: return String(localized: "fontWeight.medium", defaultValue: "Medium", comment: "Font weight name in the text weight picker")
+        case 700: return String(localized: "fontWeight.bold", defaultValue: "Bold", comment: "Font weight name in the text weight picker")
+        default: return String(localized: "fontWeight.regular", defaultValue: "Regular", comment: "Font weight name in the text weight picker")
         }
     }
 

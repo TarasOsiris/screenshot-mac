@@ -83,8 +83,39 @@ struct GPUploadTarget: Identifiable {
     let templateCount: Int
 }
 
+/// A step of the Play publish. `diagnosticName` is stable English for breadcrumbs; `phrase`
+/// completes the localized failure sentences.
+nonisolated enum GPUploadOperation: Equatable {
+    case openEdit
+    case commitEdit
+    case clearScreenshots(GPImageType)
+    case uploadScreenshot(number: Int)
+
+    var diagnosticName: String {
+        switch self {
+        case .openEdit: return "open a Play Console edit"
+        case .commitEdit: return "commit the Play Console edit"
+        case .clearScreenshots(let type): return "clear existing \(type.rawValue)"
+        case .uploadScreenshot(let number): return "upload screenshot \(number)"
+        }
+    }
+
+    var phrase: String {
+        switch self {
+        case .openEdit:
+            return String(localized: "open a Play Console edit", comment: "Completes 'Google Play returned 500 while trying to …' and 'Could not … for <row> (<image type>) in <language>.'")
+        case .commitEdit:
+            return String(localized: "commit the Play Console edit", comment: "Completes 'Google Play returned 500 while trying to …' and 'Could not … for <row> (<image type>) in <language>.'")
+        case .clearScreenshots(let type):
+            return String(localized: "clear existing \(type.label) screenshots", comment: "Completes 'Google Play returned 500 while trying to …' and 'Could not … for <row> (<image type>) in <language>.' The placeholder is a Play image type such as 'Phone' or '7-inch tablet'.")
+        case .uploadScreenshot(let number):
+            return String(localized: "upload screenshot \(number)", comment: "Completes 'Google Play returned 500 while trying to …' and 'Could not … for <row> (<image type>) in <language>.' The placeholder is the screenshot's position in the row.")
+        }
+    }
+}
+
 nonisolated struct GPUploadFailureContext {
-    let operation: String
+    let operation: GPUploadOperation
     let rowLabel: String
     let imageTypeLabel: String
     let languageLabel: String
@@ -97,7 +128,7 @@ nonisolated struct GPUploadFailureContext {
     /// implicitly Sendable — it is thrown out of a `@MainActor` service.
     let transportError: URLError?
 
-    init(operation: String, target: GPUploadTarget, language: GPUploadLanguage, underlyingError: Error) {
+    init(operation: GPUploadOperation, target: GPUploadTarget, language: GPUploadLanguage, underlyingError: Error) {
         self.operation = operation
         self.rowLabel = target.rowLabel
         self.imageTypeLabel = target.imageType.label
@@ -149,22 +180,22 @@ nonisolated struct GPUploadFailureContext {
             return String(localized: "This app can't save an un-reviewed draft via the API — nothing was uploaded.")
         }
         if let httpStatus {
-            return String(localized: "Google Play returned \(httpStatus) while trying to \(operation).")
+            return String(localized: "Google Play returned \(httpStatus) while trying to \(operation.phrase).", comment: "The last placeholder is an action such as 'upload screenshot 3'.")
         }
         if transportError?.code == .notConnectedToInternet {
-            return String(localized: "No internet connection while trying to \(operation).")
+            return String(localized: "No internet connection while trying to \(operation.phrase).", comment: "The placeholder is an action such as 'upload screenshot 3'.")
         }
         if isConnectionFailure {
-            return String(localized: "The connection failed while trying to \(operation).")
+            return String(localized: "The connection failed while trying to \(operation.phrase).", comment: "The placeholder is an action such as 'upload screenshot 3'.")
         }
-        return String(localized: "Upload failed while trying to \(operation).")
+        return String(localized: "Upload failed while trying to \(operation.phrase).", comment: "The placeholder is an action such as 'upload screenshot 3'.")
     }
 
     /// Every branch below is the same three parts: what failed, what to do about it, and what
     /// Google Play (or the transport) actually said.
     private func detail(_ advice: String) -> String {
         [
-            String(localized: "Could not \(operation) for \(rowLabel) (\(imageTypeLabel)) in \(languageLabel)."),
+            String(localized: "Could not \(operation.phrase) for \(rowLabel) (\(imageTypeLabel)) in \(languageLabel).", comment: "Placeholders: an action such as 'upload screenshot 3', the row name, the Play image type, the listing language."),
             advice,
             String(localized: "Original response: \(originalMessage)")
         ].joined(separator: "\n\n")
@@ -196,7 +227,7 @@ nonisolated struct GPUploadFailureContext {
 
     var technicalMessage: String {
         [
-            "Operation: \(operation)",
+            "Operation: \(operation.diagnosticName)",
             "Row: \(rowLabel)",
             "Image type: \(imageTypeLabel)",
             "Language: \(languageLabel) (\(languageCode))",
@@ -267,8 +298,8 @@ final class GooglePlayUploadService {
             progress(UploadProgress(totalSteps: totalSteps, completedSteps: completed, currentLabel: label))
         }
 
-        emit(completedSteps, "Starting…")
-        let edit = try await performStep("open a Play Console edit", target: targets[0], language: targets[0].languages.first) {
+        emit(completedSteps, String(localized: "Starting…"))
+        let edit = try await performStep(.openEdit, target: targets[0], language: targets[0].languages.first) {
             try await api.insertEdit(packageName: packageName)
         }
 
@@ -322,11 +353,11 @@ final class GooglePlayUploadService {
                 }
             }
 
-            emit(completedSteps, sendForReview ? "Submitting for review…" : "Saving draft…")
-            let didSendForReview = try await performStep("commit the Play Console edit", target: targets[0], language: targets[0].languages.first) {
+            emit(completedSteps, sendForReview ? String(localized: "Submitting for review…") : String(localized: "Saving draft…"))
+            let didSendForReview = try await performStep(.commitEdit, target: targets[0], language: targets[0].languages.first) {
                 try await api.commitEdit(packageName: packageName, editId: edit.id, sendForReview: sendForReview)
             }
-            emit(completedSteps, "Done")
+            emit(completedSteps, String(localized: "Done"))
             return didSendForReview
         } catch {
             // Abandon the half-finished edit so it doesn't linger in the Play Console.
@@ -352,7 +383,7 @@ final class GooglePlayUploadService {
 
         for templateIndex in 0..<target.templateCount {
             try Task.checkCancellation()
-            emit("Rendering \(target.rowLabel) · \(language.label) · \(templateIndex + 1)/\(target.templateCount)")
+            emit(String(localized: "Rendering \(target.rowLabel) · \(language.label) · \(templateIndex + 1)/\(target.templateCount)", comment: "Upload progress. Placeholders: row name, language, screenshot number, screenshot count."))
             let image = context.templateImage(at: templateIndex)
             // The SwiftUI render must stay on the main actor; the encode must not, or the upload UI
             // freezes. Play rejects an alpha channel, so encode opaque.
@@ -400,7 +431,7 @@ final class GooglePlayUploadService {
 
                 CrashReportingService.breadcrumb(.upload, "Play: retrying a language", level: .warning)
                 // Progress rewinds to where the language started, because the work is being redone.
-                emit(baseStep, "Connection problem — retrying \(job.planLabel)")
+                emit(baseStep, String(localized: "Connection problem — retrying \(job.planLabel)", comment: "Upload progress. The placeholder is 'row · language · image type'."))
                 throw StoreRetryPolicy.Retryable(underlying: error)
             }
         }
@@ -412,8 +443,8 @@ final class GooglePlayUploadService {
         emit: (Int, String) -> Void
     ) async throws -> Int {
         // Replace mode: clear the existing set for this language+type, then re-upload.
-        emit(baseStep, "Clearing existing screenshots · \(job.planLabel)")
-        try await performStep("clear existing \(job.target.imageType.label) screenshots", target: job.target, language: job.language) {
+        emit(baseStep, String(localized: "Clearing existing screenshots · \(job.planLabel)", comment: "Upload progress. The placeholder is 'row · language · image type'."))
+        try await performStep(.clearScreenshots(job.target.imageType), target: job.target, language: job.language) {
             try await api.deleteAllImages(
                 packageName: job.packageName,
                 editId: job.editId,
@@ -425,8 +456,8 @@ final class GooglePlayUploadService {
         for (offset, screenshot) in job.rendered.enumerated() {
             try Task.checkCancellation()
             let label = "\(job.target.rowLabel) · \(job.language.label) · \(screenshot.templateIndex + 1)/\(job.target.templateCount)"
-            emit(baseStep + offset, "Uploading \(label)")
-            _ = try await performStep("upload screenshot \(screenshot.templateIndex + 1)", target: job.target, language: job.language) {
+            emit(baseStep + offset, String(localized: "Uploading \(label)", comment: "Upload progress. The placeholder names the screenshot being uploaded."))
+            _ = try await performStep(.uploadScreenshot(number: screenshot.templateIndex + 1), target: job.target, language: job.language) {
                 try await api.uploadImage(
                     packageName: job.packageName,
                     editId: job.editId,
@@ -442,20 +473,20 @@ final class GooglePlayUploadService {
     }
 
     private func performStep<T>(
-        _ operation: String,
+        _ operation: GPUploadOperation,
         target: GPUploadTarget,
         language: GPUploadLanguage?,
         work: () async throws -> T
     ) async throws -> T {
-        // `operation` is a fixed English description; the target's row label is user content
-        // and must never leave the device.
-        CrashReportingService.breadcrumb(.upload, "Play: \(operation)")
+        // The diagnostic name is fixed English; the target's row label is user content and must
+        // never leave the device.
+        CrashReportingService.breadcrumb(.upload, "Play: \(operation.diagnosticName)")
         do {
             return try await work()
         } catch let error as CancellationError {
             throw error
         } catch {
-            CrashReportingService.breadcrumb(.upload, "Play failed: \(operation)", level: .warning)
+            CrashReportingService.breadcrumb(.upload, "Play failed: \(operation.diagnosticName)", level: .warning)
             let lang = language ?? GPUploadLanguage(projectCode: "", playCode: "", label: "—")
             throw GooglePlayUploadError.requestFailed(GPUploadFailureContext(
                 operation: operation,

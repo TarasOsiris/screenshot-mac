@@ -8,8 +8,8 @@ enum DeviceBodyFinish: String, Codable, CaseIterable, Identifiable {
     var id: String { rawValue }
     var label: String {
         switch self {
-        case .matte: "Matte"
-        case .glossy: "Glossy"
+        case .matte: String(localized: "Matte", comment: "3D device body finish")
+        case .glossy: String(localized: "Glossy", comment: "3D device body finish")
         }
     }
 }

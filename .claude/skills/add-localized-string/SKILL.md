@@ -28,6 +28,14 @@ For interpolated strings, keep the variable inline so xcstrings can extract the 
 String(localized: "Missing: \(missing.joined(separator: \", \")).")
 ```
 
+One key has one translation everywhere it appears. When the same English word needs a different translation in another place (e.g. "Center" as text alignment vs. the gradient's center point), give the second use its own key and keep the English:
+
+```swift
+String(localized: "gradient.center", defaultValue: "Center", comment: "Caption for the gradient's center point")
+```
+
+`translate_catalog.py` merges such keys with their English, and the translation and audit tools read it from there (`xcstrings_format.source_text`).
+
 ## Step 2 — Run the build to extract keys
 
 Xcode's xcstrings extraction runs as part of the build. Trigger it:

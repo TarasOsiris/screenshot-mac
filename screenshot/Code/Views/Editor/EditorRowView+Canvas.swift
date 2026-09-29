@@ -193,7 +193,7 @@ extension EditorRowView {
             : row.totalDisplayWidth(zoom: 1.0)
         let width = baseWidth * zoom
         let height = row.displayHeight(zoom: 1.0) * zoom
-        let label = isPreviewMode ? "Rendering preview…" : "Loading editor…"
+        let label: LocalizedStringKey = isPreviewMode ? "Rendering preview…" : "Loading editor…"
 
         ZStack {
             HStack(spacing: 10) {

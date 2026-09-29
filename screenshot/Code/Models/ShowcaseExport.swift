@@ -50,17 +50,17 @@ enum ShowcaseOutputSize: String, CaseIterable, Identifiable {
 
     var label: String {
         switch self {
-        case .original: return "Original"
-        case .xlarge: return "X-Large"
-        case .large: return "Large"
-        case .medium: return "Medium"
-        case .small: return "Small"
+        case .original: return String(localized: "showcaseSize.original", defaultValue: "Original", comment: "Showcase export output-size option")
+        case .xlarge: return String(localized: "showcaseSize.xlarge", defaultValue: "X-Large", comment: "Showcase export output-size option")
+        case .large: return String(localized: "showcaseSize.large", defaultValue: "Large", comment: "Showcase export output-size option")
+        case .medium: return String(localized: "showcaseSize.medium", defaultValue: "Medium", comment: "Showcase export output-size option")
+        case .small: return String(localized: "showcaseSize.small", defaultValue: "Small", comment: "Showcase export output-size option")
         }
     }
 
     var caption: String {
         switch self {
-        case .original: return "Full"
+        case .original: return String(localized: "showcaseSize.full", defaultValue: "Full", comment: "Caption under the Original output size: no size cap, full resolution")
         case .xlarge: return "4000 px"
         case .large: return "2400 px"
         case .medium: return "1600 px"
@@ -96,10 +96,10 @@ enum ShowcaseAspectPreset: String, CaseIterable, Identifiable {
 
     var label: String {
         switch self {
-        case .social: return "Social"
-        case .square: return "Square"
-        case .portrait: return "Portrait"
-        case .story: return "Story"
+        case .social: return String(localized: "Social", comment: "Showcase aspect-ratio preset (1.91:1, for social feeds)")
+        case .square: return String(localized: "Square", comment: "Showcase aspect-ratio preset (1:1)")
+        case .portrait: return String(localized: "Portrait")
+        case .story: return String(localized: "Story", comment: "Showcase aspect-ratio preset (9:16, for stories)")
         case .youtube: return "YouTube"
         case .pinterest: return "Pinterest"
         }
@@ -119,11 +119,11 @@ enum ShowcaseAspectPreset: String, CaseIterable, Identifiable {
     var hint: String {
         switch self {
         case .social: return "X, Facebook, LinkedIn"
-        case .square: return "Instagram feed"
-        case .portrait: return "Instagram portrait"
-        case .story: return "Stories, Reels, TikTok"
-        case .youtube: return "YouTube thumbnail"
-        case .pinterest: return "Pinterest pin"
+        case .square: return String(localized: "Instagram feed", comment: "Where the 1:1 showcase preset is used")
+        case .portrait: return String(localized: "Instagram portrait", comment: "Where the 4:5 showcase preset is used")
+        case .story: return String(localized: "Stories, Reels, TikTok", comment: "Where the 9:16 showcase preset is used; Stories and Reels are the Instagram features")
+        case .youtube: return String(localized: "YouTube thumbnail", comment: "Where the 16:9 showcase preset is used")
+        case .pinterest: return String(localized: "Pinterest pin", comment: "Where the 2:3 showcase preset is used")
         }
     }
 

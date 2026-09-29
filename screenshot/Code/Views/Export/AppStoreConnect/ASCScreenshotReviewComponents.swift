@@ -79,8 +79,10 @@ struct ASCScreenshotDiffThumbnail: View {
     }
 
     private var accessibilityDescription: String {
-        let source = proposed ? String(localized: "Proposed") : String(localized: "Current App Store")
-        return "\(source) screenshot \(displayIndex), \(item.status.label)"
+        if proposed {
+            return String(localized: "Proposed screenshot \(displayIndex), \(item.status.label)", comment: "VoiceOver label. Placeholders: screenshot position, change status such as 'Moved'.")
+        }
+        return String(localized: "Current App Store screenshot \(displayIndex), \(item.status.label)", comment: "VoiceOver label. Placeholders: screenshot position, change status such as 'Moved'.")
     }
 }
 

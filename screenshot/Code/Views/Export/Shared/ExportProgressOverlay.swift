@@ -9,7 +9,7 @@ struct ExportProgressOverlay: View {
         ZStack {
             ModalScrim()
             VStack(spacing: 12) {
-                Text("Exporting Screenshots...")
+                Text("Exporting Screenshots…")
                     .font(.headline)
                 ProgressView(value: Double(progress), total: Double(max(1, total)))
                     .frame(width: 200)

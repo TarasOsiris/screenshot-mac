@@ -44,7 +44,6 @@ VERBATIM_ALLOWED = {
     "%@ · %@: %@",
     "%lld",
     "%lld / %lld",
-    "%lld of %lld",
     "%lld/%lld",
     "%lld%%",
     "%lld°",
@@ -147,14 +146,29 @@ VERBATIM_ALLOWED = {
     "#%lld",
     "%lld %@",
     "shapes.gallery",
+    "Shapes Gallery",
+    "Esc",
+    "Watch",
+    "Stories, Reels, TikTok",
 }
 
 # English loanwords that are the correct translation in one language but would be a miss in others.
 LANGUAGE_VERBATIM_ALLOWED = {
+    "de": {"Editorial", "Experiment", "Export", "Indigo", "Layout", "Original", "Rose", "Showcase", "Story", "Treatments", "Website"},
+    "es": {"Aurora", "Editorial", "Original", "Social"},
+    "fa": {"Delete"},
+    "fr": {"Actions", "Indigo", "Original", "Rectangles", "Rose", "Story", "Type"},
     "it": {
-        "%@ · 1 screenshot", "1 screenshot", "1 set", "Email: %@", "Font", "Preset", "screenshot",
+        "%@ · 1 screenshot", "1 screenshot", "1 set", "Aurora", "Email: %@", "Font", "Layout", "Preset", "Social", "screenshot",
     },
+    "ja": {"Delete"},
+    "ko": {"Delete"},
+    "pt-BR": {"Aurora", "Editorial", "Layout", "Original", "Social", "Story"},
+    "ru": {"Delete"},
     "tr": {"1 set", "Android Tablet", "Font", "Minimal", "Platform"},
+    "uk": {"Delete"},
+    "zh-Hans": {"Delete"},
+    "zh-Hant": {"Delete"},
 }
 
 
@@ -215,7 +229,8 @@ def audit(catalog: Path, include_stale: bool) -> list[str]:
         if MANUAL_PLURAL_RE.search(key):
             errors.append(f"manual plural anti-pattern in key: {key}")
 
-        source_specs = normalized_specifiers(key)
+        source = xcstrings_format.source_text(key, entry)
+        source_specs = normalized_specifiers(source)
         localizations = entry.get("localizations", {})
         for language in TARGET_LANGUAGES:
             localization = localizations.get(language)
@@ -242,7 +257,7 @@ def audit(catalog: Path, include_stale: bool) -> list[str]:
                         f"source={source_specs} translation={value_specs}"
                     )
 
-                if value == key and not should_allow_verbatim(key) and key not in LANGUAGE_VERBATIM_ALLOWED.get(language, ()):
+                if value == source and not should_allow_verbatim(source) and source not in LANGUAGE_VERBATIM_ALLOWED.get(language, ()):
                     errors.append(f"{language}: untranslated value for {key}")
 
     return errors

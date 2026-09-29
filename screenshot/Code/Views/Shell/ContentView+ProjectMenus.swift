@@ -30,7 +30,7 @@ extension ContentView {
     @ViewBuilder
     var currentProjectSection: some View {
         Section("Current Project") {
-            Button("Rename Project...", systemImage: "pencil") {
+            Button("Rename Project…", systemImage: "pencil") {
                 guard let id = state.activeProjectId else { return }
                 let currentName = state.activeProject?.name ?? ""
                 // Defer so the menu fully dismisses before the modal opens.
@@ -56,7 +56,7 @@ extension ContentView {
             }
             .disabled(state.activeProjectId == nil)
 
-            Button("Duplicate Project...", systemImage: "plus.square.on.square") {
+            Button("Duplicate Project…", systemImage: "plus.square.on.square") {
                 store.requirePro(
                     allowed: store.canCreateProject(currentCount: state.visibleProjects.count),
                     context: .projectLimit
@@ -76,7 +76,7 @@ extension ContentView {
             }
             .disabled(state.activeProjectId == nil)
 
-            Button("Reset Project...", systemImage: "arrow.counterclockwise", role: .destructive) {
+            Button("Reset Project…", systemImage: "arrow.counterclockwise", role: .destructive) {
                 if confirmBeforeDeleting {
                     isResettingProject = true
                 } else if let id = state.activeProjectId {
@@ -87,7 +87,7 @@ extension ContentView {
 
             resetFromTemplateMenu
 
-            Button("Delete Project...", systemImage: "trash", role: .destructive) {
+            Button("Delete Project…", systemImage: "trash", role: .destructive) {
                 if confirmBeforeDeleting {
                     isDeletingProject = true
                 } else if let id = state.activeProjectId {
@@ -172,7 +172,7 @@ extension ContentView {
         HStack(spacing: 6) {
             Image(systemName: "folder")
                 .foregroundStyle(.secondary)
-            Text(state.activeProject?.name ?? "No Project")
+            Text(state.activeProject?.name ?? String(localized: "No Project"))
                 .lineLimit(1)
                 .truncationMode(.middle)
                 .frame(minWidth: 180, idealWidth: 240, maxWidth: 320, alignment: .leading)
@@ -199,7 +199,7 @@ extension ContentView {
     #if os(macOS)
     var projectActionsToolbarMenu: some View {
         Menu {
-            Button("New Project...", systemImage: "plus") {
+            Button("New Project…", systemImage: "plus") {
                 store.requirePro(
                     allowed: store.canCreateProject(currentCount: state.visibleProjects.count),
                     context: .projectLimit
@@ -289,7 +289,7 @@ extension ContentView {
             currentProjectSection
         } label: {
             HStack(spacing: 4) {
-                Text(state.activeProject?.name ?? "No Project")
+                Text(state.activeProject?.name ?? String(localized: "No Project"))
                     .font(.headline)
                     .lineLimit(1)
                     .truncationMode(.middle)

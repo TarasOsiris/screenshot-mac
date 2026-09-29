@@ -42,9 +42,9 @@ extension ContentView {
     }
 
     var exportButtonText: LocalizedStringKey {
-        if exportFlow.isExporting { return "Exporting..." }
+        if exportFlow.isExporting { return "Exporting…" }
         if exportFlow.exportSuccess { return "Exported" }
-        return hasLastExportDestination ? "Export" : "Export..."
+        return hasLastExportDestination ? "Export" : "Export…"
     }
 
     var exportHelpText: LocalizedStringKey {

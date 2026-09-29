@@ -22,7 +22,7 @@ struct ShapeDeviceModelRotationControls: View {
                 isPresented: $isPopoverPresented,
                 showsOverrideDot: showsOverrideDot,
                 help: "Rotation, material, and lighting",
-                popoverTitle: "Appearance"
+                popoverTitle: "3D Device"
             ) {
                 Text("3D")
             } content: {

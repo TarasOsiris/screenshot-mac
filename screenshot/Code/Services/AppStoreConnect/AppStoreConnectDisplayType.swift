@@ -110,7 +110,7 @@ enum ASCDisplayType: String, CaseIterable, Identifiable, Sendable {
         case .ipadPro3Gen11: return "iPad Pro 11\" (1668×2388)"
         case .ipad105: return "iPad 10.5\" (1668×2224)"
         case .ipad97: return "iPad 9.7\" (1536×2048)"
-        case .desktop: return "Mac Desktop"
+        case .desktop: return String(localized: "Mac Desktop", comment: "Screenshot display category for Mac App Store screenshots")
         case .watchUltra: return "Apple Watch Ultra"
         case .watchSeries7: return "Apple Watch Series 7+"
         case .watchSeries4: return "Apple Watch Series 4-6"
@@ -162,11 +162,11 @@ enum ASCDisplayType: String, CaseIterable, Identifiable, Sendable {
 
     var acceptedSizeDescription: String {
         let sizes = acceptedPortraitSizes.map { "\($0.0)×\($0.1)" }
-        guard !sizes.isEmpty else { return "No upload sizes listed for this display type." }
+        guard !sizes.isEmpty else { return String(localized: "No upload sizes listed for this display type.") }
         if self == .desktop {
-            return sizes.joined(separator: ", ") + " landscape only"
+            return String(localized: "\(sizes.joined(separator: ", ")) landscape only", comment: "The placeholder lists accepted pixel sizes, e.g. 2880×1800, 2560×1600")
         }
-        return sizes.joined(separator: ", ") + " portrait or landscape"
+        return String(localized: "\(sizes.joined(separator: ", ")) portrait or landscape", comment: "The placeholder lists accepted pixel sizes, e.g. 1320×2868")
     }
 
     /// True if the given (width, height) matches an ASC-valid size for this display type.

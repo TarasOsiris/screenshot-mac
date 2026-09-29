@@ -127,7 +127,7 @@ struct DevicePickerMenu: View {
 
         layout {
             if showsColorOptions, let group = resolvedGroup {
-                labeledIfSidebar(group.prefersVariantMenu ? "Watch style" : "Frame color") {
+                labeledIfSidebar(group.prefersVariantMenu ? String(localized: "Watch style") : String(localized: "Frame color")) {
                     if group.prefersVariantMenu {
                         DeviceFrameVariantSelector(
                             group: group,
@@ -150,7 +150,7 @@ struct DevicePickerMenu: View {
             }
 
             if canToggleOrientation {
-                labeledIfSidebar("Orientation") {
+                labeledIfSidebar(String(localized: "Orientation")) {
                     OrientationPicker(isLandscape: orientationBinding(for: frame), labelsHidden: true)
                         .frame(width: 72, alignment: .leading)
                 }
@@ -231,7 +231,7 @@ struct DevicePickerMenu: View {
         if canResetBodyColor, let onResetBodyColor {
             ActionButton(
                 icon: "arrow.counterclockwise",
-                tooltip: "Reset \(bodyColorLabel.lowercased())",
+                tooltip: "Reset to default color",
                 frameSize: 24
             ) {
                 onResetBodyColor()
@@ -289,7 +289,7 @@ private struct WatchVariantDescriptor {
         guard
             let finish = finishes.first(where: { variantName.hasPrefix("\($0) ") })
         else {
-            bandName = "Watch"
+            bandName = String(localized: "Watch", comment: "Section title for Apple Watch frames without a named band")
             title = variantName
             subtitle = nil
             selectionLabel = variantName
@@ -297,7 +297,7 @@ private struct WatchVariantDescriptor {
         }
 
         let remainder = String(variantName.dropFirst(finish.count + 1))
-        let band = bandNames.first(where: { remainder.hasPrefix($0) }) ?? "Watch"
+        let band = bandNames.first(where: { remainder.hasPrefix($0) }) ?? String(localized: "Watch", comment: "Section title for Apple Watch frames without a named band")
         let bandDetail = String(remainder.dropFirst(band.count)).trimmingCharacters(in: .whitespaces)
 
         bandName = band
@@ -370,7 +370,7 @@ private struct DeviceFrameVariantSelector: View {
                 }
             }
         } label: {
-            Text(selectionLabel ?? "Watch style")
+            Text(selectionLabel ?? String(localized: "Watch style"))
                 .lineLimit(1)
                 .truncationMode(.tail)
         }

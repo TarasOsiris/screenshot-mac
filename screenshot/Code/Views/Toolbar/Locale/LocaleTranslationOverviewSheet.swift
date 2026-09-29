@@ -279,7 +279,7 @@ struct TranslationOverviewSheet: View {
     ) -> some View {
         HStack(spacing: 0) {
             headerColumn(
-                title: "Base Language",
+                title: String(localized: "Base Language"),
                 subtitle: baseLocale?.flagLabel ?? state.localeState.baseLocaleCode.uppercased()
             )
             .frame(width: baseColumnWidth, alignment: .leading)

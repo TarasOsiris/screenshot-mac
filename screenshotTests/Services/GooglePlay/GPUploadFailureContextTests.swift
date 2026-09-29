@@ -5,7 +5,7 @@ import Testing
 
 /// What the user is told when an upload fails, and whether the step is worth repeating.
 struct GPUploadFailureContextTests {
-    private func context(_ error: Error, operation: String = "upload screenshot 8") -> GPUploadFailureContext {
+    private func context(_ error: Error, operation: GPUploadOperation = .uploadScreenshot(number: 8)) -> GPUploadFailureContext {
         GPUploadFailureContext(
             operation: operation,
             target: GPUploadTarget(

@@ -90,7 +90,7 @@ final class RichTextFormatController {
             storage.endEditing()
             tv.didChangeText()
         }
-        undoManager.setActionName("Format Text")
+        undoManager.setActionName(String(localized: "Format Text", comment: "Undo action name for a rich-text formatting change"))
     }
 
     private func updatedTypingAttributes(

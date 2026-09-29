@@ -183,12 +183,12 @@ struct LocaleBar: View {
                     progress.translated >= progress.total
                 )
 
-                Button("Re-Translate All Text...", systemImage: "arrow.triangle.2.circlepath") {
+                Button("Re-Translate All Text…", systemImage: "arrow.triangle.2.circlepath") {
                     showReplaceAllConfirmation = true
                 }
                 .disabled(isQuickTranslating || progress.total == 0)
 
-                Button("Revert to Base Language...", systemImage: "arrow.uturn.backward", role: .destructive) {
+                Button("Revert to Base Language…", systemImage: "arrow.uturn.backward", role: .destructive) {
                     showResetToBaseConfirmation = true
                 }
                 .disabled(isQuickTranslating || !state.localeState.activeLocaleHasOverrides)
@@ -196,12 +196,12 @@ struct LocaleBar: View {
                 Divider()
             }
             if state.localeState.locales.count > 1 {
-                Button("Edit Translation Table...", systemImage: "tablecells") {
+                Button("Edit Translation Table…", systemImage: "tablecells") {
                     isTranslationOverview = true
                 }
                 .disabled(progress.total == 0)
             }
-            Button("Manage Languages...", systemImage: "globe") {
+            Button("Manage Languages…", systemImage: "globe") {
                 isManagingLocales = true
             }
         } label: {

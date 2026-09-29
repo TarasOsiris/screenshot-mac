@@ -23,7 +23,7 @@ extension AppState {
         teardownActiveProject()
 
         let sanitized = String(name.trimmingCharacters(in: .whitespacesAndNewlines).prefix(Self.maxProjectNameLength))
-        let baseName = sanitized.isEmpty ? "Project" : sanitized
+        let baseName = sanitized.isEmpty ? String(localized: "Project", comment: "Default name for a project created without a name") : sanitized
         let project = Project(name: uniqueProjectName(baseName))
         projects.append(project)
         activeProjectId = project.id

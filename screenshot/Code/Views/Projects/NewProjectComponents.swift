@@ -29,8 +29,8 @@ struct NewProjectModePicker: View {
 }
 
 private struct NewProjectModeCard: View {
-    let title: String
-    let subtitle: String
+    let title: LocalizedStringKey
+    let subtitle: LocalizedStringKey
     let icon: String
     let mode: NewProjectCreationMode
     @Binding var selectedMode: NewProjectCreationMode

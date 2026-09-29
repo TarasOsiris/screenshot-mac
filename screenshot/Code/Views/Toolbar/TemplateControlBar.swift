@@ -193,7 +193,7 @@ struct TemplateControlBar: View {
             }
             .disabled(isPreviewing)
             #if os(macOS)
-            Button("Save as PNG...", systemImage: "square.and.arrow.down") {
+            Button("Save as PNG…", systemImage: "square.and.arrow.down") {
                 downloadScreenshot()
             }
             #else

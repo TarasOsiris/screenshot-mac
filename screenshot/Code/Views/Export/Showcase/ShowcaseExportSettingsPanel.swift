@@ -313,11 +313,11 @@ private struct ShowcaseLayoutSection: View {
 }
 
 private struct ShowcasePercentSliderRow: View {
-    let label: String
+    let label: LocalizedStringKey
     @Binding var value: Double
     let range: ClosedRange<Double>
 
-    init(_ label: String, value: Binding<Double>, range: ClosedRange<Double>) {
+    init(_ label: LocalizedStringKey, value: Binding<Double>, range: ClosedRange<Double>) {
         self.label = label
         _value = value
         self.range = range

@@ -51,7 +51,7 @@ struct CanvasShapeContextMenuContent: View {
         if !isMultiSelected {
             if shape.type == .device {
                 Menu {
-                    Button("Replace Image...", systemImage: "photo") {
+                    Button("Replace Image…", systemImage: "photo") {
                         onRequestImagePicker?()
                     }
                     Button("Reset Image", systemImage: "arrow.counterclockwise") {
@@ -73,7 +73,7 @@ struct CanvasShapeContextMenuContent: View {
                 }
                 Divider()
             } else if shape.type == .image {
-                Button("Replace Image...", systemImage: "photo") {
+                Button("Replace Image…", systemImage: "photo") {
                     onRequestImagePicker?()
                 }
                 Button("Reset Image", systemImage: "arrow.counterclockwise") {
@@ -207,7 +207,7 @@ struct CanvasShapeContextMenuContent: View {
 
         if shape.type == .svg {
             if !isMultiSelected, let onReplaceSvg {
-                Button("Replace SVG...", systemImage: "arrow.triangle.2.circlepath", action: onReplaceSvg)
+                Button("Replace SVG…", systemImage: "arrow.triangle.2.circlepath", action: onReplaceSvg)
             }
             if let originalSize = svgOriginalSize {
                 Button("Restore Original Aspect Ratio", systemImage: "aspectratio") {

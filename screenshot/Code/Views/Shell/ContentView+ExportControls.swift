@@ -91,7 +91,7 @@ extension ContentView {
 
     @ViewBuilder
     var exportMenuContent: some View {
-        Button("Export All Screenshots to Folder...", systemImage: "square.and.arrow.up") {
+        Button("Export All Screenshots to Folder…", systemImage: "square.and.arrow.up") {
             exportScreenshotsAs()
         }
 

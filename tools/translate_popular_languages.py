@@ -233,7 +233,7 @@ def translate_language(strings: dict[str, dict], xcstrings_language: str, servic
         if xcstrings_language in localizations:
             continue
 
-        source = key
+        source = xcstrings_format.source_text(key, payload)
         if needs_verbatim_copy(source):
             localizations[xcstrings_language] = {
                 "stringUnit": {

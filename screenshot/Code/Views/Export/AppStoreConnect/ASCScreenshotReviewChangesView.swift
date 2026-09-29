@@ -42,7 +42,7 @@ struct ASCScreenshotReviewChangesView: View {
         stateView(
             icon: "arrow.clockwise.circle",
             title: "Review is out of date",
-            message: coordinator.errorMessage ?? "The project or App Store screenshots changed after this comparison was created.",
+            message: coordinator.errorMessage ?? String(localized: "The project or App Store screenshots changed after this comparison was created."),
             actionTitle: "Refresh Changes",
             action: refresh
         )
@@ -52,7 +52,7 @@ struct ASCScreenshotReviewChangesView: View {
         stateView(
             icon: "photo.on.rectangle.angled",
             title: "No comparison available",
-            message: "Return to the plan and review the screenshots again.",
+            message: String(localized: "Return to the plan and review the screenshots again."),
             actionTitle: "Refresh Changes",
             action: refresh
         )

@@ -24,7 +24,7 @@ nonisolated struct UploadTargetClaim {
 nonisolated enum StoreUploadChecks {
     /// Rows may be unlabelled; every message still needs something to call them.
     static func rowName(_ label: String) -> String {
-        label.isEmpty ? "Row" : label
+        label.isEmpty ? String(localized: "Row") : label
     }
 
     static func sizeLabel(_ size: CGSize) -> String {
@@ -37,12 +37,12 @@ nonisolated enum StoreUploadChecks {
         if planCount == 0 {
             return UploadIssue(
                 severity: .error,
-                message: "This project has no rows to upload.",
-                hint: "Add a row in the editor before running the upload."
+                message: String(localized: "This project has no rows to upload."),
+                hint: String(localized: "Add a row in the editor before running the upload.")
             )
         }
         if enabledCount == 0 {
-            return UploadIssue(severity: .error, message: "Enable at least one row to upload.")
+            return UploadIssue(severity: .error, message: String(localized: "Enable at least one row to upload."))
         }
         return nil
     }

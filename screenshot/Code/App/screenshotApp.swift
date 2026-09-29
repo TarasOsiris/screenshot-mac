@@ -361,24 +361,24 @@ struct ScreenshotBroApp: App {
                     translationProgress.translated >= translationProgress.total
                 )
 
-                Button("Re-Translate All Text...") {
+                Button("Re-Translate All Text…") {
                     appState.localeMenu.pendingMenuRequest = .reTranslateAll
                 }
                 .disabled(appState.localeState.isBaseLocale || translationProgress.total == 0)
 
-                Button("Revert to Base Language...") {
+                Button("Revert to Base Language…") {
                     appState.localeMenu.pendingMenuRequest = .revertToBase
                 }
                 .disabled(!appState.localeState.activeLocaleHasOverrides)
 
                 Divider()
 
-                Button("Edit Translations...") {
+                Button("Edit Translations…") {
                     appState.localeMenu.pendingMenuRequest = .editTranslations
                 }
                 .disabled(appState.localeState.locales.count < 2 || translationProgress.total == 0)
 
-                Button("Manage Languages...") {
+                Button("Manage Languages…") {
                     appState.localeMenu.pendingMenuRequest = .manageLocales
                 }
             }
@@ -547,7 +547,7 @@ private struct NewProjectCommands: Commands {
 
     var body: some Commands {
         CommandGroup(replacing: .newItem) {
-            Button("New Project...") {
+            Button("New Project…") {
                 openWindow(id: NewProjectWindowView.windowID)
             }
             .keyboardShortcut("n", modifiers: .command)

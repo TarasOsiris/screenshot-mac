@@ -2,6 +2,32 @@ import SwiftUI
 import UniformTypeIdentifiers
 
 extension AppState {
+    /// Which image write failed, spelled as whole sentences so each reads naturally once translated.
+    enum ImageResourceSaveAction {
+        case saveScreenshot
+        case saveFillImage
+        case saveBackgroundImage
+
+        var encodeFailedMessage: String {
+            switch self {
+            case .saveScreenshot: String(localized: "Failed to save screenshot: could not encode image.")
+            case .saveFillImage: String(localized: "Failed to save fill image: could not encode image.")
+            case .saveBackgroundImage: String(localized: "Failed to save background image: could not encode image.")
+            }
+        }
+
+        func writeFailedMessage(_ reason: String) -> String {
+            switch self {
+            case .saveScreenshot:
+                String(localized: "Failed to save screenshot: \(reason)", comment: "The placeholder is the system's error description.")
+            case .saveFillImage:
+                String(localized: "Failed to save fill image: \(reason)", comment: "The placeholder is the system's error description.")
+            case .saveBackgroundImage:
+                String(localized: "Failed to save background image: \(reason)", comment: "The placeholder is the system's error description.")
+            }
+        }
+    }
+
     // MARK: - Shape Fill Images
 
     func saveShapeFillImage(_ image: NSImage, for shapeId: UUID) {
@@ -15,7 +41,7 @@ extension AppState {
                 image,
                 named: fileName,
                 activeId: activeId,
-                action: "save fill image"
+                action: .saveFillImage
             ) else {
                 return
             }
@@ -58,7 +84,7 @@ extension AppState {
                 image,
                 named: fileName,
                 activeId: activeId,
-                action: "save background image"
+                action: .saveBackgroundImage
             ) else {
                 return
             }
@@ -115,10 +141,10 @@ extension AppState {
         _ image: NSImage,
         named fileName: String,
         activeId: UUID,
-        action: String
+        action: ImageResourceSaveAction
     ) -> NSImage? {
         guard let pngData = ExportService.pngData(from: image) else {
-            saveError = String(localized: "Failed to \(action): could not encode image.")
+            saveError = action.encodeFailedMessage
             return nil
         }
 
@@ -126,7 +152,7 @@ extension AppState {
         do {
             try ImageResourceIO.writeData(pngData, url)
         } catch {
-            saveError = String(localized: "Failed to \(action): \(error.localizedDescription)")
+            saveError = action.writeFailedMessage(error.localizedDescription)
             return nil
         }
 

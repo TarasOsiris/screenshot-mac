@@ -59,7 +59,7 @@ struct SvgPasteDialog: View {
                     }
 
                 if svgText.isEmpty {
-                    Text("Paste your SVG here...")
+                    Text("Paste your SVG here…")
                         .font(.system(size: 11, design: .monospaced))
                         .foregroundStyle(.tertiary)
                         .padding(.top, 7)
@@ -104,7 +104,7 @@ struct SvgPasteDialog: View {
 
             #if os(macOS)
             HStack {
-                Button("Import File...") {
+                Button("Import File…") {
                     importFile()
                 }
 

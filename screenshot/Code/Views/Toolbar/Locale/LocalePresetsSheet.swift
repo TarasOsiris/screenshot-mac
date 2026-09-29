@@ -247,7 +247,7 @@ private struct LocalePresetsSheet: View {
                 .padding(.top, 16)
                 .padding(.bottom, 8)
 
-            TextField("Search languages...", text: $searchText)
+            TextField("Search languages…", text: $searchText)
                 .textFieldStyle(.roundedBorder)
                 .padding(.horizontal, 16)
                 .padding(.bottom, 8)
@@ -306,7 +306,7 @@ private struct LocalePresetsSheet: View {
         .searchable(
             text: $searchText,
             placement: .navigationBarDrawer(displayMode: .always),
-            prompt: Text("Search languages...")
+            prompt: Text("Search languages…")
         )
         .overlay {
             if availablePresets.isEmpty && !searchText.isEmpty {

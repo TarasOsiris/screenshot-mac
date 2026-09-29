@@ -335,7 +335,7 @@ extension AppState {
 
     func toggleShowDevice(for rowId: UUID) {
         guard let idx = rowIndex(for: rowId) else { return }
-        withUndo(rows[idx].showDevice ? String(localized: "Hide Devices") : String(localized: "Show Devices")) {
+        withUndo(rows[idx].showDevice ? "Hide Devices" : "Show Devices") {
             rows[idx].showDevice.toggle()
         }
     }
@@ -348,7 +348,7 @@ extension AppState {
 
     func toggleShowBorders(for rowId: UUID) {
         guard let idx = rowIndex(for: rowId) else { return }
-        withUndo(rows[idx].showBorders ? String(localized: "Hide Borders") : String(localized: "Show Borders")) {
+        withUndo(rows[idx].showBorders ? "Hide Borders" : "Show Borders") {
             rows[idx].showBorders.toggle()
         }
     }
@@ -364,7 +364,7 @@ extension AppState {
     func toggleShapeTypeVisibility(for rowId: UUID, type: ShapeType) {
         guard let idx = rowIndex(for: rowId) else { return }
         let isCurrentlyVisible = !rows[idx].hiddenShapeTypes.contains(type)
-        withUndo(isCurrentlyVisible ? "Hide \(type.pluralLabel)" : "Show \(type.pluralLabel)") {
+        withUndo(isCurrentlyVisible ? "Hide \(type.rawValue) shapes" : "Show \(type.rawValue) shapes") {
             if isCurrentlyVisible {
                 rows[idx].hiddenShapeTypes.insert(type)
             } else {

@@ -172,7 +172,7 @@ private struct ASCDisplayTypePicker: View {
                 }
             } label: {
                 HStack {
-                    Text(plan.selectedAssetType?.label ?? "Select…")
+                    Text(plan.selectedAssetType?.label ?? String(localized: "Select…"))
                         .lineLimit(1)
                     Spacer()
                     #if os(iOS)
@@ -209,7 +209,7 @@ private struct ASCDisplayTypeDetailsPopover: View {
                 Text(verbatim: plan.sizeLabel)
             }
             LabeledContent("Auto-detected") {
-                Text(plan.detectedAssetType?.label ?? "No exact match")
+                Text(plan.detectedAssetType?.label ?? String(localized: "No exact match", comment: "No App Store Connect display type matches this row's size"))
             }
             if let selected = plan.selectedAssetType {
                 LabeledContent("Upload target") {

@@ -91,11 +91,11 @@ struct TextLocalizationSheetContent: View {
             }
 
             Section {
-                Button("Edit Translation Table...") {
+                Button("Edit Translation Table…") {
                     followUp = .editTranslations
                     dismiss()
                 }
-                Button("Manage Languages...") {
+                Button("Manage Languages…") {
                     followUp = .manageLocales
                     dismiss()
                 }

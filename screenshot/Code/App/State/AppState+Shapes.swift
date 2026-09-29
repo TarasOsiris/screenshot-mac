@@ -175,7 +175,7 @@ extension AppState {
         guard let idx = rowIndex(for: rowId) else { return }
         let matching = rows[idx].shapes.filter { $0.type == type }
         guard !matching.isEmpty else { return }
-        withRowUndo("Delete All \(type.pluralLabel)", rowId: rowId) {
+        withRowUndo("Delete All \(type.rawValue) shapes", rowId: rowId) {
             let allCandidates = imageFileNames(for: matching)
             let matchingIds = Set(matching.map(\.id))
             for shape in matching {

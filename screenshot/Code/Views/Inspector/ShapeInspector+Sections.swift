@@ -265,7 +265,7 @@ extension ShapeInspector {
     func localizationSection(shape: CanvasShapeModel, fields: Set<LocaleOverrideField>) -> some View {
         if shape.type == .text && state.localeState.nonBaseLocaleCount > 0 {
             InspectorSection(.shapeLocalization, "Localization", accessory: { overrideBadge(.translation, fields) }) {
-                Button("Edit Translations...") {
+                Button("Edit Translations…") {
                     isLocalizationPopoverPresented = true
                 }
                 .popover(isPresented: $isLocalizationPopoverPresented, arrowEdge: .leading) {

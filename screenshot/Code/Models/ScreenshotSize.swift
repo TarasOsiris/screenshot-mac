@@ -107,7 +107,7 @@ let displayCategories: [DisplayCategory] = [
         (1668, 2388, "iPad Pro 11\" (3rd/4th gen)"),
         (1640, 2360, "iPad (10th gen) / iPad mini (6th gen)"),
     ]),
-    DisplayCategory(name: "Mac Desktop", deviceCategory: .macbook, landscapeSizes: [
+    DisplayCategory(name: String(localized: "Mac Desktop", comment: "Screenshot display category for Mac App Store screenshots"), deviceCategory: .macbook, landscapeSizes: [
         (2880, 1800, "Retina 16:10"),
         (2560, 1600, "Retina 16:10"),
         (1440, 900, "Standard 16:10"),

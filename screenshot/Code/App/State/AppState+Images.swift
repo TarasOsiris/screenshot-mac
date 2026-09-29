@@ -204,7 +204,7 @@ extension AppState {
             image,
             named: fileName,
             activeId: activeId,
-            action: Self.saveScreenshotAction
+            action: .saveScreenshot
         ) else {
             return false
         }
@@ -274,11 +274,6 @@ extension AppState {
         rows[location.rowIndex].shapes[location.shapeIndex] = shape
         return previous
     }
-
-    /// Interpolated into the shared "Failed to %@: ..." messages, so the staged path reports the
-    /// same wording as the synchronous `persistImageResource` one. Deliberately not localized —
-    /// the surrounding format string is, and that is the pre-existing convention here.
-    static let saveScreenshotAction = "save screenshot"
 
     private func screenshotImageFileName(for shapeId: UUID, localeCode: String?) -> String {
         let localePart = localeCode.map { "-\($0)" } ?? ""
@@ -577,10 +572,10 @@ extension AppState {
                 // The model already references this name. Leaving the reference is the least
                 // destructive outcome: a missing resource loads as an empty device, whereas
                 // retracting it would edit the document after the undo step has closed.
-                saveError = String(localized: "Failed to \(Self.saveScreenshotAction): \(reason)")
+                saveError = ImageResourceSaveAction.saveScreenshot.writeFailedMessage(reason)
                 continue
             } catch {
-                saveError = String(localized: "Failed to \(Self.saveScreenshotAction): could not encode image.")
+                saveError = ImageResourceSaveAction.saveScreenshot.encodeFailedMessage
                 continue
             }
 

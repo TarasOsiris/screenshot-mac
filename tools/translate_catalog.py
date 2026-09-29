@@ -19,11 +19,15 @@ import xcstrings_format
 CATALOG = Path(__file__).parent.parent / "screenshot" / "Localizable.xcstrings"
 # Globbed rather than hardcoded: the DerivedData hash differs per checkout, and a
 # stale absolute path fails silently as "merged 0 keys".
-STRINGSDATA_GLOB = str(
-    Path.home() / "Library/Developer/Xcode/DerivedData"
-    / "screenshot-*/Build/Intermediates.noindex"
-    / "screenshot.build/Debug/screenshot.build/Objects-normal/arm64/*.stringsdata"
-)
+# macOS and iOS Simulator both, so `#if os(iOS)`-only strings are merged too.
+STRINGSDATA_GLOBS = [
+    str(
+        Path.home() / "Library/Developer/Xcode/DerivedData"
+        / "screenshot-*/Build/Intermediates.noindex"
+        / f"screenshot.build/{configuration}/screenshot.build/Objects-normal/arm64/*.stringsdata"
+    )
+    for configuration in ("Debug", "Debug-iphonesimulator")
+]
 
 # Keys intentionally NOT translated (identical in Spanish: format strings,
 # brand names, identifiers, file extensions, attribution, examples).
@@ -709,10 +713,10 @@ LOCALIZATION_REPAIRS = {
 }
 
 
-def collect_extracted_keys() -> set[str]:
-    """Read Xcode's .stringsdata outputs for the Localizable table."""
-    keys = set()
-    for sd in glob.glob(STRINGSDATA_GLOB):
+def collect_extracted_keys() -> dict[str, dict]:
+    """Read Xcode's .stringsdata outputs for the Localizable table, keyed by string key."""
+    keys: dict[str, dict] = {}
+    for sd in (path for pattern in STRINGSDATA_GLOBS for path in glob.glob(pattern)):
         try:
             payload = json.loads(Path(sd).read_text())
         except Exception:
@@ -722,8 +726,19 @@ def collect_extracted_keys() -> set[str]:
                 continue
             for entry in entries:
                 if key := entry.get("key"):
-                    keys.add(key)
+                    keys.setdefault(key, entry)
     return keys
+
+
+def new_catalog_entry(extracted: dict) -> dict:
+    """A catalog entry for a key Xcode extracted; `defaultValue:` keys keep their English."""
+    entry: dict = {}
+    if comment := extracted.get("comment"):
+        entry["comment"] = comment
+    if (value := extracted.get("value")) is not None:
+        entry["extractionState"] = "extracted_with_value"
+        entry["localizations"] = {"en": {"stringUnit": {"state": "new", "value": value}}}
+    return entry
 
 
 def main():
@@ -732,9 +747,9 @@ def main():
 
     # Merge any keys that Xcode extracted but didn't land in the catalog.
     merged = 0
-    for key in collect_extracted_keys():
+    for key, extracted in collect_extracted_keys().items():
         if key not in strings:
-            strings[key] = {}
+            strings[key] = new_catalog_entry(extracted)
             merged += 1
 
     added = 0

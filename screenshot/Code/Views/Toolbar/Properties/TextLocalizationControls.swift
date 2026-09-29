@@ -78,12 +78,12 @@ struct TextLocalizationControls: View, ShapeEditing {
             }
 
             HStack {
-                Button("Edit Translation Table...") {
+                Button("Edit Translation Table…") {
                     onDismiss()
                     state.localeMenu.pendingMenuRequest = .editTranslations
                 }
                 Spacer()
-                Button("Manage Languages...") {
+                Button("Manage Languages…") {
                     onDismiss()
                     state.localeMenu.pendingMenuRequest = .manageLocales
                 }

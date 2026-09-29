@@ -206,7 +206,7 @@ struct BackgroundEditor: View {
             )
 
             VStack(alignment: .leading, spacing: 2) {
-                Text("Center")
+                Text(LocalizedStringResource("gradient.center", defaultValue: "Center", comment: "Caption for the radial/angular gradient's center point (X/Y percentages below it)"))
                     .font(EditorFont.label)
                     .foregroundStyle(.secondary)
 
@@ -366,10 +366,10 @@ struct BackgroundImageEditor: View {
         #endif
 
         Picker("Fill", selection: $config.fillMode.onSet { onChanged() }) {
-            Text("Fill").tag(ImageFillMode.fill)
-            Text("Fit").tag(ImageFillMode.fit)
-            Text("Stretch").tag(ImageFillMode.stretch)
-            Text("Tile").tag(ImageFillMode.tile)
+            Text(LocalizedStringResource("fillMode.fill", defaultValue: "Fill", comment: "Background image fill mode (segmented control: Fill / Fit / Stretch / Tile)")).tag(ImageFillMode.fill)
+            Text(LocalizedStringResource("fillMode.fit", defaultValue: "Fit", comment: "Background image fill mode (segmented control: Fill / Fit / Stretch / Tile)")).tag(ImageFillMode.fit)
+            Text(LocalizedStringResource("fillMode.stretch", defaultValue: "Stretch", comment: "Background image fill mode (segmented control: Fill / Fit / Stretch / Tile)")).tag(ImageFillMode.stretch)
+            Text(LocalizedStringResource("fillMode.tile", defaultValue: "Tile", comment: "Background image fill mode (segmented control: Fill / Fit / Stretch / Tile)")).tag(ImageFillMode.tile)
         }
         .pickerStyle(.segmented)
         .labelsHidden()

@@ -43,12 +43,12 @@ struct LocaleToolbarButton: View {
                 }
                 .disabled(progress.total == 0 || progress.translated >= progress.total)
 
-                Button("Re-Translate All Text...", systemImage: "arrow.triangle.2.circlepath") {
+                Button("Re-Translate All Text…", systemImage: "arrow.triangle.2.circlepath") {
                     state.localeMenu.pendingMenuRequest = .reTranslateAll
                 }
                 .disabled(progress.total == 0)
 
-                Button("Revert to Base Language...", systemImage: "arrow.uturn.backward", role: .destructive) {
+                Button("Revert to Base Language…", systemImage: "arrow.uturn.backward", role: .destructive) {
                     state.localeMenu.pendingMenuRequest = .revertToBase
                 }
                 .disabled(!localeState.activeLocaleHasOverrides)
@@ -56,12 +56,12 @@ struct LocaleToolbarButton: View {
 
             Divider()
             if localeState.locales.count > 1 {
-                Button("Edit Translation Table...", systemImage: "tablecells") {
+                Button("Edit Translation Table…", systemImage: "tablecells") {
                     state.localeMenu.pendingMenuRequest = .editTranslations
                 }
                 .disabled(progress.total == 0)
             }
-            Button("Manage Languages...", systemImage: "globe") {
+            Button("Manage Languages…", systemImage: "globe") {
                 state.localeMenu.pendingMenuRequest = .manageLocales
             }
         } label: {

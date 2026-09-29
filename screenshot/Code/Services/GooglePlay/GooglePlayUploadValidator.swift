@@ -15,14 +15,14 @@ nonisolated enum GooglePlayUploadValidator {
             if trimmed.isEmpty {
                 issues.append(UploadIssue(
                     severity: .error,
-                    message: "Enter the app's package name (application ID).",
-                    hint: "For example: com.example.myapp"
+                    message: String(localized: "Enter the app's package name (application ID)."),
+                    hint: String(localized: "For example: com.example.myapp")
                 ))
             } else if !isValidPackageName(trimmed) {
                 issues.append(UploadIssue(
                     severity: .error,
-                    message: "\"\(trimmed)\" doesn't look like a valid package name.",
-                    hint: "Use the reverse-DNS application ID, e.g. com.example.myapp"
+                    message: String(localized: "\"\(trimmed)\" doesn't look like a valid package name."),
+                    hint: String(localized: "Use the reverse-DNS application ID, e.g. com.example.myapp")
                 ))
             }
         }
@@ -44,8 +44,8 @@ nonisolated enum GooglePlayUploadValidator {
                 perRow.append(UploadIssue(
                     severity: .error,
                     scope: rowName,
-                    message: "Row size \(sizeLabel) is outside Google Play's limits.",
-                    hint: "Screenshots must be 320–3840 px per edge with an aspect ratio no greater than 2:1."
+                    message: String(localized: "Row size \(sizeLabel) is outside Google Play's limits."),
+                    hint: String(localized: "Screenshots must be 320–3840 px per edge with an aspect ratio no greater than 2:1.")
                 ))
             }
 
@@ -53,16 +53,16 @@ nonisolated enum GooglePlayUploadValidator {
                 perRow.append(UploadIssue(
                     severity: .error,
                     scope: rowName,
-                    message: "Google Play requires at least \(GPUploadLimits.minScreenshotsPerType) screenshots per type; this row has \(plan.templateCount).",
-                    hint: "Add more screenshot columns to this row."
+                    message: String(localized: "Google Play requires at least \(GPUploadLimits.minScreenshotsPerType) screenshots per type; this row has \(plan.templateCount)."),
+                    hint: String(localized: "Add more screenshot columns to this row.")
                 ))
             }
             if plan.templateCount > GPUploadLimits.maxScreenshotsPerType {
                 perRow.append(UploadIssue(
                     severity: .error,
                     scope: rowName,
-                    message: "Google Play allows at most \(GPUploadLimits.maxScreenshotsPerType) screenshots per type; this row has \(plan.templateCount).",
-                    hint: "Remove columns to bring the count to \(GPUploadLimits.maxScreenshotsPerType) or fewer."
+                    message: String(localized: "Google Play allows at most \(GPUploadLimits.maxScreenshotsPerType) screenshots per type; this row has \(plan.templateCount)."),
+                    hint: String(localized: "Remove columns to bring the count to \(GPUploadLimits.maxScreenshotsPerType) or fewer.")
                 ))
             }
 
@@ -71,7 +71,7 @@ nonisolated enum GooglePlayUploadValidator {
                 perRow.append(UploadIssue(
                     severity: .error,
                     scope: rowName,
-                    message: "Enable at least one language to upload to."
+                    message: String(localized: "Enable at least one language to upload to.")
                 ))
             }
 
@@ -99,9 +99,9 @@ nonisolated enum GooglePlayUploadValidator {
             perRow.append(UploadIssue(
                 severity: .warning,
                 message: unsupported.count == 1
-                    ? "Google Play has no listing language for \(names), so it will be skipped."
-                    : "Google Play has no listing language for \(names), so they will be skipped.",
-                hint: "Play publishes one listing per language it supports; every other language uploads normally."
+                    ? String(localized: "Google Play has no listing language for \(names), so it will be skipped.")
+                    : String(localized: "Google Play has no listing language for \(names), so they will be skipped."),
+                hint: String(localized: "Play publishes one listing per language it supports; every other language uploads normally.")
             ))
         }
 
@@ -113,17 +113,17 @@ nonisolated enum GooglePlayUploadValidator {
                     severity: .error,
                     scope: rowName,
                     message: localeLabels.count == 2
-                        ? "\(names) both upload to Play's \(playCode) listing."
-                        : "\(names) all upload to Play's \(playCode) listing.",
-                    hint: "Play keeps one screenshot set per language — turn all but one of them off."
+                        ? String(localized: "\(names) both upload to Play's \(playCode) listing.")
+                        : String(localized: "\(names) all upload to Play's \(playCode) listing."),
+                    hint: String(localized: "Play keeps one screenshot set per language — turn all but one of them off.")
                 )
             },
             otherRow: { rowName, partner in
                 UploadIssue(
                     severity: .error,
                     scope: rowName,
-                    message: "This row uploads to the same Play listing slot as \(partner).",
-                    hint: "Disable one of these rows or pick a different image type."
+                    message: String(localized: "This row uploads to the same Play listing slot as \(partner)."),
+                    hint: String(localized: "Disable one of these rows or pick a different image type.")
                 )
             }
         ))

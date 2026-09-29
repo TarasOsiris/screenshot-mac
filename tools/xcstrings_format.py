@@ -38,3 +38,17 @@ def load(path: Path) -> dict:
 
 def write(path: Path, data: dict) -> None:
     Path(path).write_text(dumps(data))
+
+
+
+def source_text(key: str, entry: dict) -> str:
+    """The English a translator should work from.
+
+    Usually the key itself; a key declared with `defaultValue:` (e.g. `gradient.center`,
+    used to give one English word a second, separately translated meaning) carries its
+    English in the `en` localization instead.
+    """
+    value = entry.get("localizations", {}).get("en", {}).get("stringUnit", {}).get("value")
+    if value and entry.get("extractionState") == "extracted_with_value":
+        return value
+    return key

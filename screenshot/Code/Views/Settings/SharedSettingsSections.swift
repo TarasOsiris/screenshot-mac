@@ -117,7 +117,7 @@ struct ICloudStatusLabel: View {
 
     var body: some View {
         if !ICloudSyncService.shared.isUsingICloud {
-            Label("Connecting...", systemImage: "arrow.triangle.2.circlepath")
+            Label("Connecting…", systemImage: "arrow.triangle.2.circlepath")
                 .foregroundStyle(.secondary)
         } else {
             switch syncStatus {

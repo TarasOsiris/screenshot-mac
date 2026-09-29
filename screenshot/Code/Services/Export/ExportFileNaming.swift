@@ -78,7 +78,7 @@ enum ExportFileNaming {
         var used: Set<String> = [original.lowercased()]
         for variant in variants {
             let sanitized = sanitizedFileName(variant.name)
-            let base = sanitized.isEmpty ? "Variant" : sanitized
+            let base = sanitized.isEmpty ? String(localized: "Variant", comment: "Export folder name for a variant whose name is empty") : sanitized
             var name = base
             var suffix = 2
             while used.contains(name.lowercased()) {

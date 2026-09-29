@@ -31,13 +31,13 @@ nonisolated enum TemplateCategory: String, Codable, CaseIterable, Identifiable {
 
     var title: LocalizedStringResource {
         switch self {
-        case .minimal: "Minimal"
-        case .bold: "Playful"
-        case .editorial: "Editorial"
-        case .gradient: "Gradient"
-        case .colorful: "Colorful"
-        case .dark: "Dark"
-        case .showcase: "Device Showcase"
+        case .minimal: LocalizedStringResource("templateCategory.minimal", defaultValue: "Minimal", comment: "Template gallery style group")
+        case .bold: LocalizedStringResource("templateCategory.playful", defaultValue: "Playful", comment: "Template gallery style group")
+        case .editorial: LocalizedStringResource("templateCategory.editorial", defaultValue: "Editorial", comment: "Template gallery style group")
+        case .gradient: LocalizedStringResource("templateCategory.gradient", defaultValue: "Gradient", comment: "Template gallery style group")
+        case .colorful: LocalizedStringResource("templateCategory.colorful", defaultValue: "Colorful", comment: "Template gallery style group")
+        case .dark: LocalizedStringResource("templateCategory.dark", defaultValue: "Dark", comment: "Template gallery style group")
+        case .showcase: LocalizedStringResource("templateCategory.deviceShowcase", defaultValue: "Device Showcase", comment: "Template gallery style group")
         }
     }
 }

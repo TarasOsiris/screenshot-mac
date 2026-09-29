@@ -24,11 +24,11 @@ extension HelpSection {
     }
 
     private static let shortcutGroups: [ShortcutGroup] = [
-        ShortcutGroup(title: "File", rows: [
+        ShortcutGroup(title: LocalizedStringResource("shortcutGroup.file", defaultValue: "File", comment: "Keyboard Shortcuts help heading, named after the macOS File menu"), rows: [
             ShortcutRowItem(keys: "⌘N", description: "New project"),
             ShortcutRowItem(keys: "⌘E", description: "Export screenshots"),
         ]),
-        ShortcutGroup(title: "Edit", rows: [
+        ShortcutGroup(title: LocalizedStringResource("shortcutGroup.edit", defaultValue: "Edit", comment: "Keyboard Shortcuts help heading, named after the macOS Edit menu"), rows: [
             ShortcutRowItem(keys: "⌘Z", description: "Undo"),
             ShortcutRowItem(keys: "⌘⇧Z", description: "Redo"),
             ShortcutRowItem(keys: "⌘C", description: "Copy selected shapes, or focused text"),
@@ -37,37 +37,37 @@ extension HelpSection {
             ShortcutRowItem(keys: "⌘A", description: "Select all shapes in the active row, or focused text"),
             ShortcutRowItem(keys: "⌘D", description: "Duplicate selected shapes / row"),
             ShortcutRowItem(keys: "⌘L", description: "Lock or unlock selected shapes"),
-            ShortcutRowItem(keys: "Delete", description: "Delete selected shapes"),
-            ShortcutRowItem(keys: "Esc", description: "Deselect"),
+            ShortcutRowItem(keys: String(localized: "shortcutKey.delete", defaultValue: "Delete", comment: "Name of the Delete key on a Mac keyboard, in the Keyboard Shortcuts help"), description: "Delete selected shapes"),
+            ShortcutRowItem(keys: String(localized: "Esc", comment: "Name of the Escape key on a Mac keyboard, in the Keyboard Shortcuts help"), description: "Deselect"),
             ShortcutRowItem(keys: "⌘⇧]", description: "Bring shape to front"),
             ShortcutRowItem(keys: "⌘⇧[", description: "Send shape to back"),
             ShortcutRowItem(keys: "← → ↑ ↓", description: "Nudge selection by 1px"),
-            ShortcutRowItem(keys: "⇧ + Arrow", description: "Nudge selection by 10px"),
-            ShortcutRowItem(keys: "⌥ + Drag", description: "Duplicate while dragging"),
-            ShortcutRowItem(keys: "⇧ + Drag rotation handle", description: "Snap rotation to 15° steps"),
-            ShortcutRowItem(keys: "⇧ + Drag resize handle", description: "Lock aspect ratio"),
+            ShortcutRowItem(keys: String(localized: "⇧ + Arrow", comment: "Key or gesture in the Keyboard Shortcuts help"), description: "Nudge selection by 10px"),
+            ShortcutRowItem(keys: String(localized: "⌥ + Drag", comment: "Key or gesture in the Keyboard Shortcuts help"), description: "Duplicate while dragging"),
+            ShortcutRowItem(keys: String(localized: "⇧ + Drag rotation handle", comment: "Key or gesture in the Keyboard Shortcuts help"), description: "Snap rotation to 15° steps"),
+            ShortcutRowItem(keys: String(localized: "⇧ + Drag resize handle", comment: "Key or gesture in the Keyboard Shortcuts help"), description: "Lock aspect ratio"),
         ]),
-        ShortcutGroup(title: "View", rows: [
+        ShortcutGroup(title: LocalizedStringResource("shortcutGroup.view", defaultValue: "View", comment: "Keyboard Shortcuts help heading, named after the macOS View menu"), rows: [
             ShortcutRowItem(keys: "⌘+", description: "Zoom in"),
             ShortcutRowItem(keys: "⌘−", description: "Zoom out"),
             ShortcutRowItem(keys: "⌘0", description: "Reset to default zoom"),
             ShortcutRowItem(keys: "⌘⌥I", description: "Show or hide the inspector"),
             ShortcutRowItem(keys: "F", description: "Focus on selection"),
-            ShortcutRowItem(keys: "Pinch / ⌘ + Scroll", description: "Zoom canvas"),
-            ShortcutRowItem(keys: "Middle-click + drag", description: "Pan canvas"),
+            ShortcutRowItem(keys: String(localized: "Pinch / ⌘ + Scroll", comment: "Key or gesture in the Keyboard Shortcuts help"), description: "Zoom canvas"),
+            ShortcutRowItem(keys: String(localized: "Middle-click + drag", comment: "Key or gesture in the Keyboard Shortcuts help"), description: "Pan canvas"),
         ]),
         ShortcutGroup(title: "Language", rows: [
-            ShortcutRowItem(keys: "Language menu", description: "Lists every language you've added, plus every translation action"),
+            ShortcutRowItem(keys: String(localized: "Language menu", comment: "The toolbar Language menu, listed as a key in the Keyboard Shortcuts help"), description: "Lists every language you've added, plus every translation action"),
             ShortcutRowItem(keys: "⌘]", description: "Next language"),
             ShortcutRowItem(keys: "⌘[", description: "Previous language"),
             ShortcutRowItem(keys: "⌘⌥0", description: "Switch to base language"),
         ]),
         ShortcutGroup(title: "Text editing", rows: [
-            ShortcutRowItem(keys: "Double-click text", description: "Enter inline edit mode"),
-            ShortcutRowItem(keys: "Esc / click outside", description: "Commit text edit"),
+            ShortcutRowItem(keys: String(localized: "Double-click text", comment: "Key or gesture in the Keyboard Shortcuts help"), description: "Enter inline edit mode"),
+            ShortcutRowItem(keys: String(localized: "Esc / click outside", comment: "Key or gesture in the Keyboard Shortcuts help"), description: "Commit text edit"),
         ]),
-        ShortcutGroup(title: "Window", rows: [
-            ShortcutRowItem(keys: "Window ▸ Show Main Window", description: "Bring the editor back when its window is closed"),
+        ShortcutGroup(title: LocalizedStringResource("shortcutGroup.window", defaultValue: "Window", comment: "Keyboard Shortcuts help heading, named after the macOS Window menu"), rows: [
+            ShortcutRowItem(keys: String(localized: "Window ▸ Show Main Window", comment: "Menu path: the macOS Window menu, then its Show Main Window command. Match those menu titles."), description: "Bring the editor back when its window is closed"),
         ]),
         ShortcutGroup(title: "App", rows: [
             ShortcutRowItem(keys: "⌘,", description: "Open Settings"),

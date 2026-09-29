@@ -16,9 +16,9 @@ nonisolated enum GPImageType: String, CaseIterable, Identifiable {
 
     var label: String {
         switch self {
-        case .phoneScreenshots: return "Phone"
-        case .sevenInchScreenshots: return "7-inch tablet"
-        case .tenInchScreenshots: return "10-inch tablet"
+        case .phoneScreenshots: return String(localized: "Phone", comment: "Google Play screenshot image type")
+        case .sevenInchScreenshots: return String(localized: "7-inch tablet", comment: "Google Play screenshot image type")
+        case .tenInchScreenshots: return String(localized: "10-inch tablet", comment: "Google Play screenshot image type")
         }
     }
 
