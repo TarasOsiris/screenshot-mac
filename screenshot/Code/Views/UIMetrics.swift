@@ -296,15 +296,6 @@ enum UIMetrics {
         #endif
     }
 
-    enum LabeledControl {
-        #if os(macOS)
-        /// AppKit fields render their text below the label's native baseline in compact rows.
-        static let labelVerticalOffset: CGFloat = 4
-        #else
-        static let labelVerticalOffset: CGFloat = 0
-        #endif
-    }
-
     /// Collapsible sections in the selection / row inspector.
     enum InspectorSection {
         /// Between a section's separating rule and its title.

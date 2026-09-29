@@ -7,6 +7,7 @@ import SwiftUI
 struct TextFontPickerControl: View, ShapeEditing {
     let state: AppState
     let shapeId: UUID
+    var presentation: FontPicker.Presentation = .menu
 
     var body: some View {
         FontPicker(
@@ -17,7 +18,8 @@ struct TextFontPickerControl: View, ShapeEditing {
             onApplyImportedSelection: { imported in
                 applyImportedFontSelection(imported, to: shapeId)
             },
-            onImportFont: { url in state.importCustomFont(from: url) }
+            onImportFont: { url in state.importCustomFont(from: url) },
+            presentation: presentation
         )
     }
 }
@@ -39,6 +41,7 @@ struct MultiTextFontPickerControl: View, MultiShapeEditing {
     let state: AppState
     /// The first selected shape's custom-font state; the whole selection follows it.
     let controlState: CustomFontControlState?
+    var presentation: FontPicker.Presentation = .menu
 
     var body: some View {
         FontPicker(
@@ -47,7 +50,8 @@ struct MultiTextFontPickerControl: View, MultiShapeEditing {
             italic: multiItalicBinding(controlState: controlState),
             customFaces: state.customFaces,
             onApplyImportedSelection: { applyImportedFontSelectionOnSelection($0) },
-            onImportFont: { url in state.importCustomFont(from: url) }
+            onImportFont: { url in state.importCustomFont(from: url) },
+            presentation: presentation
         )
     }
 }
@@ -178,12 +182,32 @@ struct TextVerticalAlignPicker: View {
 struct TextLetterSpacingControl: View, ShapeEditing {
     let state: AppState
     let shapeId: UUID
-    let sliderWidth: CGFloat
+    var sliderWidth: CGFloat = UIMetrics.SliderWidth.standard
+    /// `.formRow` is the whole labeled inspector row; otherwise just the value, for the bar to label.
+    var layout: InspectorValueLayout = .strip
+
+    private static let range: ClosedRange<CGFloat> = -5...30
 
     var body: some View {
         let trackingBinding = shapeBinding(shapeId, \.letterSpacing, default: 0, continuous: true)
+        if layout == .formRow {
+            PopoverSliderRow(
+                label: "Letter Spacing",
+                value: trackingBinding,
+                range: Self.range,
+                layout: layout,
+                format: { Double($0).formatted(.number.precision(.fractionLength(1))) }
+            ) {
+                resetButton(trackingBinding)
+            }
+        } else {
+            stripControl(trackingBinding)
+        }
+    }
+
+    private func stripControl(_ trackingBinding: Binding<CGFloat>) -> some View {
         HStack(spacing: 4) {
-            Slider(value: trackingBinding, in: -5...30)
+            Slider(value: trackingBinding, in: Self.range)
                 .frame(width: sliderWidth)
 
             Text(trackingBinding.wrappedValue, format: .number.precision(.fractionLength(1)))
@@ -195,15 +219,19 @@ struct TextLetterSpacingControl: View, ShapeEditing {
                 .help("Double-tap to reset")
                 #endif
 
-            // Disabled rather than hidden, so dragging off zero doesn't shift the slider.
-            ActionButton(
-                icon: "arrow.counterclockwise",
-                tooltip: "Reset letter spacing",
-                frameSize: UIMetrics.IconButton.frameSize,
-                disabled: trackingBinding.wrappedValue == 0
-            ) {
-                trackingBinding.wrappedValue = 0
-            }
+            resetButton(trackingBinding)
+        }
+    }
+
+    /// Disabled rather than hidden, so dragging off zero doesn't shift the slider.
+    private func resetButton(_ trackingBinding: Binding<CGFloat>) -> some View {
+        ActionButton(
+            icon: "arrow.counterclockwise",
+            tooltip: "Reset letter spacing",
+            frameSize: UIMetrics.IconButton.frameSize,
+            disabled: trackingBinding.wrappedValue == 0
+        ) {
+            trackingBinding.wrappedValue = 0
         }
     }
 }
@@ -224,22 +252,46 @@ struct TextClearFormattingButton: View, ShapeEditing {
 struct TextBackgroundControls: View, ShapeEditing {
     let state: AppState
     let shapeId: UUID
-    /// Two columns of presets instead of one row, for a column narrower than the popover.
-    var wrapsPresets = false
+    /// `.formRow` lays the controls out as the selection inspector's separated label/value rows.
+    var layout: InspectorValueLayout = .popoverColumn
 
     var body: some View {
-        let isOn = textBackgroundEnabledBinding(shapeId)
-        let hasOutline = textBackgroundOutlineEnabledBinding(shapeId)
+        if layout == .formRow {
+            formRows
+        } else {
+            popoverColumn
+        }
+    }
 
-        VStack(alignment: .leading, spacing: 10) {
-            // One-tap presets — applying a preset also turns the background on.
-            if wrapsPresets {
-                LazyVGrid(columns: [GridItem(.flexible(), spacing: 6), GridItem(.flexible(), spacing: 6)], alignment: .leading, spacing: 6) {
-                    presetButtons
+    @ViewBuilder
+    private var formRows: some View {
+        let isOn = textBackgroundEnabledBinding(shapeId)
+        let matching = matchingPresetName
+        Toggle("Background", isOn: isOn)
+            .toggleStyle(.switch)
+        // Applying a preset also turns the background on, so it stays reachable while off.
+        EditorLabeledContent("Preset") {
+            Picker("Preset", selection: presetNameBinding(current: matching)) {
+                if matching == nil {
+                    Text(isOn.wrappedValue ? "Custom" : "None").tag(String?.none)
                 }
-            } else {
-                HStack(spacing: 6) { presetButtons }
+                ForEach(TextBackgroundPreset.presets) { preset in
+                    Text(verbatim: preset.name).tag(Optional(preset.name))
+                }
             }
+            .inspectorPopUpPicker()
+        }
+        if isOn.wrappedValue {
+            backgroundRows
+            outlineRows
+        }
+    }
+
+    private var popoverColumn: some View {
+        let isOn = textBackgroundEnabledBinding(shapeId)
+        return VStack(alignment: .leading, spacing: 10) {
+            // One-tap presets — applying a preset also turns the background on.
+            HStack(spacing: 6) { presetButtons }
 
             Divider()
 
@@ -248,72 +300,100 @@ struct TextBackgroundControls: View, ShapeEditing {
                 .controlSize(.small)
 
             if isOn.wrappedValue {
-                EditorLabeledContent("Color") {
-                    PaletteColorPicker(
-                        "",
-                        selection: shapeBinding(shapeId, \.textBackgroundColor, default: CanvasShapeModel.defaultTextBackgroundColor),
-                        supportsOpacity: true, wellWidth: UIMetrics.ColorSwatch.inline
-                    )
-                    .labelsHidden()
-                }
-
-                PopoverSliderField(
-                    label: "Padding",
-                    value: shapeBinding(shapeId, \.textBackgroundPadding, default: 0, continuous: true),
-                    range: 0...100
-                )
-
-                PopoverSliderField(
-                    label: "Radius",
-                    value: shapeBinding(shapeId, \.textBackgroundCornerRadius, default: 0, continuous: true),
-                    range: 0...100
-                )
-
-                PopoverSliderField(
-                    label: "Opacity",
-                    value: textBackgroundOpacityPercentBinding(shapeId),
-                    range: 0...100,
-                    resetValue: 100
-                )
-
+                backgroundRows
                 Divider()
-
-                Toggle("Outline", isOn: hasOutline)
-                    .toggleStyle(.switch)
-                    .controlSize(.small)
-                    .help(hasOutline.wrappedValue ? String(localized: "Disable outline") : String(localized: "Enable outline"))
-
-                if hasOutline.wrappedValue {
-                    EditorLabeledContent("Outline") {
-                        PaletteColorPicker(
-                            "",
-                            selection: shapeBinding(
-                                shapeId,
-                                \.textBackgroundOutlineColor,
-                                default: CanvasShapeModel.defaultTextBackgroundOutlineColor
-                            ),
-                            supportsOpacity: true
-                        )
-                        .labelsHidden()
-                        .frame(width: UIMetrics.ColorSwatch.inline)
-                    }
-
-                    PopoverSliderField(
-                        label: "Width",
-                        value: shapeBinding(
-                            shapeId,
-                            \.textBackgroundOutlineWidth,
-                            default: CanvasShapeModel.defaultTextBackgroundOutlineWidth,
-                            continuous: true
-                        ),
-                        range: 1...50,
-                        resetValue: CanvasShapeModel.defaultTextBackgroundOutlineWidth
-                    )
-                }
+                outlineRows
             }
         }
         .scaledFont(UIMetrics.FontSize.body)
         .controlSize(.small)
+    }
+
+    @ViewBuilder
+    private var backgroundRows: some View {
+        EditorLabeledContent("Color") {
+            PaletteColorPicker(
+                "",
+                selection: shapeBinding(shapeId, \.textBackgroundColor, default: CanvasShapeModel.defaultTextBackgroundColor),
+                supportsOpacity: true, wellWidth: UIMetrics.ColorSwatch.inline
+            )
+            .labelsHidden()
+        }
+
+        PopoverSliderField(
+            label: "Padding",
+            value: shapeBinding(shapeId, \.textBackgroundPadding, default: 0, continuous: true),
+            range: 0...100,
+            layout: layout
+        )
+
+        PopoverSliderField(
+            label: "Radius",
+            value: shapeBinding(shapeId, \.textBackgroundCornerRadius, default: 0, continuous: true),
+            range: 0...100,
+            layout: layout
+        )
+
+        PopoverSliderField(
+            label: "Opacity",
+            value: textBackgroundOpacityPercentBinding(shapeId),
+            range: 0...100,
+            resetValue: 100,
+            layout: layout,
+            unit: "%"
+        )
+    }
+
+    @ViewBuilder
+    private var outlineRows: some View {
+        let hasOutline = textBackgroundOutlineEnabledBinding(shapeId)
+        Toggle("Outline", isOn: hasOutline)
+            .toggleStyle(.switch)
+            .help(hasOutline.wrappedValue ? String(localized: "Disable outline") : String(localized: "Enable outline"))
+
+        if hasOutline.wrappedValue {
+            EditorLabeledContent("Outline") {
+                PaletteColorPicker(
+                    "",
+                    selection: shapeBinding(
+                        shapeId,
+                        \.textBackgroundOutlineColor,
+                        default: CanvasShapeModel.defaultTextBackgroundOutlineColor
+                    ),
+                    supportsOpacity: true
+                )
+                .labelsHidden()
+                .frame(width: UIMetrics.ColorSwatch.inline)
+            }
+
+            PopoverSliderField(
+                label: "Width",
+                value: shapeBinding(
+                    shapeId,
+                    \.textBackgroundOutlineWidth,
+                    default: CanvasShapeModel.defaultTextBackgroundOutlineWidth,
+                    continuous: true
+                ),
+                range: 1...50,
+                resetValue: CanvasShapeModel.defaultTextBackgroundOutlineWidth,
+                layout: layout
+            )
+        }
+    }
+
+    private var matchingPresetName: String? {
+        guard let shape = resolvedDocumentShape(shapeId), shape.textBackgroundColorData != nil else { return nil }
+        return TextBackgroundPreset.presets.first { $0.matches(shape) }?.name
+    }
+
+    private func presetNameBinding(current: String?) -> Binding<String?> {
+        Binding(
+            get: { current },
+            set: { name in
+                guard let preset = TextBackgroundPreset.presets.first(where: { $0.name == name }) else { return }
+                applyTextBackgroundPreset(preset, shapeId: shapeId)
+            }
+        )
     }
 
     @ViewBuilder

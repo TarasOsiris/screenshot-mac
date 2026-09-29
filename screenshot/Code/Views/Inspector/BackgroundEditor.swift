@@ -4,13 +4,11 @@ import UniformTypeIdentifiers
 /// Desktop-dense fixed-point fonts on macOS; standard Dynamic Type styles on iPad.
 private enum EditorFont {
     #if os(macOS)
-    static let row = Font.system(size: UIMetrics.FontSize.body)
     static let label = Font.system(size: UIMetrics.FontSize.inlineLabel)
     static let value = Font.system(size: UIMetrics.FontSize.numericBadge).monospacedDigit()
     static let hint = Font.system(size: UIMetrics.FontSize.hint)
     static let axisValue = Font.system(size: UIMetrics.FontSize.hint).monospacedDigit()
     #else
-    static let row = Font.body
     static let label = Font.subheadline
     static let value = Font.footnote.monospacedDigit()
     static let hint = Font.footnote
@@ -19,7 +17,6 @@ private enum EditorFont {
 }
 
 #if os(macOS)
-private let sliderValueColumnWidth: CGFloat = 38
 private let axisValueColumnWidth: CGFloat = 34
 private let axisLabelWidth: CGFloat = 10
 #else
@@ -49,42 +46,37 @@ struct BackgroundEditor: View {
     #endif
 
     var body: some View {
-        Picker("Style", selection: $backgroundStyle.onSet { onChanged() }) {
-            Text("Color").tag(BackgroundStyle.color)
-            Text("Gradient").tag(BackgroundStyle.gradient)
-            if allowsImage {
-                Text("Image").tag(BackgroundStyle.image)
+        EditorLabeledContent("Style") {
+            Picker("Style", selection: $backgroundStyle.onSet { onChanged() }) {
+                Text("Color").tag(BackgroundStyle.color)
+                Text("Gradient").tag(BackgroundStyle.gradient)
+                if allowsImage {
+                    Text("Image").tag(BackgroundStyle.image)
+                }
             }
+            .inspectorChoicePicker()
         }
-        .pickerStyle(.segmented)
-        .labelsHidden()
-        .frame(maxWidth: .infinity)
-        .iPadTappableSegmentedControl()
 
         switch backgroundStyle {
         case .color:
-            HStack {
-                Text("Color")
-                Spacer()
+            EditorLabeledContent("Color") {
                 PaletteColorPicker("", selection: $bgColor.onSet { onChanged() }, supportsOpacity: false)
                     .labelsHidden()
                     .accessibilityLabel("Color")
                     .iPadColorSwatchFrame()
                     .fixedSize()
             }
-            .font(EditorFont.row)
 
         case .gradient:
             VStack(alignment: .leading, spacing: 10) {
-                Picker("Type", selection: $gradientConfig.gradientType.onSet { onChanged() }) {
-                    Text("Linear").tag(GradientType.linear)
-                    Text("Radial").tag(GradientType.radial)
-                    Text("Angular").tag(GradientType.angular)
+                EditorLabeledContent("Type") {
+                    Picker("Type", selection: $gradientConfig.gradientType.onSet { onChanged() }) {
+                        Text("Linear").tag(GradientType.linear)
+                        Text("Radial").tag(GradientType.radial)
+                        Text("Angular").tag(GradientType.angular)
+                    }
+                    .inspectorChoicePicker()
                 }
-                .pickerStyle(.segmented)
-                .labelsHidden()
-                .frame(maxWidth: .infinity)
-                .iPadTappableSegmentedControl()
 
                 GradientStopEditor(
                     config: $gradientConfig,
@@ -369,17 +361,16 @@ struct BackgroundImageEditor: View {
         }
         #endif
 
-        Picker("Fill", selection: $config.fillMode.onSet { onChanged() }) {
-            Text(LocalizedStringResource("fillMode.fill", defaultValue: "Fill", comment: "Background image fill mode (segmented control: Fill / Fit / Stretch / Tile)")).tag(ImageFillMode.fill)
-            Text(LocalizedStringResource("fillMode.fit", defaultValue: "Fit", comment: "Background image fill mode (segmented control: Fill / Fit / Stretch / Tile)")).tag(ImageFillMode.fit)
-            Text(LocalizedStringResource("fillMode.stretch", defaultValue: "Stretch", comment: "Background image fill mode (segmented control: Fill / Fit / Stretch / Tile)")).tag(ImageFillMode.stretch)
-            Text(LocalizedStringResource("fillMode.tile", defaultValue: "Tile", comment: "Background image fill mode (segmented control: Fill / Fit / Stretch / Tile)")).tag(ImageFillMode.tile)
+        EditorLabeledContent("Fill") {
+            Picker("Fill", selection: $config.fillMode.onSet { onChanged() }) {
+                Text(LocalizedStringResource("fillMode.fill", defaultValue: "Fill", comment: "Background image fill mode (segmented control: Fill / Fit / Stretch / Tile)")).tag(ImageFillMode.fill)
+                Text(LocalizedStringResource("fillMode.fit", defaultValue: "Fit", comment: "Background image fill mode (segmented control: Fill / Fit / Stretch / Tile)")).tag(ImageFillMode.fit)
+                Text(LocalizedStringResource("fillMode.stretch", defaultValue: "Stretch", comment: "Background image fill mode (segmented control: Fill / Fit / Stretch / Tile)")).tag(ImageFillMode.stretch)
+                Text(LocalizedStringResource("fillMode.tile", defaultValue: "Tile", comment: "Background image fill mode (segmented control: Fill / Fit / Stretch / Tile)")).tag(ImageFillMode.tile)
+            }
+            .inspectorChoicePicker()
+            .disabled(!hasImage)
         }
-        .pickerStyle(.segmented)
-        .labelsHidden()
-        .frame(maxWidth: .infinity)
-        .iPadTappableSegmentedControl()
-        .disabled(!hasImage)
 
         sliderRow("Opacity", value: $config.opacity)
 
@@ -405,19 +396,22 @@ struct BackgroundImageEditor: View {
         range: ClosedRange<Double> = 0...1.0,
         formatLabel: (() -> String)? = nil
     ) -> some View {
+        #if os(macOS)
+        PopoverSliderRow(
+            label: label,
+            value: value.onSet { onChanged() },
+            range: range,
+            layout: .formRow,
+            format: { formatLabel?() ?? "\(Int(($0 * 100).rounded()))%" }
+        )
+        .disabled(!hasImage)
+        #else
         HStack(spacing: 4) {
             Text(label)
                 .font(EditorFont.label)
-            #if os(macOS)
-            Spacer()
-            Slider(value: value.onSet { onChanged() }, in: range)
-                .frame(width: UIMetrics.SliderWidth.standard)
-                .disabled(!hasImage)
-            #else
             Slider(value: value.onSet { onChanged() }, in: range)
                 .disabled(!hasImage)
                 .padding(.horizontal, 4)
-            #endif
             Text(formatLabel?() ?? "\(Int(value.wrappedValue * 100))%")
                 .font(EditorFont.value)
                 .foregroundStyle(.secondary)
@@ -425,6 +419,7 @@ struct BackgroundImageEditor: View {
                 .frame(width: sliderValueColumnWidth, alignment: .trailing)
         }
         .opacity(hasImage ? 1 : UIMetrics.Opacity.disabled)
+        #endif
     }
 
     private func axisSliderRow(

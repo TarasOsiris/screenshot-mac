@@ -380,14 +380,8 @@ extension ShapeEditing {
     // MARK: - Text background
 
     func applyTextBackgroundPreset(_ preset: TextBackgroundPreset, shapeId: UUID) {
-        guard var updated = editingShape(shapeId) else { return }
-        updated.textBackgroundColor = preset.color
-        updated.textBackgroundPadding = preset.padding
-        updated.textBackgroundCornerRadius = preset.cornerRadius
-        updated.textBackgroundOutlineColor = preset.outlineColor
-        updated.textBackgroundOutlineWidth = preset.outlineWidth
-        updated.textBackgroundOpacity = nil
-        state.updateShape(updated)
+        guard let shape = editingShape(shapeId) else { return }
+        state.updateShape(preset.applied(to: shape))
     }
 
     /// Enable/disable toggles every field together against the live selection — same shape as the
@@ -430,7 +424,7 @@ extension ShapeEditing {
 }
 
 struct TextBackgroundPreset: Identifiable {
-    let id = UUID()
+    var id: String { name }
     let name: String
     let color: Color
     let padding: CGFloat
@@ -438,14 +432,35 @@ struct TextBackgroundPreset: Identifiable {
     let outlineColor: Color?
     let outlineWidth: CGFloat?
 
+    func applied(to shape: CanvasShapeModel) -> CanvasShapeModel {
+        var applied = shape
+        applied.textBackgroundColor = color
+        applied.textBackgroundPadding = padding
+        applied.textBackgroundCornerRadius = cornerRadius
+        applied.textBackgroundOutlineColor = outlineColor
+        applied.textBackgroundOutlineWidth = outlineWidth
+        applied.textBackgroundOpacity = nil
+        return applied
+    }
+
+    /// Whether `shape`'s background is exactly what applying this preset would leave. Compares the
+    /// fields `applied(to:)` writes rather than whole shapes, which carry their text.
+    func matches(_ shape: CanvasShapeModel) -> Bool {
+        let applied = applied(to: shape)
+        return applied.textBackgroundColorData == shape.textBackgroundColorData
+            && applied.textBackgroundPadding == shape.textBackgroundPadding
+            && applied.textBackgroundCornerRadius == shape.textBackgroundCornerRadius
+            && applied.textBackgroundOutlineColorData == shape.textBackgroundOutlineColorData
+            && applied.textBackgroundOutlineWidth == shape.textBackgroundOutlineWidth
+            && applied.textBackgroundOpacity == shape.textBackgroundOpacity
+    }
+
     // String(localized:) literals so the catalog extractor picks the names up (it can't see
     // LocalizedStringKey buried in a struct initializer). Button(_ String) renders them verbatim.
-    static var presets: [TextBackgroundPreset] {
-        [
-            .init(name: String(localized: "Solid"), color: .black, padding: 16, cornerRadius: 8, outlineColor: nil, outlineWidth: nil),
-            .init(name: String(localized: "Pill"), color: .black, padding: 20, cornerRadius: 100, outlineColor: nil, outlineWidth: nil),
-            .init(name: String(localized: "Outline"), color: .white, padding: 16, cornerRadius: 8, outlineColor: .black, outlineWidth: 4),
-            .init(name: String(localized: "Highlight"), color: .yellow.opacity(0.4), padding: 6, cornerRadius: 4, outlineColor: nil, outlineWidth: nil),
-        ]
-    }
+    static let presets: [TextBackgroundPreset] = [
+        .init(name: String(localized: "Solid"), color: .black, padding: 16, cornerRadius: 8, outlineColor: nil, outlineWidth: nil),
+        .init(name: String(localized: "Pill"), color: .black, padding: 20, cornerRadius: 100, outlineColor: nil, outlineWidth: nil),
+        .init(name: String(localized: "Outline"), color: .white, padding: 16, cornerRadius: 8, outlineColor: .black, outlineWidth: 4),
+        .init(name: String(localized: "Highlight"), color: .yellow.opacity(0.4), padding: 6, cornerRadius: 4, outlineColor: nil, outlineWidth: nil),
+    ]
 }

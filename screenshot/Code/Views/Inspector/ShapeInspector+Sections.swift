@@ -37,7 +37,7 @@ extension ShapeInspector {
     @ViewBuilder
     private func deviceSection(shape: CanvasShapeModel, fields: Set<LocaleOverrideField>) -> some View {
         InspectorSection(.shapeDevice, "Device", accessory: { overrideBadge(.media, fields) }) {
-            devicePicker(shape: shape, shapeId: shapeId, presentation: .sidebar)
+            devicePicker(shape: shape, shapeId: shapeId, presentation: .inspector)
 
             if shape.screenshotFileName != nil {
                 replaceImageRow(title: "Replace Image")
@@ -59,7 +59,8 @@ extension ShapeInspector {
                 pitch: deviceModelRotationBinding(shapeId, \.devicePitch, defaultValue: \.resolvedDevicePitch),
                 yaw: deviceModelRotationBinding(shapeId, \.deviceYaw, defaultValue: \.resolvedDeviceYaw),
                 material: optionalConfigBinding(shapeId, \.deviceBodyMaterial, fallback: DeviceBodyMaterial(), isEmpty: \.isEmpty),
-                lighting: optionalConfigBinding(shapeId, \.deviceLighting, fallback: DeviceLighting(), isEmpty: \.isEmpty)
+                lighting: optionalConfigBinding(shapeId, \.deviceLighting, fallback: DeviceLighting(), isEmpty: \.isEmpty),
+                layout: .formRow
             )
 
             PopoverResetButton(label: "Reset all", isDisabled: { !hasDevice3DAppearanceOverride(shapeId) }) {
@@ -77,7 +78,7 @@ extension ShapeInspector {
 
         InspectorSection(.shapeText, "Text", accessory: { overrideBadge(.typography, fields) }) {
             EditorLabeledContent("Font") {
-                TextFontPickerControl(state: state, shapeId: shapeId)
+                TextFontPickerControl(state: state, shapeId: shapeId, presentation: .popUp)
                     .localeOverridden(.font)
             }
 
@@ -124,10 +125,8 @@ extension ShapeInspector {
                     .help("Scale the text down so every line fits the box, in every language")
             }
 
-            EditorLabeledContent("Letter Spacing") {
-                TextLetterSpacingControl(state: state, shapeId: shapeId, sliderWidth: UIMetrics.SliderWidth.standard)
-                    .localeOverridden(.letterSpacing)
-            }
+            TextLetterSpacingControl(state: state, shapeId: shapeId, layout: .formRow)
+                .localeOverridden(.letterSpacing)
 
             EditorLabeledContent("Line Spacing") {
                 TextLineSpacingField(state: state, shapeId: shapeId, layout: .formRow)
@@ -141,7 +140,7 @@ extension ShapeInspector {
 
     private var textBackgroundSection: some View {
         InspectorSection(.shapeTextBackground, "Text Background") {
-            TextBackgroundControls(state: state, shapeId: shapeId, wrapsPresets: true)
+            TextBackgroundControls(state: state, shapeId: shapeId, layout: .formRow)
         }
     }
 
@@ -279,7 +278,7 @@ extension ShapeInspector {
         let shadow = optionalConfigBinding(shapeId, \.shadow, fallback: ShadowConfig(), isEmpty: \.isEmpty)
 
         return InspectorSection(.shapeShadow, "Shadow") {
-            ShadowControls(shadow: shadow)
+            ShadowControls(shadow: shadow, layout: .formRow)
 
             PopoverResetButton(label: "Reset", isDisabled: { resolvedDocumentShape(shapeId)?.shadow == nil }) {
                 shadow.wrappedValue = ShadowConfig()

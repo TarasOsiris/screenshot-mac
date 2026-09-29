@@ -2,10 +2,8 @@ import SwiftUI
 
 #if os(macOS)
 private let sizeFieldLabelWidth: CGFloat = 14
-private let blurValueWidth: CGFloat = 28
 #else
 private let sizeFieldLabelWidth: CGFloat = 20
-private let blurValueWidth: CGFloat = 36
 #endif
 
 /// The inspector's row state: size, device, background, shapes, visibility and upload settings for
@@ -241,21 +239,12 @@ struct RowInspector: View {
             )
 
             if state.rows[rowIndex].backgroundStyle != .color {
-                HStack(spacing: 4) {
-                    Text("Blur")
-                        .scaledFont(UIMetrics.FontSize.body)
-                    Spacer()
-                    Slider(
-                        value: continuousRowBinding(rowId, keyPath: \.backgroundBlur, default: 0, actionName: "Background Blur"),
-                        in: 0...100
-                    )
-                    .frame(width: 100)
-                    Text("\(Int(state.rows[rowIndex].backgroundBlur))")
-                        .scaledFont(UIMetrics.FontSize.numericBadge)
-                        .monospacedDigit()
-                        .foregroundStyle(.secondary)
-                        .frame(width: blurValueWidth, alignment: .trailing)
-                }
+                PopoverSliderRow(
+                    label: "Blur",
+                    value: continuousRowBinding(rowId, keyPath: \.backgroundBlur, default: 0, actionName: "Background Blur"),
+                    range: 0...100,
+                    layout: .formRow
+                )
             }
 
             if state.rows[rowIndex].backgroundStyle != .color {
@@ -279,29 +268,24 @@ struct RowInspector: View {
     @ViewBuilder
     private func deviceSection(rowId: UUID) -> some View {
         InspectorSection(.rowDevice, "Device") {
-            VStack(alignment: .leading, spacing: 4) {
-                Text("Default device frame")
-                    .scaledFont(UIMetrics.FontSize.body)
-                    .foregroundStyle(.secondary)
-                DevicePickerMenu(
-                    category: defaultDeviceCategory(for: rowId),
-                    frameId: defaultDeviceFrameId(for: rowId),
-                    presentation: .sidebar,
-                    bodyColor: defaultDeviceIsAbstract(for: rowId) ? rowDefaultDeviceBodyColorBinding(for: rowId) : nil,
-                    bodyColorLabel: String(localized: "Default color"),
-                    onSelectNone: {
-                        state.setDefaultDevice(for: rowId, category: nil, frameId: nil)
-                    },
-                    onSelectCategory: { cat in
-                        state.setDefaultDevice(for: rowId, category: cat, frameId: nil)
-                    },
-                    onSelectFrame: { frame in
-                        state.setDefaultDevice(for: rowId, category: frame.fallbackCategory, frameId: frame.id)
-                    }
-                )
-                .help(defaultDeviceHelp(for: rowId))
-            }
-            .compactControlSize()
+            DevicePickerMenu(
+                category: defaultDeviceCategory(for: rowId),
+                frameId: defaultDeviceFrameId(for: rowId),
+                presentation: .inspector,
+                bodyColor: defaultDeviceIsAbstract(for: rowId) ? rowDefaultDeviceBodyColorBinding(for: rowId) : nil,
+                bodyColorLabel: String(localized: "Default color"),
+                menuTitle: String(localized: "Default device frame"),
+                onSelectNone: {
+                    state.setDefaultDevice(for: rowId, category: nil, frameId: nil)
+                },
+                onSelectCategory: { cat in
+                    state.setDefaultDevice(for: rowId, category: cat, frameId: nil)
+                },
+                onSelectFrame: { frame in
+                    state.setDefaultDevice(for: rowId, category: frame.fallbackCategory, frameId: frame.id)
+                }
+            )
+            .help(defaultDeviceHelp(for: rowId))
         }
     }
 

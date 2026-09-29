@@ -40,20 +40,15 @@ struct ShadowPopover: View {
 /// the inspector section each supply their own. macOS gets the dense column, iPad `Form` sections.
 struct ShadowControls: View {
     @Binding var shadow: ShadowConfig
+    /// `.formRow` lays the controls out as the selection inspector's label/value rows.
+    var layout: InspectorValueLayout = .popoverColumn
 
     var body: some View {
         #if os(macOS)
-        VStack(alignment: .leading, spacing: 12) {
-            Toggle("Enable shadow", isOn: enabledBinding)
-                .toggleStyle(.switch)
-                .controlSize(.small)
-
-            if shadow.isActive {
-                Divider()
-                presetSection
-                Divider()
-                detailSection
-            }
+        if layout == .formRow {
+            formRows
+        } else {
+            popoverColumn
         }
         #else
         Section {
@@ -75,6 +70,48 @@ struct ShadowControls: View {
         #endif
     }
 
+    #if os(macOS)
+    @ViewBuilder
+    private var formRows: some View {
+        Toggle("Enable shadow", isOn: enabledBinding)
+            .toggleStyle(.switch)
+
+        if shadow.isActive {
+            EditorLabeledContent("Preset") {
+                Picker("Preset", selection: presetBinding) {
+                    if shadow.matchingPreset == nil {
+                        Text("Custom").tag(ShadowConfig.Preset?.none)
+                    }
+                    ForEach(ShadowConfig.Preset.allCases) { preset in
+                        Text(preset.label).tag(Optional(preset))
+                    }
+                }
+                .inspectorPopUpPicker()
+            }
+            EditorLabeledContent("Color") {
+                PaletteColorPicker("Shadow", selection: colorBinding, supportsOpacity: false)
+                    .labelsHidden()
+            }
+            detailSliders
+        }
+    }
+
+    private var popoverColumn: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Toggle("Enable shadow", isOn: enabledBinding)
+                .toggleStyle(.switch)
+                .controlSize(.small)
+
+            if shadow.isActive {
+                Divider()
+                presetSection
+                Divider()
+                detailSection
+            }
+        }
+    }
+    #endif
+
     @ViewBuilder
     private var presetSection: some View {
         PopoverSectionHeader("Preset")
@@ -89,7 +126,7 @@ struct ShadowControls: View {
     private func presetButton(_ preset: ShadowConfig.Preset) -> some View {
         let isSelected = shadow.matchingPreset == preset
         Button {
-            shadow = ShadowConfig.preset(preset, color: shadow.resolvedColor)
+            apply(preset)
         } label: {
             Text(preset.label)
                 .font(presetFont(isSelected: isSelected))
@@ -140,13 +177,14 @@ struct ShadowControls: View {
     /// The four tuning sliders, shared by the macOS column and the iPad Form.
     @ViewBuilder
     private var detailSliders: some View {
-        PopoverSliderRow(label: "Blur", value: radiusBinding, range: ShadowConfig.radiusRange)
-        PopoverSliderRow(label: "Offset X", value: offsetXBinding, range: ShadowConfig.offsetRange)
-        PopoverSliderRow(label: "Offset Y", value: offsetYBinding, range: ShadowConfig.offsetRange)
+        PopoverSliderRow(label: "Blur", value: radiusBinding, range: ShadowConfig.radiusRange, layout: layout)
+        PopoverSliderRow(label: "Offset X", value: offsetXBinding, range: ShadowConfig.offsetRange, layout: layout)
+        PopoverSliderRow(label: "Offset Y", value: offsetYBinding, range: ShadowConfig.offsetRange, layout: layout)
         PopoverSliderRow(
             label: "Opacity",
             value: opacityBinding,
             range: ShadowConfig.opacityRange,
+            layout: layout,
             format: { "\(Int(($0 * 100).rounded()))%" }
         )
     }
@@ -157,6 +195,19 @@ struct ShadowControls: View {
         Binding(
             get: { shadow.isActive },
             set: { shadow.enabled = $0 }
+        )
+    }
+    private func apply(_ preset: ShadowConfig.Preset) {
+        shadow = ShadowConfig.preset(preset, color: shadow.resolvedColor)
+    }
+
+    /// Nil once the sliders move off every preset, shown as "Custom".
+    private var presetBinding: Binding<ShadowConfig.Preset?> {
+        Binding(
+            get: { shadow.matchingPreset },
+            set: { preset in
+                if let preset { apply(preset) }
+            }
         )
     }
     private var colorBinding: Binding<Color> {

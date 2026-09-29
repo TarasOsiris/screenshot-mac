@@ -40,7 +40,7 @@ struct MultiShapeInspector: View, MultiShapeEditing {
                     appearanceSection(commonType: commonType, shapes: shapes)
                     outlineSection(commonType: commonType, shapes: shapes)
                     InspectorSection(.shapeShadow, "Shadow") {
-                        ShadowControls(shadow: multiShadowBinding())
+                        ShadowControls(shadow: multiShadowBinding(), layout: .formRow)
                     }
                 }
                 .inspectorFormChrome()
@@ -77,7 +77,7 @@ struct MultiShapeInspector: View, MultiShapeEditing {
 
         InspectorSection(.shapeText, "Text") {
             EditorLabeledContent("Font") {
-                MultiTextFontPickerControl(state: state, controlState: primaryControlState)
+                MultiTextFontPickerControl(state: state, controlState: primaryControlState, presentation: .popUp)
             }
 
             if showsMultiFontWeightPicker(primary: primaryControlState, textShapes: shapes) {

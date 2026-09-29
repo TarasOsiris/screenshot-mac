@@ -14,13 +14,23 @@ extension View {
         #endif
     }
 
-    /// Segmented pickers use the dense `.mini` size on macOS but a tappable `.regular` on iPad.
+    /// A picker in an inspector row: a pop-up at the trailing edge, like the other value rows.
+    func inspectorPopUpPicker() -> some View {
+        pickerStyle(.menu)
+            .labelsHidden()
+            .fixedSize()
+    }
+
+    /// A few-option picker (a style, a type): a pop-up on macOS, where segments don't fit beside a
+    /// label, and a tappable `.regular` segmented control on iPad.
     @ViewBuilder
-    func iPadTappableSegmentedControl() -> some View {
+    func inspectorChoicePicker() -> some View {
         #if os(macOS)
-        controlSize(.mini)
+        inspectorPopUpPicker()
         #else
-        controlSize(.regular)
+        pickerStyle(.segmented)
+            .labelsHidden()
+            .controlSize(.regular)
             .frame(minHeight: UIMetrics.GradientEditor.iconTapTarget)
             .clipShape(RoundedRectangle(cornerRadius: UIMetrics.CornerRadius.section))
             .contentShape(RoundedRectangle(cornerRadius: UIMetrics.CornerRadius.section))

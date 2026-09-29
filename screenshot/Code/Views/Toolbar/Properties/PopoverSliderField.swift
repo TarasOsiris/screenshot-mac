@@ -8,6 +8,10 @@ struct PopoverSliderField: View {
     @Binding var value: CGFloat
     let range: ClosedRange<CGFloat>
     var resetValue: CGFloat = 0
+    /// `.formRow` sizes the slider and field to the inspector's shared columns.
+    var layout: InspectorValueLayout = .popoverColumn
+    /// Form rows only: a suffix such as "%" in the inspector's unit column.
+    var unit: String?
 
     @State private var text = ""
     @FocusState private var focused: Bool
@@ -28,24 +32,15 @@ struct PopoverSliderField: View {
 
     var body: some View {
         EditorLabeledContent {
-            HStack(spacing: 4) {
+            // The popover packs its pair tighter than the inspector's shared columns.
+            HStack(spacing: layout == .formRow ? layout.columnGap : 4) {
                 Slider(value: $value, in: range)
-                    .frame(width: UIMetrics.SliderWidth.standard)
-                TextField("", text: $text)
-                    .focused($focused)
-                    .labelsHidden()
-                    .textFieldStyle(.roundedBorder)
-                    .multilineTextAlignment(.trailing)
-                    .frame(width: propertiesNumericFieldWidth)
-                    .integerKeyboard()
-                    .onSubmit { commit() }
-                    .onChange(of: focused) { _, isFocused in
-                        if isFocused {
-                            editingTarget = $value
-                        } else {
-                            commit()
-                        }
-                    }
+                    .inspectorSliderWidth(layout)
+                if let unit {
+                    field.unitSuffix(unit, layout)
+                } else {
+                    field.reservesInspectorUnitColumn(layout)
+                }
             }
         } label: {
             Text(label)
@@ -58,5 +53,23 @@ struct PopoverSliderField: View {
         }
         .onAppear { sync() }
         .onChange(of: value) { _, _ in if !focused { sync() } }
+    }
+
+    private var field: some View {
+        TextField("", text: $text)
+            .focused($focused)
+            .labelsHidden()
+            .textFieldStyle(.roundedBorder)
+            .multilineTextAlignment(layout == .formRow ? .center : .trailing)
+            .frame(width: layout == .formRow ? UIMetrics.InspectorRow.valueWidth : propertiesNumericFieldWidth)
+            .integerKeyboard()
+            .onSubmit { commit() }
+            .onChange(of: focused) { _, isFocused in
+                if isFocused {
+                    editingTarget = $value
+                } else {
+                    commit()
+                }
+            }
     }
 }

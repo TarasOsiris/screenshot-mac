@@ -3,7 +3,8 @@ import SwiftUI
 enum DevicePickerPresentation {
     case form
     case inline
-    case sidebar
+    /// Separate label/value rows for the inspectors' grouped forms.
+    case inspector
     case toolbar
 }
 
@@ -16,6 +17,8 @@ struct DevicePickerMenu: View {
     var presentation: DevicePickerPresentation = .form
     var bodyColor: Binding<Color>?
     var bodyColorLabel: String = String(localized: "Color")
+    /// `.inspector` only: the label on the row that holds the device menu.
+    var menuTitle: String = String(localized: "Device")
     var canResetBodyColor: Bool = false
     var onResetBodyColor: (() -> Void)?
     var onSelectNone: () -> Void = {}
@@ -55,21 +58,17 @@ struct DevicePickerMenu: View {
         return DeviceFrameCatalog.toggledOrientation(for: frameId) != nil
     }
 
-    private var layout: AnyLayout {
-        switch presentation {
-        case .sidebar:
-            AnyLayout(VStackLayout(alignment: .leading, spacing: 6))
-        case .form, .inline, .toolbar:
-            AnyLayout(HStackLayout(alignment: .center, spacing: 8))
-        }
-    }
-
+    /// In the inspector each piece is its own view, so the Form gives each a separated row.
     var body: some View {
-        layout {
-            menuButton
+        if presentation == .inspector {
+            EditorLabeledContent { menuButton } label: { Text(menuTitle) }
             accessoryControls
+        } else {
+            HStack(alignment: .center, spacing: 8) {
+                menuButton
+                accessoryControls
+            }
         }
-        .frame(maxWidth: presentation == .sidebar ? .infinity : nil, alignment: .leading)
     }
 
     @ViewBuilder
@@ -97,14 +96,10 @@ struct DevicePickerMenu: View {
         }
 
         switch presentation {
-        case .toolbar:
+        case .toolbar, .inspector:
             menu
                 .menuStyle(.button)
                 .fixedSize()
-        case .sidebar:
-            menu
-                .menuStyle(.button)
-                .frame(maxWidth: .infinity, alignment: .leading)
         case .form, .inline:
             menu.menuStyle(.button)
         }
@@ -121,50 +116,49 @@ struct DevicePickerMenu: View {
 
     @ViewBuilder
     private func frameAccessoryControls(frame: DeviceFrame) -> some View {
-        let layout: AnyLayout = presentation == .sidebar
-            ? AnyLayout(VStackLayout(alignment: .leading, spacing: 6))
-            : AnyLayout(HStackLayout(spacing: 6))
+        if presentation == .inspector {
+            frameAccessories(frame: frame)
+        } else {
+            HStack(spacing: 6) { frameAccessories(frame: frame) }
+        }
+    }
 
-        layout {
-            if showsColorOptions, let group = resolvedGroup {
-                labeledIfSidebar(group.prefersVariantMenu ? String(localized: "Watch style") : String(localized: "Frame color")) {
-                    if group.prefersVariantMenu {
-                        DeviceFrameVariantSelector(
-                            group: group,
-                            selectedFrame: frame,
-                            onSelectFrame: onSelectFrame
-                        )
-                    } else {
-                        DeviceFrameColorSelector(
-                            group: group,
-                            selectedFrame: frame,
-                            compact: true,
-                            onSelectFrame: onSelectFrame
-                        )
-                    }
-                }
+    @ViewBuilder
+    private func frameAccessories(frame: DeviceFrame) -> some View {
+        if showsColorOptions, let group = resolvedGroup {
+            labeledInInspector(group.prefersVariantMenu ? String(localized: "Watch style") : String(localized: "Frame color")) {
+                frameVariantSelector(group: group, frame: frame)
             }
+        }
 
-            if frame.isModelBacked, let bodyColor {
-                bodyColorControls(bodyColor)
-            }
+        if frame.isModelBacked, let bodyColor {
+            bodyColorControls(bodyColor)
+        }
 
-            if canToggleOrientation {
-                labeledIfSidebar(String(localized: "Orientation")) {
-                    OrientationPicker(isLandscape: orientationBinding(for: frame), labelsHidden: true)
-                        .frame(width: 72, alignment: .leading)
-                }
+        if canToggleOrientation {
+            labeledInInspector(String(localized: "Orientation")) {
+                OrientationPicker(isLandscape: orientationBinding(for: frame), labelsHidden: true)
+                    .frame(width: 72, alignment: .leading)
             }
         }
     }
 
     @ViewBuilder
-    private func labeledIfSidebar<Content: View>(
+    private func frameVariantSelector(group: DeviceFrameGroup, frame: DeviceFrame) -> some View {
+        if group.prefersVariantMenu {
+            DeviceFrameVariantSelector(group: group, selectedFrame: frame, onSelectFrame: onSelectFrame)
+        } else {
+            DeviceFrameColorSelector(group: group, selectedFrame: frame, compact: true, onSelectFrame: onSelectFrame)
+        }
+    }
+
+    @ViewBuilder
+    private func labeledInInspector<Content: View>(
         _ title: String,
         @ViewBuilder content: () -> Content
     ) -> some View {
-        if presentation == .sidebar {
-            sidebarField(title, content: content)
+        if presentation == .inspector {
+            EditorLabeledContent { content() } label: { Text(title) }
         } else {
             content()
         }
@@ -173,6 +167,17 @@ struct DevicePickerMenu: View {
     @ViewBuilder
     private func bodyColorControls(_ bodyColor: Binding<Color>) -> some View {
         switch presentation {
+        case .inspector:
+            EditorLabeledContent {
+                HStack(spacing: 6) {
+                    resetBodyColorButton
+                    PaletteColorPicker("", selection: bodyColor, supportsOpacity: false)
+                        .labelsHidden()
+                        .accessibilityLabel(Text(bodyColorLabel))
+                }
+            } label: {
+                Text(bodyColorLabel)
+            }
         case .form:
             LabeledContent(bodyColorLabel) {
                 HStack(spacing: 6) {
@@ -188,15 +193,6 @@ struct DevicePickerMenu: View {
                     .help(bodyColorLabel)
                 resetBodyColorButton
             }
-        case .sidebar:
-            sidebarField(bodyColorLabel) {
-                HStack(spacing: 6) {
-                    ColorPicker("", selection: bodyColor, supportsOpacity: false)
-                        .labelsHidden()
-                        .help(bodyColorLabel)
-                    resetBodyColorButton
-                }
-            }
         }
     }
 
@@ -206,24 +202,7 @@ struct DevicePickerMenu: View {
             Text(resolvedLabel)
                 .lineLimit(1)
                 .truncationMode(.tail)
-
-            if presentation == .sidebar {
-                Spacer(minLength: 0)
-            }
         }
-    }
-
-    private func sidebarField<Content: View>(
-        _ title: String,
-        @ViewBuilder content: () -> Content
-    ) -> some View {
-        VStack(alignment: .leading, spacing: 3) {
-            Text(title)
-                .scaledFont(UIMetrics.FontSize.menuRow)
-                .foregroundStyle(.secondary)
-            content()
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     @ViewBuilder

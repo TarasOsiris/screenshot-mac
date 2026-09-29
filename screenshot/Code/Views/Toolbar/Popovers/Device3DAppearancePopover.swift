@@ -58,15 +58,26 @@ struct Device3DAppearanceControls: View {
     @Binding var yaw: Double
     @Binding var material: DeviceBodyMaterial
     @Binding var lighting: DeviceLighting
+    /// `.formRow` lays the controls out as the selection inspector's label/value rows.
+    var layout: InspectorValueLayout = .popoverColumn
 
     var body: some View {
         #if os(macOS)
-        VStack(alignment: .leading, spacing: 12) {
-            rotationSection
-            Divider()
-            materialSection
-            Divider()
-            lightingSection
+        if layout == .formRow {
+            rotationSliders
+            EditorLabeledContent("Finish") {
+                finishPicker
+                    .fixedSize()
+            }
+            lightingSliders
+        } else {
+            VStack(alignment: .leading, spacing: 12) {
+                rotationSection
+                Divider()
+                materialSection
+                Divider()
+                lightingSection
+            }
         }
         #else
         Section("Rotation") {
@@ -98,8 +109,8 @@ struct Device3DAppearanceControls: View {
     /// AppKit layout on every tick.
     @ViewBuilder
     private var rotationSliders: some View {
-        PopoverSliderRow(label: "Pitch", value: $pitch, range: -90...90, format: Self.degrees)
-        PopoverSliderRow(label: "Yaw", value: $yaw, range: -90...90, format: Self.degrees)
+        PopoverSliderRow(label: "Pitch", value: $pitch, range: -90...90, layout: layout, format: Self.degrees)
+        PopoverSliderRow(label: "Yaw", value: $yaw, range: -90...90, layout: layout, format: Self.degrees)
     }
 
     private static let degrees: (Double) -> String = { "\(Int($0.rounded()))°" }
@@ -112,15 +123,19 @@ struct Device3DAppearanceControls: View {
             Text("Finish")
                 .foregroundStyle(.secondary)
                 .frame(width: 60, alignment: .leading)
-            Picker("", selection: finishBinding) {
-                ForEach(DeviceBodyFinish.allCases) { option in
-                    Text(option.label).tag(option)
-                }
-            }
-            .pickerStyle(.segmented)
-            .labelsHidden()
-            .accessibilityLabel("Finish")
+            finishPicker
         }
+    }
+
+    private var finishPicker: some View {
+        Picker("", selection: finishBinding) {
+            ForEach(DeviceBodyFinish.allCases) { option in
+                Text(option.label).tag(option)
+            }
+        }
+        .pickerStyle(.segmented)
+        .labelsHidden()
+        .accessibilityLabel("Finish")
     }
 
     @ViewBuilder
@@ -131,9 +146,9 @@ struct Device3DAppearanceControls: View {
 
     @ViewBuilder
     private var lightingSliders: some View {
-        PopoverSliderRow(label: "Ambient", value: ambientBinding, range: DeviceLighting.ambientIntensityRange)
-        PopoverSliderRow(label: "Key", value: keyBinding, range: DeviceLighting.keyIntensityRange)
-        PopoverSliderRow(label: "Rim", value: rimBinding, range: DeviceLighting.rimIntensityRange)
+        PopoverSliderRow(label: "Ambient", value: ambientBinding, range: DeviceLighting.ambientIntensityRange, layout: layout)
+        PopoverSliderRow(label: "Key", value: keyBinding, range: DeviceLighting.keyIntensityRange, layout: layout)
+        PopoverSliderRow(label: "Rim", value: rimBinding, range: DeviceLighting.rimIntensityRange, layout: layout)
     }
 
     private var finishBinding: Binding<DeviceBodyFinish> {
