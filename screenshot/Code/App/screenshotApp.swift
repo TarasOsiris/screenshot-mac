@@ -504,10 +504,13 @@ struct ScreenshotBroApp: App {
         return try body(bundleURL)
     }
 
+    /// Launch-time refresh: never prompts. An open panel here appeared on every Debug launch without
+    /// a saved bookmark — including each test run, whose host app is the Debug build.
     private func debugRefreshExistingTemplates() {
-        debugExistingTemplates = withDebugBundleAccess { bundleURL in
-            DebugTemplateService.existingTemplateNames(at: bundleURL)
-        } ?? []
+        guard let bundleURL = DebugTemplateService.resolveBookmark() else { return }
+        let didAccess = bundleURL.startAccessingSecurityScopedResource()
+        defer { if didAccess { bundleURL.stopAccessingSecurityScopedResource() } }
+        debugExistingTemplates = DebugTemplateService.existingTemplateNames(at: bundleURL)
     }
 
     private func debugOpenTemplate(name: String) {
