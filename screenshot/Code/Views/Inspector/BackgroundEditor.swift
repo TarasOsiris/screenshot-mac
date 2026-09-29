@@ -39,6 +39,7 @@ struct BackgroundEditor: View {
     var onRemoveImage: (() -> Void)?
     var onDropImage: ((NSImage) -> Void)?
     var onDropSvg: ((String) -> Void)?
+    var allowsImage = true
 
     #if os(macOS)
     private static let gradientPresetTileHeight: CGFloat = 24
@@ -50,7 +51,9 @@ struct BackgroundEditor: View {
         Picker("Style", selection: $backgroundStyle.onSet { onChanged() }) {
             Text("Color").tag(BackgroundStyle.color)
             Text("Gradient").tag(BackgroundStyle.gradient)
-            Text("Image").tag(BackgroundStyle.image)
+            if allowsImage {
+                Text("Image").tag(BackgroundStyle.image)
+            }
         }
         .pickerStyle(.segmented)
         .labelsHidden()

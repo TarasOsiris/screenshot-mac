@@ -20,6 +20,8 @@ final class TextLayoutNSView: NSView {
     private var lastLegacyLineSpacing: CGFloat?
     private var lastRichTextData: String?
     private var lastFontScale: CGFloat?
+    private var lastFillOverride: NSColor?
+    private var stroke: TextStroke?
 
     override var isFlipped: Bool { true }
 
@@ -55,8 +57,14 @@ final class TextLayoutNSView: NSView {
         lineHeightMultiple: CGFloat?,
         legacyLineSpacing: CGFloat?,
         richTextData: String? = nil,
-        fontScale: CGFloat = 1
+        fontScale: CGFloat = 1,
+        stroke: TextStroke? = nil,
+        fillOverride: NSColor? = nil
     ) {
+        if stroke != self.stroke {
+            self.stroke = stroke
+            needsDisplay = true
+        }
         guard text != lastText
             || font != lastFont
             || color != lastColor
@@ -68,6 +76,7 @@ final class TextLayoutNSView: NSView {
             || legacyLineSpacing != lastLegacyLineSpacing
             || richTextData != lastRichTextData
             || fontScale != lastFontScale
+            || fillOverride != lastFillOverride
         else { return }
 
         lastText = text
@@ -81,6 +90,7 @@ final class TextLayoutNSView: NSView {
         lastLegacyLineSpacing = legacyLineSpacing
         lastRichTextData = richTextData
         lastFontScale = fontScale
+        lastFillOverride = fillOverride
 
         self.verticalAlignment = verticalAlignment
         compactDelegate.lineHeightMultiple = lineHeightMultiple ?? 1.0
@@ -90,7 +100,7 @@ final class TextLayoutNSView: NSView {
             font: fontScale == 1 ? font : font.withSize(font.pointSize * fontScale)
         )
 
-        textStorage.setAttributedString(RichTextUtils.buildAttributedString(
+        textStorage.setAttributedString(TextLayoutStyle.overridingForeground(RichTextUtils.buildAttributedString(
             richText: richTextData,
             plainText: text,
             font: font,
@@ -101,7 +111,7 @@ final class TextLayoutNSView: NSView {
             legacyLineSpacing: legacyLineSpacing,
             uppercase: uppercase,
             fontScale: fontScale
-        ))
+        ), with: fillOverride))
         needsDisplay = true
     }
 
@@ -125,6 +135,11 @@ final class TextLayoutNSView: NSView {
         )
 
         let origin = NSPoint(x: 0, y: yOffset)
+        if let stroke {
+            TextLayoutStyle.applyStroke(to: textStorage, color: stroke.color, width: stroke.width)
+            layoutManager.drawGlyphs(forGlyphRange: glyphRange, at: origin)
+            TextLayoutStyle.removeStroke(from: textStorage)
+        }
         layoutManager.drawBackground(forGlyphRange: glyphRange, at: origin)
         layoutManager.drawGlyphs(forGlyphRange: glyphRange, at: origin)
     }

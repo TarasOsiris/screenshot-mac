@@ -204,6 +204,7 @@ extension HelpSection {
                 .bullet("Double-click a text shape to edit inline. Press **Esc** or click outside to commit."),
                 .bullet("With a text shape selected, the properties bar shows font, **weight**, size, color, horizontal and vertical alignment, line height, and letter spacing. An imported family offers only the weights and italics it actually ships."),
                 .bullet("**Italic** and **Uppercase** toggle the whole shape. Uppercase is display-only — the text you typed is unchanged, so translations still read normally."),
+                .bullet("**Fill** can be a solid color or a **gradient** across the letters, and **Outline** draws a stroke around them. A gradient replaces any colors set on parts of the text."),
                 .bullet("**Shrink to Fit** scales the text down just enough for every line to fit its box. It is worked out per language, so a long German translation shrinks while the English headline stays full size."),
                 .bullet("**Double-click the letter-spacing value** to snap it back to the default."),
                 .bullet("**Rich text**: while editing, select part of the text and use the format bar for bold, italic, underline, strikethrough, a different size, or a different color — per run, inside one shape. **Clear formatting** returns the selection to the shape's base style."),

@@ -193,7 +193,7 @@
         "svg": { "description": "svgContent — inline SVG XML for svg shapes.", "type": "string" },
         "suc": { "description": "svgUseColor — when true, recolor SVG using `c`.", "type": "boolean" },
 
-        "olc": { "description": "outlineColorData — stroke color (rectangle/circle/star).", "$ref": "#/$defs/Color" },
+        "olc": { "description": "outlineColorData — stroke color (rectangle/circle/star/image; on text, a glyph outline drawn outside the letters).", "$ref": "#/$defs/Color" },
         "olw": { "description": "outlineWidth — stroke width in points.", "type": "number" },
 
         "tbc": { "description": "textBackgroundColorData — fill color of the rounded plate behind a text shape (present iff a text background is set).", "$ref": "#/$defs/Color" },
@@ -205,7 +205,7 @@
 
         "spc": { "description": "starPointCount — number of points on a star shape.", "type": "integer" },
 
-        "fst": { "description": "fillStyle — gradient/image fill for rectangle/circle/star.", "$ref": "#/$defs/BackgroundStyle" },
+        "fst": { "description": "fillStyle — gradient/image fill for rectangle/circle/star; text accepts gradient only (fills the glyphs).", "$ref": "#/$defs/BackgroundStyle" },
         "fgc": { "description": "fillGradientConfig — used when fillStyle is 'gradient'.", "$ref": "#/$defs/GradientConfig" },
         "fic": { "description": "fillImageConfig — used when fillStyle is 'image'.", "$ref": "#/$defs/BackgroundImageConfig" },
 

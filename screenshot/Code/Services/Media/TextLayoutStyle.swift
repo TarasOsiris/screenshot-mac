@@ -215,4 +215,38 @@ enum TextLayoutStyle {
         }
         return attributes
     }
+
+    // MARK: - Glyph outline
+
+    /// Strokes every run so the visible band outside the glyphs is `width` model points: AppKit's
+    /// stroke width is a percentage of each run's point size and straddles the glyph edge.
+    static func applyStroke(to storage: NSTextStorage, color: NSColor, width: CGFloat) {
+        let fullRange = NSRange(location: 0, length: storage.length)
+        storage.beginEditing()
+        storage.enumerateAttribute(.font, in: fullRange) { value, range, _ in
+            let pointSize = (value as? NSFont)?.pointSize ?? CanvasShapeModel.defaultFontSize
+            guard pointSize > 0 else { return }
+            storage.addAttributes([
+                .strokeColor: color,
+                .strokeWidth: 2 * width / pointSize * 100,
+            ], range: range)
+        }
+        storage.endEditing()
+    }
+
+    static func removeStroke(from storage: NSTextStorage) {
+        let fullRange = NSRange(location: 0, length: storage.length)
+        storage.beginEditing()
+        storage.removeAttribute(.strokeColor, range: fullRange)
+        storage.removeAttribute(.strokeWidth, range: fullRange)
+        storage.endEditing()
+    }
+
+    /// One color over every run, rich-text colors included — what a gradient mask needs.
+    static func overridingForeground(_ attributed: NSAttributedString, with color: NSColor?) -> NSAttributedString {
+        guard let color else { return attributed }
+        let result = NSMutableAttributedString(attributedString: attributed)
+        result.addAttribute(.foregroundColor, value: color, range: NSRange(location: 0, length: result.length))
+        return result
+    }
 }

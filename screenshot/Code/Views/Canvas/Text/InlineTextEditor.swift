@@ -20,6 +20,8 @@ struct RasterizedDisplayTextView: View {
     var legacyLineSpacing: CGFloat?
     var richTextData: String?
     var fontScale: CGFloat = 1
+    var stroke: TextStroke?
+    var fillOverride: NSColor?
     /// Supersample factor for the raster. Export and preview leave it at the default, which
     /// reproduces what the implicit rasterizer produced before; the editor passes its on-screen
     /// scale so a zoomed-in row stays sharp.
@@ -53,6 +55,8 @@ struct RasterizedDisplayTextView: View {
             legacyLineSpacing: legacyLineSpacing,
             richTextData: richTextData,
             fontScale: fontScale,
+            stroke: stroke,
+            fillOverride: fillOverride,
             renderScale: renderScale,
             cachesResult: cachesRaster
         ) {

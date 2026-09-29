@@ -7,6 +7,12 @@ import UIKit
 // `renderImage` builds a `TextLayoutNSView`, so it stays in `Views/` while the rest of
 // `TextLayoutStyle` — pure TextKit metrics that `RichTextUtils` needs — lives in `Services/Media/`.
 // Splitting the type rather than moving it keeps all 23 call sites unchanged.
+/// A glyph outline drawn under the fill; `width` is the visible band outside the glyphs, in model points.
+struct TextStroke: Equatable {
+    var color: NSColor
+    var width: CGFloat
+}
+
 extension TextLayoutStyle {
     /// Ceiling on the supersample factor. The editor asks for `displayScale × screenScale`, which a
     /// short template at maximum zoom can push past 6 — enough to turn one headline into a
@@ -50,6 +56,8 @@ extension TextLayoutStyle {
         legacyLineSpacing: CGFloat?,
         richTextData: String? = nil,
         fontScale: CGFloat = 1,
+        stroke: TextStroke? = nil,
+        fillOverride: NSColor? = nil,
         renderScale: CGFloat = defaultTextRenderScale,
         cachesResult: Bool = true
     ) -> NSImage? {
@@ -61,7 +69,7 @@ extension TextLayoutStyle {
             size: size, scale: scale, text: text, font: font, color: color, alignment: alignment,
             verticalAlignment: verticalAlignment, uppercase: uppercase, letterSpacing: letterSpacing,
             lineHeightMultiple: lineHeightMultiple, legacyLineSpacing: legacyLineSpacing,
-            richTextData: richTextData, fontScale: fontScale
+            richTextData: richTextData, fontScale: fontScale, stroke: stroke, fillOverride: fillOverride
         ) as NSString
         if let cached = textImageCache.object(forKey: cacheKey) {
             return cached
@@ -70,7 +78,7 @@ extension TextLayoutStyle {
             size: size, scale: scale, text: text, font: font, color: color, alignment: alignment,
             verticalAlignment: verticalAlignment, uppercase: uppercase, letterSpacing: letterSpacing,
             lineHeightMultiple: lineHeightMultiple, legacyLineSpacing: legacyLineSpacing,
-            richTextData: richTextData, fontScale: fontScale
+            richTextData: richTextData, fontScale: fontScale, stroke: stroke, fillOverride: fillOverride
         ) else { return nil }
         // A continuous style edit (a tracking/size slider) puts a changing value in the key, so
         // every tick is a guaranteed miss whose raster is dead on the next one. Storing them would
@@ -106,7 +114,9 @@ extension TextLayoutStyle {
         lineHeightMultiple: CGFloat?,
         legacyLineSpacing: CGFloat?,
         richTextData: String?,
-        fontScale: CGFloat
+        fontScale: CGFloat,
+        stroke: TextStroke?,
+        fillOverride: NSColor?
     ) -> NSImage? {
         let view = TextLayoutNSView(frame: NSRect(origin: .zero, size: size))
         view.configure(
@@ -120,7 +130,9 @@ extension TextLayoutStyle {
             lineHeightMultiple: lineHeightMultiple,
             legacyLineSpacing: legacyLineSpacing,
             richTextData: richTextData,
-            fontScale: fontScale
+            fontScale: fontScale,
+            stroke: stroke,
+            fillOverride: fillOverride
         )
         view.layoutSubtreeIfNeeded()
         guard let rep = NSBitmapImageRep(
@@ -166,9 +178,11 @@ extension TextLayoutStyle {
         lineHeightMultiple: CGFloat?,
         legacyLineSpacing: CGFloat?,
         richTextData: String?,
-        fontScale: CGFloat
+        fontScale: CGFloat,
+        stroke: TextStroke?,
+        fillOverride: NSColor?
     ) -> NSImage? {
-        let attributed = RichTextUtils.buildAttributedString(
+        let attributed = overridingForeground(RichTextUtils.buildAttributedString(
             richText: richTextData,
             plainText: text,
             font: font,
@@ -179,7 +193,7 @@ extension TextLayoutStyle {
             legacyLineSpacing: legacyLineSpacing,
             uppercase: uppercase,
             fontScale: fontScale
-        )
+        ), with: fillOverride)
         let textStorage = NSTextStorage(attributedString: attributed)
         let layoutManager = NSLayoutManager()
         let compactDelegate = CompactLineLayoutDelegate()
@@ -208,6 +222,11 @@ extension TextLayoutStyle {
 
         return PlatformImageRenderer.image(size: size, scale: scale) {
             let origin = CGPoint(x: 0, y: yOffset)
+            if let stroke {
+                applyStroke(to: textStorage, color: stroke.color, width: stroke.width)
+                layoutManager.drawGlyphs(forGlyphRange: glyphRange, at: origin)
+                removeStroke(from: textStorage)
+            }
             layoutManager.drawBackground(forGlyphRange: glyphRange, at: origin)
             layoutManager.drawGlyphs(forGlyphRange: glyphRange, at: origin)
         }
@@ -243,7 +262,7 @@ extension TextLayoutStyle {
         size: CGSize, scale: CGFloat, text: String, font: NSFont, color: NSColor,
         alignment: NSTextAlignment, verticalAlignment: TextVerticalAlign, uppercase: Bool,
         letterSpacing: CGFloat?, lineHeightMultiple: CGFloat?, legacyLineSpacing: CGFloat?,
-        richTextData: String?, fontScale: CGFloat = 1
+        richTextData: String?, fontScale: CGFloat = 1, stroke: TextStroke? = nil, fillOverride: NSColor? = nil
     ) -> String {
         return [
             "\(scalarToken(size.width))x\(scalarToken(size.height))",
@@ -256,6 +275,8 @@ extension TextLayoutStyle {
             legacyLineSpacing.map(scalarToken) ?? "-",
             richTextData ?? "-",
             scalarToken(fontScale),
+            stroke.map { "\(colorToken($0.color))/\(scalarToken($0.width))" } ?? "-",
+            fillOverride.map(colorToken) ?? "-",
         ].joined(separator: "|")
     }
 }

@@ -172,6 +172,14 @@ extension MCPToolExecutor {
         if let points = args.int("star_points") { shape.starPointCount = points }
         if let clip = args.bool("clip_to_template") { shape.clipToTemplate = clip }
         if let shrink = args.bool("shrink_to_fit") { shape.shrinkToFit = shrink }
+        if let gradient = try args.object("fill_gradient").map(Self.parseGradient) {
+            shape.fillGradientConfig = gradient
+            shape.fillStyle = .gradient
+        }
+        if let style = args.string("fill_style") {
+            shape.fillStyle = style == "gradient" ? .gradient : nil
+            if style == "gradient" && shape.fillGradientConfig == nil { shape.fillGradientConfig = GradientConfig() }
+        }
         if let locked = args.bool("locked") { shape.isLocked = locked }
     }
 }

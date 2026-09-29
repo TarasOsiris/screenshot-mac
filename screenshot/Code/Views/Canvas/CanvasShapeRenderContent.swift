@@ -118,26 +118,45 @@ struct CanvasShapeRenderContent: View {
         let showsOverflow = showsEditorHelpers && !showPlaceholder
             && TextFitMeasurer.overflows(fitInput, shrinksToFit: shrinksToFit)
 
+        let stroke = showPlaceholder ? nil : textStroke
+        func raster(fillOverride: NSColor?, stroke: TextStroke?) -> RasterizedDisplayTextView {
+            RasterizedDisplayTextView(
+                size: CGSize(width: effectiveW, height: effectiveH),
+                text: displayText,
+                font: nsFont,
+                color: nsColor,
+                alignment: align,
+                verticalAlignment: verticalAlign,
+                uppercase: uppercase,
+                letterSpacing: shape.letterSpacing,
+                lineHeightMultiple: shape.lineHeightMultiple,
+                legacyLineSpacing: shape.lineSpacing,
+                richTextData: richText,
+                fontScale: fontScale,
+                stroke: stroke,
+                fillOverride: fillOverride,
+                renderScale: textRenderScale,
+                cachesRaster: !isLiveShapeEdit
+            )
+        }
+
         // One raster for the editor, preview and export alike. The editor used to host a live
         // `TextLayoutNSView` per text shape; those NSViews joined AppKit's `_layoutViewTree`, the
         // constraint pass and every hit test, which a scroll trace showed costing ~18% of the main
         // thread on a 111-shape project. The only live text view left is the one being edited.
-        return RasterizedDisplayTextView(
-            size: CGSize(width: effectiveW, height: effectiveH),
-            text: displayText,
-            font: nsFont,
-            color: nsColor,
-            alignment: align,
-            verticalAlignment: verticalAlign,
-            uppercase: uppercase,
-            letterSpacing: shape.letterSpacing,
-            lineHeightMultiple: shape.lineHeightMultiple,
-            legacyLineSpacing: shape.lineSpacing,
-            richTextData: richText,
-            fontScale: fontScale,
-            renderScale: textRenderScale,
-            cachesRaster: !isLiveShapeEdit
-        )
+        return ZStack(alignment: .topLeading) {
+            if shape.resolvedFillStyle == .gradient && !showPlaceholder {
+                // The outline layer draws no fill, so the gradient shows through the glyphs only.
+                if let stroke {
+                    raster(fillOverride: .clear, stroke: stroke)
+                }
+                shape.fillView(image: nil, modelSize: CGSize(width: effectiveW, height: effectiveH))
+                    .frame(width: effectiveW, height: effectiveH)
+                    .mask { raster(fillOverride: .white, stroke: nil) }
+            } else {
+                raster(fillOverride: nil, stroke: stroke)
+            }
+        }
         .frame(width: effectiveW, height: effectiveH)
         .background { textBackgroundLayer }
         .scaleEffect(displayScale, anchor: .topLeading)
@@ -160,6 +179,11 @@ struct CanvasShapeRenderContent: View {
             .offset(x: 8, y: 8)
             .accessibilityLabel(Text("Text doesn't fit"))
             .help(Text("Text doesn't fit in its box. Enlarge the box, shorten the text, or turn on Shrink to Fit."))
+    }
+
+    private var textStroke: TextStroke? {
+        guard let color = shape.outlineColor, let width = shape.outlineWidth, width > 0 else { return nil }
+        return TextStroke(color: NSColor(color), width: width)
     }
 
     /// Extra resolution for the editor only. Preview and export draw at model scale using the

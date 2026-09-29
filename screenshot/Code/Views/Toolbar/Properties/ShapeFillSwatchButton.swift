@@ -14,6 +14,7 @@ struct ShapeFillSwatchButton: View {
     let onPickImage: () -> Void
     let onRemoveImage: () -> Void
     let onDropImage: (NSImage) -> Void
+    var allowsImage = true
 
     // iPad needs extra width so the enlarged gradient angle wheel + preset row fit on one line.
     #if os(macOS)
@@ -47,7 +48,8 @@ struct ShapeFillSwatchButton: View {
                     onChanged: onChanged,
                     onPickImage: onPickImage,
                     onRemoveImage: onRemoveImage,
-                    onDropImage: onDropImage
+                    onDropImage: onDropImage,
+                    allowsImage: allowsImage
                 )
             }
             .padding(12)

@@ -91,11 +91,6 @@ extension ShapeInspector {
                 }
             }
 
-            EditorLabeledContent("Color") {
-                ColorPicker("Color", selection: shapeBinding(shapeId, \.color), supportsOpacity: false)
-                    .labelsHidden()
-            }
-
             EditorLabeledContent("Align") {
                 VStack(alignment: .trailing, spacing: 6) {
                     TextAlignPicker(selection: shapeBinding(shapeId, \.textAlign, default: .center))
@@ -222,7 +217,7 @@ extension ShapeInspector {
 
     @ViewBuilder
     func fillSection(shape: CanvasShapeModel) -> some View {
-        if shape.type.supportsFill {
+        if shape.supportsFillEditing {
             InspectorSection(.shapeFill, "Fill") {
                 BackgroundEditor(
                     backgroundStyle: fillStyleBinding(shapeId),
@@ -233,8 +228,14 @@ extension ShapeInspector {
                     onChanged: { state.scheduleSave() },
                     onPickImage: { isReplacingFillImage = true },
                     onRemoveImage: { state.removeShapeFillImage(for: shapeId) },
-                    onDropImage: { image in state.saveShapeFillImage(image, for: shapeId) }
+                    onDropImage: { image in state.saveShapeFillImage(image, for: shapeId) },
+                    allowsImage: shape.type.supportsFill
                 )
+                if shape.type == .text && shape.resolvedFillStyle == .gradient && shape.hasRichText {
+                    Text("A gradient replaces the colors set on parts of the text.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
             }
         }
     }

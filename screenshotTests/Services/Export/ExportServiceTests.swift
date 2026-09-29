@@ -1662,6 +1662,69 @@ struct ExportServiceTests {
         #expect(abs(exportInk - (try inkPixelCount(plainExport))) > exportInk / 10, "Shrinking must change what is drawn")
     }
 
+    private func makeHeadlineRow(_ configure: (inout CanvasShapeModel) -> Void) -> ScreenshotRow {
+        var row = makeTestRow(width: 400, height: 400, bgColor: .white)
+        var shape = CanvasShapeModel(
+            type: .text, x: 0, y: 0, width: 400, height: 400,
+            color: .black, text: "WWW\nWWW", fontSize: 120, fontWeight: 900
+        )
+        configure(&shape)
+        row.shapes = [shape]
+        return row
+    }
+
+    /// The outline is drawn outside the glyphs, so the unoutlined render's paper turns stroke-colored
+    /// right at the glyph edges, and editor and export agree.
+    @Test func textOutlineRendersOutsideTheGlyphsInEditorAndExport() throws {
+        let outlined = makeHeadlineRow {
+            $0.outlineColorData = CodableColor(Color(red: 0, green: 0, blue: 0.9))
+            $0.outlineWidth = 6
+        }
+        let exportBitmap = try renderTemplateBitmap(index: 0, row: outlined)
+        let editorBitmap = try renderEditorBitmap(index: 0, row: outlined)
+        let plain = try renderTemplateBitmap(index: 0, row: makeHeadlineRow { _ in })
+
+        func bluePixels(_ bitmap: NSBitmapImageRep) throws -> Int {
+            var count = 0
+            for y in stride(from: 0, to: bitmap.pixelsHigh, by: 2) {
+                for x in stride(from: 0, to: bitmap.pixelsWide, by: 2) {
+                    let c = try pixelColor(bitmap, at: (x, y))
+                    if c.b > 0.6 && c.r < 0.4 && c.g < 0.4 { count += 1 }
+                }
+            }
+            return count
+        }
+        let exportBlue = try bluePixels(exportBitmap)
+        #expect(exportBlue > 100, "The outline should be visible in export")
+        #expect(try bluePixels(plain) == 0)
+        let editorBlue = try bluePixels(editorBitmap)
+        #expect(abs(exportBlue - editorBlue) <= max(40, exportBlue * 20 / 100), "editor \(editorBlue) vs export \(exportBlue)")
+    }
+
+    @Test func textGradientFillVariesAcrossTheGlyphs() throws {
+        let row = makeHeadlineRow {
+            $0.fillStyle = .gradient
+            $0.fillGradientConfig = GradientConfig(
+                stops: [
+                    GradientColorStop(color: Color(red: 1, green: 0, blue: 0), location: 0),
+                    GradientColorStop(color: Color(red: 0, green: 0, blue: 1), location: 1),
+                ],
+                angle: 90
+            )
+        }
+        let bitmap = try renderTemplateBitmap(index: 0, row: row)
+        var reds = 0, blues = 0
+        for y in stride(from: 0, to: bitmap.pixelsHigh, by: 2) {
+            for x in stride(from: 0, to: bitmap.pixelsWide, by: 2) {
+                let c = try pixelColor(bitmap, at: (x, y))
+                if c.r > 0.7 && c.b < 0.4 && c.g < 0.4 { reds += 1 }
+                if c.b > 0.7 && c.r < 0.4 && c.g < 0.4 { blues += 1 }
+            }
+        }
+        #expect(reds > 50 && blues > 50, "red \(reds), blue \(blues)")
+        try expectNearWhite(bitmap, at: (2, 2), label: "Paper outside the glyphs stays clear of the gradient")
+    }
+
     private func inkPixelCount(_ bitmap: NSBitmapImageRep) throws -> Int {
         var count = 0
         for y in stride(from: 0, to: bitmap.pixelsHigh, by: 2) {
