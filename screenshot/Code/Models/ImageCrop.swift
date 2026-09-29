@@ -39,6 +39,19 @@ nonisolated struct ImageCrop: Codable, Equatable {
         clamped(imageAspect: imageSize.height > 0 ? imageSize.width / imageSize.height : 0, frameSize: frameSize)
     }
 
+    /// Moves the picture by `translation` (model points, in the frame's own axes), starting from
+    /// the clamped crop so an offset left over from a higher zoom can't swallow the first part of
+    /// a pan. The result is unclamped, so a drag can overshoot while it's live.
+    func panned(by translation: CGSize, frameSize: CGSize, imageSize: CGSize?) -> ImageCrop {
+        var crop = imageSize.map { clamped(imageSize: $0, frameSize: frameSize) } ?? self
+        crop.offsetX += translation.width / max(frameSize.width, 1)
+        crop.offsetY += translation.height / max(frameSize.height, 1)
+        return crop
+    }
+
+    /// The value a shape stores: nil for the identity crop.
+    var storedValue: ImageCrop? { isIdentity ? nil : self }
+
     static func aspectFillSize(imageAspect: CGFloat, frameSize: CGSize) -> CGSize {
         let frameAspect = frameSize.width / frameSize.height
         return imageAspect > frameAspect

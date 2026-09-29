@@ -155,18 +155,15 @@ extension CanvasShapeView {
         interactions.onDragEnd?()
     }
 
-    /// The crop with the in-progress pan applied. The pan starts from the *clamped* crop — a
-    /// stored offset left over from a higher zoom would otherwise swallow the first part of a drag.
+    /// The crop with the in-progress pan applied.
     var liveImageCrop: ImageCrop? {
         guard cropPanOffset != .zero else { return shape.imageCrop }
         let local = ResizeGeometry.localTranslation(cropPanOffset, rotation: shape.rotation)
-        var crop = shape.imageCrop ?? ImageCrop()
-        if let image = screenshotImage {
-            crop = crop.clamped(imageSize: image.size, frameSize: CGSize(width: shape.width, height: shape.height))
-        }
-        crop.offsetX += local.width / max(displayScale * shape.width, 1)
-        crop.offsetY += local.height / max(displayScale * shape.height, 1)
-        return crop
+        return (shape.imageCrop ?? ImageCrop()).panned(
+            by: CGSize(width: local.width / displayScale, height: local.height / displayScale),
+            frameSize: CGSize(width: shape.width, height: shape.height),
+            imageSize: screenshotImage?.size
+        )
     }
 
     private func commitCropPan() {
@@ -174,8 +171,7 @@ extension CanvasShapeView {
         cropPanOffset = .zero
         guard let crop, let image = screenshotImage else { return }
         var updated = shape
-        let clamped = crop.clamped(imageSize: image.size, frameSize: CGSize(width: shape.width, height: shape.height))
-        updated.imageCrop = clamped.isIdentity ? nil : clamped
+        updated.imageCrop = crop.clamped(imageSize: image.size, frameSize: CGSize(width: shape.width, height: shape.height)).storedValue
         guard updated.imageCrop != shape.imageCrop else { return }
         interactions.onUpdate(updated)
     }

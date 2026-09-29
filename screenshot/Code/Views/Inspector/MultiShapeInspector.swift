@@ -89,7 +89,7 @@ struct MultiShapeInspector: View, MultiShapeEditing {
             EditorLabeledContent("Color") {
                 PaletteColorPicker("Color", selection: multiTextColorBinding(), supportsOpacity: false)
                     .labelsHidden()
-                    .help(selectedTextHasGradient ? Text("Text color — replaces the gradient fill") : Text("Text color"))
+                    .help(textColorHelp(for: shapes))
             }
 
             EditorLabeledContent("Align") {

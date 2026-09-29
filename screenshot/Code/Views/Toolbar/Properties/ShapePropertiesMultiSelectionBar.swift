@@ -115,7 +115,7 @@ struct ShapePropertiesMultiSelectionBar: View, MultiShapeEditing {
             ShapePropertiesSection {
                 PaletteColorPicker("Text color", selection: multiTextColorBinding(), supportsOpacity: false, wellWidth: UIMetrics.ColorSwatch.inline)
                     .labelsHidden()
-                    .help(selectedTextHasGradient ? Text("Text color — replaces the gradient fill") : Text("Text color"))
+                    .help(textColorHelp(for: shapes))
                     .accessibilityLabel("Text color")
             }
 

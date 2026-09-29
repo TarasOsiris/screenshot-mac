@@ -423,7 +423,7 @@ extension AppState {
 
         // Only once something will actually move, so a fully-locked nudge doesn't poison the
         // baseline for a later, unrelated nudge.
-        beginNudgeIfNeeded(rowIdx: rowIdx)
+        beginNudgeIfNeeded(rowIdx: rowIdx, target: rows[rowIdx].id)
         edits.nudgeActionName = ids.count > 1 ? "Move Shapes" : "Move Shape"
 
         for i in rows[rowIdx].shapes.indices {
@@ -449,14 +449,13 @@ extension AppState {
 
         let frameSize = CGSize(width: resolved.width, height: resolved.height)
         let local = ResizeGeometry.localTranslation(CGSize(width: dx, height: dy), rotation: resolved.rotation)
-        var crop = (shape.imageCrop ?? ImageCrop()).clamped(imageSize: image.size, frameSize: frameSize)
-        crop.offsetX += local.width / resolved.width
-        crop.offsetY += local.height / resolved.height
-        let clamped = crop.clamped(imageSize: image.size, frameSize: frameSize)
-        let newCrop = clamped.isIdentity ? nil : clamped
+        let newCrop = (shape.imageCrop ?? ImageCrop())
+            .panned(by: local, frameSize: frameSize, imageSize: image.size)
+            .clamped(imageSize: image.size, frameSize: frameSize)
+            .storedValue
         guard newCrop != shape.imageCrop else { return }
 
-        beginNudgeIfNeeded(rowIdx: rowIdx)
+        beginNudgeIfNeeded(rowIdx: rowIdx, target: shapeId)
         edits.nudgeActionName = "Crop Image"
         rows[rowIdx].shapes[shapeIdx].imageCrop = newCrop
         scheduleSave()
@@ -464,11 +463,14 @@ extension AppState {
     }
 
     /// Captures the undo base at the start of a nudge burst; the burst commits as one step.
-    private func beginNudgeIfNeeded(rowIdx: Int) {
+    /// `target` is the row for a move and the shape for a crop pan, so switching between the two
+    /// — however crop mode was entered or left — splits the burst into separate undo steps.
+    private func beginNudgeIfNeeded(rowIdx: Int, target: UUID) {
+        if edits.nudge.isActive, edits.nudge.activeId != target { edits.nudge.finish() }
         guard !edits.nudge.isActive else { return }
         commitAllPendingEdits()
         let baseRow = rows[rowIdx]
-        edits.nudge.begin(id: baseRow.id) { [weak self] in
+        edits.nudge.begin(id: target) { [weak self] in
             guard let self else { return }
             self.registerUndoForRowWithBase(self.edits.nudgeActionName, baseRow: baseRow)
         }

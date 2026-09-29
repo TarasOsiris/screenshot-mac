@@ -186,6 +186,9 @@ extension AppState {
         guard let rowIdx = selectedRowIndex, !selectedShapeIds.isEmpty else { return }
         let rowId = rows[rowIdx].id
         let shouldLock = !isSelectionFullyLocked
+        if shouldLock, let cropping = imageCrop.shapeId, selectedShapeIds.contains(cropping) {
+            endImageCrop()
+        }
         updateShapes(
             selectedShapeIds,
             in: rowId,

@@ -140,7 +140,7 @@ struct CanvasShapeHandlesOverlay: View {
 
     private func resizeHandle(edge: ResizeEdge) -> some View {
         let handleSize = handleDiameter / zoom
-        let hitSize: CGFloat = 20 / zoom
+        let hitSize = UIMetrics.CanvasHandle.resizeHitSize / zoom
         let position = handlePosition(for: edge)
 
         return ZStack {

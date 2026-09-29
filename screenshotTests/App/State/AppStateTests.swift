@@ -378,14 +378,20 @@ struct AppStateTests {
         #expect(state.screenshotsReplaced(by: plan, inRow: rowId) == count)
     }
 
-    @Test func arrowKeysPanThePictureInCropMode() throws {
-        let (state, tempDir) = makeState()
-        defer { cleanup(tempDir) }
+    /// A 200×200 picture zoomed 2× in a 200×200 frame, so it can pan half a frame each way.
+    private func addCroppableImage(to state: AppState) -> CanvasShapeModel {
         var shape = CanvasShapeModel(type: .image, x: 100, y: 100, width: 200, height: 200)
         shape.imageFileName = "crop.png"
         shape.imageCrop = ImageCrop(scale: 2)
         state.rows[0].shapes.append(shape)
         state.screenshotImages["crop.png"] = makeTestImage(width: 200, height: 200)
+        return shape
+    }
+
+    @Test func arrowKeysPanThePictureInCropMode() throws {
+        let (state, tempDir) = makeState()
+        defer { cleanup(tempDir) }
+        let shape = addCroppableImage(to: state)
         state.beginImageCrop(shape.id)
         #expect(state.imageCrop.shapeId == shape.id)
         let um = try #require(state.undoManager)
@@ -407,26 +413,35 @@ struct AppStateTests {
     @Test func enteringCropModeSplitsAMoveFromACropPanInUndo() throws {
         let (state, tempDir) = makeState()
         defer { cleanup(tempDir) }
-        var shape = CanvasShapeModel(type: .image, x: 100, y: 100, width: 200, height: 200)
-        shape.imageFileName = "crop.png"
-        shape.imageCrop = ImageCrop(scale: 2)
-        state.rows[0].shapes.append(shape)
-        state.screenshotImages["crop.png"] = makeTestImage(width: 200, height: 200)
+        let shape = addCroppableImage(to: state)
         state.selectShape(shape.id, in: state.rows[0].id)
-        let um = try #require(state.undoManager)
-        um.removeAllActions()
+        try #require(state.undoManager).removeAllActions()
 
         state.nudgeSelectedShapes(dx: 10, dy: 0)
         state.beginImageCrop(shape.id)
         state.nudgeSelectedShapes(dx: 10, dy: 0)
         state.endImageCrop()
 
-        um.undo()
+        // The app's ⌘Z path, which commits a still-pending pan before undoing.
+        state.undoDocumentAction()
         let afterFirstUndo = try #require(state.rows[0].shapes.first { $0.id == shape.id })
         #expect(afterFirstUndo.x == shape.x + 10)
         #expect(afterFirstUndo.imageCrop == shape.imageCrop)
-        um.undo()
+        state.undoDocumentAction()
         #expect(state.rows[0].shapes.first { $0.id == shape.id }?.x == shape.x)
+    }
+
+    @Test func lockingEndsCropModeAndLockedCropsCantBeReset() throws {
+        let (state, tempDir) = makeState()
+        defer { cleanup(tempDir) }
+        let shape = addCroppableImage(to: state)
+        state.beginImageCrop(shape.id)
+
+        state.toggleLockOnSelection()
+        #expect(!state.imageCrop.isActive)
+
+        state.resetImageCrop(shape.id)
+        #expect(state.rows[0].shapes.first { $0.id == shape.id }?.imageCrop == shape.imageCrop)
     }
 
     @Test func batchImportImagesReusesExistingDeviceShapes() async throws {

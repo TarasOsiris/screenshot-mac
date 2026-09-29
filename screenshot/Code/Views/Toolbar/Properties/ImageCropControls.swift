@@ -19,8 +19,6 @@ struct ImageCropControls: View, ShapeEditing {
                 Label("Crop", systemImage: "crop")
             }
             .toggleStyle(.button)
-            // Still clickable while cropping, so a shape locked mid-crop can be taken out of it.
-            .disabled(isLocked && !isCropping)
             .help(isLocked
                 ? Text("Unlock the shape to crop it")
                 : Text("Drag the picture to reposition it inside the frame (or double-click the image)"))
@@ -29,15 +27,16 @@ struct ImageCropControls: View, ShapeEditing {
                 .foregroundStyle(.secondary)
             Slider(value: shapeBinding(shapeId, \.imageCropScale, continuous: true), in: ImageCrop.scaleRange)
                 .frame(width: sliderWidth)
-                .disabled(isLocked)
                 .help("Zoom the picture inside its frame")
             Image(systemName: "plus.magnifyingglass")
                 .foregroundStyle(.secondary)
 
-            ActionButton(icon: "arrow.counterclockwise", tooltip: "Reset Crop", frameSize: UIMetrics.IconButton.frameSize, disabled: !hasCrop || isLocked) {
+            ActionButton(icon: "arrow.counterclockwise", tooltip: "Reset Crop", frameSize: UIMetrics.IconButton.frameSize, disabled: !hasCrop) {
                 state.resetImageCrop(shapeId)
             }
         }
+        // Locking ends crop mode, so nothing here needs to stay reachable on a locked shape.
+        .disabled(isLocked)
         .controlSize(.small)
     }
 }

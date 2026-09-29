@@ -59,10 +59,10 @@ struct MultiShapeEditingTests {
         let plain = textShape(.blue)
         let (state, tempDir, editor, _) = makeEditor(adding: [gradient, plain])
         defer { cleanupTestState(tempDir) }
-        #expect(editor.selectedTextHasGradient)
+        #expect(editor.hasGradientText(editor.selectedShapes))
 
         editor.multiTextColorBinding().wrappedValue = .red
-        #expect(!editor.selectedTextHasGradient)
+        #expect(!editor.hasGradientText(editor.selectedShapes))
 
         #expect(documentShape(state, gradient.id)?.resolvedFillStyle == .color)
         #expect(documentShape(state, gradient.id)?.color.hexString == Color.red.hexString)

@@ -47,12 +47,15 @@ struct LocaleFolderImportSheet: View {
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
 
-            if request.plan.batches.isEmpty, !addableLocales.isEmpty {
-                Text("None of this folder's languages are in the project yet. Turn on the ones to add below, and their screenshots import with them.")
-                    .fixedSize(horizontal: false, vertical: true)
-            } else if request.plan.batches.isEmpty {
-                Text("No screenshots in this folder match this row's languages and its \(sizeLabel) size. Name subfolders by language — for example en-US and de-DE — or add the language code to each file name.")
-                    .fixedSize(horizontal: false, vertical: true)
+            if request.plan.batches.isEmpty {
+                Group {
+                    if addableLocales.isEmpty {
+                        Text("No screenshots in this folder match this row's languages and its \(sizeLabel) size. Name subfolders by language — for example en-US and de-DE — or add the language code to each file name.")
+                    } else {
+                        Text("None of this folder's languages are in the project yet. Turn on the ones to add below, and their screenshots import with them.")
+                    }
+                }
+                .fixedSize(horizontal: false, vertical: true)
             } else {
                 VStack(alignment: .leading, spacing: 4) {
                     ForEach(request.plan.batches, id: \.localeCode) { batch in

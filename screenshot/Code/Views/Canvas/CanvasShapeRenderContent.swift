@@ -184,11 +184,11 @@ struct CanvasShapeRenderContent: View {
         Image(systemName: "exclamationmark")
             .font(.system(size: 11, weight: .heavy))
             .foregroundStyle(.white)
-            .frame(width: 18, height: 18)
+            .frame(width: UIMetrics.CanvasHandle.overflowBadgeSize, height: UIMetrics.CanvasHandle.overflowBadgeSize)
             .background(Color.orange, in: Circle())
-            // Straddles the bottom edge it overflows, inset from the corner so it clears the
-            // bottom-right resize handle's 20 pt hit area — that handle is how you fix it.
-            .offset(x: -15, y: 9)
+            // Straddles the bottom edge it overflows, inset past the bottom-right resize handle's
+            // hit area — that handle is how you fix it.
+            .offset(x: -(UIMetrics.CanvasHandle.resizeHitSize / 2 + 5), y: UIMetrics.CanvasHandle.overflowBadgeSize / 2)
             .accessibilityLabel(Text("Text doesn't fit"))
             .help(Text("Text doesn't fit in its box. Enlarge the box, shorten the text, or turn on Shrink to Fit."))
     }

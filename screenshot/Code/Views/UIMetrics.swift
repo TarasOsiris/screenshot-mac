@@ -359,6 +359,12 @@ enum UIMetrics {
         static let verticalPadding: CGFloat = 8
     }
 
+    enum CanvasHandle {
+        /// Hit area of a shape's resize handle; canvas chrome near a corner must stay clear of it.
+        static let resizeHitSize: CGFloat = 20
+        static let overflowBadgeSize: CGFloat = 18
+    }
+
     enum GradientEditor {
         #if os(macOS)
         static let stopHandleSize: CGFloat = 14
