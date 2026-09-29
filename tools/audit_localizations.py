@@ -21,7 +21,7 @@ import xcstrings_format
 
 
 CATALOG = Path(__file__).parent.parent / "screenshot" / "Localizable.xcstrings"
-TARGET_LANGUAGES = ("de", "es", "fa", "fr", "ja", "ko", "pt-BR", "zh-Hans")
+TARGET_LANGUAGES = ("de", "es", "fa", "fr", "it", "ja", "ko", "pt-BR", "ru", "tr", "uk", "zh-Hans", "zh-Hant")
 
 FORMAT_SPECIFIER_RE = re.compile(
     r"%(?:(?P<position>\d+)\$)?(?P<type>@|lld|ld|d|[0-9]*(?:\.[0-9]+)?[fF]|%)"
@@ -144,6 +144,18 @@ VERBATIM_ALLOWED = {
     "© 2025 Your Company",
     "by Ibrahim.Bhl",
     "e.g. 57246542-96fe-1a63-e053-0824d011072a",
+    "#%lld",
+    "%lld %@",
+    "shapes.gallery",
+}
+
+# English loanwords that are the correct translation in one language but would be a miss in others.
+LANGUAGE_VERBATIM_ALLOWED = {
+    "it": {
+        "%@ · 1 screenshot", "1 screenshot", "1 set", "Email: %@", "File", "Font", "Preset",
+        "Privacy Policy", "[Privacy Policy](https://screenshotbro.app/privacy)", "screenshot",
+    },
+    "tr": {"1 set", "Android Tablet", "Font", "Minimal", "Platform"},
 }
 
 
@@ -231,7 +243,7 @@ def audit(catalog: Path, include_stale: bool) -> list[str]:
                         f"source={source_specs} translation={value_specs}"
                     )
 
-                if value == key and not should_allow_verbatim(key):
+                if value == key and not should_allow_verbatim(key) and key not in LANGUAGE_VERBATIM_ALLOWED.get(language, ()):
                     errors.append(f"{language}: untranslated value for {key}")
 
     return errors

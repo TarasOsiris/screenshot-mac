@@ -1,6 +1,6 @@
 ---
 name: add-localized-string
-description: Add a new user-facing string to the codebase using String(localized:) and propagate it through Localizable.xcstrings via the project's Python translation scripts. Use when adding any UI label, button title, alert message, accessibility text, or other text the user will see, so all 30 supported locales stay in sync.
+description: Add a new user-facing string to the codebase using String(localized:) and propagate it through Localizable.xcstrings via the project's Python translation scripts. Use when adding any UI label, button title, alert message, accessibility text, or other text the user will see, so all 13 app UI languages stay in sync.
 disable-model-invocation: true
 ---
 
@@ -42,17 +42,18 @@ After this, `screenshot/Localizable.xcstrings` will contain the new key with `st
 
 The two translation scripts have **different jobs** — they're not interchangeable:
 
-- **`tools/translate_popular_languages.py`** — uses Google Translate (via `deep-translator`) to fill missing entries for fr, de, ja, ko, pt-BR, zh-Hans. Run it first for any new key. Requires `python3 -m pip install deep-translator`.
+- **`tools/translate_popular_languages.py`** — uses Google Translate (via `deep-translator`) to fill missing entries for every UI language in its `TARGET_LANGUAGES` (de, es, fa, fr, it, ja, ko, pt-BR, ru, tr, uk, zh-Hans, zh-Hant). Run it first for any new key. Requires `python3 -m pip install deep-translator`.
 - **`tools/translate_catalog.py`** — Spanish-only. Uses a hand-curated English→Spanish dictionary baked into the script. It also merges new keys from Xcode's `.stringsdata` files into the catalog (workaround for xcodebuild CLI not always running the catalog-merge step). If your new key isn't in its `ES` dict, add a translation to the dict first, then run the script.
 
 Typical flow:
 
 ```
 python3 tools/translate_catalog.py            # merges new keys + Spanish
-python3 tools/translate_popular_languages.py  # fills the 6 popular langs
+python3 tools/translate_popular_languages.py  # fills every UI language
+python3 tools/audit_localizations.py          # placeholder / missing-language check
 ```
 
-Other locales beyond these 7 (the catalog supports 30) are translated manually or skipped — there is no script for them.
+Adding a UI language means adding it to `TARGET_LANGUAGES` in both `translate_popular_languages.py` and `audit_localizations.py`, and to `localizations.supported` in `project.xcproj`.
 
 ## Step 4 — Verify
 

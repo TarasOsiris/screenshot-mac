@@ -35,10 +35,11 @@ enum AppLanguageOptions {
         Bundle.main.localizations.filter { $0 != "Base" }.sorted()
     }
 
-    /// The language's own endonym (e.g. "Deutsch" for `de`).
+    /// The language's own endonym (e.g. "Deutsch" for `de`). Uses the full identifier so
+    /// `zh-Hans`/`zh-Hant` don't both collapse to "中文".
     static func displayName(for code: String) -> String {
         let locale = Locale(identifier: code)
-        if let name = locale.localizedString(forLanguageCode: code) {
+        if let name = locale.localizedString(forIdentifier: code) {
             return name.capitalized(with: locale)
         }
         return code

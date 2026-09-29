@@ -10,7 +10,12 @@ high-impact set of languages:
   - Korean (`ko`)
   - Portuguese, Brazil (`pt-BR`)
   - Chinese, Simplified (`zh-Hans`)
+  - Chinese, Traditional (`zh-Hant`)
   - Persian (`fa`)
+  - Italian (`it`)
+  - Russian (`ru`)
+  - Turkish (`tr`)
+  - Ukrainian (`uk`)
 
 Requirements:
   python3 -m pip install deep-translator
@@ -48,7 +53,12 @@ TARGET_LANGUAGES = {
     "ko": "ko",
     "pt-BR": "pt",
     "zh-Hans": "zh-CN",
+    "zh-Hant": "zh-TW",
     "fa": "fa",
+    "it": "it",
+    "ru": "ru",
+    "tr": "tr",
+    "uk": "uk",
 }
 
 KEEP_AS_IS = {
