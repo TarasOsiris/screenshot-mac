@@ -94,7 +94,7 @@ extension CanvasShapeView {
     }
 
     private func handleDragChanged(_ value: DragGesture.Value) {
-        if isCropping {
+        if isCropping && !shape.resolvedIsLocked {
             cropPanOffset = value.translation
             PlatformCursor.hold(.closedHand, for: .shapeBody)
             return
@@ -137,7 +137,7 @@ extension CanvasShapeView {
 
     private func handleDragEnded(_ value: DragGesture.Value) {
         PlatformCursor.release(.shapeBody)
-        if isCropping {
+        if isCropping && !shape.resolvedIsLocked {
             commitCropPan()
             return
         }
@@ -155,11 +155,18 @@ extension CanvasShapeView {
         interactions.onDragEnd?()
     }
 
-    /// The crop with the in-progress pan applied, clamping left to the renderer.
+    /// The crop with the in-progress pan applied. The pan starts from the *clamped* crop — a
+    /// stored offset left over from a higher zoom would otherwise swallow the first part of a drag.
     var liveImageCrop: ImageCrop? {
         guard cropPanOffset != .zero else { return shape.imageCrop }
         let local = shapeLocalTranslation(cropPanOffset)
         var crop = shape.imageCrop ?? ImageCrop()
+        if let image = screenshotImage, image.size.width > 0, image.size.height > 0 {
+            crop = crop.clamped(
+                imageAspect: image.size.width / image.size.height,
+                frameSize: CGSize(width: shape.width, height: shape.height)
+            )
+        }
         crop.offsetX += local.width / max(displayScale * shape.width, 1)
         crop.offsetY += local.height / max(displayScale * shape.height, 1)
         return crop
@@ -170,10 +177,11 @@ extension CanvasShapeView {
         cropPanOffset = .zero
         guard let crop, let image = screenshotImage, image.size.width > 0, image.size.height > 0 else { return }
         var updated = shape
-        updated.imageCrop = crop.clamped(
+        let clamped = crop.clamped(
             imageAspect: image.size.width / image.size.height,
             frameSize: CGSize(width: shape.width, height: shape.height)
         )
+        updated.imageCrop = clamped.isIdentity ? nil : clamped
         guard updated.imageCrop != shape.imageCrop else { return }
         interactions.onUpdate(updated)
     }

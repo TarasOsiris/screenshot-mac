@@ -19,8 +19,9 @@ extension AppState {
     }
 
     func beginImageCrop(_ shapeId: UUID) {
-        guard let location = shapeLocation(for: shapeId),
-              canCropImage(rows[location.rowIndex].shapes[location.shapeIndex]) else { return }
+        guard let location = shapeLocation(for: shapeId) else { return }
+        let shape = rows[location.rowIndex].shapes[location.shapeIndex]
+        guard canCropImage(shape), !shape.resolvedIsLocked else { return }
         selectShape(shapeId, in: rows[location.rowIndex].id)
         imageCrop.begin(shapeId)
     }
