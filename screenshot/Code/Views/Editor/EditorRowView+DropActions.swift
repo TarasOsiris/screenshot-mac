@@ -33,7 +33,14 @@ extension EditorRowView {
 
     func handleCanvasDrop(_ providers: [NSItemProvider], at displayLocation: CGPoint, displayScale ds: CGFloat) -> Bool {
         guard !providers.isEmpty else { return false }
-        if routeFolderDrop(providers) { return true }
+        let dropX = displayLocation.x / ds
+        let dropY = displayLocation.y / ds
+        if routeFolderDrop(providers, fallback: { provider in
+            ItemProviderImageLoader.loadImage(from: provider) { image in
+                guard let image else { return }
+                self.createImageShape(image: image, modelX: dropX, modelY: dropY, source: .dropCanvas)
+            }
+        }) { return true }
 
         var svgProviders: [NSItemProvider] = []
         var imageProviders: [NSItemProvider] = []
@@ -132,19 +139,20 @@ extension EditorRowView {
 
     // MARK: - Localized folder import
 
-    /// A single dropped folder is a localized import, not an image: Finder hands it over as a bare
-    /// file URL that the image loader would silently discard.
-    private func routeFolderDrop(_ providers: [NSItemProvider]) -> Bool {
+    /// A single dropped folder is a localized import, not an image. Finder may describe it only as
+    /// `public.file-url`, so the URL is loaded and checked; anything that isn't a directory takes
+    /// the single-image path it would have taken anyway.
+    private func routeFolderDrop(_ providers: [NSItemProvider], fallback: @escaping (NSItemProvider) -> Void) -> Bool {
         #if os(macOS)
         guard providers.count == 1, let provider = providers.first,
-              provider.hasItemConformingToTypeIdentifier(UTType.folder.identifier)
-                || provider.hasItemConformingToTypeIdentifier(UTType.directory.identifier),
-              !provider.hasItemConformingToTypeIdentifier(UTType.image.identifier)
+              provider.hasItemConformingToTypeIdentifier(UTType.fileURL.identifier),
+              !provider.hasItemConformingToTypeIdentifier(UTType.image.identifier),
+              !provider.hasItemConformingToTypeIdentifier(UTType.svg.identifier)
         else { return false }
-        let begin = beginLocaleFolderImport
+        let pending = PendingFolderDrop(provider: provider, begin: beginLocaleFolderImport, fallback: fallback)
         _ = provider.loadObject(ofClass: URL.self) { @Sendable url, _ in
-            guard let url else { return }
-            Task { @MainActor in begin(url) }
+            let isDirectory = url.flatMap { try? $0.resourceValues(forKeys: [.isDirectoryKey]).isDirectory } ?? false
+            Task { @MainActor in pending.finish(url: url, isDirectory: isDirectory) }
         }
         return true
         #else
@@ -180,24 +188,61 @@ extension EditorRowView {
     }
 
     func performLocaleFolderImport(_ request: LocaleFolderImportRequest, addingLocales: [LocaleDefinition]) {
-        let plan = addingLocales.isEmpty ? request.plan : LocaleFolderImportPlanner.plan(
+        let existingCodes = state.localeState.locales.map(\.code)
+        var seen = Set(existingCodes)
+        let newLocales = addingLocales.filter { seen.insert($0.code).inserted }
+        let plan = newLocales.isEmpty ? request.plan : LocaleFolderImportPlanner.plan(
             folder: request.folder,
-            projectLocaleCodes: state.localeState.locales.map(\.code) + addingLocales.map(\.code),
+            projectLocaleCodes: existingCodes + newLocales.map(\.code),
             rowSize: request.rowSize
         )
+        // By reference: the plan already read each header, and the bytes are copied from
+        // `sourceURL`, so reading every file here would only stall the main thread.
         let batches = plan.batches.map { batch in
             (localeCode: batch.localeCode, sources: batch.files.compactMap { url in
-                NSImage(contentsOf: url).map { ImageImportSource(image: $0, sourceURL: url) }
+                Self.lazyImage(at: url).map { ImageImportSource(image: $0, sourceURL: url) }
             })
         }
+        let sourceCount = batches.reduce(0) { $0 + $1.sources.count }
         let cap = store.isProUnlocked ? nil : PurchaseService.freeMaxTemplatesPerRow
         Task { @MainActor in
             let imported = await state.importLocalizedScreenshots(
-                batches, into: request.rowId, addingLocales: addingLocales, maxTemplatesPerRow: cap
+                batches, into: request.rowId, addingLocales: newLocales, maxTemplatesPerRow: cap
             )
-            if imported < plan.imageCount {
+            if cap != nil && imported < sourceCount {
                 store.presentPaywall(for: .templateLimit)
             }
+        }
+    }
+
+    private static func lazyImage(at url: URL) -> NSImage? {
+        #if os(macOS)
+        NSImage(byReferencing: url)
+        #else
+        NSImage(contentsOfFile: url.path)
+        #endif
+    }
+}
+
+/// Carries the drop's provider and continuations across NSItemProvider's background callback;
+/// main-actor isolated, so the callback can hold it without sending either across actors.
+@MainActor
+private final class PendingFolderDrop {
+    private let provider: NSItemProvider
+    private let begin: (URL) -> Void
+    private let fallback: (NSItemProvider) -> Void
+
+    init(provider: NSItemProvider, begin: @escaping (URL) -> Void, fallback: @escaping (NSItemProvider) -> Void) {
+        self.provider = provider
+        self.begin = begin
+        self.fallback = fallback
+    }
+
+    func finish(url: URL?, isDirectory: Bool) {
+        if let url, isDirectory {
+            begin(url)
+        } else {
+            fallback(provider)
         }
     }
 }

@@ -84,7 +84,7 @@ struct TextFitMeasurerTests {
         var row = ScreenshotRow(templates: [ScreenshotTemplate()], templateWidth: 400, templateHeight: 800)
         row.shapes = [shape]
         #expect(TextOverflowCheck.overflowingLocaleCodes(in: row, localeState: state, availableFontFamilies: families) == ["de"])
-        let issues = TextOverflowCheck.uploadIssues(rows: [row], localeState: state)
+        let issues = TextOverflowCheck.uploadIssues(rows: [row], localeState: state, availableFontFamilies: families)
         #expect(issues.count == 1)
         #expect(issues.first?.severity == .warning)
     }

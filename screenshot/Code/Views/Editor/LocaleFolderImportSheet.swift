@@ -12,15 +12,28 @@ struct LocaleFolderImportRequest: Identifiable {
 struct LocaleFolderImportSheet: View {
     let request: LocaleFolderImportRequest
     let localeLabel: (String) -> String
+    let projectLocaleCodes: [String]
     let onImport: ([LocaleDefinition]) -> Void
     let onCancel: () -> Void
 
     @State private var localesToAdd: Set<String> = []
 
-    private var addableLocales: [(folder: String, locale: LocaleDefinition)] {
-        request.plan.unmatchedLocaleFolders.compactMap { folder in
-            LocaleFolderImportPlanner.presetLocale(forFolderName: folder).map { (folder, $0) }
+    /// One entry per language: `fr-FR` and `fr-CA` can both resolve to one preset, and adding it
+    /// twice would plan — and import — its screenshots twice.
+    private var addableLocales: [(folders: String, locale: LocaleDefinition)] {
+        var order: [String] = []
+        var byCode: [String: (folders: [String], locale: LocaleDefinition)] = [:]
+        for folder in request.plan.unmatchedLocaleFolders {
+            guard let locale = LocaleFolderImportPlanner.presetLocale(forFolderName: folder),
+                  !projectLocaleCodes.contains(locale.code) else { continue }
+            if byCode[locale.code] == nil {
+                order.append(locale.code)
+                byCode[locale.code] = ([folder], locale)
+            } else {
+                byCode[locale.code]?.folders.append(folder)
+            }
         }
+        return order.compactMap { byCode[$0] }.map { ($0.folders.joined(separator: ", "), $0.locale) }
     }
 
     var body: some View {
@@ -49,15 +62,16 @@ struct LocaleFolderImportSheet: View {
                 VStack(alignment: .leading, spacing: 4) {
                     Text("Languages not in this project")
                         .font(.subheadline.weight(.semibold))
-                    ForEach(addableLocales, id: \.folder) { entry in
+                    ForEach(addableLocales, id: \.locale.code) { entry in
                         Toggle(isOn: addBinding(entry.locale.code)) {
-                            Text("Add \(entry.locale.flagLabel) (\(entry.folder))")
+                            Text("Add \(entry.locale.flagLabel) (\(entry.folders))")
                         }
                     }
                 }
             }
 
-            let ignored = request.plan.unmatchedLocaleFolders.filter { LocaleFolderImportPlanner.presetLocale(forFolderName: $0) == nil }
+            let addable = Set(addableLocales.flatMap { $0.folders.components(separatedBy: ", ") })
+            let ignored = request.plan.unmatchedLocaleFolders.filter { !addable.contains($0) }
             if !ignored.isEmpty {
                 Label("Skipped folders: \(ignored.joined(separator: ", "))", systemImage: "questionmark.folder")
                     .foregroundStyle(.secondary)

@@ -81,11 +81,13 @@ final class GPUploadFlowModel {
     }
 
     var validationIssues: [UploadIssue] {
-        GooglePlayUploadValidator.validate(
+        let issues = GooglePlayUploadValidator.validate(
             packageName: packageName,
             plans: rowPlans,
             isDemoMode: credentials.isDemoMode
-        ) + TextOverflowCheck.uploadIssues(rows: listingRows, localeState: localeState)
+        )
+        guard let document else { return issues }
+        return issues + TextOverflowCheck.uploadIssues(rows: listingRows, source: document)
     }
 
     func prefillPackageName() {

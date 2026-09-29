@@ -25,6 +25,24 @@ struct PaletteTests {
         #expect(!um.canUndo)
     }
 
+    /// The debounced text-edit undo builds its own base document; it must carry the palette, or
+    /// undoing a keystroke burst empties Project Colors.
+    @Test func undoingADebouncedTextEditKeepsThePalette() throws {
+        let (state, tempDir) = makeTestState()
+        defer { cleanupTestState(tempDir) }
+        state.addPaletteColor(Color(red: 1, green: 0, blue: 0))
+        let um = try #require(state.undoManager)
+        um.removeAllActions()
+
+        let base = state.rows
+        state.rows[0].label = "Edited"
+        state.registerUndoWithBase("Edit Base Text", base: base)
+        um.undo()
+
+        #expect(state.rows[0].label != "Edited")
+        #expect(state.palette.count == 1)
+    }
+
     @Test func documentColorsRankByUseAndSkipSavedOnes() throws {
         let (state, tempDir) = makeTestState()
         defer { cleanupTestState(tempDir) }

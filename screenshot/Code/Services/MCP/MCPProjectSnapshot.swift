@@ -119,13 +119,13 @@ enum MCPSnapshotBuilder {
         }
     }
 
-    static func project(id: UUID, name: String, rows: [ScreenshotRow], localeState: LocaleState) -> MCPProjectSnapshot {
+    static func project(id: UUID, name: String, rows: [ScreenshotRow], localeState: LocaleState, availableFontFamilies: Set<String>) -> MCPProjectSnapshot {
         MCPProjectSnapshot(
             id: id.uuidString,
             name: name,
             locales: locales(localeState),
             rows: rows.enumerated().map { index, row in
-                rowSnapshot(row, index: index, localeState: localeState)
+                rowSnapshot(row, index: index, localeState: localeState, availableFontFamilies: availableFontFamilies)
             }
         )
     }
@@ -141,7 +141,7 @@ enum MCPSnapshotBuilder {
         }
     }
 
-    static func rowSnapshot(_ row: ScreenshotRow, index: Int, localeState: LocaleState) -> MCPRowSnapshot {
+    static func rowSnapshot(_ row: ScreenshotRow, index: Int, localeState: LocaleState, availableFontFamilies: Set<String>) -> MCPRowSnapshot {
         MCPRowSnapshot(
             id: row.id.uuidString,
             index: index,
@@ -175,12 +175,12 @@ enum MCPSnapshotBuilder {
                 )
             },
             shapes: row.shapes.map { shape in
-                shapeSnapshot(shape, row: row, localeState: localeState)
+                shapeSnapshot(shape, row: row, localeState: localeState, availableFontFamilies: availableFontFamilies)
             }
         )
     }
 
-    static func shapeSnapshot(_ shape: CanvasShapeModel, row: ScreenshotRow, localeState: LocaleState) -> MCPShapeSnapshot {
+    static func shapeSnapshot(_ shape: CanvasShapeModel, row: ScreenshotRow, localeState: LocaleState, availableFontFamilies: Set<String>) -> MCPShapeSnapshot {
         var translations: [String: String] = [:]
         var imageOverrides: [String: String] = [:]
         for (localeCode, overrides) in localeState.overrides {
@@ -192,10 +192,9 @@ enum MCPSnapshotBuilder {
             }
         }
 
-        let overflowLocales = localeState.locales.map(\.code).filter {
-            TextOverflowCheck.overflows(shape, localeCode: $0, localeState: localeState,
-                                        availableFontFamilies: PlatformFonts.familyNameSet)
-        }
+        let overflowLocales = TextOverflowCheck.overflowingLocaleCodes(
+            of: shape, localeState: localeState, availableFontFamilies: availableFontFamilies
+        )
 
         return MCPShapeSnapshot(
             id: shape.id.uuidString,

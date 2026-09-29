@@ -128,7 +128,7 @@ final class MCPToolExecutor {
     func rowResult(_ rowIndex: Int) throws -> CallTool.Result {
         let row = state.rows[rowIndex]
         return try MCPResultEncoding.result(
-            MCPSnapshotBuilder.rowSnapshot(row, index: rowIndex, localeState: state.localeState)
+            MCPSnapshotBuilder.rowSnapshot(row, index: rowIndex, localeState: state.localeState, availableFontFamilies: state.availableFontFamilySet)
         )
     }
 
@@ -138,7 +138,7 @@ final class MCPToolExecutor {
             throw MCPToolError.notFound("Shape \(shapeId.uuidString)")
         }
         return try MCPResultEncoding.result(
-            MCPSnapshotBuilder.shapeSnapshot(shape, row: row, localeState: state.localeState)
+            MCPSnapshotBuilder.shapeSnapshot(shape, row: row, localeState: state.localeState, availableFontFamilies: state.availableFontFamilySet)
         )
     }
 
@@ -147,7 +147,7 @@ final class MCPToolExecutor {
             throw MCPToolError.expected("No active project")
         }
         return try MCPResultEncoding.result(
-            MCPSnapshotBuilder.project(id: project.id, name: project.name, rows: state.rows, localeState: state.localeState)
+            MCPSnapshotBuilder.project(id: project.id, name: project.name, rows: state.rows, localeState: state.localeState, availableFontFamilies: state.availableFontFamilySet)
         )
     }
 }

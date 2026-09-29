@@ -22,14 +22,16 @@ extension MCPToolExecutor {
     func getProject(_ args: MCPArguments) async throws -> CallTool.Result {
         let checkout = try await requireCheckout(args)
         defer { checkout.dispose() }
-        return try MCPResultEncoding.result(
+        let snapshot = checkout.withResolvedFonts {
             MCPSnapshotBuilder.project(
                 id: checkout.projectId,
                 name: checkout.projectName,
                 rows: checkout.rows,
-                localeState: checkout.localeState
+                localeState: checkout.localeState,
+                availableFontFamilies: checkout.availableFontFamilySet
             )
-        )
+        }
+        return try MCPResultEncoding.result(snapshot)
     }
 
     func createProject(_ args: MCPArguments) async throws -> CallTool.Result {

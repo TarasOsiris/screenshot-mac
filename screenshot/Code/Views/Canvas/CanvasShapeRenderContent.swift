@@ -116,8 +116,10 @@ struct CanvasShapeRenderContent: View {
             richTextData: richText
         )
         let shrinksToFit = shape.shrinkToFit == true && !showPlaceholder
-        let fontScale = shrinksToFit ? TextFitMeasurer.fitScale(fitInput) : 1
-        let showsOverflow = showsEditorHelpers && !showPlaceholder
+        // A resize drag moves the effective box away from the stored one on every tick.
+        let isLive = isLiveShapeEdit || effectiveW != shape.width || effectiveH != shape.height
+        let fontScale = shrinksToFit ? TextFitMeasurer.fitScale(fitInput, cachesResult: !isLive) : 1
+        let showsOverflow = showsEditorHelpers && !showPlaceholder && !isLive
             && TextFitMeasurer.overflows(fitInput, shrinksToFit: shrinksToFit)
 
         let stroke = showPlaceholder ? nil : textStroke

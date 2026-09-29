@@ -121,7 +121,7 @@ extension AppState {
         CrashReportingService.breadcrumb(.edit, actionName, data: ["rows": rows.count])
         registerSnapshot(
             actionName,
-            base: ProjectDocument(rows: base, localeState: baseLocaleState ?? localeState, variants: variants)
+            base: ProjectDocument(rows: base, localeState: baseLocaleState ?? localeState, variants: variants, palette: palette)
         )
     }
 

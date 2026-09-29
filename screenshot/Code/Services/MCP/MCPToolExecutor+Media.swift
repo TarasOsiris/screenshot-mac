@@ -71,7 +71,7 @@ extension MCPToolExecutor {
             imported: imported,
             locale: imported > 0 ? writtenLocale : nil,
             failures: failures,
-            row: MCPSnapshotBuilder.rowSnapshot(state.rows[rowIndex], index: rowIndex, localeState: state.localeState)
+            row: MCPSnapshotBuilder.rowSnapshot(state.rows[rowIndex], index: rowIndex, localeState: state.localeState, availableFontFamilies: state.availableFontFamilySet)
         ))
     }
 

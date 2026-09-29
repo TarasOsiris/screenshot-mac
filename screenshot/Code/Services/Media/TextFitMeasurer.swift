@@ -112,13 +112,17 @@ enum TextFitMeasurer {
 
     /// The largest font scale in `minimumShrinkScale...1` at which the text fits, or
     /// `minimumShrinkScale` when even that overflows.
-    static func fitScale(_ input: TextFitInput) -> CGFloat {
+    /// `cachesResult: false` during a live resize or slider burst: every tick is a new key whose
+    /// answer is dead on the next one, and storing them would evict every settled shape's fit.
+    static func fitScale(_ input: TextFitInput, cachesResult: Bool = true) -> CGFloat {
         let key = input.cacheKey as NSString
         if let cached = fitScaleCache.object(forKey: key) {
             return CGFloat(cached.doubleValue)
         }
         let scale = searchFitScale(input)
-        fitScaleCache.setObject(NSNumber(value: Double(scale)), forKey: key)
+        if cachesResult {
+            fitScaleCache.setObject(NSNumber(value: Double(scale)), forKey: key)
+        }
         return scale
     }
 

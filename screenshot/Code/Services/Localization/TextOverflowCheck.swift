@@ -3,6 +3,8 @@ import Foundation
 /// Where a text shape's string loses lines once it is resolved for a locale — the case a long
 /// translation creates and the canvas otherwise shows only by quietly dropping the last line.
 enum TextOverflowCheck {
+    /// Measures with fonts as `overflows` finds them; wrap calls in the document's
+    /// `withResolvedFonts` when the project may not be the one open in the editor.
     static func overflows(
         _ shape: CanvasShapeModel,
         localeCode: String,
@@ -16,6 +18,17 @@ enum TextOverflowCheck {
             TextFitInput(shape: resolved, availableFontFamilies: availableFontFamilies),
             shrinksToFit: resolved.shrinkToFit == true
         )
+    }
+
+    static func overflowingLocaleCodes(
+        of shape: CanvasShapeModel,
+        localeState: LocaleState,
+        availableFontFamilies: Set<String>
+    ) -> [String] {
+        guard shape.type == .text else { return [] }
+        return localeState.locales.map(\.code).filter {
+            overflows(shape, localeCode: $0, localeState: localeState, availableFontFamilies: availableFontFamilies)
+        }
     }
 
     /// Checks every shape that shares the key, since one string can sit in boxes of different sizes.
@@ -49,11 +62,7 @@ enum TextOverflowCheck {
 
     /// Warnings, never errors: a clipped line is a design problem, not a reason the store would
     /// reject the upload.
-    static func uploadIssues(
-        rows: [ScreenshotRow],
-        localeState: LocaleState,
-        availableFontFamilies: Set<String> = PlatformFonts.familyNameSet
-    ) -> [UploadIssue] {
+    static func uploadIssues(rows: [ScreenshotRow], localeState: LocaleState, availableFontFamilies: Set<String>) -> [UploadIssue] {
         rows.compactMap { row in
             let codes = overflowingLocaleCodes(in: row, localeState: localeState, availableFontFamilies: availableFontFamilies)
             guard !codes.isEmpty else { return nil }
@@ -66,4 +75,25 @@ enum TextOverflowCheck {
             )
         }
     }
+
+    /// The upload flows read their issue list from computed properties that re-run on every body
+    /// evaluation; a project with hundreds of text × locale pairs outruns the measurer's cache, so
+    /// the last answer is kept for as long as the document is unchanged.
+    static func uploadIssues(rows: [ScreenshotRow], source: some RowRenderSource) -> [UploadIssue] {
+        let input = MemoInput(rows: rows, localeState: source.localeState, families: source.availableFontFamilySet)
+        if let memo, memo.input == input { return memo.issues }
+        let issues = source.withResolvedFonts {
+            uploadIssues(rows: rows, localeState: input.localeState, availableFontFamilies: input.families)
+        }
+        memo = (input, issues)
+        return issues
+    }
+
+    private struct MemoInput: Equatable {
+        let rows: [ScreenshotRow]
+        let localeState: LocaleState
+        let families: Set<String>
+    }
+
+    private static var memo: (input: MemoInput, issues: [UploadIssue])?
 }

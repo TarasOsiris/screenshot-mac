@@ -42,6 +42,21 @@ struct LocaleFolderImportPlannerTests {
         #expect(plan.imageCount == 4)
     }
 
+    /// `deliver download_screenshots` writes every regional variant; only one may fill a locale.
+    @Test func regionalSiblingsDoNotStackIntoOneLocale() throws {
+        let folder = try makeFolder(["en-AU/1.png", "en-GB/1.png", "en-US/1.png", "en-US/2.png"])
+        let plan = LocaleFolderImportPlanner.plan(folder: folder, projectLocaleCodes: ["en"], rowSize: rowSize, pixelSize: probe)
+        #expect(plan.batches.count == 1)
+        #expect(plan.batches[0].files.map { $0.deletingLastPathComponent().lastPathComponent } == ["en-US", "en-US"])
+        #expect(plan.unmatchedLocaleFolders == ["en-AU", "en-GB"])
+    }
+
+    @Test func anExactFolderNameBeatsTheStoreDefault() throws {
+        let folder = try makeFolder(["en-US/1.png", "en-GB/1.png"])
+        let plan = LocaleFolderImportPlanner.plan(folder: folder, projectLocaleCodes: ["en-GB"], rowSize: rowSize, pixelSize: probe)
+        #expect(plan.batches.first?.files.first?.deletingLastPathComponent().lastPathComponent == "en-GB")
+    }
+
     @Test func supplyTreeFindsNestedScreenshots() throws {
         let folder = try makeFolder(["en-US/images/phoneScreenshots/1.png", "en-US/images/phoneScreenshots/2.png"])
         let plan = LocaleFolderImportPlanner.plan(folder: folder, projectLocaleCodes: ["en"], rowSize: rowSize, pixelSize: probe)

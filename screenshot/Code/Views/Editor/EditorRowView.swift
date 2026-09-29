@@ -244,6 +244,7 @@ struct EditorRowView: View {
                 localeLabel: { code in
                     state.localeState.locales.first { $0.code == code }?.flagLabel ?? code
                 },
+                projectLocaleCodes: state.localeState.locales.map(\.code),
                 onImport: { adding in
                     localeFolderImport = nil
                     performLocaleFolderImport(request, addingLocales: adding)

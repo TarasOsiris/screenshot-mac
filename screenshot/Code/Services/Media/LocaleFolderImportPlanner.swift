@@ -10,7 +10,8 @@ struct LocaleFolderImportPlan: Equatable {
 
     /// In project-locale order, base locale first.
     var batches: [LocaleBatch] = []
-    /// Folder names that read as locale codes but match no project locale.
+    /// Folder names that read as locale codes but match no project locale — including a second
+    /// regional folder (`en-GB` beside `en-US`) for a project locale another folder already fills.
     var unmatchedLocaleFolders: [String] = []
     /// Images whose pixel size isn't the row's, e.g. the other devices in a fastlane folder.
     var skippedForSize: [URL] = []
@@ -46,13 +47,12 @@ enum LocaleFolderImportPlanner {
             at: folder, includingPropertiesForKeys: [.isDirectoryKey], options: [.skipsHiddenFiles]
         )) ?? []
 
+        var foldersByLocale: [String: [URL]] = [:]
         for child in children.sorted(by: { $0.lastPathComponent.localizedStandardCompare($1.lastPathComponent) == .orderedAscending }) {
             let name = child.lastPathComponent
             if isDirectory(child) {
                 if let code = LocaleCodeMatcher.match(name, among: projectLocaleCodes) {
-                    for file in imageFiles(under: child, fileManager: fileManager) {
-                        accept(file, for: code)
-                    }
+                    foldersByLocale[code, default: []].append(child)
                 } else if LocaleCodeMatcher.looksLikeLocaleCode(name) {
                     unmatched.append(name)
                 }
@@ -60,12 +60,34 @@ enum LocaleFolderImportPlanner {
                 accept(child, for: code)
             }
         }
+        // One folder per project locale: `en-US`, `en-GB` and `en-AU` all prefix-match `en`, and
+        // importing all three would stack three sets of screenshots into one row.
+        for (code, folders) in foldersByLocale {
+            let chosen = preferredFolder(folders, for: code)
+            for file in imageFiles(under: chosen, fileManager: fileManager) {
+                accept(file, for: code)
+            }
+            unmatched += folders.filter { $0 != chosen }.map(\.lastPathComponent)
+        }
+        unmatched.sort { $0.localizedStandardCompare($1) == .orderedAscending }
 
         let batches = projectLocaleCodes.compactMap { code -> LocaleFolderImportPlan.LocaleBatch? in
             guard let files = filesByLocale[code], !files.isEmpty else { return nil }
             return .init(localeCode: code, files: files)
         }
         return LocaleFolderImportPlan(batches: batches, unmatchedLocaleFolders: unmatched, skippedForSize: skipped)
+    }
+
+    /// An exact name first, then the App Store's own code for the language (`en` → `en-US`), then
+    /// the first in Finder order.
+    private static func preferredFolder(_ folders: [URL], for projectCode: String) -> URL {
+        let names = folders.map { $0.lastPathComponent.replacingOccurrences(of: "_", with: "-").lowercased() }
+        if let exact = names.firstIndex(of: projectCode.lowercased()) { return folders[exact] }
+        if let storeCode = ASCLanguageMatcher.appStoreLanguageCode(forProjectCode: projectCode)?.lowercased(),
+           let store = names.firstIndex(of: storeCode) {
+            return folders[store]
+        }
+        return folders[0]
     }
 
     /// The bundled language a folder like `fr-FR` or `zh-Hans` stands for, so the import can offer
