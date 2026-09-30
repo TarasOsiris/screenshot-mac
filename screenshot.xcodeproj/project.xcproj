@@ -110,6 +110,10 @@
       ],
       "package-product-members": [
         {
+          "package": "SBAppPortfolio",
+          "product-name": "SBAppPortfolio",
+          "build-phase": { "build-phase": "frameworks" },
+        }, {
           "package": "SwiftDraw",
           "product-name": "SwiftDraw",
           "build-phase": { "build-phase": "frameworks" },
@@ -126,10 +130,6 @@
           "product-name": "RevenueCatUI",
           "build-phase": { "build-phase": "frameworks" },
         }, {
-          "package": "SBAppPortfolio",
-          "product-name": "SBAppPortfolio",
-          "build-phase": { "build-phase": "frameworks" },
-        }, {
           "package": "sentry-cocoa",
           "product-name": "Sentry",
           "build-phase": { "build-phase": "frameworks" },
@@ -143,8 +143,9 @@
         "ASSETCATALOG_COMPILER_APPICON_NAME": "Bro",
         "ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME": "AccentColor",
         "ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS": "YES",
-        "CODE_SIGN_ENTITLEMENTS": "screenshot/screenshot.entitlements",
+        "CODE_SIGN_ENTITLEMENTS[config=Debug]": "screenshot/screenshot.entitlements",
         "CODE_SIGN_ENTITLEMENTS[config=Debug][sdk=macosx*]": "screenshot/screenshotDebug.entitlements",
+        "CODE_SIGN_ENTITLEMENTS[config=Release]": "screenshot/screenshot.entitlements",
         "CODE_SIGN_STYLE": "Automatic",
         "COMBINE_HIDPI_IMAGES": "YES",
         "CURRENT_PROJECT_VERSION": "152",

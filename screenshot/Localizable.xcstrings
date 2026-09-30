@@ -46858,6 +46858,7 @@
       }
     },
     "Could not %@ for %@ (%@) in %@." : {
+      "comment" : "Placeholders: an action such as 'upload screenshot 3', the row name, the Play image type, the listing language.",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -56973,6 +56974,7 @@
       }
     },
     "Double-click a **device** or **image** shape to open the picker and swap its picture." : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -70597,6 +70599,7 @@
       }
     },
     "Format Text" : {
+      "comment" : "Undo action name for a rich-text formatting change",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -72589,6 +72592,7 @@
       }
     },
     "Google Play returned %lld while trying to %@." : {
+      "comment" : "The last placeholder is an action such as 'upload screenshot 3'.",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -90160,6 +90164,7 @@
       }
     },
     "No internet connection while trying to %@." : {
+      "comment" : "The placeholder is an action such as 'upload screenshot 3'.",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -133751,6 +133756,7 @@
       }
     },
     "The connection failed while trying to %@." : {
+      "comment" : "The placeholder is an action such as 'upload screenshot 3'.",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -144381,6 +144387,7 @@
       }
     },
     "Upload failed while trying to %@." : {
+      "comment" : "The placeholder is an action such as 'upload screenshot 3'.",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -183426,7 +183433,8 @@
           }
         }
       }
-    }
+    },
+    "**Crop**: double-click an image (or use **Crop** in the properties bar) and drag to move the picture inside its frame; the zoom slider next to **Crop** enlarges it. Press **Return** or **Esc**, or click elsewhere, to finish. **Reset Crop** (right-click) centers it again." : {}
   },
   "version" : "1.0"
 }
