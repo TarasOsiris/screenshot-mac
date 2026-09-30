@@ -92,6 +92,16 @@ extension ShapePropertiesSingleSelectionBar {
         }
     }
 
+    func isCropping(_ shapeId: UUID) -> Bool {
+        state.imageCrop.shapeId == shapeId
+    }
+
+    func imageCropSection(shapeId: UUID) -> some View {
+        ShapePropertiesSection {
+            ImageCropControls(state: state, shapeId: shapeId)
+        }
+    }
+
     @ViewBuilder
     func mediaSections(shape: CanvasShapeModel, shapeId: UUID) -> some View {
         if shape.type == .image {
@@ -100,10 +110,8 @@ extension ShapePropertiesSingleSelectionBar {
                 onPickImage: { pickAndReplaceImage(for: shapeId) },
                 onImageSelected: { state.saveImage($0, for: shapeId, source: .picker) },
             )
-            if state.canCropImage(shape) {
-                ShapePropertiesSection {
-                    ImageCropControls(state: state, shapeId: shapeId)
-                }
+            if state.canCropImage(shape), !isCropping(shapeId) {
+                imageCropSection(shapeId: shapeId)
             }
         }
 

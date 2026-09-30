@@ -54,5 +54,8 @@ extension View {
         formStyle(.grouped)
             .scaledFont(UIMetrics.FontSize.body)
             .compactControlSize()
+            #if os(macOS)
+            .environment(\.centersEditorLabels, true)
+            #endif
     }
 }

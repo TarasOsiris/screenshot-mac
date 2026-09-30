@@ -46,6 +46,8 @@ struct CropHandleGlyph: View {
 struct CropModeHint: View {
     let displayRect: CGRect
     let rotation: Double
+    /// iPhone and iPad have no Return key, and the bar's Done can be scrolled out of view.
+    var onDone: () -> Void = {}
 
     var body: some View {
         let radians = rotation * .pi / 180
@@ -54,24 +56,32 @@ struct CropModeHint: View {
         let above = displayRect.midY - boundsHeight / 2 - gap
         let y = above > gap ? above : displayRect.midY + boundsHeight / 2 + gap
 
-        hintText
+        pill
             .font(.caption)
-            .foregroundStyle(.secondary)
             .lineLimit(1)
             .padding(.horizontal, 8)
             .padding(.vertical, 3)
             .background(.regularMaterial, in: Capsule())
             .overlay { Capsule().strokeBorder(Color.primary.opacity(UIMetrics.Opacity.hairlineOverlay)) }
             .fixedSize()
-            .allowsHitTesting(false)
             .position(x: displayRect.midX, y: y)
     }
 
-    private var hintText: Text {
+    @ViewBuilder
+    private var pill: some View {
         #if os(macOS)
         Text("Drag to reposition · Return to finish")
+            .foregroundStyle(.secondary)
+            .allowsHitTesting(false)
         #else
-        Text("Drag to reposition")
+        HStack(spacing: 10) {
+            Text("Drag to reposition")
+                .foregroundStyle(.secondary)
+            Button("Done", action: onDone)
+                .fontWeight(.semibold)
+                .frame(minHeight: UIMetrics.CanvasHandle.cropHintTapHeight)
+                .contentShape(Rectangle())
+        }
         #endif
     }
 }

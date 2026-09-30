@@ -43,6 +43,12 @@ struct ShapePropertiesSingleSelectionBar: View, ShapeEditing {
                     HStack(spacing: 8) {
                         ShapePropertiesBadge(type: shape.type)
 
+                        // While cropping, the controls that finish it lead the bar rather than
+                        // waiting at the far end of a strip the phone has to scroll.
+                        if isCropping(shapeId) {
+                            imageCropSection(shapeId: shapeId)
+                        }
+
                         if !overrideFields.isEmpty {
                             LocaleOverrideChip(scope: .shape(id: shapeId, fields: overrideFields), state: state)
                         }

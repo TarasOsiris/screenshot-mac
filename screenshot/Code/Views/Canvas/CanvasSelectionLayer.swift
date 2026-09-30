@@ -93,6 +93,7 @@ struct CanvasSelectionLayer: View {
                 resizeState: resizeBinding(for: shape),
                 dragSession: dragSession,
                 isCropping: imageCrop.shapeId == shape.id,
+                onFinishCrop: imageCrop.end,
                 resolveResize: resolveResize,
                 onResizeEnded: dragSession.endSnapping,
                 onUpdate: onUpdate

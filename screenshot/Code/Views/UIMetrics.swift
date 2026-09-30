@@ -362,8 +362,14 @@ enum UIMetrics {
         static let overflowBadgeSize: CGFloat = 18
         static let cropBracketArm: CGFloat = 12
         static let cropBracketThickness: CGFloat = 3
-        /// Space between a cropping frame and the hint pill floating over it.
+        /// From a cropping frame's edge to the hint pill's center — clear of the edge handle's hit area.
+        #if os(macOS)
         static let cropHintGap: CGFloat = 18
+        #else
+        static let cropHintGap: CGFloat = 36
+        #endif
+        /// The pill's Done button on iPhone/iPad: a finger-sized target inside a compact capsule.
+        static let cropHintTapHeight: CGFloat = 32
     }
 
     enum GradientEditor {

@@ -14,6 +14,7 @@ struct CanvasShapeHandlesOverlay: View {
     let dragSession: CanvasDragSession
     /// Crop mode: bracket handles that trim the picture, no rotate handle.
     let isCropping: Bool
+    var onFinishCrop: () -> Void = {}
     /// Turns a handle's model-space translation into the frame to show, snapping included.
     let resolveResize: (_ base: CanvasShapeModel, _ edge: ResizeEdge, _ translation: CGSize, _ lockAspectRatio: Bool) -> ResizeState
     let onResizeEnded: () -> Void
@@ -31,7 +32,7 @@ struct CanvasShapeHandlesOverlay: View {
         if !shape.resolvedIsLocked {
             resizeHandles
             if isCropping {
-                CropModeHint(displayRect: displayRect, rotation: currentRotation)
+                CropModeHint(displayRect: displayRect, rotation: currentRotation, onDone: onFinishCrop)
             }
         }
     }
