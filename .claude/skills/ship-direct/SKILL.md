@@ -18,7 +18,7 @@ from the `screenshot Direct` target in `project.xcproj`.
 Shared values:
 - ASC API key: `$HOME/Library/Mobile Documents/com~apple~CloudDocs/Files/AuthKey_4KK2B86XC6_BRO.p8`, key id `4KK2B86XC6`, issuer `69a6de84-a676-47e3-e053-5b8c7c11a4d1`.
 - Sparkle EdDSA private key: login Keychain, account `screenshot-bro`. The public key is
-  `SUPublicEDKey` in `ScreenshotBro-Direct-Info.plist`. **Never regenerate it.** Every
+  `SUPublicEDKey` in `ScreenshotBro-Direct-Info.plist`. A backup is in 1Password (account my.1password.com, vault Personal, item "Sparkle EdDSA key — Screenshot Bro (direct download)"). On a new Mac, restore it with `generate_keys --account screenshot-bro -f <file>`. **Never regenerate it.** Every
   installed copy would then reject all future updates.
 - Sparkle tools: `SourcePackages/artifacts/sparkle/Sparkle/bin/` under this project's DerivedData.
 - Site repo: `/Users/taras/repo/experiments/screnshot-mac-site`. `public/appcast.xml` is the input to step 5. DMGs are **never** committed: they go to `~/Desktop`.
