@@ -19,14 +19,20 @@ import xcstrings_format
 CATALOG = Path(__file__).parent.parent / "screenshot" / "Localizable.xcstrings"
 # Globbed rather than hardcoded: the DerivedData hash differs per checkout, and a
 # stale absolute path fails silently as "merged 0 keys".
-# macOS and iOS Simulator both, so `#if os(iOS)`-only strings are merged too.
+# macOS and iOS Simulator both, so `#if os(iOS)`-only strings are merged too, plus the
+# `screenshot Direct` target for `#if DIRECT_DISTRIBUTION` strings. That target has
+# SWIFT_EMIT_LOC_STRINGS=NO, so build it with `SWIFT_EMIT_LOC_STRINGS=YES` on the command line.
 STRINGSDATA_GLOBS = [
     str(
         Path.home() / "Library/Developer/Xcode/DerivedData"
         / "screenshot-*/Build/Intermediates.noindex"
-        / f"screenshot.build/{configuration}/screenshot.build/Objects-normal/arm64/*.stringsdata"
+        / f"screenshot.build/{configuration}/{target}.build/Objects-normal/arm64/*.stringsdata"
     )
-    for configuration in ("Debug", "Debug-iphonesimulator")
+    for configuration, target in (
+        ("Debug", "screenshot"),
+        ("Debug-iphonesimulator", "screenshot"),
+        ("Debug", "screenshot Direct"),
+    )
 ]
 
 # Keys intentionally NOT translated (identical in Spanish: format strings,

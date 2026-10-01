@@ -554,7 +554,7 @@ struct SettingsView: View {
                     Label("Screenshot Bro Pro is unlocked.", systemImage: "checkmark.seal.fill")
                         .font(.footnote)
                         .foregroundStyle(.green)
-                    Text("Your unlock is managed by the App Store for this Apple Account.")
+                    Text(purchaseManagedByText)
                         .font(.footnote)
                         .foregroundStyle(.secondary)
                 }
@@ -568,6 +568,13 @@ struct SettingsView: View {
             }
         }
         .formStyle(.grouped)
+    }
+
+    private var purchaseManagedByText: LocalizedStringKey {
+        switch DistributionChannel.current {
+        case .appStore: "Your unlock is managed by the App Store for this Apple Account."
+        case .direct: "Your unlock comes from a web purchase activated on this Mac."
+        }
     }
 
     @ViewBuilder
@@ -630,6 +637,10 @@ struct SettingsView: View {
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 8)
             }
+
+            #if DIRECT_DISTRIBUTION
+            DirectUpdateSettingsSection()
+            #endif
 
             Section {
                 AboutLinkRows()

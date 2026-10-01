@@ -45,9 +45,11 @@ struct DirectPaywallView: View {
                 Text("Already bought? Paste the activation link from your receipt email.")
                     .font(.callout)
                 HStack {
-                    TextField("rc-…://redeem_web_purchase?…", text: $pastedLink)
-                        .textFieldStyle(.roundedBorder)
-                        .onSubmit(redeemPastedLink)
+                    TextField(text: $pastedLink, prompt: Text(verbatim: "rc-…://redeem_web_purchase?…")) {
+                        Text("Activation link")
+                    }
+                    .textFieldStyle(.roundedBorder)
+                    .onSubmit(redeemPastedLink)
                     Button("Activate", action: redeemPastedLink)
                         .disabled(pastedURL == nil || store.isRedeeming)
                 }

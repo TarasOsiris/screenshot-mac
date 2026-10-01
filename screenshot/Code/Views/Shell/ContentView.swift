@@ -600,7 +600,10 @@ struct ContentView: View {
         }
         .onAppear {
             // `requestReview` is an environment value, so only a view can hand it over.
-            exportFlow.requestReview = { requestReview() }
+            // Outside the App Store the system review sheet has no listing to send a review to.
+            if !DistributionChannel.isDirect {
+                exportFlow.requestReview = { requestReview() }
+            }
             #if os(iOS)
             if state.selectedRowId == nil, let firstRow = state.rows.first {
                 state.selectRow(firstRow.id)

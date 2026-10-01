@@ -194,7 +194,7 @@ struct PostPurchaseCelebrationView: View {
                     .foregroundStyle(.primary)
                     .accessibilityAddTraits(.isHeader)
 
-                Text("Your purchase is complete — Screenshot Bro Pro is unlocked on this Apple Account.")
+                Text(purchaseCompleteMessage)
                     .font(.system(size: 13))
                     .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
@@ -202,6 +202,13 @@ struct PostPurchaseCelebrationView: View {
             }
             .opacity(contentAppeared ? 1 : 0)
             .offset(y: contentAppeared ? 0 : 8)
+        }
+    }
+
+    private var purchaseCompleteMessage: LocalizedStringKey {
+        switch DistributionChannel.current {
+        case .appStore: "Your purchase is complete — Screenshot Bro Pro is unlocked on this Apple Account."
+        case .direct: "Your purchase is complete — Screenshot Bro Pro is unlocked on this Mac."
         }
     }
 

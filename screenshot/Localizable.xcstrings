@@ -183441,7 +183441,84 @@
     },
     "Direct download" : {
       "localizations" : {
-
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Direkter Download"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Descarga directa"
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "دانلود مستقیم"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Téléchargement direct"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Download diretto"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "直接ダウンロード"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "직접 다운로드"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Download direto"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Прямая загрузка"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Doğrudan indirme"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Пряме завантаження"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "直接下载"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "直接下載"
+          }
+        }
       }
     },
     "Next to each App Store locale the wizard shows what the selected version already has for the row's display type: **No screenshots** when that locale has none at all, **None in this size** when it only has other sizes, or how many it already has." : {
@@ -184014,6 +184091,2302 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "該 App Store 版本中已有的 %@ 截圖。"
+          }
+        }
+      }
+    },
+    "Your unlock comes from a web purchase activated on this Mac." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Deine Freischaltung stammt von einem Web-Kauf, der auf diesem Mac aktiviert wurde."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tu desbloqueo procede de una compra web activada en este Mac."
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "فعال‌سازی شما از یک خرید وب است که روی این Mac فعال شده است."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Votre déblocage provient d'un achat web activé sur ce Mac."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Il tuo sblocco deriva da un acquisto web attivato su questo Mac."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ロック解除は、この Mac でアクティベートされた Web 購入によるものです。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "이 Mac에서 활성화한 웹 구매로 잠금 해제되었습니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Seu desbloqueio vem de uma compra pela web ativada neste Mac."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Разблокировка получена по веб-покупке, активированной на этом Mac."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kilidinizin açılması bu Mac'te etkinleştirilen bir web satın alımından geliyor."
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Розблокування надано вебпокупкою, активованою на цьому Mac."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "你的解锁来自在这台 Mac 上激活的网页购买。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "你的解鎖來自在這台 Mac 上啟用的網頁購買項目。"
+          }
+        }
+      }
+    },
+    "Your purchase is complete — Screenshot Bro Pro is unlocked on this Mac." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dein Kauf ist abgeschlossen – Screenshot Bro Pro ist auf diesem Mac freigeschaltet."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tu compra se ha completado: Screenshot Bro Pro está desbloqueado en este Mac."
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "خرید شما کامل شد — Screenshot Bro Pro روی این Mac باز شده است."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Votre achat est terminé — Screenshot Bro Pro est débloqué sur ce Mac."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Acquisto completato: Screenshot Bro Pro è sbloccato su questo Mac."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "購入が完了しました — この Mac で Screenshot Bro Pro のロックが解除されました。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "구매가 완료되었습니다 — 이 Mac에서 Screenshot Bro Pro가 잠금 해제되었습니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sua compra foi concluída — o Screenshot Bro Pro está desbloqueado neste Mac."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Покупка завершена — Screenshot Bro Pro разблокирован на этом Mac."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Satın alımınız tamamlandı — Screenshot Bro Pro bu Mac'te açıldı."
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Покупку завершено — Screenshot Bro Pro розблоковано на цьому Mac."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "购买已完成 — Screenshot Bro Pro 已在这台 Mac 上解锁。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "購買已完成 — Screenshot Bro Pro 已在這台 Mac 上解鎖。"
+          }
+        }
+      }
+    },
+    "Current plan, **Unlock Screenshot Bro Pro**, **Activate Web Purchase…** for a purchase made in the browser, and a copyable purchase ID to quote if you ever need help with a transaction." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aktueller Tarif, **Screenshot Bro Pro freischalten**, **Web-Kauf aktivieren …** für einen im Browser getätigten Kauf und eine kopierbare Kauf-ID, die du angeben kannst, falls du einmal Hilfe bei einer Transaktion brauchst."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Plan actual, **Desbloquear Screenshot Bro Pro**, **Activar compra web…** para una compra hecha en el navegador y un ID de compra copiable para citarlo si alguna vez necesitas ayuda con una transacción."
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "طرح فعلی، **باز کردن قفل Screenshot Bro Pro**، **فعال‌سازی خرید وب…** برای خریدی که در مرورگر انجام شده، و یک شناسهٔ خرید قابل کپی که اگر روزی برای تراکنشی به کمک نیاز داشتید، آن را ذکر کنید."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Formule actuelle, **Débloquer Screenshot Bro Pro**, **Activer un achat web…** pour un achat effectué dans le navigateur, et un identifiant d'achat copiable à indiquer si vous avez besoin d'aide pour une transaction."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Piano attuale, **Sblocca Screenshot Bro Pro**, **Attiva acquisto web…** per un acquisto fatto nel browser e un ID acquisto copiabile da citare se mai ti servisse aiuto con una transazione."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "現在のプラン、**Screenshot Bro Pro のロックを解除**、ブラウザでの購入用の **Web 購入をアクティベート…**、そして取引でサポートが必要になったときに伝えられる、コピー可能な購入 ID。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "현재 플랜, **Screenshot Bro Pro 잠금 해제**, 브라우저에서 구매한 경우를 위한 **웹 구매 활성화…**, 그리고 거래 관련 도움이 필요할 때 알려 줄 수 있는 복사 가능한 구매 ID."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Plano atual, **Desbloquear Screenshot Bro Pro**, **Ativar compra pela web…** para uma compra feita no navegador e um ID de compra copiável para informar se você precisar de ajuda com uma transação."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Текущий план, **Разблокировать Screenshot Bro Pro**, **Активировать веб-покупку…** для покупки, сделанной в браузере, и копируемый ID покупки — его стоит указать, если понадобится помощь с транзакцией."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mevcut plan, **Screenshot Bro Pro'nun Kilidini Açın**, tarayıcıda yapılan bir satın alım için **Web Satın Alımını Etkinleştir…** ve bir işlemle ilgili yardıma ihtiyaç duyarsanız belirtebileceğiniz kopyalanabilir bir satın alma kimliği."
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Поточний план, **Розблокувати Screenshot Bro Pro**, **Активувати вебпокупку…** для покупки, зробленої в браузері, і ідентифікатор покупки, який можна скопіювати й навести, якщо знадобиться допомога з транзакцією."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "当前方案、**解锁 Screenshot Bro Pro**、用于在浏览器中完成的购买的 **激活网页购买…**，以及一个可复制的购买 ID，需要交易帮助时可提供。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "目前方案、**解鎖 Screenshot Bro Pro**、用於在瀏覽器中完成之購買的**啟用網頁購買項目…**，以及一組可拷貝的購買 ID，需要交易協助時可提供。"
+          }
+        }
+      }
+    },
+    "Below the version, where your copy came from: **App Store** or **Direct download**." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Unter der Version steht, woher deine Kopie stammt: **App Store** oder **Direkter Download**."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Debajo de la versión, de dónde procede tu copia: **App Store** o **Descarga directa**."
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "زیر نسخه، منبع نسخهٔ شما: **App Store** یا **دانلود مستقیم**."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sous la version, la provenance de votre copie : **App Store** ou **Téléchargement direct**."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sotto la versione, la provenienza della tua copia: **App Store** o **Download diretto**."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "バージョンの下には、入手元（**App Store** または **直接ダウンロード**）が表示されます。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "버전 아래에는 설치 출처(**App Store** 또는 **직접 다운로드**)가 표시됩니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abaixo da versão, de onde veio a sua cópia: **App Store** ou **Download direto**."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Под версией — откуда установлена ваша копия: **App Store** или **Прямая загрузка**."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sürümün altında kopyanızın nereden geldiği yazar: **App Store** veya **Doğrudan indirme**."
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Під версією — звідки ваша копія: **App Store** або **Пряме завантаження**."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "版本号下方显示你的副本来源：**App Store** 或 **直接下载**。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "版本下方顯示你的副本來源：**App Store** 或**直接下載**。"
+          }
+        }
+      }
+    },
+    "Loved the app? Telling a friend about it helps tremendously and keeps Screenshot Bro independent." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gefällt dir die App? Erzähl einem Freund davon – das hilft enorm und hält Screenshot Bro unabhängig."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "¿Te encanta la app? Hablarle de ella a un amigo ayuda muchísimo y mantiene independiente a Screenshot Bro."
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "برنامه را دوست دارید؟ معرفی آن به یک دوست خیلی کمک می‌کند و Screenshot Bro را مستقل نگه می‌دارد."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vous aimez l'app ? En parler à un ami aide énormément et permet à Screenshot Bro de rester indépendant."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ti è piaciuta l'app? Parlarne a un amico aiuta tantissimo e mantiene Screenshot Bro indipendente."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "このアプリを気に入っていただけましたか？友人に紹介していただくことが大きな励みになり、Screenshot Bro の独立した開発を支えます。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "앱이 마음에 드셨나요? 친구에게 소개해 주시면 큰 도움이 되며 Screenshot Bro가 독립적으로 운영되는 힘이 됩니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gostou do app? Contar para um amigo ajuda muito e mantém o Screenshot Bro independente."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Нравится приложение? Расскажите о нём другу — это очень помогает и сохраняет независимость Screenshot Bro."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Uygulamayı beğendiniz mi? Bir arkadaşınıza bahsetmeniz çok yardımcı olur ve Screenshot Bro'nun bağımsız kalmasını sağlar."
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Сподобалася програма? Розкажіть про неї другові — це дуже допомагає й підтримує незалежність Screenshot Bro."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "喜欢这个 App 吗？推荐给朋友会大有帮助，也能让 Screenshot Bro 保持独立。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "喜歡這個 App 嗎？推薦給朋友能提供莫大幫助，並讓 Screenshot Bro 保持獨立。"
+          }
+        }
+      }
+    },
+    "**Updates** — **Automatically check for updates**, and **Check for Updates…** to look right away. The same command is in the **Screenshot Bro** menu." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Updates** – **Automatisch nach Updates suchen** und **Nach Updates suchen …**, um sofort nachzusehen. Denselben Befehl findest du im Menü **Screenshot Bro**."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Actualizaciones**: **Buscar actualizaciones automáticamente** y **Buscar actualizaciones…** para comprobarlo al momento. El mismo comando está en el menú **Screenshot Bro**."
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**به‌روزرسانی‌ها** — **بررسی خودکار به‌روزرسانی‌ها** و **بررسی به‌روزرسانی‌ها…** برای بررسی فوری. همین فرمان در منوی **Screenshot Bro** هم هست."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Mises à jour** — **Rechercher automatiquement les mises à jour**, et **Rechercher des mises à jour…** pour vérifier tout de suite. La même commande se trouve dans le menu **Screenshot Bro**."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Aggiornamenti** — **Controlla automaticamente gli aggiornamenti** e **Controlla aggiornamenti…** per verificare subito. Lo stesso comando si trova nel menu **Screenshot Bro**."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**アップデート** — **アップデートを自動的に確認** と、今すぐ確認する **アップデートを確認…**。同じコマンドは **Screenshot Bro** メニューにもあります。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**업데이트** — **자동으로 업데이트 확인**과 지금 바로 확인하는 **업데이트 확인…**. 같은 명령이 **Screenshot Bro** 메뉴에도 있습니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Atualizações** — **Verificar atualizações automaticamente** e **Verificar Atualizações…** para conferir na hora. O mesmo comando está no menu **Screenshot Bro**."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Обновления** — **Автоматически проверять обновления** и **Проверить обновления…**, чтобы проверить прямо сейчас. Та же команда есть в меню **Screenshot Bro**."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Güncellemeler** — **Güncellemeleri otomatik olarak denetle** ve hemen bakmak için **Güncellemeleri Denetle…**. Aynı komut **Screenshot Bro** menüsünde de bulunur."
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Оновлення** — **Автоматично перевіряти оновлення** і **Перевірити оновлення…**, щоб перевірити одразу. Та сама команда є в меню **Screenshot Bro**."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**更新** — **自动检查更新**，以及立即检查的 **检查更新…**。同一命令也在 **Screenshot Bro** 菜单中。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**更新項目** — **自動檢查更新項目**，以及立即檢查的**檢查更新項目…**。同一指令也在 **Screenshot Bro** 選單中。"
+          }
+        }
+      }
+    },
+    "Links to contact support, visit the website, or follow along on X, Threads, and Discord — plus **More Apps** from the same developer." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Links zum Support, zur Website und zu X, Threads und Discord – dazu **Weitere Apps** desselben Entwicklers."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Enlaces para contactar con soporte, visitar el sitio web o seguirnos en X, Threads y Discord, además de **Más apps** del mismo desarrollador."
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "پیوندهایی برای تماس با پشتیبانی، بازدید از وب‌سایت یا دنبال کردن ما در X، Threads و Discord — به‌علاوهٔ **برنامه‌های دیگر** از همین توسعه‌دهنده."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Des liens pour contacter l’assistance, visiter le site web ou nous suivre sur X, Threads et Discord — ainsi que **Autres apps** du même développeur."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Link per contattare l'assistenza, visitare il sito web o seguirci su X, Threads e Discord, più **Altre app** dello stesso sviluppatore."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "サポートへの問い合わせ、Web サイト、X・Threads・Discord へのリンクと、同じデベロッパの **その他のアプリ**。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "지원팀 문의, 웹사이트 방문, X·Threads·Discord 팔로우 링크와 같은 개발자의 **더 많은 앱**."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Links para contatar o suporte, visitar o site ou nos seguir no X, Threads e Discord — além de **Mais apps** do mesmo desenvolvedor."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ссылки, чтобы связаться с поддержкой, открыть сайт или следить за новостями в X, Threads и Discord, а также **Другие приложения** того же разработчика."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Destekle iletişime geçme, web sitesini ziyaret etme veya X, Threads ve Discord'da takip etme bağlantıları — ayrıca aynı geliştiricinin **Diğer Uygulamalar**'ı."
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Посилання, щоб зв’язатися з підтримкою, відвідати вебсайт або стежити за новинами в X, Threads і Discord, — а також **Інші програми** від того самого розробника."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "联系技术支持、访问网站，或在 X、Threads 和 Discord 上关注我们的链接——以及同一开发者的 **更多 App**。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "提供聯絡支援、造訪網站，或在 X、Threads 和 Discord 上追蹤的連結——另有同一開發者的**更多 App**。"
+          }
+        }
+      }
+    },
+    "Buying or activating" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kaufen oder aktivieren"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Comprar o activar"
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "خرید یا فعال‌سازی"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Achat ou activation"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Acquisto o attivazione"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "購入またはアクティベート"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "구매 또는 활성화"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Comprar ou ativar"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Покупка и активация"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Satın alma veya etkinleştirme"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Купівля або активація"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "购买或激活"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "購買或啟用"
+          }
+        }
+      }
+    },
+    "**Settings ▸ Purchase ▸ Unlock Screenshot Bro Pro** sells Pro as a one-time purchase. Checkout opens in your browser." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Einstellungen ▸ Kauf ▸ Screenshot Bro Pro freischalten** verkauft Pro als einmaligen Kauf. Der Bezahlvorgang öffnet sich in deinem Browser."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Ajustes ▸ Compra ▸ Desbloquear Screenshot Bro Pro** vende Pro como pago único. El pago se abre en tu navegador."
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**تنظیمات ▸ خرید ▸ باز کردن قفل Screenshot Bro Pro** نسخهٔ Pro را با پرداخت یک‌باره می‌فروشد. پرداخت در مرورگر شما باز می‌شود."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Réglages ▸ Achat ▸ Débloquer Screenshot Bro Pro** propose Pro en achat unique. Le paiement s'ouvre dans votre navigateur."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Impostazioni ▸ Acquisto ▸ Sblocca Screenshot Bro Pro** vende Pro come acquisto una tantum. Il pagamento si apre nel browser."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**設定 ▸ 購入 ▸ Screenshot Bro Pro のロックを解除** で Pro を買い切りで購入できます。購入手続きはブラウザで開きます。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**설정 ▸ 구입 ▸ Screenshot Bro Pro 잠금 해제**에서 Pro를 1회 구매로 구입할 수 있습니다. 결제 페이지는 브라우저에서 열립니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Ajustes ▸ Compra ▸ Desbloquear Screenshot Bro Pro** vende o Pro como compra única. O pagamento abre no seu navegador."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Настройки ▸ Покупка ▸ Разблокировать Screenshot Bro Pro** продаёт Pro разовой покупкой. Оплата откроется в браузере."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Ayarlar ▸ Satın Alma ▸ Screenshot Bro Pro'nun Kilidini Açın**, Pro'yu tek seferlik bir satın alım olarak sunar. Ödeme tarayıcınızda açılır."
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Параметри ▸ Покупка ▸ Розблокувати Screenshot Bro Pro** продає Pro як разову покупку. Оплата відкриється у браузері."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**设置 ▸ 购买 ▸ 解锁 Screenshot Bro Pro** 以一次性购买的方式出售 Pro。结账页面会在浏览器中打开。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**設定 ▸ 購買 ▸ 解鎖 Screenshot Bro Pro** 以一次性購買的方式販售 Pro。結帳頁面會在瀏覽器中打開。"
+          }
+        }
+      }
+    },
+    "When checkout is done, click **Open Screenshot Bro** and Pro unlocks on this Mac." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Klicke nach dem Bezahlen auf **Open Screenshot Bro**, dann wird Pro auf diesem Mac freigeschaltet."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cuando termine el pago, haz clic en **Open Screenshot Bro** y Pro se desbloqueará en este Mac."
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "پس از پایان پرداخت، روی **Open Screenshot Bro** کلیک کنید تا Pro روی این Mac باز شود."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Une fois le paiement terminé, cliquez sur **Open Screenshot Bro** et Pro se débloque sur ce Mac."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Al termine del pagamento, fai clic su **Open Screenshot Bro** e Pro si sblocca su questo Mac."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "購入手続きが完了したら **Open Screenshot Bro** をクリックすると、この Mac で Pro のロックが解除されます。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "결제가 완료되면 **Open Screenshot Bro**를 클릭하세요. 이 Mac에서 Pro가 잠금 해제됩니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Quando o pagamento terminar, clique em **Open Screenshot Bro** e o Pro será desbloqueado neste Mac."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "После оплаты нажмите **Open Screenshot Bro** — и Pro разблокируется на этом Mac."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ödeme tamamlandığında **Open Screenshot Bro**'ya tıklayın; Pro bu Mac'te açılır."
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Після оплати натисніть **Open Screenshot Bro** — і Pro розблокується на цьому Mac."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "结账完成后，点按 **Open Screenshot Bro**，Pro 即会在这台 Mac 上解锁。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "結帳完成後，按一下 **Open Screenshot Bro**，Pro 即會在這台 Mac 上解鎖。"
+          }
+        }
+      }
+    },
+    "If the app didn't open, or you reinstalled it, use **Activate Web Purchase…** and paste the activation link from your receipt email." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wenn sich die App nicht geöffnet hat oder du sie neu installiert hast, verwende **Web-Kauf aktivieren …** und füge den Aktivierungslink aus deiner Quittungs-E-Mail ein."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Si la app no se abrió o la has reinstalado, usa **Activar compra web…** y pega el enlace de activación del correo con tu recibo."
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "اگر برنامه باز نشد یا آن را دوباره نصب کرده‌اید، از **فعال‌سازی خرید وب…** استفاده کنید و پیوند فعال‌سازی را از ایمیل رسید جای‌گذاری کنید."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Si l'app ne s'est pas ouverte, ou si vous l'avez réinstallée, utilisez **Activer un achat web…** et collez le lien d'activation figurant dans l'e-mail de reçu."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Se l'app non si è aperta o l'hai reinstallata, usa **Attiva acquisto web…** e incolla il link di attivazione dall'email della ricevuta."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "アプリが開かなかった場合や再インストールした場合は、**Web 購入をアクティベート…** を使い、レシートメールのアクティベーションリンクをペーストしてください。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "앱이 열리지 않았거나 다시 설치했다면 **웹 구매 활성화…**를 사용해 영수증 이메일의 활성화 링크를 붙여 넣으세요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Se o app não abriu, ou se você o reinstalou, use **Ativar compra pela web…** e cole o link de ativação do e-mail do recibo."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Если приложение не открылось или вы его переустановили, выберите **Активировать веб-покупку…** и вставьте ссылку активации из письма с чеком."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Uygulama açılmadıysa veya yeniden yüklediyseniz **Web Satın Alımını Etkinleştir…** seçeneğini kullanın ve makbuz e-postanızdaki etkinleştirme bağlantısını yapıştırın."
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Якщо програма не відкрилася або ви її перевстановили, скористайтеся **Активувати вебпокупку…** і вставте посилання для активації з листа з квитанцією."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "如果 App 没有打开，或你重新安装了它，请使用 **激活网页购买…**，并粘贴收据电子邮件中的激活链接。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "如果 App 沒有打開，或你重新安裝了它，請使用**啟用網頁購買項目…**，並貼上收據電子郵件中的啟用連結。"
+          }
+        }
+      }
+    },
+    "A purchase activates on one Mac. To move it to another Mac, contact support." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ein Kauf wird auf einem Mac aktiviert. Um ihn auf einen anderen Mac zu übertragen, wende dich an den Support."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Una compra se activa en un solo Mac. Para trasladarla a otro Mac, ponte en contacto con soporte."
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "هر خرید روی یک Mac فعال می‌شود. برای انتقال آن به Mac دیگر، با پشتیبانی تماس بگیرید."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Un achat s'active sur un seul Mac. Pour le transférer sur un autre Mac, contactez l'assistance."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Un acquisto si attiva su un solo Mac. Per trasferirlo su un altro Mac, contatta l'assistenza."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "購入は 1 台の Mac でアクティベートされます。別の Mac に移すには、サポートにお問い合わせください。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "구매는 Mac 한 대에서 활성화됩니다. 다른 Mac으로 옮기려면 지원팀에 문의하세요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Uma compra é ativada em um único Mac. Para transferi-la para outro Mac, entre em contato com o suporte."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Покупка активируется на одном Mac. Чтобы перенести её на другой Mac, свяжитесь с поддержкой."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bir satın alım tek bir Mac'te etkinleştirilir. Başka bir Mac'e taşımak için destekle iletişime geçin."
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Покупка активується на одному Mac. Щоб перенести її на інший Mac, зверніться до підтримки."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "一次购买只能在一台 Mac 上激活。如需转移到另一台 Mac，请联系技术支持。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "一次購買只能在一台 Mac 上啟用。如需轉移到另一台 Mac，請聯絡支援。"
+          }
+        }
+      }
+    },
+    "Activate Web Purchase…" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Web-Kauf aktivieren …"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Activar compra web…"
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "فعال‌سازی خرید وب…"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Activer un achat web…"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Attiva acquisto web…"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Web 購入をアクティベート…"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "웹 구매 활성화…"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ativar compra pela web…"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Активировать веб-покупку…"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Web Satın Alımını Etkinleştir…"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Активувати вебпокупку…"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "激活网页购买…"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "啟用網頁購買項目…"
+          }
+        }
+      }
+    },
+    "Screenshot Bro Pro" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Screenshot Bro Pro"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Screenshot Bro Pro"
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Screenshot Bro Pro"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Screenshot Bro Pro"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Screenshot Bro Pro"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Screenshot Bro Pro"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Screenshot Bro Pro"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Screenshot Bro Pro"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Screenshot Bro Pro"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Screenshot Bro Pro"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Screenshot Bro Pro"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Screenshot Bro Pro"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Screenshot Bro Pro"
+          }
+        }
+      }
+    },
+    "Checkout opens in your browser. When it's done, click **Open Screenshot Bro** to activate Pro on this Mac." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Der Bezahlvorgang öffnet sich in deinem Browser. Klicke danach auf **Open Screenshot Bro**, um Pro auf diesem Mac zu aktivieren."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "El pago se abre en tu navegador. Cuando termine, haz clic en **Open Screenshot Bro** para activar Pro en este Mac."
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "پرداخت در مرورگر شما باز می‌شود. پس از پایان، روی **Open Screenshot Bro** کلیک کنید تا Pro روی این Mac فعال شود."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Le paiement s'ouvre dans votre navigateur. Une fois terminé, cliquez sur **Open Screenshot Bro** pour activer Pro sur ce Mac."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Il pagamento si apre nel browser. Al termine, fai clic su **Open Screenshot Bro** per attivare Pro su questo Mac."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "購入手続きはブラウザで開きます。完了したら **Open Screenshot Bro** をクリックすると、この Mac で Pro がアクティベートされます。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "결제 페이지가 브라우저에서 열립니다. 완료되면 **Open Screenshot Bro**를 클릭해 이 Mac에서 Pro를 활성화하세요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O pagamento abre no seu navegador. Quando terminar, clique em **Open Screenshot Bro** para ativar o Pro neste Mac."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Оплата откроется в браузере. Когда она завершится, нажмите **Open Screenshot Bro**, чтобы активировать Pro на этом Mac."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ödeme tarayıcınızda açılır. Tamamlandığında, Pro'yu bu Mac'te etkinleştirmek için **Open Screenshot Bro**'ya tıklayın."
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Оплата відкриється у браузері. Коли вона завершиться, натисніть **Open Screenshot Bro**, щоб активувати Pro на цьому Mac."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "结账页面会在浏览器中打开。完成后，点按 **Open Screenshot Bro** 即可在这台 Mac 上激活 Pro。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "結帳頁面會在瀏覽器中打開。完成後，按一下 **Open Screenshot Bro** 即可在這台 Mac 上啟用 Pro。"
+          }
+        }
+      }
+    },
+    "Buy Pro — One-Time Purchase" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pro kaufen – einmaliger Kauf"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Comprar Pro: pago único"
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "خرید Pro — پرداخت یک‌باره"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Acheter Pro — achat unique"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Acquista Pro — acquisto una tantum"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pro を購入 — 買い切り"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pro 구입 — 1회 구매"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Comprar Pro — compra única"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Купить Pro — разовая покупка"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pro Satın Al — Tek Seferlik Ödeme"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Купити Pro — разова покупка"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "购买 Pro — 一次性购买"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "購買 Pro — 一次性購買"
+          }
+        }
+      }
+    },
+    "Already bought? Paste the activation link from your receipt email." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Schon gekauft? Füge den Aktivierungslink aus deiner Quittungs-E-Mail ein."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "¿Ya lo compraste? Pega el enlace de activación del correo con tu recibo."
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "قبلاً خریده‌اید؟ پیوند فعال‌سازی را از ایمیل رسید خود جای‌گذاری کنید."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Déjà acheté ? Collez le lien d'activation figurant dans l'e-mail de reçu."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hai già acquistato? Incolla il link di attivazione dall'email della ricevuta."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "購入済みの場合は、レシートメールに記載されたアクティベーションリンクをペーストしてください。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "이미 구입하셨나요? 영수증 이메일의 활성화 링크를 붙여 넣으세요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Já comprou? Cole o link de ativação do e-mail do recibo."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Уже купили? Вставьте ссылку активации из письма с чеком."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zaten satın aldınız mı? Makbuz e-postanızdaki etkinleştirme bağlantısını yapıştırın."
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Уже купили? Вставте посилання для активації з листа з квитанцією."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已经购买？请粘贴收据电子邮件中的激活链接。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已經購買？請貼上收據電子郵件中的啟用連結。"
+          }
+        }
+      }
+    },
+    "Activate" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aktivieren"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Activar"
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "فعال‌سازی"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Activer"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Attiva"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "アクティベート"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "활성화"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ativar"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Активировать"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Etkinleştir"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Активувати"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "激活"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "啟用"
+          }
+        }
+      }
+    },
+    "The purchase was redeemed, but it didn't unlock Pro. Please contact support." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Der Kauf wurde eingelöst, hat Pro aber nicht freigeschaltet. Bitte wende dich an den Support."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La compra se canjeó, pero no desbloqueó Pro. Ponte en contacto con soporte."
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "خرید ثبت شد، اما Pro را باز نکرد. لطفاً با پشتیبانی تماس بگیرید."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "L'achat a été activé, mais n'a pas débloqué Pro. Veuillez contacter l'assistance."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "L'acquisto è stato riscattato, ma non ha sbloccato Pro. Contatta l'assistenza."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "購入は引き換えられましたが、Pro のロックは解除されませんでした。サポートにお問い合わせください。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "구매가 사용 처리되었지만 Pro가 잠금 해제되지 않았습니다. 지원팀에 문의하세요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A compra foi resgatada, mas não desbloqueou o Pro. Entre em contato com o suporte."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Покупка активирована, но Pro не разблокирован. Пожалуйста, свяжитесь с поддержкой."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Satın alım kullanıldı ancak Pro'nun kilidini açmadı. Lütfen destekle iletişime geçin."
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Покупку активовано, але Pro не розблоковано. Зверніться до підтримки."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "购买已兑换，但未能解锁 Pro。请联系技术支持。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "購買項目已兌換，但未能解鎖 Pro。請聯絡支援。"
+          }
+        }
+      }
+    },
+    "This purchase link isn't valid. Check that you copied the whole link from your receipt email." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dieser Kauflink ist ungültig. Prüfe, ob du den vollständigen Link aus deiner Quittungs-E-Mail kopiert hast."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Este enlace de compra no es válido. Comprueba que copiaste el enlace completo del correo con tu recibo."
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "این پیوند خرید معتبر نیست. بررسی کنید که کل پیوند را از ایمیل رسید کپی کرده باشید."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ce lien d'achat n'est pas valide. Vérifiez que vous avez copié le lien complet depuis l'e-mail de reçu."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Questo link di acquisto non è valido. Verifica di aver copiato l'intero link dall'email della ricevuta."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "この購入リンクは無効です。レシートメールからリンク全体をコピーしたか確認してください。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "이 구매 링크는 유효하지 않습니다. 영수증 이메일에서 링크 전체를 복사했는지 확인하세요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Este link de compra não é válido. Verifique se você copiou o link inteiro do e-mail do recibo."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Эта ссылка на покупку недействительна. Проверьте, что вы скопировали ссылку из письма с чеком целиком."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bu satın alma bağlantısı geçerli değil. Makbuz e-postanızdaki bağlantının tamamını kopyaladığınızdan emin olun."
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Це посилання на покупку недійсне. Перевірте, чи ви скопіювали посилання з листа з квитанцією повністю."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "此购买链接无效。请检查你是否从收据电子邮件中复制了完整链接。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "此購買連結無效。請檢查你是否從收據電子郵件中拷貝了完整連結。"
+          }
+        }
+      }
+    },
+    "This purchase has already been activated on another Mac. Contact support to move it to this one." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dieser Kauf wurde bereits auf einem anderen Mac aktiviert. Wende dich an den Support, um ihn auf diesen Mac zu übertragen."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Esta compra ya se activó en otro Mac. Ponte en contacto con soporte para trasladarla a este."
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "این خرید قبلاً روی Mac دیگری فعال شده است. برای انتقال آن به این Mac با پشتیبانی تماس بگیرید."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cet achat a déjà été activé sur un autre Mac. Contactez l'assistance pour le transférer sur celui-ci."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Questo acquisto è già stato attivato su un altro Mac. Contatta l'assistenza per trasferirlo su questo."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "この購入はすでに別の Mac でアクティベートされています。この Mac に移すには、サポートにお問い合わせください。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "이 구매는 이미 다른 Mac에서 활성화되었습니다. 이 Mac으로 옮기려면 지원팀에 문의하세요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Esta compra já foi ativada em outro Mac. Entre em contato com o suporte para transferi-la para este."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Эта покупка уже активирована на другом Mac. Чтобы перенести её на этот, свяжитесь с поддержкой."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bu satın alım başka bir Mac'te zaten etkinleştirildi. Bu Mac'e taşımak için destekle iletişime geçin."
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Цю покупку вже активовано на іншому Mac. Щоб перенести її на цей, зверніться до підтримки."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "此购买已在另一台 Mac 上激活。如需将其转移到这台 Mac，请联系技术支持。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "此購買項目已在另一台 Mac 上啟用。如需將其轉移到這台 Mac，請聯絡支援。"
+          }
+        }
+      }
+    },
+    "This link has expired. A new one has been sent to %@." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dieser Link ist abgelaufen. Ein neuer wurde an %@ gesendet."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Este enlace ha caducado. Se ha enviado uno nuevo a %@."
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "این پیوند منقضی شده است. پیوند جدیدی به %@ ارسال شد."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ce lien a expiré. Un nouveau lien a été envoyé à %@."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Questo link è scaduto. Ne è stato inviato uno nuovo a %@."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "このリンクは期限切れです。新しいリンクを %@ に送信しました。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "이 링크는 만료되었습니다. 새 링크를 %@(으)로 보냈습니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Este link expirou. Um novo foi enviado para %@."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Срок действия ссылки истёк. Новая ссылка отправлена на %@."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bu bağlantının süresi doldu. Yeni bir bağlantı %@ adresine gönderildi."
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Термін дії посилання минув. Нове посилання надіслано на %@."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "此链接已过期。新链接已发送至 %@。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "此連結已過期。新連結已傳送至 %@。"
+          }
+        }
+      }
+    },
+    "Couldn't activate your purchase: %@" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dein Kauf konnte nicht aktiviert werden: %@"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No se pudo activar tu compra: %@"
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "فعال‌سازی خرید شما ممکن نشد: %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Impossible d'activer votre achat : %@"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Impossibile attivare l'acquisto: %@"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "購入をアクティベートできませんでした：%@"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "구매를 활성화할 수 없습니다: %@"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Não foi possível ativar sua compra: %@"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Не удалось активировать покупку: %@"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Satın alımınız etkinleştirilemedi: %@"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Не вдалося активувати покупку: %@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "无法激活你的购买：%@"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "無法啟用你的購買項目：%@"
+          }
+        }
+      }
+    },
+    "Check for Updates…" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nach Updates suchen …"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Buscar actualizaciones…"
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "بررسی به‌روزرسانی‌ها…"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rechercher des mises à jour…"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Controlla aggiornamenti…"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "アップデートを確認…"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "업데이트 확인…"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Verificar Atualizações…"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Проверить обновления…"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Güncellemeleri Denetle…"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Перевірити оновлення…"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "检查更新…"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "檢查更新項目…"
+          }
+        }
+      }
+    },
+    "Updates" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Updates"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Actualizaciones"
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "به‌روزرسانی‌ها"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mises à jour"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aggiornamenti"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "アップデート"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "업데이트"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Atualizações"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Обновления"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Güncellemeler"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Оновлення"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "更新"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "更新項目"
+          }
+        }
+      }
+    },
+    "Automatically check for updates" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Automatisch nach Updates suchen"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Buscar actualizaciones automáticamente"
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "بررسی خودکار به‌روزرسانی‌ها"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rechercher automatiquement les mises à jour"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Controlla automaticamente gli aggiornamenti"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "アップデートを自動的に確認"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "자동으로 업데이트 확인"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Verificar atualizações automaticamente"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Автоматически проверять обновления"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Güncellemeleri otomatik olarak denetle"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Автоматично перевіряти оновлення"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "自动检查更新"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "自動檢查更新項目"
+          }
+        }
+      }
+    },
+    "Software update" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Softwareupdate"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Actualización de software"
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "به‌روزرسانی نرم‌افزار"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mise à jour logicielle"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aggiornamento software"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ソフトウェアアップデート"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "소프트웨어 업데이트"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Atualização de software"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Обновление ПО"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yazılım güncellemesi"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Оновлення ПЗ"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "软件更新"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "軟體更新"
+          }
+        }
+      }
+    },
+    "Activation link" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aktivierungslink"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Enlace de activación"
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "پیوند فعال‌سازی"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lien d'activation"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Link di attivazione"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "アクティベーションリンク"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "활성화 링크"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Link de ativação"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ссылка активации"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Etkinleştirme bağlantısı"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Посилання для активації"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "激活链接"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "啟用連結"
           }
         }
       }

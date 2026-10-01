@@ -609,7 +609,7 @@ private struct HelpCommands: Commands {
 
 final class AppDelegate: NSObject, NSApplicationDelegate {
     #if DIRECT_DISTRIBUTION
-    let updater = DirectUpdater()
+    let updater = DirectUpdater.shared
     weak var purchaseService: PurchaseService? {
         didSet { redeemPendingURLs() }
     }

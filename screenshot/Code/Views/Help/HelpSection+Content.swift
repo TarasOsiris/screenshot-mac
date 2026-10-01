@@ -56,7 +56,9 @@ extension HelpSection {
                 .heading("Legal"),
                 .bullet("[Privacy Policy](https://screenshotbro.app/privacy)"),
                 .bullet("[Terms of Service](https://screenshotbro.app/terms)"),
-                .tip("Loved the app? An App Store review helps tremendously and keeps Screenshot Bro independent."),
+                DistributionChannel.isDirect
+                    ? .tip("Loved the app? Telling a friend about it helps tremendously and keeps Screenshot Bro independent.")
+                    : .tip("Loved the app? An App Store review helps tremendously and keeps Screenshot Bro independent."),
             ],
             seeAlso: [.settings, .tips]
         )
@@ -660,13 +662,15 @@ extension HelpSection {
                 .heading("Automation"),
                 .bullet("Enable the local MCP server and copy the agent prompt, connection JSON, or access token. See the Automation & MCP topic."),
                 .heading("Purchase"),
-                .bullet("Current plan, restore purchases, manage subscription, and a copyable purchase ID to quote if you ever need help with a transaction."),
+                DistributionChannel.isDirect
+                    ? .bullet("Current plan, **Unlock Screenshot Bro Pro**, **Activate Web Purchase…** for a purchase made in the browser, and a copyable purchase ID to quote if you ever need help with a transaction.")
+                    : .bullet("Current plan, restore purchases, manage subscription, and a copyable purchase ID to quote if you ever need help with a transaction."),
                 .heading("Attributions"),
                 .bullet("Credits and licenses for fonts, icons, and bundled assets."),
                 .heading("About"),
                 .bullet("**Version** — the build you're running. Worth quoting in a bug report."),
-                .bullet("Links to rate the app, contact support, visit the website, or follow along on X, Threads, and Discord — plus **More Apps** from the same developer."),
-            ],
+                .bullet("Below the version, where your copy came from: **App Store** or **Direct download**."),
+            ] + aboutChannelBlocks,
             seeAlso: [.exporting, .appStoreConnect, .googlePlay, .automation]
         )
     }
@@ -686,14 +690,46 @@ extension HelpSection {
                 .bullet("Unlimited projects, rows, and templates."),
                 .bullet("No row or screenshot-column limits when building larger launch sets."),
                 .bullet("Future Pro-only features as they ship."),
-                .heading("Buying or restoring"),
-                .bullet("**Settings ▸ Purchase** lists the available plans. RevenueCat handles the transaction."),
-                .bullet("**Restore Purchase** brings back an existing subscription on a new Mac."),
-                .bullet("Subscriptions are managed through your Apple Account. To change or cancel one, open **System Settings**, click your name, choose **Media & Purchases**, then click **Manage** next to **Subscriptions**."),
+            ] + buyingBlocks + [
                 .tip("Pro paywall messages adapt to context — the prompt you see when adding a 4th row is different from the one you see when adding a 6th template, so you always know exactly which limit you're hitting."),
             ],
             seeAlso: [.projects, .rows, .templates]
         )
+    }
+
+    /// The About pane differs by build: only the App Store copy can be rated, only the direct copy updates itself.
+    private var aboutChannelBlocks: [HelpBlock] {
+        switch DistributionChannel.current {
+        case .appStore:
+            [
+                .bullet("Links to rate the app, contact support, visit the website, or follow along on X, Threads, and Discord — plus **More Apps** from the same developer."),
+            ]
+        case .direct:
+            [
+                .bullet("**Updates** — **Automatically check for updates**, and **Check for Updates…** to look right away. The same command is in the **Screenshot Bro** menu."),
+                .bullet("Links to contact support, visit the website, or follow along on X, Threads, and Discord — plus **More Apps** from the same developer."),
+            ]
+        }
+    }
+
+    private var buyingBlocks: [HelpBlock] {
+        switch DistributionChannel.current {
+        case .appStore:
+            [
+                .heading("Buying or restoring"),
+                .bullet("**Settings ▸ Purchase** lists the available plans. RevenueCat handles the transaction."),
+                .bullet("**Restore Purchase** brings back an existing subscription on a new Mac."),
+                .bullet("Subscriptions are managed through your Apple Account. To change or cancel one, open **System Settings**, click your name, choose **Media & Purchases**, then click **Manage** next to **Subscriptions**."),
+            ]
+        case .direct:
+            [
+                .heading("Buying or activating"),
+                .bullet("**Settings ▸ Purchase ▸ Unlock Screenshot Bro Pro** sells Pro as a one-time purchase. Checkout opens in your browser."),
+                .bullet("When checkout is done, click **Open Screenshot Bro** and Pro unlocks on this Mac."),
+                .bullet("If the app didn't open, or you reinstalled it, use **Activate Web Purchase…** and paste the activation link from your receipt email."),
+                .bullet("A purchase activates on one Mac. To move it to another Mac, contact support."),
+            ]
+        }
     }
 
     private var tipsEntry: HelpEntry {

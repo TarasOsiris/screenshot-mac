@@ -44,6 +44,12 @@ Xcode's xcstrings extraction runs as part of the build. Trigger it:
 xcodebuild -scheme screenshot -destination 'platform=macOS' build 2>&1 | tail -10
 ```
 
+A string behind `#if DIRECT_DISTRIBUTION` is only extracted by the `screenshot Direct` target, which has extraction off in the project; build it with the setting overridden so `translate_catalog.py` can merge it:
+
+```
+xcodebuild -scheme "screenshot Direct" -destination 'platform=macOS' SWIFT_EMIT_LOC_STRINGS=YES build 2>&1 | tail -10
+```
+
 After this, `screenshot/Localizable.xcstrings` will contain the new key with `state: "new"` and no translations.
 
 ## Step 3 — Translate
