@@ -1,6 +1,6 @@
 ---
 name: add-localized-string
-description: Add a new user-facing string to the codebase using String(localized:) and propagate it through Localizable.xcstrings via the project's Python translation scripts. Use when adding any UI label, button title, alert message, accessibility text, or other text the user will see, so all 13 app UI languages stay in sync.
+description: Add a new user-facing string to the codebase using String(localized:) and translate it yourself into Localizable.xcstrings (merged by tools/translate_catalog.py, written through tools/xcstrings_format.py). Use when adding any UI label, button title, alert message, accessibility text, or other text the user will see, so all 13 app UI languages stay in sync.
 disable-model-invocation: true
 ---
 
@@ -48,18 +48,34 @@ After this, `screenshot/Localizable.xcstrings` will contain the new key with `st
 
 ## Step 3 — Translate
 
-The two translation scripts have **different jobs** — they're not interchangeable:
+**Write the translations yourself.** Don't use Google Translate (`translate_popular_languages.py`) unless the user asks for it: its output is lower quality, it gets rate-limited, and it also fills unrelated missing keys across the catalog.
 
-- **`tools/translate_popular_languages.py`** — uses Google Translate (via `deep-translator`) to fill missing entries for every UI language in its `TARGET_LANGUAGES` (de, es, fa, fr, it, ja, ko, pt-BR, ru, tr, uk, zh-Hans, zh-Hant). Run it first for any new key. Requires `python3 -m pip install deep-translator`.
-- **`tools/translate_catalog.py`** — Spanish-only. Uses a hand-curated English→Spanish dictionary baked into the script. It also merges new keys from Xcode's `.stringsdata` files into the catalog (workaround for xcodebuild CLI not always running the catalog-merge step). If your new key isn't in its `ES` dict, add a translation to the dict first, then run the script.
+1. Merge the extracted keys into the catalog. Build macOS first, or a stale `.stringsdata` merges nothing:
 
-Typical flow:
+   ```
+   python3 tools/translate_catalog.py   # merges new keys; its "Missing translations" list is your to-do list
+   ```
 
-```
-python3 tools/translate_catalog.py            # merges new keys + Spanish
-python3 tools/translate_popular_languages.py  # fills every UI language
-python3 tools/audit_localizations.py          # placeholder / missing-language check
-```
+2. Translate each new key into every UI language: de, es, fa, fr, it, ja, ko, pt-BR, ru, tr, uk, zh-Hans, zh-Hant. Write them through `tools/xcstrings_format.py` so Xcode's serialization is preserved:
+
+   ```python
+   import sys; sys.path.insert(0, "tools")
+   import xcstrings_format as x
+   from pathlib import Path
+   p = Path("screenshot/Localizable.xcstrings")
+   d = x.load(p)
+   d["strings"]["No screenshots"]["localizations"]["de"] = {"stringUnit": {"state": "translated", "value": "Keine Screenshots"}}
+   x.write(p, d)
+   ```
+
+   Keep `%lld` / `%@` placeholders and markdown intact. When a Help sentence quotes a UI label in bold, reuse that label's own translation.
+
+3. Check the result:
+
+   ```
+   python3 tools/audit_localizations.py   # placeholder / missing-language check
+   git diff --numstat screenshot/Localizable.xcstrings   # should be purely additive
+   ```
 
 Adding a UI language means adding it to `TARGET_LANGUAGES` in both `translate_popular_languages.py` and `audit_localizations.py`, and to `localizations.supported` in `project.xcproj`.
 
@@ -73,7 +89,7 @@ Confirm the new key has translations for the locales you expect. Run the app or 
 
 ## When to skip Step 3
 
-If the user only wants the English string staged and intends to translate later, stop after Step 2 and tell them which key was added. They will run the translation script before shipping.
+If the user only wants the English string staged and intends to translate later, stop after Step 2 and tell them which key was added. They will translate before shipping.
 
 ## Conventions
 
