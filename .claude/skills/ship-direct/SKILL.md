@@ -21,7 +21,7 @@ Shared values:
   `SUPublicEDKey` in `ScreenshotBro-Direct-Info.plist`. **Never regenerate it.** Every
   installed copy would then reject all future updates.
 - Sparkle tools: `SourcePackages/artifacts/sparkle/Sparkle/bin/` under this project's DerivedData.
-- Site repo: `/Users/taras/repo/experiments/screnshot-mac-site`. Appcast `public/appcast.xml`, DMGs `public/releases/`.
+- Site repo: `/Users/taras/repo/experiments/screnshot-mac-site`. `public/appcast.xml` is the input to step 5. DMGs are **never** committed: they go to `~/Desktop`.
 
 ```bash
 KEY=(-authenticationKeyPath "$HOME/Library/Mobile Documents/com~apple~CloudDocs/Files/AuthKey_4KK2B86XC6_BRO.p8" -authenticationKeyID 4KK2B86XC6 -authenticationKeyIssuerID 69a6de84-a676-47e3-e053-5b8c7c11a4d1)
@@ -93,16 +93,15 @@ sentry-cli debug-files upload -o nineva-studios -p screenshot-bro build/screensh
 The release name is the same as the App Store one (`xyz.tleskiv.screenshot@V+B`), so `/ship`'s
 Sentry release already covers it. Crashes are told apart by the `distribution` tag.
 
-## 7. Publish on the site
+## 7. Hand off the DMG — never commit it
 ```bash
-cp build/appcast/appcast.xml "$SITE/public/appcast.xml"
-mkdir -p "$SITE/public/releases"
-cp "build/direct/ScreenshotBro-$V-$B.dmg" "$SITE/public/releases/"
-cp "build/direct/ScreenshotBro-$V-$B.dmg" "$SITE/public/releases/ScreenshotBro.dmg"   # stable /download link
+cp "build/direct/ScreenshotBro-$V-$B.dmg" ~/Desktop/
+cp build/appcast/appcast.xml ~/Desktop/appcast-$V-$B.xml
 ```
-Delete DMGs older than the previous release from `public/releases/` so the repo doesn't grow
-without bound. Sparkle only needs the newest one. Then commit and push the site repo. Coolify
-deploys on push.
+**Never commit or push a DMG to any git repo.** The site's `.gitignore` excludes them. The user
+uploads the DMG to `https://screenshotbro.app/releases/` themselves. Leave the appcast on the
+Desktop too, and don't commit `public/appcast.xml` unless the user asks. An appcast that
+points at a DMG which isn't uploaded yet breaks Sparkle updates.
 
 ## 8. Report
 Give the version, the notarization ids, the DMG size, and the appcast item. Remind the user to
