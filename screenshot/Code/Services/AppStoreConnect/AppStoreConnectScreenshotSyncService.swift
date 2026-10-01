@@ -1191,7 +1191,7 @@ final class AppStoreConnectScreenshotSyncService {
         if isDemoMode() { return .assumedComplete(screenshotId) }
         var lastError: Error?
         var failedPolls = 0
-        for _ in 0..<30 {
+        for attempt in 0..<Self.deliveryPollLimit {
             try Task.checkCancellation()
             do {
                 let screenshot = try await api.screenshot(id: screenshotId, retryPolicy: .singleAttempt)
@@ -1230,12 +1230,23 @@ final class AppStoreConnectScreenshotSyncService {
                 failedPolls += 1
                 guard failedPolls < Self.maxConsecutivePollFailures else { throw error }
             }
-            try await Task.sleep(for: pollDelay(failedPolls: failedPolls))
+            try await Task.sleep(for: deliveryPollDelay(attempt: attempt, failedPolls: failedPolls))
         }
         if let lastError { throw lastError }
         throw ASCScreenshotSyncError.invalidPlan(
             String(localized: "App Store Connect did not finish processing the uploaded screenshot in time.")
         )
+    }
+
+    /// Apple routinely holds a committed screenshot in `UPLOAD_COMPLETE` for well over 30 s when
+    /// it is busy, and giving up then deletes a healthy upload and aborts the sync. ~3.5 min:
+    /// ten polls at the base interval, then one every 4×.
+    private static let deliveryPollLimit = 60
+    private static let deliveryFastPolls = 10
+
+    private func deliveryPollDelay(attempt: Int, failedPolls: Int) -> Duration {
+        if failedPolls > 0 { return pollDelay(failedPolls: failedPolls) }
+        return attempt < Self.deliveryFastPolls ? pollInterval : pollInterval * 4
     }
 
     /// A poll that failed is evidence the account is being throttled, so polling again a second
@@ -1245,8 +1256,8 @@ final class AppStoreConnectScreenshotSyncService {
         failedPolls == 0 ? pollInterval : min(pollInterval * pow(2.0, Double(failedPolls)), pollInterval * 8)
     }
 
-    /// Enough to ride out a blip (~15s with the backoff above) and not enough to stall. Both poll
-    /// loops run 30 iterations, so tolerating a *sustained* refusal would sit for ~4 minutes
+    /// Enough to ride out a blip (~15s with the backoff above) and not enough to stall. The poll
+    /// loops run 30–60 iterations, so tolerating a *sustained* refusal would sit for ~4 minutes
     /// behind a progress label that never moves — and a throttle that outlasts 15s is not going
     /// to clear inside this loop anyway. Failing hands the user the resumable path instead.
     private static let maxConsecutivePollFailures = 4

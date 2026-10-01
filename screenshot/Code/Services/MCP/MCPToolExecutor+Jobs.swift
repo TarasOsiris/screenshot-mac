@@ -59,7 +59,7 @@ extension MCPToolExecutor {
     /// time. 180 renders took ~130 s and timed out; 36 returned fine.
     static let syncPreviewRenderLimit = 40
     static let hardPreviewRenderLimit = 400
-    /// Much tighter than the render limit, because `waitForDelivery` polls up to 30 s *per upload*
+    /// Much tighter than the render limit, because `waitForDelivery` polls up to ~3.5 min *per upload*
     /// and `verify` up to 30 s *per set* — a small diff spread over many locales is slow for
     /// reasons the step count alone doesn't show.
     static let syncApplyStepLimit = 12
