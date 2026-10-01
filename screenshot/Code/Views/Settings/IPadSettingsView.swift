@@ -266,6 +266,10 @@ struct IPadSettingsView: View {
                 Text("\(Bundle.main.shortVersion) (\(Bundle.main.buildNumber))")
                     .foregroundStyle(.secondary)
             }
+            LabeledContent("Source") {
+                Text(DistributionChannel.current.displayName)
+                    .foregroundStyle(.secondary)
+            }
             AboutLinkRows()
             SocialLinkButtons()
                 .frame(maxWidth: .infinity)

@@ -15,6 +15,21 @@ nonisolated enum DistributionChannel: String {
 
     static var isDirect: Bool { current == .direct }
 
+    var displayName: String {
+        switch self {
+        case .appStore: String(localized: "App Store")
+        case .direct: String(localized: "Direct download")
+        }
+    }
+
+    /// English on purpose: support reads the diagnostics block regardless of the user's language.
+    var diagnosticsName: String {
+        switch self {
+        case .appStore: "App Store"
+        case .direct: "Direct download"
+        }
+    }
+
     /// Redirects to the RevenueCat Web Purchase Link, so the checkout URL can change without a release.
     static let webCheckoutURL = URL(string: "https://screenshotbro.app/buy")!
 }

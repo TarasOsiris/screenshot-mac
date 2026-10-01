@@ -621,6 +621,9 @@ struct SettingsView: View {
                         .font(.callout)
                         .foregroundStyle(.secondary)
                         .textSelection(.enabled)
+                    Text(DistributionChannel.current.displayName)
+                        .font(.callout)
+                        .foregroundStyle(.secondary)
                     SocialLinkButtons()
                         .padding(.top, 4)
                 }

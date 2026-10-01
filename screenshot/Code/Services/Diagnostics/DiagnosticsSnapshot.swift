@@ -13,6 +13,7 @@ enum DiagnosticsSnapshot {
         var lines: [String] = []
 
         lines.append("Screenshot Bro \(Bundle.main.shortVersion) (\(Bundle.main.buildNumber)) · \(platformLine())")
+        lines.append("Source       \(DistributionChannel.current.diagnosticsName)")
         lines.append("Install ID   \(DiagnosticsIdentity.installId)")
         if let first = DiagnosticsIdentity.firstVersion {
             lines.append("First seen   \(first)")

@@ -183434,7 +183434,16 @@
         }
       }
     },
-    "**Crop**: double-click an image (or use **Crop** in the properties bar) and drag to move the picture inside its frame; the zoom slider next to **Crop** enlarges it. Press **Return** or **Esc**, or click elsewhere, to finish. **Reset Crop** (right-click) centers it again." : {}
+    "**Crop**: double-click an image (or use **Crop** in the properties bar) and drag to move the picture inside its frame; the zoom slider next to **Crop** enlarges it. Press **Return** or **Esc**, or click elsewhere, to finish. **Reset Crop** (right-click) centers it again." : {
+      "localizations" : {
+
+      }
+    },
+    "Direct download" : {
+      "localizations" : {
+
+      }
+    }
   },
   "version" : "1.0"
 }

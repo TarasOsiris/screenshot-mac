@@ -9,6 +9,13 @@
     <key>destination</key>
     <string>export</string>
     <key>signingStyle</key>
-    <string>automatic</string>
+    <string>manual</string>
+    <key>signingCertificate</key>
+    <string>Developer ID Application</string>
+    <key>provisioningProfiles</key>
+    <dict>
+        <key>xyz.tleskiv.screenshot</key>
+        <string>Screenshot Bro Developer ID</string>
+    </dict>
 </dict>
 </plist>
