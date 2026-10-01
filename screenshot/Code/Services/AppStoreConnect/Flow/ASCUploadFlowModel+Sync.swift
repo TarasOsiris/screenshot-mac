@@ -178,6 +178,8 @@ extension ASCUploadFlowModel {
             errorMessage = message
             errorDetailsText = message
             retreatAfterScreenshotSync(to: returnOnFailure)
+            // A failed apply can still have changed some sets; nothing else on this path sends.
+            reloadRemoteScreenshotCounts()
             (screenshotSync.failure ?? .unknown).report(store: "asc", cancelled: screenshotSync.wasCancelled)
             NotificationService.notify(title: String(localized: "Screenshot sync stopped"), body: message)
         }

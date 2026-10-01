@@ -183443,6 +183443,580 @@
       "localizations" : {
 
       }
+    },
+    "Next to each App Store locale the wizard shows what the selected version already has for the row's display type: **No screenshots** when that locale has none at all, **None in this size** when it only has other sizes, or how many it already has." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Neben jeder App Store-Sprache zeigt der Assistent, was die ausgewählte Version für den Anzeigetyp der Zeile bereits hat: **Keine Screenshots**, wenn diese Sprache gar keine hat, **Keine in dieser Größe**, wenn sie nur andere Größen hat, oder wie viele bereits vorhanden sind."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Junto a cada idioma del App Store, el asistente muestra lo que la versión seleccionada ya tiene para el tipo de pantalla de la fila: **Sin capturas** cuando ese idioma no tiene ninguna, **Ninguna en este tamaño** cuando solo tiene otros tamaños, o cuántas tiene ya."
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "دستیار کنار هر زبان App Store نشان می‌دهد نسخه انتخاب‌شده برای نوع نمایشگر این ردیف از قبل چه دارد: **بدون اسکرین‌شات** وقتی آن زبان هیچ اسکرین‌شاتی ندارد، **هیچ‌کدام در این اندازه** وقتی فقط اندازه‌های دیگر را دارد، یا تعداد اسکرین‌شات‌های موجود."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "À côté de chaque langue App Store, l'assistant indique ce que la version sélectionnée contient déjà pour le type d'écran de la ligne : **Aucune capture** si cette langue n'en a aucune, **Aucune dans cette taille** si elle n'a que d'autres tailles, ou combien elle en a déjà."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Accanto a ogni lingua dell’App Store, la procedura mostra cosa ha già la versione selezionata per il tipo di schermo della riga: **Nessuno screenshot** se quella lingua non ne ha affatto, **Nessuno in questa dimensione** se ha solo altre dimensioni, oppure quanti ne ha già."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ウィザードは各 App Store ロケールの横に、選択したバージョンがその行のディスプレイタイプについてすでに持っているものを表示します。ロケールにまったくない場合は **スクリーンショットなし**、他のサイズしかない場合は **このサイズはなし**、それ以外はすでにある枚数です。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "마법사는 각 App Store 로케일 옆에 선택한 버전이 해당 행의 디스플레이 유형에 대해 이미 가진 것을 표시합니다. 해당 로케일에 스크린샷이 전혀 없으면 **스크린샷 없음**, 다른 크기만 있으면 **이 크기 없음**, 그렇지 않으면 이미 있는 개수를 보여 줍니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ao lado de cada idioma da App Store, o assistente mostra o que a versão selecionada já tem para o tipo de tela da linha: **Sem capturas** quando esse idioma não tem nenhuma, **Nenhuma neste tamanho** quando só tem outros tamanhos, ou quantas já tem."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Рядом с каждым языком App Store мастер показывает, что уже есть в выбранной версии для типа экрана этой строки: **Нет скриншотов**, если у языка их нет совсем, **Нет в этом размере**, если есть только другие размеры, или сколько их уже есть."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sihirbaz her App Store dilinin yanında, seçili sürümün satırın ekran türü için zaten neye sahip olduğunu gösterir: dilin hiç ekran görüntüsü yoksa **Ekran görüntüsü yok**, yalnızca başka boyutlar varsa **Bu boyutta yok**, aksi halde mevcut sayı."
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Поруч із кожною мовою App Store майстер показує, що вже є у вибраній версії для типу екрана цього рядка: **Немає знімків екрана**, якщо в мови їх немає зовсім, **Немає в цьому розмірі**, якщо є лише інші розміри, або скільки їх уже є."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "向导会在每个 App Store 语言旁显示所选版本在该行显示类型下已有的内容：该语言完全没有截图时显示 **无截图**，只有其他尺寸时显示 **此尺寸无截图**，否则显示已有的数量。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "精靈會在每個 App Store 語言旁顯示所選版本在該列顯示類型下已有的內容：該語言完全沒有截圖時顯示 **無截圖**，只有其他尺寸時顯示 **此尺寸無截圖**，否則顯示已有的數量。"
+          }
+        }
+      }
+    },
+    "%lld in this version" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld in dieser Version"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld en esta versión"
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld در این نسخه"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld dans cette version"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld in questa versione"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "このバージョンに %lld 枚"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "이 버전에 %lld개"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld nesta versão"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld в этой версии"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bu sürümde %lld"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld у цій версії"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "此版本有 %lld 张"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "此版本有 %lld 張"
+          }
+        }
+      }
+    },
+    "No screenshots" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Keine Screenshots"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sin capturas"
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "بدون اسکرین‌شات"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aucune capture"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nessuno screenshot"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "スクリーンショットなし"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "스크린샷 없음"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sem capturas"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Нет скриншотов"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ekran görüntüsü yok"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Немає знімків екрана"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "无截图"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "無截圖"
+          }
+        }
+      }
+    },
+    "This locale has no screenshots in this App Store version yet." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Diese Sprache hat in dieser App Store-Version noch keine Screenshots."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Este idioma aún no tiene capturas en esta versión del App Store."
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "این زبان هنوز در این نسخه App Store اسکرین‌شاتی ندارد."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cette langue n'a encore aucune capture dans cette version de l'App Store."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Questa lingua non ha ancora screenshot in questa versione dell’App Store."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "このロケールには、この App Store バージョンのスクリーンショットがまだありません。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "이 로케일에는 이 App Store 버전의 스크린샷이 아직 없습니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Este idioma ainda não tem capturas nesta versão da App Store."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "У этого языка пока нет скриншотов в этой версии App Store."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bu dilin bu App Store sürümünde henüz ekran görüntüsü yok."
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ця мова ще не має знімків екрана в цій версії App Store."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "此语言在该 App Store 版本中还没有截图。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "此語言在該 App Store 版本中尚無截圖。"
+          }
+        }
+      }
+    },
+    "None in this size" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Keine in dieser Größe"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ninguna en este tamaño"
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "هیچ‌کدام در این اندازه"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aucune dans cette taille"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nessuno in questa dimensione"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "このサイズはなし"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "이 크기 없음"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nenhuma neste tamanho"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Нет в этом размере"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bu boyutta yok"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Немає в цьому розмірі"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "此尺寸无截图"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "此尺寸無截圖"
+          }
+        }
+      }
+    },
+    "This locale has screenshots in this App Store version, but none for %@." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Diese Sprache hat Screenshots in dieser App Store-Version, aber keine für %@."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Este idioma tiene capturas en esta versión del App Store, pero ninguna para %@."
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "این زبان در این نسخه App Store اسکرین‌شات دارد، اما هیچ‌کدام برای %@ نیست."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cette langue a des captures dans cette version de l'App Store, mais aucune pour %@."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Questa lingua ha screenshot in questa versione dell’App Store, ma nessuno per %@."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "このロケールにはこの App Store バージョンのスクリーンショットがありますが、%@ 用はありません。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "이 로케일에는 이 App Store 버전의 스크린샷이 있지만 %@용은 없습니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Este idioma tem capturas nesta versão da App Store, mas nenhuma para %@."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "У этого языка есть скриншоты в этой версии App Store, но нет для %@."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bu dilin bu App Store sürümünde ekran görüntüleri var, ancak %@ için yok."
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ця мова має знімки екрана в цій версії App Store, але жодного для %@."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "此语言在该 App Store 版本中有截图，但没有 %@ 的截图。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "此語言在該 App Store 版本中有截圖，但沒有 %@ 的截圖。"
+          }
+        }
+      }
+    },
+    "Screenshots this App Store version already has for %@." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Screenshots, die diese App Store-Version bereits für %@ hat."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Capturas que esta versión del App Store ya tiene para %@."
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "اسکرین‌شات‌هایی که این نسخه App Store از قبل برای %@ دارد."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Captures que cette version de l'App Store possède déjà pour %@."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Screenshot che questa versione dell’App Store ha già per %@."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "この App Store バージョンにすでにある %@ 用のスクリーンショット。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "이 App Store 버전에 이미 있는 %@용 스크린샷입니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Capturas que esta versão da App Store já tem para %@."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Скриншоты для %@, которые уже есть в этой версии App Store."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bu App Store sürümünde %@ için zaten bulunan ekran görüntüleri."
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Знімки екрана для %@, які вже є в цій версії App Store."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "该 App Store 版本中已有的 %@ 截图。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "該 App Store 版本中已有的 %@ 截圖。"
+          }
+        }
+      }
     }
   },
   "version" : "1.0"

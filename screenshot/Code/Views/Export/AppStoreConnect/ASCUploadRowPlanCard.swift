@@ -36,6 +36,7 @@ struct ASCUploadRowPlanCard: View {
     let availableDisplayTypes: [ASCDisplayType]
     @Binding var displayTypeDetailsPlanId: String?
     let localeCreation: ASCLocaleCreationContext
+    let remoteScreenshotCounts: [String: [String: Int]]
     let onToggleExpanded: () -> Void
 
     var body: some View {
@@ -72,7 +73,12 @@ struct ASCUploadRowPlanCard: View {
             // "English (Australia) (EN-AU)" against.
             Grid(alignment: .leading, horizontalSpacing: 8, verticalSpacing: 4) {
                 ForEach($plan.localeTargets) { $target in
-                    ASCLocaleTargetRow(target: $target, creation: localeCreation)
+                    ASCLocaleTargetRow(
+                        target: $target,
+                        creation: localeCreation,
+                        remoteScreenshotCounts: remoteScreenshotCounts,
+                        displayType: plan.selectedAssetType
+                    )
                 }
             }
         }
@@ -243,6 +249,8 @@ private struct ASCDisplayTypeDetailsPopover: View {
 private struct ASCLocaleTargetRow: View {
     @Binding var target: ASCLocaleTarget
     let creation: ASCLocaleCreationContext
+    let remoteScreenshotCounts: [String: [String: Int]]
+    let displayType: ASCDisplayType?
 
     /// Exactly two cells: anything else here becomes its own Grid column and breaks the alignment
     /// the Grid exists to provide.
@@ -289,10 +297,16 @@ private struct ASCLocaleTargetRow: View {
             HStack(alignment: .firstTextBaseline, spacing: 8) {
                 VStack(alignment: .leading, spacing: 2) {
                     ForEach(target.candidates) { candidate in
-                        Toggle(candidate.attributes.locale, isOn: $target.selectedASCLocalizationIds.contains(candidate.id))
-                            .storeSelectionToggleStyle()
-                            .font(.caption)
-                            .disabled(!target.isEnabled)
+                        HStack(alignment: .firstTextBaseline, spacing: 6) {
+                            Toggle(candidate.attributes.locale, isOn: $target.selectedASCLocalizationIds.contains(candidate.id))
+                                .storeSelectionToggleStyle()
+                                .disabled(!target.isEnabled)
+                            ASCRemoteScreenshotBadge(
+                                status: .resolve(counts: remoteScreenshotCounts[candidate.id], displayType: displayType),
+                                displayType: displayType
+                            )
+                        }
+                        .font(.caption)
                     }
                 }
                 selectedLocaleLabel
@@ -331,6 +345,30 @@ private struct ASCLocaleTargetRow: View {
             Text(verbatim: "-> \(selected.joined(separator: ", "))")
                 .font(.caption)
                 .foregroundStyle(.secondary)
+        }
+    }
+}
+
+private struct ASCRemoteScreenshotBadge: View {
+    let status: ASCRemoteScreenshotStatus?
+    let displayType: ASCDisplayType?
+
+    var body: some View {
+        if let status, let displayType {
+            switch status {
+            case .empty:
+                Label("No screenshots", systemImage: "exclamationmark.triangle.fill")
+                    .foregroundStyle(.orange)
+                    .help("This locale has no screenshots in this App Store version yet.")
+            case .missingForDisplayType:
+                Label("None in this size", systemImage: "exclamationmark.circle")
+                    .foregroundStyle(.orange)
+                    .help("This locale has screenshots in this App Store version, but none for \(displayType.label).")
+            case .present(let count):
+                Text("\(count) in this version")
+                    .foregroundStyle(.secondary)
+                    .help("Screenshots this App Store version already has for \(displayType.label).")
+            }
         }
     }
 }

@@ -58,6 +58,14 @@ final class ASCUploadFlowModel {
     var creatingLocaleKeys: Set<String> = []
     var localeCreationErrors: [String: String] = [:]
 
+    /// Screenshot count per display type, keyed by version localization id, for the plan step's
+    /// per-locale badges — the selected (editable) version's, not the live listing's. A missing id
+    /// means "not known", never "empty": a failed or pending fetch shows no badge.
+    var remoteScreenshotCounts: [String: [String: Int]] = [:]
+    @ObservationIgnored var remoteScreenshotCountTasks: [Task<Void, Never>] = []
+    @ObservationIgnored var remoteScreenshotCountsInFlight: Set<String> = []
+    @ObservationIgnored var remoteScreenshotCountsGeneration = 0
+
     // MARK: - Collaborators
 
     let mode: ASCFlowMode
@@ -188,6 +196,7 @@ final class ASCUploadFlowModel {
     func tearDown() {
         uploadTask?.cancel()
         uploadTask = nil
+        cancelRemoteScreenshotCounts()
         screenshotSync.discard()
         // Belt and braces against the capture hazard documented where these are assigned.
         navigationDidAdvance = { _ in }

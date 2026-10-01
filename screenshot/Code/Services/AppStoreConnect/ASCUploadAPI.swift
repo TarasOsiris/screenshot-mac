@@ -5,7 +5,8 @@ import Foundation
 /// already takes an injectable `URLSession`, but the flow reached it through `.shared`.
 ///
 /// Deliberately not the whole client: screenshot set/asset calls belong to
-/// `AppStoreConnectScreenshotSyncService`, which owns them already.
+/// `AppStoreConnectScreenshotSyncService`, which owns them already. The flow only reads counts,
+/// for the plan step's per-locale "No screenshots" badges.
 /// `Sendable` because `moveToMetadata` starts one of these calls with `async let`, which carries
 /// the reference into a child task. Conformers are `@MainActor` classes and so already are.
 @MainActor
@@ -13,6 +14,7 @@ protocol ASCUploadAPI: Sendable {
     func listAppsWithVersions(limit: Int) async throws -> [ASCAppWithVersions]
     func listAppStoreVersions(appId: String, limit: Int) async throws -> [ASCAppStoreVersion]
     func listLocalizations(versionId: String, limit: Int) async throws -> [ASCAppStoreVersionLocalization]
+    func screenshotCountsByDisplayType(localizationId: String) async throws -> [String: Int]
     func listAppInfos(appId: String) async throws -> [ASCAppInfo]
     func listAppInfoLocalizations(appInfoId: String, limit: Int) async throws -> [ASCAppInfoLocalization]
     func createAppStoreVersion(

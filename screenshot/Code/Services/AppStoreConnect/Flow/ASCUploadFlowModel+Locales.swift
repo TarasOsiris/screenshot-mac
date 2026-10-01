@@ -47,6 +47,7 @@ extension ASCUploadFlowModel {
             localizations.append(created)
             localizationsByVersionId[versionId] = localizations
             updateDestinationPlans(buildDestinationPlans(preserving: destinationPlans))
+            reloadRemoteScreenshotCounts(keepingKnown: true)
         } catch {
             // Inline on the row rather than `errorMessage`: one locale App Store Connect won't
             // take shouldn't blank out the whole plan screen.

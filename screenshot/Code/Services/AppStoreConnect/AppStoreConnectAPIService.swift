@@ -240,6 +240,25 @@ final class AppStoreConnectAPIService {
         return response.data
     }
 
+    /// Screenshot count per display type for one version localization, in a single request.
+    /// A set whose linkage didn't come back is left out rather than reported as empty.
+    func screenshotCountsByDisplayType(localizationId: String) async throws -> [String: Int] {
+        if isDemoMode {
+            await demoDelay()
+            return demoData.screenshotCounts(parentId: localizationId)
+        }
+        let parent = ASCScreenshotSetParent.versionLocalization(localizationId)
+        let path = "\(parent.screenshotSetsPath)?include=appScreenshots&fields%5BappScreenshots%5D=fileName"
+            + "&limit=50&limit%5BappScreenshots%5D=50"
+        let response: ASCListResponse<ASCAppScreenshotSetLinkage> = try await get(path)
+        var counts: [String: Int] = [:]
+        for set in response.data {
+            guard let type = set.attributes.screenshotDisplayType, let count = set.screenshotCount else { continue }
+            counts[type, default: 0] += count
+        }
+        return counts
+    }
+
     func createScreenshotSet(parent: ASCScreenshotSetParent, displayType: String) async throws -> ASCAppScreenshotSet {
         if isDemoMode {
             await demoDelay()

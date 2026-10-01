@@ -172,6 +172,12 @@ final class FakeASCUploadAPI: ASCUploadAPI {
     var localizationsByVersionId: [String: [ASCAppStoreVersionLocalization]] = [:]
     var appInfosByAppId: [String: [ASCAppInfo]] = [:]
     var appInfoLocalizationsByAppInfoId: [String: [ASCAppInfoLocalization]] = [:]
+    /// Missing ids answer `[:]`; ids in `failingCountLocalizationIds` throw.
+    var screenshotCountsByLocalizationId: [String: [String: Int]] = [:]
+    var failingCountLocalizationIds: Set<String> = []
+    /// When set, answers instead of the tables above — lets a test hold a request open.
+    var screenshotCountResponder: ((String) async throws -> [String: Int])?
+    private(set) var screenshotCountCalls: [String] = []
 
     /// Popped in order; the last result repeats once exhausted.
     var createResults: [Result<ASCAppStoreVersionLocalization, Error>] = []
@@ -186,6 +192,13 @@ final class FakeASCUploadAPI: ASCUploadAPI {
 
     func listLocalizations(versionId: String, limit: Int) async throws -> [ASCAppStoreVersionLocalization] {
         localizationsByVersionId[versionId] ?? []
+    }
+
+    func screenshotCountsByDisplayType(localizationId: String) async throws -> [String: Int] {
+        screenshotCountCalls.append(localizationId)
+        if let screenshotCountResponder { return try await screenshotCountResponder(localizationId) }
+        if failingCountLocalizationIds.contains(localizationId) { throw URLError(.notConnectedToInternet) }
+        return screenshotCountsByLocalizationId[localizationId] ?? [:]
     }
 
     func listAppInfos(appId: String) async throws -> [ASCAppInfo] { appInfosByAppId[appId] ?? [] }

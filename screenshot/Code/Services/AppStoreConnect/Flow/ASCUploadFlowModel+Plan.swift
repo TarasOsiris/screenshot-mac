@@ -62,6 +62,7 @@ extension ASCUploadFlowModel {
             try await loadSelectedVersionLocalizations()
             updateDestinationPlans(buildDestinationPlans(preserving: destinationPlans))
             advance(to: .configuringPlan)
+            reloadRemoteScreenshotCounts()
         } catch {
             errorMessage = String(localized: "Could not load App Store data: \(error.localizedDescription)")
         }
@@ -77,6 +78,7 @@ extension ASCUploadFlowModel {
         do {
             try await loadSelectedVersionLocalizations()
             updateDestinationPlans(buildDestinationPlans(preserving: destinationPlans))
+            reloadRemoteScreenshotCounts()
         } catch {
             errorMessage = String(localized: "Could not refresh locales: \(error.localizedDescription)")
         }
@@ -86,6 +88,83 @@ extension ASCUploadFlowModel {
         for version in selectedVersions {
             let fetched = try await api.listLocalizations(versionId: version.id)
             localizationsByVersionId[version.id] = fetched
+        }
+    }
+
+    // MARK: - Existing screenshots
+
+    /// Requests in flight at once. The fetch runs beside the upload, which needs the same
+    /// per-hour API quota, so it trickles rather than bursting one GET per localization.
+    static let screenshotCountConcurrency = 4
+    /// Results published per write, so the plan re-renders a few times rather than once per locale.
+    static let screenshotCountBatchSize = 8
+
+    /// Fetches what each selected version's localizations already hold, in the background; the
+    /// plan step never waits on it. A full reload drops every known count and any fetch still
+    /// running; `keepingKnown` only adds localizations neither known nor in flight (a freshly
+    /// created locale).
+    func reloadRemoteScreenshotCounts(keepingKnown: Bool = false) {
+        if !keepingKnown {
+            cancelRemoteScreenshotCounts()
+            remoteScreenshotCounts = [:]
+        }
+        var seen = Set<String>()
+        let ids = selectedVersions
+            .flatMap { localizationsByVersionId[$0.id] ?? [] }
+            .map(\.id)
+            .filter { seen.insert($0).inserted && remoteScreenshotCounts[$0] == nil && !remoteScreenshotCountsInFlight.contains($0) }
+        guard !ids.isEmpty else { return }
+        remoteScreenshotCountsInFlight.formUnion(ids)
+        let generation = remoteScreenshotCountsGeneration
+        remoteScreenshotCountTasks.append(Task { [weak self] in
+            await self?.loadRemoteScreenshotCounts(localizationIds: ids, generation: generation)
+        })
+    }
+
+    /// Bumping the generation is what actually stops a cancelled fetch from writing: a request
+    /// already on the wire still returns, and its result is dropped.
+    func cancelRemoteScreenshotCounts() {
+        remoteScreenshotCountsGeneration += 1
+        remoteScreenshotCountTasks.forEach { $0.cancel() }
+        remoteScreenshotCountTasks = []
+        remoteScreenshotCountsInFlight = []
+    }
+
+    func settleRemoteScreenshotCounts() async {
+        for task in remoteScreenshotCountTasks {
+            await task.value
+        }
+    }
+
+    private func loadRemoteScreenshotCounts(localizationIds: [String], generation: Int) async {
+        let api = api
+        var pending: [String: [String: Int]] = [:]
+        var failures = 0
+        await withTaskGroup(of: (String, [String: Int]?).self) { group in
+            var queue = localizationIds.makeIterator()
+            func startNext() {
+                guard let id = queue.next() else { return }
+                group.addTask { (id, try? await api.screenshotCountsByDisplayType(localizationId: id)) }
+            }
+            for _ in 0..<Self.screenshotCountConcurrency { startNext() }
+            for await (id, counts) in group {
+                guard generation == remoteScreenshotCountsGeneration else {
+                    group.cancelAll()
+                    return
+                }
+                if let counts { pending[id] = counts } else { failures += 1 }
+                if pending.count >= Self.screenshotCountBatchSize {
+                    remoteScreenshotCounts.merge(pending) { $1 }
+                    pending = [:]
+                }
+                startNext()
+            }
+        }
+        guard generation == remoteScreenshotCountsGeneration else { return }
+        if !pending.isEmpty { remoteScreenshotCounts.merge(pending) { $1 } }
+        remoteScreenshotCountsInFlight.subtract(localizationIds)
+        if failures > 0 {
+            CrashReportingService.breadcrumb(.upload, "asc screenshot counts failed", data: ["count": failures])
         }
     }
 

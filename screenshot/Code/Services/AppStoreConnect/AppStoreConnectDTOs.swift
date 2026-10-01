@@ -251,6 +251,25 @@ nonisolated struct ASCAppScreenshotSet: Decodable, Identifiable {
     }
 }
 
+/// A screenshot set listed with `include=appScreenshots`, decoded only for its display type and
+/// the linkage to its screenshots — enough to count them without a request per set.
+nonisolated struct ASCAppScreenshotSetLinkage: Decodable {
+    let attributes: ASCAppScreenshotSet.Attributes
+    let relationships: Relationships?
+
+    struct Relationships: Decodable {
+        let appScreenshots: Linkage?
+    }
+
+    struct Linkage: Decodable {
+        let data: [ASCResourceReference]?
+    }
+
+    var screenshotCount: Int? {
+        relationships?.appScreenshots?.data?.count
+    }
+}
+
 nonisolated struct ASCAppScreenshot: Decodable, Identifiable {
     let id: String
     let attributes: Attributes

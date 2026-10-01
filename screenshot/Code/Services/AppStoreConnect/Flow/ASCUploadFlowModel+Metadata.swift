@@ -116,6 +116,7 @@ extension ASCUploadFlowModel {
             case .screenshots:
                 updateDestinationPlans(buildDestinationPlans(preserving: destinationPlans))
                 advance(to: .configuringPlan)
+                reloadRemoteScreenshotCounts()
             case .metadata:
                 metadataSummary = summary
                 advance(to: .done)

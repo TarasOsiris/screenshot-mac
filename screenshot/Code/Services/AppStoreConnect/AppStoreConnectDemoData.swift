@@ -26,7 +26,13 @@ final class AppStoreConnectDemoData: @unchecked Sendable {
     /// the user's display types.
     private var contextPlatforms: [ASCPlatform] = [.ios]
 
+    /// Display types detected from the project's rows; drives the canned screenshot counts.
+    private var contextDisplayTypes: [ASCDisplayType] = []
+
     private var screenshotSetsByLocalization: [String: [ASCAppScreenshotSet]] = [:]
+    /// Demo listings always come back empty, so a sync re-uploads every screenshot into a set:
+    /// the reservations made for it are exactly what it holds.
+    private var reservedScreenshotCountBySet: [String: Int] = [:]
     private var idCounter = 0
 
     /// Reseeds the demo catalog so the wizard always offers a matching version
@@ -48,8 +54,10 @@ final class AppStoreConnectDemoData: @unchecked Sendable {
         lock.lock(); defer { lock.unlock() }
         contextPlatforms = platforms
         contextLocaleCodes = codes
+        contextDisplayTypes = uniquePreservingOrder(detected)
         // Reset upload state so re-opening the sheet starts from a clean slate.
         screenshotSetsByLocalization = [:]
+        reservedScreenshotCountBySet = [:]
         idCounter = 0
         ASCExperimentDemoStore.shared.reset()
     }
@@ -173,6 +181,44 @@ final class AppStoreConnectDemoData: @unchecked Sendable {
         lockedRead { screenshotSetsByLocalization[parentId] ?? [] }
     }
 
+    /// Canned counts that cycle through the three states the upload plan shows — screenshots in
+    /// the project's sizes, none at all, and some only in another size — overlaid with whatever a
+    /// demo upload has put into this localization's sets.
+    func screenshotCounts(parentId: String) -> [String: Int] {
+        lock.lock(); defer { lock.unlock() }
+        var counts: [String: Int] = [:]
+        if let code = Self.localeCode(ofLocalizationId: parentId), let index = contextLocaleCodes.firstIndex(of: code) {
+            // No row size matched a display type, so any type the user picks by hand must count.
+            let filled = contextDisplayTypes.isEmpty
+                ? uniquePreservingOrder(contextPlatforms.flatMap { ASCDisplayType.userSelectableCases(forPlatform: $0) })
+                : contextDisplayTypes
+            switch index % 3 {
+            case 0:
+                for type in filled { counts[type.appStoreConnectValue] = 5 }
+            case 1:
+                break
+            default:
+                // A type no row can be uploaded as, so it never reads as the row's own size.
+                let other = ASCDisplayType.allCases.first { !ASCDisplayType.userSelectableCases.contains($0) } ?? .visionPro
+                counts[other.appStoreConnectValue] = 3
+            }
+        }
+        for set in screenshotSetsByLocalization[parentId] ?? [] {
+            guard let type = set.attributes.screenshotDisplayType else { continue }
+            counts[type] = reservedScreenshotCountBySet[set.id, default: 0]
+        }
+        return counts
+    }
+
+    /// Inverts `"demo-vloc-demo-version-<platform>-<locale>"`.
+    private static func localeCode(ofLocalizationId id: String) -> String? {
+        let prefix = "demo-vloc-demo-version-"
+        guard id.hasPrefix(prefix) else { return nil }
+        let rest = id.dropFirst(prefix.count)
+        guard let dash = rest.firstIndex(of: "-") else { return nil }
+        return String(rest[rest.index(after: dash)...])
+    }
+
     func createScreenshotSet(parentId: String, displayType: String) -> ASCAppScreenshotSet {
         lock.lock(); defer { lock.unlock() }
         let set = ASCAppScreenshotSet(
@@ -185,13 +231,15 @@ final class AppStoreConnectDemoData: @unchecked Sendable {
 
     func deleteScreenshotSet(id: String) {
         lock.lock(); defer { lock.unlock() }
+        reservedScreenshotCountBySet[id] = nil
         for (loc, sets) in screenshotSetsByLocalization {
             screenshotSetsByLocalization[loc] = sets.filter { $0.id != id }
         }
     }
 
-    func reserveScreenshot(setId _: String, fileName: String, fileSize: Int) -> ASCAppScreenshot {
+    func reserveScreenshot(setId: String, fileName: String, fileSize: Int) -> ASCAppScreenshot {
         lock.lock(); defer { lock.unlock() }
+        reservedScreenshotCountBySet[setId, default: 0] += 1
         return ASCAppScreenshot(
             id: nextIdLocked(prefix: "demo-shot"),
             attributes: ASCAppScreenshot.Attributes(
