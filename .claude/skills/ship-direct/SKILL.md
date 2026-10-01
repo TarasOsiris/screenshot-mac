@@ -42,6 +42,13 @@ xcodebuild -exportArchive -archivePath build/screenshot-direct.xcarchive -export
   -exportOptionsPlist ExportOptions-Direct.plist -allowProvisioningUpdates "${KEY[@]}"
 mv "build/direct/Screenshot Bro Direct.app" "build/direct/Screenshot Bro.app"
 ```
+Export signs **manually**: the "Developer ID Application: Taras Leskiv" identity in the login
+Keychain, plus the `Screenshot Bro Developer ID` profile (`MAC_APP_DIRECT`, ASC id `YWP82Y5YX2`).
+Automatic signing can't make that profile with this API key, and the iCloud and keychain entitlements need it. The
+profile expires with the certificate on 2027-02-01. To renew: create a new Developer ID
+certificate in Xcode, then run `asc profiles create --profile-type MAC_APP_DIRECT --bundle D84N5TYZ2V --certificate <cert id>`,
+then download the profile into `~/Library/Developer/Xcode/UserData/Provisioning Profiles/<UUID>.provisionprofile`.
+
 The product is named `Screenshot Bro Direct` so it never collides with the App Store build in
 DerivedData. Renaming the bundle folder doesn't break the signature, and `CFBundleName` is
 already "Screenshot Bro".
@@ -65,7 +72,7 @@ If notarization reports `Invalid`, fetch the reason with `xcrun notarytool log <
 V=<MARKETING_VERSION>; B=<CURRENT_PROJECT_VERSION>
 rm -rf build/dmg && mkdir build/dmg && cp -R "build/direct/Screenshot Bro.app" build/dmg/ && ln -s /Applications build/dmg/Applications
 hdiutil create -volname "Screenshot Bro" -srcfolder build/dmg -format UDZO -ov "build/direct/ScreenshotBro-$V-$B.dmg"
-# Sign the DMG only if a local "Developer ID Application" identity exists (security find-identity -v -p codesigning)
+codesign -s "Developer ID Application: Taras Leskiv (XW3GM347XY)" --timestamp "build/direct/ScreenshotBro-$V-$B.dmg"
 xcrun notarytool submit "build/direct/ScreenshotBro-$V-$B.dmg" "${NOTARY[@]}" --wait
 xcrun stapler staple "build/direct/ScreenshotBro-$V-$B.dmg"
 ```
