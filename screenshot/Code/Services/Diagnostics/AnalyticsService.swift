@@ -126,6 +126,7 @@ nonisolated enum AnalyticsService {
         case appBuild = "app_build"
         case firstVersion = "first_version"
         case platform
+        case distribution
         case isDebug = "is_debug"
         case pro
         case storage
@@ -176,7 +177,7 @@ nonisolated enum AnalyticsService {
     /// string value is dropped in `beforeSend`, which is what makes "never user content" a
     /// property of the code rather than of everyone remembering.
     private static let textualProperties: Set<Property> = [
-        .appVersion, .appBuild, .firstVersion, .platform, .storage, .storeUserId,
+        .appVersion, .appBuild, .firstVersion, .platform, .distribution, .storage, .storeUserId,
         .source, .step, .lastStep, .templateId, .detectedDevice, .result,
         .format, .destination, .store, .trigger, .productId, .tier, .tool,
         .mcpSessionId,
@@ -254,6 +255,7 @@ nonisolated enum AnalyticsService {
         // iPhone and iPad ship from one target, so this must be the runtime idiom, not `#if os`.
         // Until 4.8 every iOS install reported "ipados", which hid an entirely iPhone user base.
         properties[Property.platform.rawValue] = PlatformDeviceClass.current.rawValue
+        properties[Property.distribution.rawValue] = DistributionChannel.current.rawValue
         #if DEBUG
         properties[Property.isDebug.rawValue] = true
         #else

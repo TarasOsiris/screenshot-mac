@@ -82,8 +82,9 @@ but with this check it should rarely fire.
 ## Step 3: Update versions in project.xcproj
 
 Edit the quoted JSON values for `MARKETING_VERSION` and `CURRENT_PROJECT_VERSION` in
-`screenshot.xcodeproj/project.xcproj`. Each key appears twice (app target + test target;
-Debug and Release share the value). Keep the two targets in sync. Before archiving,
+`screenshot.xcodeproj/project.xcproj`. Each key appears three times (app target, `screenshot Direct`
+target, test target; Debug and Release share the value). Keep all three in sync, so the
+direct-download build (`ship-direct`) ships the same version. Before archiving,
 check that both occurrences of each key have the intended value and that the app target's
 resolved Release build settings report the same versions:
 

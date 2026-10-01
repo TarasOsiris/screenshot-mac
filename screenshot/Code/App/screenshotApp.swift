@@ -136,7 +136,12 @@ struct ScreenshotBroApp: App {
                 .environment(purchaseService)
                 .preferredColorScheme(preferredColorScheme)
                 .background(WindowSceneBridge(role: .main))
-                .task { purchaseService.start() }
+                .task {
+                    purchaseService.start()
+                    #if DIRECT_DISTRIBUTION
+                    appDelegate.purchaseService = purchaseService
+                    #endif
+                }
                 .task { mcpServer.autostartIfEnabled(state: appState) }
                 #if DEBUG
                 .task {
@@ -191,6 +196,9 @@ struct ScreenshotBroApp: App {
             MainWindowCommands()
             HelpCommands()
             SettingsCommands()
+            #if DIRECT_DISTRIBUTION
+            CheckForUpdatesCommands(updater: appDelegate.updater)
+            #endif
 
             CommandGroup(replacing: .undoRedo) {
                 Button("Undo", action: performUndoCommand)
@@ -600,6 +608,31 @@ private struct HelpCommands: Commands {
 }
 
 final class AppDelegate: NSObject, NSApplicationDelegate {
+    #if DIRECT_DISTRIBUTION
+    let updater = DirectUpdater()
+    weak var purchaseService: PurchaseService? {
+        didSet { redeemPendingURLs() }
+    }
+    /// A cold launch from a redemption link delivers the URL before the main window's task has
+    /// configured RevenueCat.
+    private var pendingURLs: [URL] = []
+
+    func application(_ application: NSApplication, open urls: [URL]) {
+        pendingURLs += urls
+        AppWindowManager.shared.showMainWindow()
+        redeemPendingURLs()
+    }
+
+    private func redeemPendingURLs() {
+        guard let purchaseService, !pendingURLs.isEmpty else { return }
+        let urls = pendingURLs
+        pendingURLs = []
+        Task {
+            for url in urls { await purchaseService.redeem(url) }
+        }
+    }
+    #endif
+
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
         false
     }

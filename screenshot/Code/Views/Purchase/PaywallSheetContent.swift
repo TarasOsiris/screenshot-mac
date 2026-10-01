@@ -27,6 +27,9 @@ struct PaywallSheetContent: View {
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
             #endif
         } else {
+            #if DIRECT_DISTRIBUTION
+            DirectPaywallView(store: store)
+            #else
             RevenueCatUI.PaywallView(displayCloseButton: true)
                 .onPurchaseCompleted { store.handlePurchaseCompleted($0) }
                 .onRestoreCompleted { store.handleRestoreCompleted($0) }
@@ -37,6 +40,7 @@ struct PaywallSheetContent: View {
                 #if os(macOS)
                 .frame(minWidth: 520, idealWidth: 560, maxWidth: 620, minHeight: 660, idealHeight: 700)
                 #endif
+            #endif
         }
     }
 }

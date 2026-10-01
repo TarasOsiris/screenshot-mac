@@ -125,6 +125,7 @@ nonisolated enum CrashReportingService {
         // back to the person who emailed about it.
         setUser(id: DiagnosticsIdentity.installId)
         setTag(DiagnosticsIdentity.firstVersion, for: "first_version")
+        setTag(DistributionChannel.current.rawValue, for: "distribution")
 
         if SentrySDK.crashedLastRun {
             setTag("true", for: "crashed_last_run")

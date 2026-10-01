@@ -398,6 +398,73 @@ final class PurchaseService {
         }
     }
 
+    #if DIRECT_DISTRIBUTION
+    // MARK: - Web purchase (direct distribution)
+
+    private(set) var isRedeeming = false
+
+    func buyOnWeb() {
+        CrashReportingService.breadcrumb(.store, "Web checkout opened", data: ["trigger": paywallContext.rawValue])
+        NSWorkspace.shared.open(DistributionChannel.webCheckoutURL)
+    }
+
+    /// Accepts the `rc-…://redeem_web_purchase` deep link, or the same link pasted from the receipt email.
+    @discardableResult
+    func redeem(_ url: URL) async -> Bool {
+        guard let redemption = url.asWebPurchaseRedemption else { return false }
+        guard Purchases.isConfigured else {
+            presentRedemptionFailure(configurationIssue ?? String(localized: "RevenueCat is not configured."))
+            return true
+        }
+        guard !isRedeeming else { return true }
+        isRedeeming = true
+        defer { isRedeeming = false }
+        CrashReportingService.breadcrumb(.store, "Web purchase redemption started")
+
+        switch await Purchases.shared.redeemWebPurchase(redemption) {
+        case .success(let customerInfo):
+            let triggeringContext = paywallContext
+            let result = updateEntitlement(from: customerInfo)
+            guard isProUnlocked else {
+                AnalyticsService.capture(.purchaseFailed, [.store: "web", .result: result.rawValue])
+                presentRedemptionFailure(String(localized: "The purchase was redeemed, but it didn't unlock Pro. Please contact support."))
+                return true
+            }
+            AnalyticsService.capture(.purchaseCompleted, [
+                .store: "web",
+                .trigger: triggeringContext.rawValue,
+                .tier: proTier?.analyticsName ?? "unknown",
+            ])
+            if showPaywall {
+                pendingCelebrationContext = triggeringContext
+                showPaywall = false
+            } else {
+                purchaseCelebrationContext = triggeringContext
+            }
+        case .invalidToken:
+            AnalyticsService.capture(.purchaseFailed, [.store: "web", .result: "invalid_token"])
+            presentRedemptionFailure(String(localized: "This purchase link isn't valid. Check that you copied the whole link from your receipt email."))
+        case .purchaseBelongsToOtherUser:
+            AnalyticsService.capture(.purchaseFailed, [.store: "web", .result: "already_redeemed"])
+            presentRedemptionFailure(String(localized: "This purchase has already been activated on another Mac. Contact support to move it to this one."))
+        case .expired(let obfuscatedEmail):
+            AnalyticsService.capture(.purchaseFailed, [.store: "web", .result: "expired"])
+            presentRedemptionFailure(String(localized: "This link has expired. A new one has been sent to \(obfuscatedEmail)."))
+        case .error(let error):
+            AnalyticsService.capture(.purchaseFailed, [.store: "web", .errorCode: (error as NSError).code])
+            presentRedemptionFailure(String(localized: "Couldn't activate your purchase: \(error.localizedDescription)"))
+        }
+        return true
+    }
+
+    private func presentRedemptionFailure(_ message: String) {
+        if !showPaywall {
+            presentPaywall(for: paywallContext)
+        }
+        setPurchaseStatus(message, isError: true)
+    }
+    #endif
+
     private func clearPurchaseStatus() {
         purchaseStatusMessage = nil
         purchaseStatusIsError = false

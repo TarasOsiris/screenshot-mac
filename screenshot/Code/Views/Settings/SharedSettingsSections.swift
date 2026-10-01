@@ -177,9 +177,15 @@ struct FreeTierSections: View {
             Button("Unlock Screenshot Bro Pro") {
                 store.presentPaywall(for: .general)
             }
+            #if DIRECT_DISTRIBUTION
+            Button("Activate Web Purchase…") {
+                store.presentPaywall(for: .general)
+            }
+            #else
             Button("Restore Purchase") {
                 Task { await store.restore() }
             }
+            #endif
         }
     }
 }
@@ -283,9 +289,11 @@ struct AppLanguagePicker: View {
 
 struct AboutLinkRows: View {
     var body: some View {
+        #if !DIRECT_DISTRIBUTION
         Link(destination: AppLinks.rateOnAppStore) {
             Label("Rate on the App Store", systemImage: "star")
         }
+        #endif
         Link(destination: AppLinks.support) {
             Label("Contact Support", systemImage: "envelope")
         }

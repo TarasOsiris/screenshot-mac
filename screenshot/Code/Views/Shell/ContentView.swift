@@ -617,7 +617,8 @@ struct ContentView: View {
     /// up across the export's success, and SwiftUI presents one modal at a time, so asking now
     /// would drop the sheet silently. The getter re-opens it once the cover closes.
     private var developerRatingPresented: Binding<Bool> {
-        Binding(get: { exportFlow.showDeveloperRatingSheet && showcasePresentation == nil },
+        // Direct-download installs can't review on the App Store.
+        Binding(get: { !DistributionChannel.isDirect && exportFlow.showDeveloperRatingSheet && showcasePresentation == nil },
                 set: { if !$0 { exportFlow.showDeveloperRatingSheet = false } })
     }
 
