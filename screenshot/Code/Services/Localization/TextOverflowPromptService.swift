@@ -26,8 +26,8 @@ enum TextOverflowPromptService {
         1. Call `switch_project` with the project id above, unless it is already the open project.
         2. Call `get_project` once. Each text shape lists its `translations` and `text_overflow_locales` — the locales whose text is cut off right now.
         3. Check every listed translation actually says what its base text says. A translation copied from another shape is a different headline; retranslate it in every locale of that shape, not just the overflowing ones.
-        4. Prefer a shorter translation: `set_translation` with `shape_id`, `locale_code` and the new `text`. Keep the meaning and the punchy marketing tone, stay in that language, and keep line breaks only where they help.
-        5. Only when no natural shorter phrasing exists, call `update_shape` with `shape_id` and `shrink_to_fit: true` — it shrinks the font in that box for every locale that needs it. Don't resize or move the box; that changes the layout in every language.
+        4. Prefer a shorter translation: `set_translation` with `shape_id`, `locale_code` and the new `text`. Keep the meaning and the punchy marketing tone, stay in that language, and keep line breaks only where they help. `set_translation` fits what still overflows on its own — a mild font shrink, then a taller box for that language only — and reports it as `auto_fit`; if `auto_fit.still_overflows` is true or `auto_fit.font_scale` is well below 1, shorten the text further.
+        5. Only when no natural shorter phrasing exists and it still overflows, call `update_shape` with `shape_id` and `shrink_to_fit: true`. Don't move or resize the box in the base locale; that changes the layout in every language.
         6. Call `get_project` again and repeat until no shape has `text_overflow_locales`. Then `render_preview` (`project_id`, `row_id`, `locale`) a few fixed rows to confirm they read well. Don't change the base (`\(base)`) text — if the base locale itself is listed, use `shrink_to_fit` for it rather than rewriting it.
         """
     }

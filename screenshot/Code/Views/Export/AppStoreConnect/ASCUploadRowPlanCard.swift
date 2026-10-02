@@ -301,9 +301,9 @@ private struct ASCLocaleTargetRow: View {
                             Toggle(candidate.attributes.locale, isOn: $target.selectedASCLocalizationIds.contains(candidate.id))
                                 .storeSelectionToggleStyle()
                                 .disabled(!target.isEnabled)
-                            ASCRemoteScreenshotBadge(
-                                status: .resolve(counts: remoteScreenshotCounts[candidate.id], displayType: displayType),
-                                displayType: displayType
+                            StoreRemoteScreenshotBadge(
+                                status: .resolve(counts: remoteScreenshotCounts[candidate.id], assetKey: displayType?.appStoreConnectValue),
+                                tooltips: remoteScreenshotTooltips
                             )
                         }
                         .font(.caption)
@@ -335,6 +335,16 @@ private struct ASCLocaleTargetRow: View {
         }
     }
 
+    private var remoteScreenshotTooltips: StoreRemoteScreenshotBadge.Tooltips {
+        let size = displayType?.label ?? ""
+        return .init(
+            empty: "This locale has no screenshots in this App Store version yet.",
+            missingForThisType: "This locale has screenshots in this App Store version, but none for \(size).",
+            present: "Screenshots this App Store version already has for \(size).",
+            presentLabel: { "\($0) in this version" }
+        )
+    }
+
     /// Only worth showing when it says something the checkboxes above don't: with everything
     /// ticked it just echoes them ("cs -> cs"), and with nothing ticked there is no destination
     /// to name.
@@ -345,30 +355,6 @@ private struct ASCLocaleTargetRow: View {
             Text(verbatim: "-> \(selected.joined(separator: ", "))")
                 .font(.caption)
                 .foregroundStyle(.secondary)
-        }
-    }
-}
-
-private struct ASCRemoteScreenshotBadge: View {
-    let status: ASCRemoteScreenshotStatus?
-    let displayType: ASCDisplayType?
-
-    var body: some View {
-        if let status, let displayType {
-            switch status {
-            case .empty:
-                Label("No screenshots", systemImage: "exclamationmark.triangle.fill")
-                    .foregroundStyle(.orange)
-                    .help("This locale has no screenshots in this App Store version yet.")
-            case .missingForDisplayType:
-                Label("None in this size", systemImage: "exclamationmark.circle")
-                    .foregroundStyle(.orange)
-                    .help("This locale has screenshots in this App Store version, but none for \(displayType.label).")
-            case .present(let count):
-                Text("\(count) in this version")
-                    .foregroundStyle(.secondary)
-                    .help("Screenshots this App Store version already has for \(displayType.label).")
-            }
         }
     }
 }

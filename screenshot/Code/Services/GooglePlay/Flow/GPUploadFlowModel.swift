@@ -41,10 +41,16 @@ final class GPUploadFlowModel {
     var errorDetailsText: String?
     var isBusy = false
 
+    /// Per Play language, then image type. A missing language means "not known", never "empty".
+    var remoteScreenshotCounts: [String: [String: Int]] = [:]
+    @ObservationIgnored var remoteScreenshotCountTask: Task<Void, Never>?
+    /// Package and languages the counts describe, so revisiting the plan doesn't re-read them.
+    @ObservationIgnored private var remoteScreenshotCountsSource: String?
+
     let credentials: GooglePlayCredentialsStore
 
     @ObservationIgnored private let uploader: any GPUploadPerforming
-    @ObservationIgnored private let api: any GPPackageVerifying
+    @ObservationIgnored private let api: any GPPackageVerifying & GPScreenshotCountReading
     /// Where the recents list lives. Injected so a test run never writes into the real one.
     @ObservationIgnored private let defaults: UserDefaults
     @ObservationIgnored private(set) weak var document: (any GPUploadDocument)?
@@ -58,7 +64,7 @@ final class GPUploadFlowModel {
 
     init(
         uploader: any GPUploadPerforming = GooglePlayUploadService.shared,
-        api: any GPPackageVerifying = GooglePlayAPIService.shared,
+        api: any GPPackageVerifying & GPScreenshotCountReading = GooglePlayAPIService.shared,
         credentials: GooglePlayCredentialsStore = .shared,
         defaults: UserDefaults = .standard
     ) {
@@ -118,6 +124,43 @@ final class GPUploadFlowModel {
         rowPlans = buildRowPlans(preserving: rowPlans)
         errorMessage = nil
         advance(to: .configuringPlan)
+        reloadRemoteScreenshotCounts()
+    }
+
+    // MARK: - Existing screenshots
+
+    /// Reads, in the background, what the listing holds for every Play language the plan maps to.
+    func reloadRemoteScreenshotCounts() {
+        let languages = Array(Set(rowPlans.flatMap(\.localeTargets).compactMap(\.playLanguageCode))).sorted()
+        let source = ([packageName] + languages).joined(separator: "|")
+        guard source != remoteScreenshotCountsSource else { return }
+        cancelRemoteScreenshotCounts()
+        remoteScreenshotCounts = [:]
+        guard !languages.isEmpty else { return }
+        remoteScreenshotCountsSource = source
+        let packageName = packageName
+        let api = api
+        remoteScreenshotCountTask = Task { [weak self] in
+            let counts = try? await api.screenshotCounts(packageName: packageName, languages: languages)
+            // Main-actor isolated, so a cancel issued before this resumes is already visible.
+            guard let self, !Task.isCancelled else { return }
+            if let counts {
+                self.remoteScreenshotCounts = counts
+            } else {
+                self.remoteScreenshotCountsSource = nil
+                CrashReportingService.breadcrumb(.upload, "play screenshot counts failed", data: ["count": languages.count])
+            }
+        }
+    }
+
+    func cancelRemoteScreenshotCounts() {
+        remoteScreenshotCountTask?.cancel()
+        remoteScreenshotCountTask = nil
+        remoteScreenshotCountsSource = nil
+    }
+
+    func settleRemoteScreenshotCounts() async {
+        await remoteScreenshotCountTask?.value
     }
 
     func verifyPackage() async {
@@ -166,6 +209,7 @@ final class GPUploadFlowModel {
     private func retreatToPlan() {
         step = .configuringPlan
         navigationWillRetreat()
+        reloadRemoteScreenshotCounts()
     }
 
     /// The iPad back-swipe and the nav bar's Back both pop the path rather than calling `goBack()`,
@@ -263,6 +307,8 @@ final class GPUploadFlowModel {
         guard let document else { return }
 
         let pkg = packageName.trimmingCharacters(in: .whitespacesAndNewlines)
+        // Its throwaway edit must not outlive the upload's own; the counts are stale after it anyway.
+        cancelRemoteScreenshotCounts()
         uploadProgress = nil
         advance(to: .uploading)
         isBusy = true
@@ -327,6 +373,7 @@ final class GPUploadFlowModel {
 
     /// The view's `.onDisappear`.
     func tearDown() {
+        cancelRemoteScreenshotCounts()
         uploadTask?.cancel()
         uploadTask = nil
     }

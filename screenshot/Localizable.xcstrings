@@ -186713,6 +186713,498 @@
           }
         }
       }
+    },
+    "This language has no screenshots on Google Play yet." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Diese Sprache hat noch keine Screenshots bei Google Play."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Este idioma aún no tiene capturas en Google Play."
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "این زبان هنوز هیچ اسکرین‌شاتی در Google Play ندارد."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cette langue n’a encore aucune capture sur Google Play."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Questa lingua non ha ancora screenshot su Google Play."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "この言語には Google Play にまだスクリーンショットがありません。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "이 언어는 아직 Google Play에 스크린샷이 없습니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Este idioma ainda não tem capturas no Google Play."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Для этого языка в Google Play пока нет скриншотов."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bu dilin Google Play'de henüz ekran görüntüsü yok."
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Для цієї мови в Google Play ще немає знімків екрана."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "此语言在 Google Play 上还没有截图。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "此語言在 Google Play 上還沒有截圖。"
+          }
+        }
+      }
+    },
+    "This language has screenshots on Google Play, but none for %@." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Diese Sprache hat Screenshots bei Google Play, aber keine für %@."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Este idioma tiene capturas en Google Play, pero ninguna para %@."
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "این زبان در Google Play اسکرین‌شات دارد، اما هیچ‌کدام برای %@ نیست."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cette langue a des captures sur Google Play, mais aucune pour %@."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Questa lingua ha screenshot su Google Play, ma nessuno per %@."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "この言語には Google Play にスクリーンショットがありますが、%@ 用はありません。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "이 언어는 Google Play에 스크린샷이 있지만 %@용은 없습니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Este idioma tem capturas no Google Play, mas nenhuma para %@."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Для этого языка в Google Play есть скриншоты, но нет ни одного для %@."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bu dilin Google Play'de ekran görüntüleri var, ancak %@ için hiç yok."
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Для цієї мови в Google Play є знімки екрана, але жодного для %@."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "此语言在 Google Play 上有截图，但没有 %@ 的截图。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "此語言在 Google Play 上有截圖，但沒有 %@ 的截圖。"
+          }
+        }
+      }
+    },
+    "Screenshots Google Play already has for %@." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Screenshots, die Google Play bereits für %@ hat."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Capturas que Google Play ya tiene para %@."
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "اسکرین‌شات‌هایی که Google Play از قبل برای %@ دارد."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Captures que Google Play possède déjà pour %@."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Screenshot che Google Play ha già per %@."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Google Play にすでにある %@ 用のスクリーンショット。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Google Play에 이미 있는 %@용 스크린샷입니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Capturas que o Google Play já tem para %@."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Скриншоты, которые уже есть в Google Play для %@."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Google Play'de %@ için zaten bulunan ekran görüntüleri."
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Знімки екрана, які вже є в Google Play для %@."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Google Play 上已有的 %@ 截图。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Google Play 上已有的 %@ 截圖。"
+          }
+        }
+      }
+    },
+    "%lld on Google Play" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld bei Google Play"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld en Google Play"
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld در Google Play"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld sur Google Play"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld su Google Play"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Google Play に %lld 枚"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Google Play에 %lld개"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld no Google Play"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld в Google Play"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Google Play'de %lld"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld у Google Play"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Google Play 上有 %lld 张"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Google Play 上有 %lld 張"
+          }
+        }
+      }
+    },
+    "Next to each language the wizard shows what the listing already has for the row's image type: **No screenshots** when that language has none at all, **None in this size** when it only has other image types, or how many it already has." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Neben jeder Sprache zeigt der Assistent, was der Eintrag für den Bildtyp der Zeile bereits enthält: **Keine Screenshots**, wenn diese Sprache gar keine hat, **Keine in dieser Größe**, wenn sie nur andere Bildtypen hat, oder wie viele bereits vorhanden sind."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Junto a cada idioma, el asistente muestra lo que la ficha ya tiene para el tipo de imagen de la fila: **Sin capturas** cuando ese idioma no tiene ninguna, **Ninguna en este tamaño** cuando solo tiene otros tipos de imagen, o cuántas tiene ya."
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "دستیار کنار هر زبان نشان می‌دهد که صفحهٔ فروشگاه از قبل چه چیزی برای نوع تصویر این ردیف دارد: **بدون اسکرین‌شات** وقتی آن زبان هیچ اسکرین‌شاتی ندارد، **هیچ‌کدام در این اندازه** وقتی فقط انواع تصویر دیگر دارد، یا اینکه از قبل چند تا دارد."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "À côté de chaque langue, l’assistant indique ce que la fiche contient déjà pour le type d’image de la ligne : **Aucune capture** quand cette langue n’en a aucune, **Aucune dans cette taille** quand elle n’a que d’autres types d’image, ou combien elle en a déjà."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Accanto a ogni lingua, la procedura mostra cosa ha già la scheda per il tipo di immagine della riga: **Nessuno screenshot** quando quella lingua non ne ha nessuno, **Nessuno in questa dimensione** quando ha solo altri tipi di immagine, oppure quanti ne ha già."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ウィザードは各言語の横に、その行の画像タイプについてストア掲載情報にすでにあるものを表示します。その言語にまったくない場合は **スクリーンショットなし**、ほかの画像タイプしかない場合は **このサイズはなし**、それ以外はすでにある枚数です。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "마법사는 각 언어 옆에 해당 행의 이미지 유형에 대해 스토어 등록정보에 이미 있는 항목을 보여줍니다. 그 언어에 스크린샷이 전혀 없으면 **스크린샷 없음**, 다른 이미지 유형만 있으면 **이 크기 없음**, 그렇지 않으면 이미 있는 개수를 표시합니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ao lado de cada idioma, o assistente mostra o que a página da loja já tem para o tipo de imagem da linha: **Sem capturas** quando esse idioma não tem nenhuma, **Nenhuma neste tamanho** quando só tem outros tipos de imagem, ou quantas já tem."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Рядом с каждым языком мастер показывает, что уже есть в странице приложения для типа изображений этой строки: **Нет скриншотов**, если у языка их нет совсем, **Нет в этом размере**, если есть только другие типы изображений, или сколько их уже есть."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sihirbaz her dilin yanında, mağaza kaydında satırın görsel türü için zaten nelerin bulunduğunu gösterir: o dilde hiç yoksa **Ekran görüntüsü yok**, yalnızca başka görsel türleri varsa **Bu boyutta yok**, aksi halde kaç tane olduğu."
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Поруч із кожною мовою майстер показує, що вже є на сторінці застосунку для типу зображень цього рядка: **Немає знімків екрана**, якщо в мови їх немає зовсім, **Немає в цьому розмірі**, якщо є лише інші типи зображень, або скільки їх уже є."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "向导会在每种语言旁显示商店详情中该行图片类型已有的内容：该语言完全没有截图时显示 **无截图**，只有其他图片类型时显示 **此尺寸无截图**，否则显示已有的数量。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "精靈會在每種語言旁顯示商店資訊中該列圖片類型已有的內容：該語言完全沒有截圖時顯示 **無截圖**，只有其他圖片類型時顯示 **此尺寸無截圖**，否則顯示已有的數量。"
+          }
+        }
+      }
+    },
+    "When a translation it sets is too long for its text box, Screenshot Bro fits it right away: a slightly smaller font first, then a taller box for that language only — into free space, never over another shape — and a smaller font only after that." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ist eine Übersetzung, die der Assistent einsetzt, zu lang für ihr Textfeld, passt Screenshot Bro sie sofort an: zuerst mit einer etwas kleineren Schrift, dann mit einem höheren Feld nur für diese Sprache – in freien Platz, nie über eine andere Form – und erst danach mit einer noch kleineren Schrift."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cuando una traducción que establece es demasiado larga para su cuadro de texto, Screenshot Bro la ajusta al momento: primero con una fuente algo más pequeña, luego con un cuadro más alto solo para ese idioma —hacia el espacio libre, nunca encima de otra forma— y solo después con una fuente más pequeña."
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "وقتی ترجمه‌ای که دستیار تنظیم می‌کند برای کادر متنش بیش از حد طولانی باشد، Screenshot Bro بلافاصله آن را جا می‌دهد: اول با فونتی کمی کوچک‌تر، سپس با کادری بلندتر فقط برای همان زبان — در فضای خالی و هرگز روی شکلی دیگر — و تنها پس از آن با فونتی کوچک‌تر."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Quand une traduction qu’il définit est trop longue pour sa zone de texte, Screenshot Bro l’ajuste aussitôt : d’abord une police légèrement plus petite, puis une zone plus haute pour cette langue uniquement — dans l’espace libre, jamais par-dessus une autre forme — et seulement ensuite une police plus petite."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Quando una traduzione che imposta è troppo lunga per la sua casella di testo, Screenshot Bro la adatta subito: prima con un carattere leggermente più piccolo, poi con una casella più alta solo per quella lingua — nello spazio libero, mai sopra un’altra forma — e solo dopo con un carattere più piccolo."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "アシスタントが設定した翻訳がテキストボックスに収まらない場合、Screenshot Bro はすぐに収めます。まずフォントを少しだけ小さくし、次にその言語だけボックスを高くし（空いているスペースへ。ほかのシェイプには重ねません）、それでも足りないときに初めてさらにフォントを小さくします。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "어시스턴트가 설정한 번역이 텍스트 상자에 비해 너무 길면 Screenshot Bro가 바로 맞춰 줍니다. 먼저 글꼴을 조금 줄이고, 그다음 해당 언어에서만 상자를 더 높게 만들며(빈 공간으로만, 다른 도형 위로는 절대 겹치지 않음), 그 후에야 글꼴을 더 줄입니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Quando uma tradução definida por ele é longa demais para a caixa de texto, o Screenshot Bro a ajusta na hora: primeiro com uma fonte um pouco menor, depois com uma caixa mais alta só para aquele idioma — no espaço livre, nunca sobre outra forma — e só então com uma fonte menor."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Если заданный ассистентом перевод не помещается в текстовое поле, Screenshot Bro сразу подгоняет его: сначала немного уменьшает шрифт, затем делает поле выше только для этого языка — в свободное место, никогда поверх другой фигуры, — и лишь после этого уменьшает шрифт сильнее."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ayarladığı bir çeviri metin kutusuna sığmayacak kadar uzunsa Screenshot Bro onu hemen sığdırır: önce yazı tipini biraz küçültür, ardından yalnızca o dil için kutuyu uzatır — boş alana doğru, asla başka bir şeklin üzerine değil — ve ancak bundan sonra yazı tipini daha da küçültür."
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Якщо заданий асистентом переклад не вміщується в текстове поле, Screenshot Bro одразу підганяє його: спершу трохи зменшує шрифт, потім робить поле вищим лише для цієї мови — у вільне місце, ніколи поверх іншої фігури, — і лише після цього зменшує шрифт сильніше."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "当它设置的译文超出文本框时，Screenshot Bro 会立即让它放得下：先把字体稍微缩小，再仅为该语言加高文本框（只占用空白区域，绝不覆盖其他形状），之后才会进一步缩小字体。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "當它設定的譯文超出文字框時，Screenshot Bro 會立即讓它放得下：先把字體稍微縮小，再僅為該語言加高文字框（只佔用空白區域，絕不覆蓋其他形狀），之後才會進一步縮小字體。"
+          }
+        }
+      }
     }
   },
   "version" : "1.0"

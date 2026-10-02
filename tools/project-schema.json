@@ -363,8 +363,19 @@
         "lns":  { "description": "lineSpacing override.", "type": "number" },
         "lhm":  { "description": "lineHeightMultiple override.", "type": "number" },
         "oifn": { "description": "overrideImageFileName — locale-specific image asset.", "type": "string" },
-        "icr":  { "description": "imageCrop override for image shapes. The identity crop (s 1, x 0, y 0) means this locale shows the picture uncropped under a cropped base; absent inherits the base crop.", "$ref": "#/$defs/ImageCrop" }
+        "icr":  { "description": "imageCrop override for image shapes. The identity crop (s 1, x 0, y 0) means this locale shows the picture uncropped under a cropped base; absent inherits the base crop.", "$ref": "#/$defs/ImageCrop" },
+        "af":   { "description": "autoFit — bookkeeping for the MCP translation auto-fit: the share of oy/oh/fs it wrote, so a later fit can take it back. Dropped by any manual edit of the override.", "$ref": "#/$defs/TextAutoFitContribution" }
       }
+    },
+
+    "TextAutoFitContribution": {
+      "type": "object",
+      "properties": {
+        "dy": { "description": "offsetY auto-fit added to oy", "type": "number" },
+        "dh": { "description": "addedHeight auto-fit added to oh", "type": "number" },
+        "fs": { "description": "fontSize auto-fit wrote as fs (only where the locale had none of its own)", "type": "number" }
+      },
+      "additionalProperties": false
     },
 
     "ImageCrop": {

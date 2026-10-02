@@ -297,12 +297,13 @@ nonisolated enum MCPToolCatalog {
         ),
         Tool(
             name: MCPToolName.setTranslation.rawValue,
-            description: "Set a text shape's translated text for a locale. Plain `text` renders in the shape's own style; pass `text_runs` instead to keep per-range formatting (get_project reports existing ones as translation_text_runs).",
+            description: "Set a text shape's translated text for a locale. Plain `text` renders in the shape's own style; pass `text_runs` instead to keep per-range formatting (get_project reports existing ones as translation_text_runs). A translation that overflows its box is fitted automatically, in this locale only: first a mild font shrink (≥80%), then a taller box into free space, and only then a deeper shrink; a later, shorter translation gives the space back. The result's `auto_fit` says what was done (`also_fitted` lists other boxes sharing the translation); when `still_overflows` is true, or `font_scale` is well below 1, shorten the translation.",
             inputSchema: MCPSchema.object([
                 "shape_id": MCPSchema.string("Text shape UUID"),
                 "locale_code": MCPSchema.string("Target locale code (must exist in the project)"),
                 "text": MCPSchema.string("Translated text"),
                 "text_runs": textRunsSchema,
+                "auto_fit": MCPSchema.boolean("Fit overflowing text automatically (default true); false leaves the box and font untouched"),
             ], required: ["shape_id", "locale_code"])
         ),
         Tool(

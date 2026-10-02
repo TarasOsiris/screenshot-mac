@@ -68,13 +68,12 @@ extension TextFitInput {
 
 enum TextFitMeasurer {
     static let minimumShrinkScale: CGFloat = 0.5
-    private static let searchSteps = 8
 
     /// Whether every glyph gets a line fragment in the renderer's container. The renderer lays out
     /// into exactly the shape's box, and TextKit silently drops lines that don't fit — so this is
     /// the same test the raster applies, not an estimate of it.
     static func fits(_ input: TextFitInput, fontScale: CGFloat = 1) -> Bool {
-        Layout(input).fits(fontScale: fontScale)
+        TextFitLayout(input).fits(fontScale: fontScale, height: input.size.height)
     }
 
     /// The largest font scale in `minimumShrinkScale...1` at which the text fits, or
@@ -109,37 +108,7 @@ enum TextFitMeasurer {
 
     /// One attributed string and one TextKit stack for the whole search; each step only rescales.
     private static func searchFitScale(_ input: TextFitInput) -> (scale: CGFloat, fits: Bool) {
-        let layout = Layout(input)
-        if layout.fits(fontScale: 1) { return (1, true) }
-        guard layout.fits(fontScale: minimumShrinkScale) else { return (minimumShrinkScale, false) }
-        var low = minimumShrinkScale
-        var high: CGFloat = 1
-        for _ in 0..<searchSteps {
-            let mid = (low + high) / 2
-            if layout.fits(fontScale: mid) {
-                low = mid
-            } else {
-                high = mid
-            }
-        }
-        return (low, true)
-    }
-
-    private struct Layout {
-        let base: NSAttributedString
-        let stack: TextLayoutStack
-
-        init(_ input: TextFitInput) {
-            base = input.attributedString()
-            stack = TextLayoutStack(containerSize: input.size, lineHeightMultiple: input.lineHeightMultiple)
-        }
-
-        func fits(fontScale: CGFloat) -> Bool {
-            guard stack.container.size.width > 0, stack.container.size.height > 0, base.length > 0 else { return true }
-            stack.storage.setAttributedString(fontScale == 1 ? base : RichTextUtils.scaled(base, by: fontScale))
-            stack.layoutManager.ensureLayout(for: stack.container)
-            return NSMaxRange(stack.layoutManager.glyphRange(for: stack.container)) >= stack.layoutManager.numberOfGlyphs
-        }
+        TextFitLayout(input).largestFittingScale(height: input.size.height)
     }
 
     private final class FitResult {
@@ -158,4 +127,57 @@ enum TextFitMeasurer {
         cache.countLimit = 2048
         return cache
     }()
+}
+
+/// One text laid out once, probed at any font scale and box height — for a search that would
+/// otherwise rebuild the attributed string and TextKit stack per step.
+final class TextFitLayout {
+    private static let scaleSearchSteps = 8
+    private static let heightSearchSteps = 14
+
+    private let base: NSAttributedString
+    private let stack: TextLayoutStack
+    private var laidOutScale: CGFloat?
+
+    init(_ input: TextFitInput) {
+        base = input.attributedString()
+        stack = TextLayoutStack(containerSize: input.size, lineHeightMultiple: input.lineHeightMultiple)
+    }
+
+    func fits(fontScale: CGFloat, height: CGFloat) -> Bool {
+        stack.container.size.height = height
+        guard stack.container.size.width > 0, height > 0, base.length > 0 else { return true }
+        if laidOutScale != fontScale {
+            stack.storage.setAttributedString(fontScale == 1 ? base : RichTextUtils.scaled(base, by: fontScale))
+            laidOutScale = fontScale
+        }
+        stack.layoutManager.ensureLayout(for: stack.container)
+        return NSMaxRange(stack.layoutManager.glyphRange(for: stack.container)) >= stack.layoutManager.numberOfGlyphs
+    }
+
+    /// The largest scale in `minimumShrinkScale...1` that fits, or the minimum when even that overflows.
+    func largestFittingScale(height: CGFloat) -> (scale: CGFloat, fits: Bool) {
+        if fits(fontScale: 1, height: height) { return (1, true) }
+        let floor = TextFitMeasurer.minimumShrinkScale
+        guard fits(fontScale: floor, height: height) else { return (floor, false) }
+        var low = floor
+        var high: CGFloat = 1
+        for _ in 0..<Self.scaleSearchSteps {
+            let mid = (low + high) / 2
+            if fits(fontScale: mid, height: height) { low = mid } else { high = mid }
+        }
+        return (low, true)
+    }
+
+    /// The smallest height in `minHeight...maxHeight` at which the text fits at `fontScale`, or nil.
+    func minimumFittingHeight(fontScale: CGFloat, minHeight: CGFloat, maxHeight: CGFloat) -> CGFloat? {
+        guard fits(fontScale: fontScale, height: maxHeight) else { return nil }
+        var low = minHeight
+        var high = maxHeight
+        for _ in 0..<Self.heightSearchSteps {
+            let mid = (low + high) / 2
+            if fits(fontScale: fontScale, height: mid) { high = mid } else { low = mid }
+        }
+        return high
+    }
 }

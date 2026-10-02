@@ -660,6 +660,35 @@ struct MCPToolExecutorTests {
 
     // MARK: - Locales & translations
 
+    @Test func setTranslationFitsOverflowingText() async throws {
+        let (executor, state, tempDir) = makeExecutor()
+        defer { cleanupTestState(tempDir) }
+        let shape = CanvasShapeModel(type: .text, x: 100, y: 400, width: 600, height: 120, text: "Edit fast", fontSize: 80, fontWeight: 700)
+        state.rows[0].shapes = [shape]
+        _ = await executor.call(name: "add_locale", arguments: ["code": "de-DE"])
+        let german = "Bearbeite deine Bildschirmfotos blitzschnell und mühelos"
+
+        let untouched = await executor.call(name: "set_translation", arguments: [
+            "shape_id": .string(shape.id.uuidString), "locale_code": "de-DE", "text": .string(german), "auto_fit": false,
+        ])
+        expectSuccess(untouched)
+        guard case .text(let untouchedJSON, _, _) = untouched.content.first else { Issue.record("expected text"); return }
+        #expect(untouchedJSON.contains("\"text_overflow_locales\""))
+        #expect(!untouchedJSON.contains("\"auto_fit\""))
+
+        let fitted = await executor.call(name: "set_translation", arguments: [
+            "shape_id": .string(shape.id.uuidString), "locale_code": "de-DE", "text": .string(german),
+        ])
+        expectSuccess(fitted)
+        guard case .text(let json, _, _) = fitted.content.first else { Issue.record("expected text"); return }
+        #expect(json.contains("\"auto_fit\""))
+        #expect(json.contains("\"still_overflows\" : false"))
+        #expect(!json.contains("\"text_overflow_locales\""))
+        #expect(json.contains("\"id\" : \"\(shape.id.uuidString)\""))
+        let base = try #require(state.rows[0].shapes.first)
+        #expect(base.y == shape.y && base.height == shape.height)
+    }
+
     @Test func localeAndTranslationFlow() async {
         let (executor, state, tempDir) = makeExecutor()
         defer { cleanupTestState(tempDir) }

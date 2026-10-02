@@ -133,13 +133,15 @@ final class MCPToolExecutor {
     }
 
     func shapeResult(rowIndex: Int, shapeId: UUID) throws -> CallTool.Result {
+        try MCPResultEncoding.result(shapeSnapshot(rowIndex: rowIndex, shapeId: shapeId))
+    }
+
+    func shapeSnapshot(rowIndex: Int, shapeId: UUID) throws -> MCPShapeSnapshot {
         let row = state.rows[rowIndex]
         guard let shape = row.shapes.first(where: { $0.id == shapeId }) else {
             throw MCPToolError.notFound("Shape \(shapeId.uuidString)")
         }
-        return try MCPResultEncoding.result(
-            MCPSnapshotBuilder.shapeSnapshot(shape, row: row, localeState: state.localeState, availableFontFamilies: state.availableFontFamilySet)
-        )
+        return MCPSnapshotBuilder.shapeSnapshot(shape, row: row, localeState: state.localeState, availableFontFamilies: state.availableFontFamilySet)
     }
 
     func activeProjectSnapshotResult() throws -> CallTool.Result {

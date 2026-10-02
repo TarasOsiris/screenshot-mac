@@ -30,3 +30,12 @@ protocol GPPackageVerifying {
 }
 
 extension GooglePlayAPIService: GPPackageVerifying {}
+
+/// What the live listing already holds, for the plan step's per-language badges. Keyed by Play
+/// language code, then by image type; a missing language means "not known".
+@MainActor
+protocol GPScreenshotCountReading {
+    func screenshotCounts(packageName: String, languages: [String]) async throws -> [String: [String: Int]]
+}
+
+extension GooglePlayAPIService: GPScreenshotCountReading {}

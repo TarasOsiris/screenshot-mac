@@ -620,6 +620,8 @@ struct LocaleOverrideFieldTests {
             "fontName", "fontSize", "fontWeight", "textAlign", "italic", "uppercase",
             "letterSpacing", "lineSpacing", "lineHeightMultiple",
             "overrideImageFileName", "imageCrop",
+            // Auto-fit's bookkeeping, not a property a user overrides.
+            "autoFit",
         ])
     }
 

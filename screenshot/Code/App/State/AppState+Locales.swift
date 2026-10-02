@@ -141,10 +141,7 @@ extension AppState {
     }
 
     func updateTranslationText(shapeId: UUID, localeCode code: String, text: String) {
-        guard code != localeState.baseLocaleCode else { return }
-        guard localeState.hasLocale(code) else { return }
-        guard let loc = shapeLocation(for: shapeId) else { return }
-        let textKey = rows[loc.rowIndex].shapes[loc.shapeIndex].textTranslationKey
+        guard let textKey = translatableTextKey(shapeId: shapeId, localeCode: code) else { return }
 
         // Capture undo state only at the start of a translation editing sequence
         if !edits.translation.isActive {
@@ -161,6 +158,13 @@ extension AppState {
         LocaleService.setTextOverride(&localeState, localeCode: code, key: textKey, text: text.isEmpty ? nil : text)
         scheduleSave()
         edits.translation.arm()
+    }
+
+    /// The key a translation for `code` is stored under, or nil when `code` takes no translation.
+    func translatableTextKey(shapeId: UUID, localeCode code: String) -> String? {
+        guard code != localeState.baseLocaleCode, localeState.hasLocale(code) else { return nil }
+        guard let loc = shapeLocation(for: shapeId) else { return nil }
+        return rows[loc.rowIndex].shapes[loc.shapeIndex].textTranslationKey
     }
 
     /// Commits a pending translation editing burst as one undo step. No-op when none is captured.

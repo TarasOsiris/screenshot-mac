@@ -100,6 +100,51 @@ final class GooglePlayAPIService {
         try? await deleteEdit(packageName: packageName, editId: edit.id)
     }
 
+    /// The read shares the upload's per-hour API quota, so it trickles rather than bursting.
+    static let screenshotCountConcurrency = 4
+
+    /// Listing screenshots per language and image type, via a throwaway edit; failed languages are left out.
+    func screenshotCounts(packageName: String, languages: [String]) async throws -> [String: [String: Int]] {
+        if isDemoMode {
+            await demoDelay()
+            return demoData.screenshotCounts(languages: languages)
+        }
+        let edit = try await insertEdit(packageName: packageName)
+        let requests = languages.flatMap { language in GPImageType.userSelectableCases.map { (language, $0.apiValue) } }
+        var counts: [String: [String: Int]] = [:]
+        var failedLanguages = Set<String>()
+        await withTaskGroup(of: (String, String, Int?).self) { group in
+            var queue = requests.makeIterator()
+            func startNext() {
+                guard let (language, imageType) = queue.next() else { return }
+                group.addTask {
+                    let count = try? await self.imageCount(packageName: packageName, editId: edit.id, language: language, imageType: imageType)
+                    return (language, imageType, count)
+                }
+            }
+            for _ in 0..<Self.screenshotCountConcurrency { startNext() }
+            for await (language, imageType, count) in group {
+                if let count { counts[language, default: [:]][imageType] = count } else { failedLanguages.insert(language) }
+                startNext()
+            }
+        }
+        // Unstructured, so a cancelled read still deletes its edit instead of leaving it open beside the upload's.
+        await Task { try? await self.deleteEdit(packageName: packageName, editId: edit.id) }.value
+        for language in failedLanguages { counts[language] = nil }
+        return counts
+    }
+
+    /// A language with no listing answers 404, which means it has no screenshots.
+    private func imageCount(packageName: String, editId: String, language: String, imageType: String) async throws -> Int {
+        let path = "/androidpublisher/v3/applications/\(packageName)/edits/\(editId)/listings/\(language)/\(imageType)"
+        do {
+            let response: GPImagesListResponse = try await request(method: "GET", path: path)
+            return response.images?.count ?? 0
+        } catch let error as GooglePlayAPIError where error.httpStatus == 404 {
+            return 0
+        }
+    }
+
     func deleteEdit(packageName: String, editId: String) async throws {
         if isDemoMode { await demoDelay(); return }
         let path = "/androidpublisher/v3/applications/\(packageName)/edits/\(editId)"
@@ -184,6 +229,10 @@ struct GPImage: Decodable {
     let url: String?
     let sha256: String?
     let sha1: String?
+}
+
+private struct GPImagesListResponse: Decodable {
+    let images: [GPImage]?
 }
 
 private struct GPImageUploadResponse: Decodable {

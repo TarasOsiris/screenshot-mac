@@ -219,7 +219,7 @@ extension UploadToGooglePlayView {
                 .disabled(!plan.wrappedValue.hasToggleableLocaleTargets)
             }
             ForEach(plan.localeTargets) { $target in
-                languageRow($target)
+                languageRow($target, imageType: plan.wrappedValue.selectedAssetType)
             }
         }
     }
@@ -306,7 +306,7 @@ extension UploadToGooglePlayView {
 
     // MARK: - Languages
 
-    private func languageRow(_ target: Binding<GPLocaleTarget>) -> some View {
+    private func languageRow(_ target: Binding<GPLocaleTarget>, imageType: GPImageType) -> some View {
         let playCode = target.wrappedValue.playLanguageCode
         return HStack(alignment: .firstTextBaseline) {
             Toggle(isOn: target.isEnabled) {
@@ -317,6 +317,11 @@ extension UploadToGooglePlayView {
             .disabled(playCode == nil)
             Spacer()
             if let playCode {
+                StoreRemoteScreenshotBadge(
+                    status: .resolve(counts: model.remoteScreenshotCounts[playCode], assetKey: imageType.apiValue),
+                    tooltips: remoteScreenshotTooltips(imageType)
+                )
+                .font(.caption)
                 Text(playCode)
                     .font(.caption.monospaced())
                     .foregroundStyle(.secondary)
@@ -326,6 +331,16 @@ extension UploadToGooglePlayView {
                     .foregroundStyle(.secondary)
             }
         }
+    }
+
+    private func remoteScreenshotTooltips(_ imageType: GPImageType) -> StoreRemoteScreenshotBadge.Tooltips {
+        let type = imageType.label
+        return .init(
+            empty: "This language has no screenshots on Google Play yet.",
+            missingForThisType: "This language has screenshots on Google Play, but none for \(type).",
+            present: "Screenshots Google Play already has for \(type).",
+            presentLabel: { "\($0) on Google Play" }
+        )
     }
 
     // MARK: - Uploading / done

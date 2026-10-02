@@ -108,6 +108,9 @@ nonisolated struct ShapeLocaleOverride: Codable, Equatable {
     var overrideImageFileName: String?
     /// Identity when the locale shows the picture uncropped under a cropped base; nil inherits.
     var imageCrop: ImageCrop?
+    /// Bookkeeping, not a field: what auto-fit added, so a later fit can take it back. Any manual
+    /// edit rebuilds the override through `makeOverride`, which drops it and leaves the values user-owned.
+    var autoFit: TextAutoFitContribution?
 
     enum CodingKeys: String, CodingKey {
         case offsetX = "ox", offsetY = "oy", offsetWidth = "ow", offsetHeight = "oh"
@@ -115,6 +118,7 @@ nonisolated struct ShapeLocaleOverride: Codable, Equatable {
         case textAlign = "ta", italic = "it", uppercase = "uc"
         case letterSpacing = "ls", lineSpacing = "lns", lineHeightMultiple = "lhm"
         case overrideImageFileName = "oifn", imageCrop = "icr"
+        case autoFit = "af"
     }
 
     init(
@@ -173,6 +177,62 @@ nonisolated struct ShapeLocaleOverride: Codable, Equatable {
             && textAlign == nil && italic == nil && uppercase == nil
             && letterSpacing == nil && lineSpacing == nil && lineHeightMultiple == nil
             && overrideImageFileName == nil && imageCrop == nil
+    }
+}
+
+/// The geometry and font size auto-fit wrote into one locale's override.
+nonisolated struct TextAutoFitContribution: Codable, Equatable {
+    var offsetY: CGFloat = 0
+    var addedHeight: CGFloat = 0
+    /// Only ever written where the locale had no font size override of its own.
+    var fontSize: CGFloat?
+
+    enum CodingKeys: String, CodingKey {
+        case offsetY = "dy", addedHeight = "dh", fontSize = "fs"
+    }
+
+    init(offsetY: CGFloat = 0, addedHeight: CGFloat = 0, fontSize: CGFloat? = nil) {
+        self.offsetY = offsetY
+        self.addedHeight = addedHeight
+        self.fontSize = fontSize
+    }
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        offsetY = try c.decodeIfPresent(CGFloat.self, forKey: .offsetY) ?? 0
+        addedHeight = try c.decodeIfPresent(CGFloat.self, forKey: .addedHeight) ?? 0
+        fontSize = try c.decodeIfPresent(CGFloat.self, forKey: .fontSize)
+    }
+}
+
+extension ShapeLocaleOverride {
+    /// This override without auto-fit's contribution, leaving any value the user set.
+    func removingAutoFit() -> ShapeLocaleOverride {
+        guard let autoFit else { return self }
+        var result = self
+        result.autoFit = nil
+        if let offsetY = result.offsetY {
+            let remaining = offsetY - autoFit.offsetY
+            result.offsetY = remaining == 0 ? nil : remaining
+        }
+        if let offsetHeight = result.offsetHeight {
+            let remaining = offsetHeight - autoFit.addedHeight
+            result.offsetHeight = remaining == 0 ? nil : remaining
+        }
+        if let fontSize = autoFit.fontSize, result.fontSize == fontSize {
+            result.fontSize = nil
+        }
+        return result
+    }
+
+    func addingAutoFit(_ contribution: TextAutoFitContribution) -> ShapeLocaleOverride {
+        var result = self
+        if contribution.offsetY != 0 { result.offsetY = (offsetY ?? 0) + contribution.offsetY }
+        if contribution.addedHeight != 0 { result.offsetHeight = (offsetHeight ?? 0) + contribution.addedHeight }
+        if let fontSize = contribution.fontSize { result.fontSize = fontSize }
+        let isEmpty = contribution.offsetY == 0 && contribution.addedHeight == 0 && contribution.fontSize == nil
+        result.autoFit = isEmpty ? nil : contribution
+        return result
     }
 }
 

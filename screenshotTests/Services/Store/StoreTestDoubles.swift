@@ -118,18 +118,31 @@ final class FakeGPUploader: GPUploadPerforming {
     }
 }
 
-/// Stands in for the `insertEdit`/`deleteEdit` probe the package step runs, so the flow's
-/// verified and rejected branches test without opening a real Play edit.
+/// Stands in for the `insertEdit`/`deleteEdit` probe the package step runs, and for the listing
+/// read behind the plan's badges, so the flow tests without opening a real Play edit.
 @MainActor
-final class FakeGPPackageVerifier: GPPackageVerifying {
+final class FakeGPPackageVerifier: GPPackageVerifying, GPScreenshotCountReading {
     var error: (any Error)?
     private(set) var callCount = 0
     private(set) var lastPackageName: String?
+
+    var screenshotCountsByLanguage: [String: [String: Int]] = [:]
+    var screenshotCountError: (any Error)?
+    /// When set, a count read waits here until the test lets it finish.
+    var screenshotCountGate: (() async -> Void)?
+    private(set) var screenshotCountRequests: [[String]] = []
 
     func verifyPackage(packageName: String) async throws {
         callCount += 1
         lastPackageName = packageName
         if let error { throw error }
+    }
+
+    func screenshotCounts(packageName: String, languages: [String]) async throws -> [String: [String: Int]] {
+        screenshotCountRequests.append(languages)
+        if let screenshotCountGate { await screenshotCountGate() }
+        if let screenshotCountError { throw screenshotCountError }
+        return screenshotCountsByLanguage.filter { languages.contains($0.key) }
     }
 }
 
@@ -312,5 +325,23 @@ extension ASCExperiment {
             id: id,
             attributes: .init(name: name, platform: platform.rawValue, state: state.rawValue, trafficProportion: 50)
         )
+    }
+}
+
+/// Holds every waiting request open until released.
+@MainActor
+final class Gate {
+    private var isOpen = false
+    private var waiters: [CheckedContinuation<Void, Never>] = []
+
+    func wait() async {
+        guard !isOpen else { return }
+        await withCheckedContinuation { waiters.append($0) }
+    }
+
+    func release() {
+        isOpen = true
+        waiters.forEach { $0.resume() }
+        waiters = []
     }
 }

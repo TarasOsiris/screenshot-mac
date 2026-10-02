@@ -12,39 +12,21 @@ struct ASCRemoteScreenshotCountsTests {
 
     @Test func statusDistinguishesEmptyMissingForTypeAndPresent() {
         let type = ASCDisplayType.iphone67
-        #expect(ASCRemoteScreenshotStatus.resolve(counts: [:], displayType: type) == .empty)
-        #expect(ASCRemoteScreenshotStatus.resolve(counts: [type.appStoreConnectValue: 0], displayType: type) == .empty)
-        #expect(ASCRemoteScreenshotStatus.resolve(
+        #expect(StoreRemoteScreenshotStatus.resolve(counts: [:], assetKey: type.appStoreConnectValue) == .empty)
+        #expect(StoreRemoteScreenshotStatus.resolve(counts: [type.appStoreConnectValue: 0], assetKey: type.appStoreConnectValue) == .empty)
+        #expect(StoreRemoteScreenshotStatus.resolve(
             counts: [ASCDisplayType.ipadPro129M4.appStoreConnectValue: 4],
-            displayType: type
-        ) == .missingForDisplayType)
-        #expect(ASCRemoteScreenshotStatus.resolve(counts: [type.appStoreConnectValue: 6], displayType: type) == .present(6))
+            assetKey: type.appStoreConnectValue
+        ) == .missingForThisType)
+        #expect(StoreRemoteScreenshotStatus.resolve(counts: [type.appStoreConnectValue: 6], assetKey: type.appStoreConnectValue) == .present(6))
     }
 
     @Test func statusIsUnknownWithoutCountsOrDisplayType() {
-        #expect(ASCRemoteScreenshotStatus.resolve(counts: nil, displayType: .iphone67) == nil)
-        #expect(ASCRemoteScreenshotStatus.resolve(counts: [:], displayType: nil) == nil)
+        #expect(StoreRemoteScreenshotStatus.resolve(counts: nil, assetKey: ASCDisplayType.iphone67.appStoreConnectValue) == nil)
+        #expect(StoreRemoteScreenshotStatus.resolve(counts: [:], assetKey: nil) == nil)
     }
 
     // MARK: - Flow model
-
-    /// Holds every count request open until released.
-    @MainActor
-    private final class Gate {
-        private var isOpen = false
-        private var waiters: [CheckedContinuation<Void, Never>] = []
-
-        func wait() async {
-            guard !isOpen else { return }
-            await withCheckedContinuation { waiters.append($0) }
-        }
-
-        func release() {
-            isOpen = true
-            waiters.forEach { $0.resume() }
-            waiters = []
-        }
-    }
 
     private final class Harness {
         let model: ASCUploadFlowModel
@@ -177,15 +159,15 @@ struct ASCRemoteScreenshotCountsTests {
         demo.updateContext(localeCodes: ["de", "fr"], rowSizes: [CGSize(width: 1290, height: 2796)])
         let type = ASCDisplayType.detect(width: 1290, height: 2796)
         let statuses = ["en-US", "de", "fr"].map {
-            ASCRemoteScreenshotStatus.resolve(counts: demo.screenshotCounts(parentId: "demo-vloc-demo-version-ios-\($0)"), displayType: type)
+            StoreRemoteScreenshotStatus.resolve(counts: demo.screenshotCounts(parentId: "demo-vloc-demo-version-ios-\($0)"), assetKey: type?.appStoreConnectValue)
         }
-        #expect(statuses == [.present(5), .empty, .missingForDisplayType])
+        #expect(statuses == [.present(5), .empty, .missingForThisType])
     }
 
     @Test func demoCountsStillShowPresentWhenNoRowSizeMatched() {
         let demo = AppStoreConnectDemoData()
         demo.updateContext(localeCodes: [], rowSizes: [CGSize(width: 100, height: 100)])
         let counts = demo.screenshotCounts(parentId: "demo-vloc-demo-version-ios-en-US")
-        #expect(ASCRemoteScreenshotStatus.resolve(counts: counts, displayType: .iphone69) == .present(5))
+        #expect(StoreRemoteScreenshotStatus.resolve(counts: counts, assetKey: ASCDisplayType.iphone69.appStoreConnectValue) == .present(5))
     }
 }

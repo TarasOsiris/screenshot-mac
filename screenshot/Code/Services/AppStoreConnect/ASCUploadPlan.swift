@@ -39,19 +39,3 @@ nonisolated struct ASCLocaleTarget: LocaleUploadTarget {
     }
 }
 
-/// What App Store Connect already holds for one localization, relative to the display type a row
-/// uploads as.
-enum ASCRemoteScreenshotStatus: Equatable {
-    /// No screenshots in any display type.
-    case empty
-    /// Screenshots exist, but none of this display type.
-    case missingForDisplayType
-    case present(Int)
-
-    /// Nil when either side isn't known yet, so nothing is claimed about the locale.
-    static func resolve(counts: [String: Int]?, displayType: ASCDisplayType?) -> Self? {
-        guard let counts, let displayType else { return nil }
-        if let count = counts[displayType.appStoreConnectValue], count > 0 { return .present(count) }
-        return counts.values.contains { $0 > 0 } ? .missingForDisplayType : .empty
-    }
-}
