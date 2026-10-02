@@ -256,7 +256,10 @@ enum RichTextUtils {
     }
 
     static func applyColorUpdate(to shape: inout CanvasShapeModel, color: Color) {
-        let newColor = CodableColor(color)
+        applyColorUpdate(to: &shape, color: CodableColor(color))
+    }
+
+    static func applyColorUpdate(to shape: inout CanvasShapeModel, color newColor: CodableColor) {
         // A no-op write must not reach syncShapeStyle(.color): it flattens mixed per-run colors,
         // and outside the base locale it mints a richText override that didn't exist before.
         guard shape.colorData != newColor else { return }
@@ -447,15 +450,7 @@ enum RichTextUtils {
     }
 
     private static func nsFontWeight(for managerWeight: Int) -> NSFont.Weight {
-        switch managerWeight {
-        case ..<4: .thin
-        case 4: .light
-        case 5: .regular
-        case 6: .medium
-        case 7...8: .semibold
-        case 9...10: .bold
-        default: .heavy
-        }
+        CSSFontWeight(manager: managerWeight).platform
     }
 
     private static func makeFont(

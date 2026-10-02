@@ -62,7 +62,8 @@ extension MCPToolExecutor {
         }
 
         var patch = newShape
-        try applyCommonPatch(&patch, args: args)
+        var restyled: [RichTextUtils.ShapeStyleProperty] = []
+        try applyCommonPatch(&patch, args: args, restyled: &restyled)
         if let text = args.string("text") {
             patch.text = text
         }
@@ -75,43 +76,70 @@ extension MCPToolExecutor {
     func updateShape(_ args: MCPArguments) throws -> CallTool.Result {
         let location = try requireShapeLocation(args)
         try validateShapeArgs(args)
-        let textRuns = args.objectArray("text_runs")
+        let textRuns = try args.strictObjectArray("text_runs")
         let clearsFormatting = args.bool("clear_text_formatting") == true
-        if textRuns != nil || clearsFormatting {
-            try validateTextFormattingArgs(args, shape: state.rows[location.rowIndex].shapes[location.shapeIndex])
-        }
-
-        if let text = args.string("text") {
-            state.updateBaseText(shapeId: location.shapeId, text: text)
-            state.finishBaseTextEditIfNeeded()
-        }
-
         // The shapes array holds the base-locale model; patch and commit against the base
         // explicitly so agent edits never land in whichever locale the UI happens to view.
         let base = state.rows[location.rowIndex].shapes[location.shapeIndex]
+        if textRuns != nil || clearsFormatting {
+            try validateTextFormattingArgs(args, shape: base)
+        }
+
         var patch = base
-        try applyCommonPatch(&patch, args: args)
-        try applyShapePatch(&patch, args: args)
-        if patch != base {
-            state.updateShape(patch, forLocaleCode: state.localeState.baseLocaleCode)
+        var restyled: [RichTextUtils.ShapeStyleProperty] = []
+        try applyCommonPatch(&patch, args: args, restyled: &restyled)
+        try applyShapePatch(&patch, args: args, restyled: &restyled)
+        if let text = args.string("text") {
+            patch.text = text
         }
-
-        // After the patch, so runs inherit any shape-level style set in the same call.
-        let styled = state.rows[location.rowIndex].shapes[location.shapeIndex]
+        // Encoded against the patched shape, so runs inherit shape-level style set in the same call.
         if let textRuns {
-            let encoded = try MCPRichText.encode(textRuns, onto: styled, availableFontFamilies: state.availableFontFamilySet)
-            state.commitInlineText(shapeId: location.shapeId, text: encoded.text, richText: encoded.richText, forLocaleCode: state.localeState.baseLocaleCode)
-        } else if clearsFormatting, styled.richText != nil {
-            state.commitInlineText(shapeId: location.shapeId, text: styled.text ?? "", richText: nil, forLocaleCode: state.localeState.baseLocaleCode)
+            let encoded = try MCPRichText.encode(textRuns, onto: patch, availableFontFamilies: state.availableFontFamilySet)
+            patch.text = encoded.text
+            patch.richText = encoded.richText
+        } else if clearsFormatting {
+            patch.richText = nil
+        }
+        if patch.text?.isEmpty != false {
+            patch.richText = nil
         }
 
-        switch args.string("z_order") {
-        case "front": state.bringShapeToFront(location.shapeId)
-        case "back": state.sendShapeToBack(location.shapeId)
-        default: break
+        // Everything that can throw has run; one transaction keeps the call a single undo step.
+        state.withUndo("Edit Shape") {
+            if patch != base {
+                state.updateShape(patch, forLocaleCode: state.localeState.baseLocaleCode)
+            }
+            if base.translationKey != nil, let text = patch.text, text != base.text {
+                state.setSharedBaseText(key: base.textTranslationKey, text: text)
+            }
+            restyleTranslations(of: patch, properties: restyled, clearingFormatting: clearsFormatting)
+            switch args.string("z_order") {
+            case "front": state.bringShapeToFront(location.shapeId)
+            case "back": state.sendShapeToBack(location.shapeId)
+            default: break
+            }
         }
 
         return try shapeResult(rowIndex: location.rowIndex, shapeId: location.shapeId)
+    }
+
+    /// Carries a shape-level restyle (or a formatting clear) into every translation that has its
+    /// own rich text, which the base shape's richText doesn't reach.
+    private func restyleTranslations(of shape: CanvasShapeModel, properties: [RichTextUtils.ShapeStyleProperty], clearingFormatting: Bool) {
+        guard clearingFormatting || !properties.isEmpty else { return }
+        let key = shape.textTranslationKey
+        for (code, overrides) in state.localeState.overrides where overrides[key]?.richText != nil {
+            var resolved = LocaleService.resolveShape(shape, localeCode: code, localeState: state.localeState)
+            if clearingFormatting {
+                resolved.richText = nil
+            } else {
+                for property in properties {
+                    RichTextUtils.syncShapeStyle(in: &resolved, property: property)
+                }
+            }
+            state.localeState.overrides[code]?[key]?.text = resolved.text
+            state.localeState.overrides[code]?[key]?.richText = resolved.richText
+        }
     }
 
     /// All throwing argument parses up front, so a bad argument can't leave a tool call
@@ -131,7 +159,7 @@ extension MCPToolExecutor {
         guard !(args.has("text_runs") && args.has("text")) else {
             throw MCPToolError.invalidArgument("text_runs", "pass either text or text_runs, not both")
         }
-        if let runs = args.objectArray("text_runs") {
+        if let runs = try args.strictObjectArray("text_runs") {
             try MCPRichText.validate(runs, availableFontFamilies: state.availableFontFamilySet)
         }
     }
@@ -159,46 +187,52 @@ extension MCPToolExecutor {
         ))
     }
 
-    /// Fields shared by add_shape and update_shape.
-    private func applyCommonPatch(_ shape: inout CanvasShapeModel, args: MCPArguments) throws {
+    /// Fields shared by add_shape and update_shape. `restyled` collects the text-style properties
+    /// that changed, which the shape's rich text has already been synced to.
+    private func applyCommonPatch(_ shape: inout CanvasShapeModel, args: MCPArguments, restyled: inout [RichTextUtils.ShapeStyleProperty]) throws {
         if let x = args.double("x") { shape.x = x }
         if let y = args.double("y") { shape.y = y }
         if let width = args.double("width") { shape.width = width }
         if let height = args.double("height") { shape.height = height }
         if let color = try args.color("color"), color != shape.colorData {
-            shape.colorData = color
-            RichTextUtils.syncShapeStyleIfNeeded(in: &shape, property: .color)
+            RichTextUtils.applyColorUpdate(to: &shape, color: color)
+            restyled.append(.color)
         }
         if let fontSize = args.double("font_size").map({ CGFloat($0) }), fontSize != shape.fontSize {
             shape.fontSize = fontSize
             RichTextUtils.syncShapeStyleIfNeeded(in: &shape, property: .fontSize)
+            restyled.append(.fontSize)
         }
         if let fontName = args.string("font_name"), fontName != shape.fontName {
-            try validateFontName(args)
             shape.fontName = fontName
             RichTextUtils.syncShapeStyleIfNeeded(in: &shape, property: .fontName)
+            restyled.append(.fontName)
         }
         if let fontWeight = args.int("font_weight"), fontWeight != shape.fontWeight {
             RichTextUtils.applyFontWeightUpdate(to: &shape, weight: fontWeight)
+            restyled.append(.fontWeight)
         }
     }
 
     /// Fields only meaningful on update_shape.
-    private func applyShapePatch(_ shape: inout CanvasShapeModel, args: MCPArguments) throws {
+    private func applyShapePatch(_ shape: inout CanvasShapeModel, args: MCPArguments, restyled: inout [RichTextUtils.ShapeStyleProperty]) throws {
         if let rotation = args.double("rotation") { shape.rotation = rotation }
         if let opacity = args.double("opacity") { shape.opacity = opacity }
         if let radius = args.double("border_radius") { shape.borderRadius = radius }
-        if let align = try args.enumValue("text_align", TextAlign.self) {
+        if let align = try args.enumValue("text_align", TextAlign.self), align != shape.textAlign {
             shape.textAlign = align
             RichTextUtils.syncShapeStyleIfNeeded(in: &shape, property: .alignment)
+            restyled.append(.alignment)
         }
-        if let spacing = args.double("letter_spacing") {
+        if let spacing = args.double("letter_spacing").map({ CGFloat($0) }), spacing != shape.letterSpacing {
             shape.letterSpacing = spacing
             RichTextUtils.syncShapeStyleIfNeeded(in: &shape, property: .letterSpacing)
+            restyled.append(.letterSpacing)
         }
-        if let spacing = args.double("line_spacing") {
+        if let spacing = args.double("line_spacing").map({ CGFloat($0) }), spacing != shape.lineSpacing {
             shape.lineSpacing = spacing
             RichTextUtils.syncShapeStyleIfNeeded(in: &shape, property: .lineHeight)
+            restyled.append(.lineHeight)
         }
         if let color = try args.color("outline_color") { shape.outlineColorData = color }
         if let width = args.double("outline_width") {

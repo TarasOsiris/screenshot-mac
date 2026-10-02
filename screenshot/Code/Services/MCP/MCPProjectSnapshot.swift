@@ -193,8 +193,9 @@ enum MCPSnapshotBuilder {
                     translations[localeCode] = text
                 }
                 if override.richText != nil {
-                    let resolved = LocaleService.resolveShape(shape, localeCode: localeCode, localeState: localeState)
-                    translationRuns[localeCode] = MCPRichText.runs(richText: resolved.richText, text: resolved.text ?? "")
+                    translationRuns[localeCode] = MCPRichText.runs(
+                        of: LocaleService.resolveShape(shape, localeCode: localeCode, localeState: localeState)
+                    )
                 }
             }
             if let file = overrides[shape.id.uuidString]?.overrideImageFileName {
@@ -223,7 +224,7 @@ enum MCPSnapshotBuilder {
             fontSize: shape.fontSize.map { Double($0) },
             fontWeight: shape.fontWeight,
             textAlign: shape.textAlign?.rawValue,
-            textRuns: MCPRichText.runs(richText: shape.richText, text: shape.text ?? ""),
+            textRuns: MCPRichText.runs(of: shape),
             translations: translations.isEmpty ? nil : translations,
             translationTextRuns: translationRuns.isEmpty ? nil : translationRuns,
             imageOverrides: imageOverrides.isEmpty ? nil : imageOverrides,

@@ -107,6 +107,20 @@ struct MCPArguments {
         raw[key]?.arrayValue.map { $0.compactMap { $0.objectValue.map(MCPArguments.init) } }
     }
 
+    /// Unlike `objectArray`, rejects a non-array value or any non-object element instead of dropping it.
+    func strictObjectArray(_ key: String) throws -> [MCPArguments]? {
+        guard has(key) else { return nil }
+        guard let elements = raw[key]?.arrayValue else {
+            throw MCPToolError.invalidArgument(key, "expected an array of objects")
+        }
+        return try elements.map { element in
+            guard let object = element.objectValue else {
+                throw MCPToolError.invalidArgument(key, "every element must be an object")
+            }
+            return MCPArguments(object)
+        }
+    }
+
     func object(_ key: String) -> MCPArguments? {
         raw[key]?.objectValue.map(MCPArguments.init)
     }

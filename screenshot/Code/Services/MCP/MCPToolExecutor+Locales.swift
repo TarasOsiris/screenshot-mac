@@ -30,7 +30,7 @@ extension MCPToolExecutor {
     func setTranslation(_ args: MCPArguments) throws -> CallTool.Result {
         let location = try requireShapeLocation(args)
         let code = try args.requiredString("locale_code")
-        let textRuns = args.objectArray("text_runs")
+        let textRuns = try args.strictObjectArray("text_runs")
         if textRuns == nil { _ = try args.requiredString("text") }
 
         guard state.localeState.locales.contains(where: { $0.code == code }) else {

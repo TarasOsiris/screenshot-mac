@@ -133,6 +133,31 @@ nonisolated enum CSSFontWeight {
         }
     }
 
+    /// Buckets NSFontManager's 0…15 scale (5 ≈ regular, 9 ≈ bold).
+    init(manager: Int) {
+        switch manager {
+        case ..<4: self = .thin
+        case 4: self = .light
+        case 5: self = .regular
+        case 6: self = .medium
+        case 7...8: self = .semibold
+        case 9...10: self = .bold
+        default: self = .heavy
+        }
+    }
+
+    var css: Int {
+        switch self {
+        case .thin: 100
+        case .light: 300
+        case .regular: 400
+        case .medium: 500
+        case .semibold: 600
+        case .bold: 700
+        case .heavy: 900
+        }
+    }
+
     var font: Font.Weight {
         switch self {
         case .thin: .thin
@@ -173,19 +198,9 @@ nonisolated enum CSSFontWeight {
 
 #if os(iOS)
 extension UIFont.Weight {
-    /// Map an AppKit NSFontManager weight (0…15, 5 ≈ regular, 9 ≈ bold) to a UIFont.Weight.
-    /// Mirrors the macOS `RichTextUtils.nsFontWeight(for:)` map so the same shape renders at
-    /// the same weight on both platforms (editor↔export parity across devices).
+    /// Map an AppKit NSFontManager weight (0…15) to a UIFont.Weight through the buckets macOS uses.
     init(managerWeight: Int) {
-        switch managerWeight {
-        case ..<4: self = .thin
-        case 4: self = .light
-        case 5: self = .regular
-        case 6: self = .medium
-        case 7...8: self = .semibold
-        case 9...10: self = .bold
-        default: self = .heavy
-        }
+        self = CSSFontWeight(manager: managerWeight).platform
     }
 }
 

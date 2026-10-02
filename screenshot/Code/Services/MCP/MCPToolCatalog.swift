@@ -78,8 +78,8 @@ nonisolated enum MCPToolCatalog {
             "color": MCPSchema.string("Span color as #RRGGBB or #RRGGBBAA (default: the shape's color)"),
             "font_weight": MCPSchema.integer("Font weight 100-900 (default: the shape's)"),
             "font_size": MCPSchema.number("Font size (default: the shape's)"),
-            "font_name": MCPSchema.string("Font family (default: the shape's)"),
-            "italic": MCPSchema.boolean("Italic"),
+            "font_name": MCPSchema.string("Font family, or \"system\" for the system font (default: the shape's)"),
+            "italic": MCPSchema.boolean("Italic (default: the shape's)"),
             "underline": MCPSchema.boolean("Underline"),
             "strikethrough": MCPSchema.boolean("Strikethrough"),
         ], required: ["text"]),
@@ -230,7 +230,7 @@ nonisolated enum MCPToolCatalog {
         ),
         Tool(
             name: MCPToolName.updateShape.rawValue,
-            description: "Patch shape properties; only provided fields change. Text edits apply to the base locale (use set_translation for other locales). Text with per-range formatting (a highlighted word) reports it in get_project as text_runs; replacing `text` alone keeps only the first span's style, so edit formatted text through text_runs. Shape-level color/font fields restyle every span.",
+            description: "Patch shape properties; only provided fields change. Text edits apply to the base locale (use set_translation for other locales). Text with per-range formatting (a highlighted word) reports it in get_project as text_runs; replacing `text` alone keeps only the first span's style, so edit formatted text through text_runs. Shape-level color/font/alignment/spacing fields restyle every span, translations included.",
             inputSchema: MCPSchema.object([
                 "shape_id": MCPSchema.string("Shape UUID"),
                 "x": MCPSchema.number("Left edge in model pixels"),
@@ -243,7 +243,7 @@ nonisolated enum MCPToolCatalog {
                 "color": MCPSchema.string("Fill/text color as #RRGGBB or #RRGGBBAA"),
                 "text": MCPSchema.string("Text content (base locale)"),
                 "text_runs": textRunsSchema,
-                "clear_text_formatting": MCPSchema.boolean("Drop per-range formatting so the whole text uses the shape's own style"),
+                "clear_text_formatting": MCPSchema.boolean("Drop per-range formatting, in the base text and every translation, so the whole text uses the shape's own style"),
                 "font_size": MCPSchema.number("Font size"),
                 "font_name": MCPSchema.string("Font family name"),
                 "font_weight": MCPSchema.integer("Font weight 100-900"),

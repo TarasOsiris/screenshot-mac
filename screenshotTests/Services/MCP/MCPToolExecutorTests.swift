@@ -402,7 +402,7 @@ struct MCPToolExecutorTests {
             "color": "#FFFFFF",
         ])
         let shapeId = state.rows[0].shapes.last!.id
-        #expect(MCPRichText.runs(richText: state.rows[0].shapes.last!.richText, text: "Track your training") == nil)
+        #expect(MCPRichText.runs(of: state.rows[0].shapes.last!) == nil)
 
         let styled = await executor.call(name: "update_shape", arguments: [
             "shape_id": .string(shapeId.uuidString),
@@ -414,7 +414,7 @@ struct MCPToolExecutorTests {
         expectSuccess(styled)
         var shape = state.rows[0].shapes.last!
         #expect(shape.text == "Track your training")
-        let runs = MCPRichText.runs(richText: shape.richText, text: shape.text ?? "")
+        let runs = MCPRichText.runs(of: shape)
         #expect(runs?.map(\.text) == ["Track your ", "training"])
         #expect(runs?.map(\.color) == ["#FFFFFF", "#8FD3FF"])
         #expect(runs?.last?.underline == true)
@@ -426,7 +426,7 @@ struct MCPToolExecutorTests {
         ])
         expectSuccess(recolored)
         shape = state.rows[0].shapes.last!
-        #expect(Set(MCPRichText.runs(richText: shape.richText, text: shape.text ?? "")?.map(\.color) ?? []) == ["#F5333A"])
+        #expect(Set(MCPRichText.runs(of: shape)?.map(\.color) ?? []) == ["#F5333A"])
 
         let cleared = await executor.call(name: "update_shape", arguments: [
             "shape_id": .string(shapeId.uuidString),
@@ -464,6 +464,152 @@ struct MCPToolExecutorTests {
         #expect(state.rows[0].shapes.last!.x != 10)
     }
 
+    @Test func textRunsRoundTripKeepsUprightAndSystemFontSpans() async {
+        let (executor, state, tempDir) = makeExecutor()
+        defer { cleanupTestState(tempDir) }
+
+        _ = await executor.call(name: "add_shape", arguments: [
+            "row_id": .string(state.rows[0].id.uuidString),
+            "type": "text",
+            "text": "Go Pro",
+            "font_name": "Helvetica",
+        ])
+        let shapeId = state.rows[0].shapes.last!.id
+        state.rows[0].shapes[state.rows[0].shapes.count - 1].italic = true
+
+        _ = await executor.call(name: "update_shape", arguments: [
+            "shape_id": .string(shapeId.uuidString),
+            "text_runs": .array([
+                .object(["text": "Go "]),
+                .object(["text": "Pro", "italic": false, "font_name": "system"]),
+            ]),
+        ])
+        let first = MCPRichText.runs(of: state.rows[0].shapes.last!)!
+        #expect(first.map(\.italic) == [true, false])
+        // RTF persists the system font as Helvetica Neue; what matters is it isn't the shape's font.
+        #expect(first.last?.fontName != "Helvetica")
+
+        // Send the spans back exactly as read, with only one color changed.
+        let echoed: [Value] = first.enumerated().map { index, run in
+            .object([
+                "text": .string(run.text),
+                "color": .string(index == 0 ? "#FF0000" : run.color),
+                "font_name": .string(run.fontName),
+                "font_size": .double(run.fontSize),
+                "font_weight": .int(run.fontWeight),
+                "italic": .bool(run.italic),
+            ])
+        }
+        let result = await executor.call(name: "update_shape", arguments: [
+            "shape_id": .string(shapeId.uuidString),
+            "text_runs": .array(echoed),
+        ])
+        expectSuccess(result)
+        let second = MCPRichText.runs(of: state.rows[0].shapes.last!)!
+        #expect(second.map(\.italic) == [true, false])
+        #expect(second.map(\.fontName) == first.map(\.fontName))
+        #expect(second.first?.color == "#FF0000")
+    }
+
+    @Test func malformedOrEmptyTextRunsAreRejected() async {
+        let (executor, state, tempDir) = makeExecutor()
+        defer { cleanupTestState(tempDir) }
+
+        _ = await executor.call(name: "add_shape", arguments: [
+            "row_id": .string(state.rows[0].id.uuidString),
+            "type": "text",
+            "text": "Original",
+        ])
+        let shapeId = state.rows[0].shapes.last!.id
+        _ = await executor.call(name: "add_locale", arguments: ["code": "de-DE"])
+
+        let malformed: [Value] = [
+            .array(["Track your ", .object(["text": "training"])]),
+            .string("[{\"text\":\"training\"}]"),
+            .array([.object(["text": ""])]),
+        ]
+        for runs in malformed {
+            let update = await executor.call(name: "update_shape", arguments: [
+                "shape_id": .string(shapeId.uuidString),
+                "text_runs": runs,
+            ])
+            #expect(update.isError == true)
+            let translation = await executor.call(name: "set_translation", arguments: [
+                "shape_id": .string(shapeId.uuidString),
+                "locale_code": "de-DE",
+                "text_runs": runs,
+            ])
+            #expect(translation.isError == true)
+        }
+        #expect(state.rows[0].shapes.last!.text == "Original")
+        #expect(state.localeState.overrides["de-DE"]?.isEmpty != false)
+    }
+
+    @Test func updateShapeWithStyleAndRunsIsOneUndoStep() async {
+        let (executor, state, tempDir) = makeExecutor()
+        defer { cleanupTestState(tempDir) }
+
+        _ = await executor.call(name: "add_shape", arguments: [
+            "row_id": .string(state.rows[0].id.uuidString),
+            "type": "text",
+            "text": "Original",
+        ])
+        let before = state.rows[0].shapes.last!
+        _ = await executor.call(name: "update_shape", arguments: [
+            "shape_id": .string(before.id.uuidString),
+            "x": 42,
+            "color": "#123456",
+            "text_runs": .array([.object(["text": "New "]), .object(["text": "text", "color": "#F5333A"])]),
+        ])
+        #expect(state.rows[0].shapes.last!.text == "New text")
+
+        state.undoManager?.undo()
+        #expect(state.rows[0].shapes.last! == before)
+    }
+
+    @Test func clearAndRestyleReachTranslations() async {
+        let (executor, state, tempDir) = makeExecutor()
+        defer { cleanupTestState(tempDir) }
+
+        _ = await executor.call(name: "add_shape", arguments: [
+            "row_id": .string(state.rows[0].id.uuidString),
+            "type": "text",
+            "text": "Base",
+            "color": "#FFFFFF",
+        ])
+        let shapeId = state.rows[0].shapes.last!.id
+        _ = await executor.call(name: "add_locale", arguments: ["code": "de-DE"])
+        _ = await executor.call(name: "set_translation", arguments: [
+            "shape_id": .string(shapeId.uuidString),
+            "locale_code": "de-DE",
+            "text_runs": .array([.object(["text": "Dein "]), .object(["text": "Training", "color": "#8FD3FF"])]),
+        ])
+        func germanRuns() -> [MCPTextRun]? {
+            MCPRichText.runs(of: LocaleService.resolveShape(state.rows[0].shapes.last!, localeCode: "de-DE", localeState: state.localeState))
+        }
+        #expect(germanRuns()?.count == 2)
+
+        _ = await executor.call(name: "update_shape", arguments: [
+            "shape_id": .string(shapeId.uuidString),
+            "color": "#F5333A",
+        ])
+        #expect(germanRuns() == nil)
+
+        _ = await executor.call(name: "set_translation", arguments: [
+            "shape_id": .string(shapeId.uuidString),
+            "locale_code": "de-DE",
+            "text_runs": .array([.object(["text": "Dein "]), .object(["text": "Training", "underline": true])]),
+        ])
+        #expect(germanRuns()?.count == 2)
+        _ = await executor.call(name: "update_shape", arguments: [
+            "shape_id": .string(shapeId.uuidString),
+            "clear_text_formatting": true,
+        ])
+        let resolved = LocaleService.resolveShape(state.rows[0].shapes.last!, localeCode: "de-DE", localeState: state.localeState)
+        #expect(resolved.richText == nil)
+        #expect(resolved.text == "Dein Training")
+    }
+
     @Test func translationTextRuns() async {
         let (executor, state, tempDir) = makeExecutor()
         defer { cleanupTestState(tempDir) }
@@ -490,7 +636,7 @@ struct MCPToolExecutorTests {
         #expect(shape.richText == nil)
         let resolved = LocaleService.resolveShape(shape, localeCode: "de-DE", localeState: state.localeState)
         #expect(resolved.text == "Dein Training")
-        #expect(MCPRichText.runs(richText: resolved.richText, text: resolved.text ?? "")?.last?.color == "#F5333A")
+        #expect(MCPRichText.runs(of: resolved)?.last?.color == "#F5333A")
     }
 
     @Test func deleteShapeRemovesIt() async {

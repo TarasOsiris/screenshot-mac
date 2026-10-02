@@ -7,20 +7,23 @@ import SwiftUI
 struct MCPTextRun: Encodable, Equatable {
     let text: String
     let color: String
-    let fontName: String?
+    /// `MCPRichText.systemFontName` for the system font.
+    let fontName: String
     let fontSize: Double
     let fontWeight: Int
-    let italic: Bool?
+    let italic: Bool
     let underline: Bool?
     let strikethrough: Bool?
 }
 
 /// Translates a shape's Base64-RTF `richText` to and from `MCPTextRun`s.
 enum MCPRichText {
+    static let systemFontName = "system"
 
-    /// The runs the canvas actually draws, or nil for uniformly styled text.
-    static func runs(richText: String?, text: String) -> [MCPTextRun]? {
-        guard let richText, let decoded = RichTextUtils.decode(richText), decoded.length > 0 else { return nil }
+    /// The runs the canvas draws, or nil when every character renders in `shape`'s own style.
+    static func runs(of shape: CanvasShapeModel) -> [MCPTextRun]? {
+        let text = shape.text ?? ""
+        guard let richText = shape.richText, let decoded = RichTextUtils.decode(richText), decoded.length > 0 else { return nil }
         var runs: [MCPTextRun] = []
         decoded.enumerateAttributes(in: NSRange(location: 0, length: decoded.length)) { attributes, range, _ in
             let span = (decoded.string as NSString).substring(with: range)
@@ -33,8 +36,9 @@ enum MCPRichText {
         }
         // A stale richText renders the new text in its first run's style (`retargetAttributedString`).
         if decoded.string != text, let first = runs.first {
-            return [first.withText(text)]
+            runs = [first.withText(text)]
         }
+        if runs.count == 1, matchesShapeStyle(runs[0], shape) { return nil }
         return runs
     }
 
@@ -46,9 +50,12 @@ enum MCPRichText {
         for run in runs {
             guard run.string("text") != nil else { throw MCPToolError.missingArgument("text_runs[].text") }
             _ = try run.color("color")
-            if let fontName = run.string("font_name"), !availableFontFamilies.contains(fontName) {
+            if let fontName = run.string("font_name"), fontName != systemFontName, !availableFontFamilies.contains(fontName) {
                 throw MCPToolError.invalidArgument("text_runs[].font_name", "font \(fontName) is not available")
             }
+        }
+        guard runs.contains(where: { !($0.string("text") ?? "").isEmpty }) else {
+            throw MCPToolError.invalidArgument("text_runs", "the runs contain no text")
         }
     }
 
@@ -58,7 +65,9 @@ enum MCPRichText {
         let attributed = NSMutableAttributedString()
         for run in runs {
             var styled = shape
-            if let fontName = run.string("font_name") { styled.fontName = fontName }
+            if let fontName = run.string("font_name") {
+                styled.fontName = fontName == systemFontName ? nil : fontName
+            }
             let size = run.double("font_size").map { CGFloat($0) } ?? shape.fontSize ?? CanvasShapeModel.defaultFontSize
             let weight = run.int("font_weight") ?? shape.fontWeight ?? 700
             let font = TextFontResolver.resolvedFont(
@@ -86,29 +95,25 @@ enum MCPRichText {
         let color = (attributes[.foregroundColor] as? NSColor).map { CodableColor(Color(nsColor: $0)).hexKey } ?? "#000000"
         let underline = (attributes[.underlineStyle] as? Int ?? 0) != 0
         let strikethrough = (attributes[.strikethroughStyle] as? Int ?? 0) != 0
-        let isSystem = font.familyName?.hasPrefix(".") ?? true
+        let family = font.familyName.flatMap { $0.hasPrefix(".") ? nil : $0 }
         return MCPTextRun(
             text: text,
             color: color,
-            fontName: isSystem ? nil : font.familyName,
+            fontName: family ?? systemFontName,
             fontSize: Double(font.pointSize),
-            fontWeight: cssWeight(managerWeight: NSFontManager.shared.weight(of: font)),
-            italic: font.fontDescriptor.symbolicTraits.contains(.italic) ? true : nil,
+            fontWeight: CSSFontWeight(manager: NSFontManager.shared.weight(of: font)).css,
+            italic: font.fontDescriptor.symbolicTraits.contains(.italic),
             underline: underline ? true : nil,
             strikethrough: strikethrough ? true : nil
         )
     }
 
-    private static func cssWeight(managerWeight: Int) -> Int {
-        switch managerWeight {
-        case ..<4: 100
-        case 4: 300
-        case 5: 400
-        case 6: 500
-        case 7...8: 600
-        case 9...10: 700
-        default: 900
-        }
+    private static func matchesShapeStyle(_ run: MCPTextRun, _ shape: CanvasShapeModel) -> Bool {
+        run.color == shape.colorData.hexKey
+            && run.fontSize == Double(shape.fontSize ?? CanvasShapeModel.defaultFontSize)
+            && CSSFontWeight(css: run.fontWeight) == CSSFontWeight(css: shape.fontWeight ?? 700)
+            && run.italic == (shape.italic ?? false)
+            && run.underline == nil && run.strikethrough == nil
     }
 }
 

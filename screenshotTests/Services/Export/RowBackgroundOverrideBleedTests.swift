@@ -53,4 +53,45 @@ struct RowBackgroundOverrideBleedTests {
             #expect(seamPixels == 0, "row background bleeds through at zoom \(zoom)")
         }
     }
+
+    /// Regression: an aspect-filled override image overflowed its slot in the editor and painted
+    /// over the neighbouring templates.
+    @Test func fillImageOverrideStaysInsideItsTemplate() throws {
+        var row = ScreenshotRow(templates: (0..<3).map { _ in ScreenshotTemplate() }, templateWidth: 1242, templateHeight: 2688)
+        row.backgroundStyle = .color
+        row.backgroundColorData = CodableColor(Color.red)
+        row.templates[1].overrideBackground = true
+        row.templates[1].backgroundStyle = .image
+        row.templates[1].backgroundImageConfig = BackgroundImageConfig(fileName: "wide.png", fillMode: .fill)
+
+        let wide = NSImage(size: NSSize(width: 4000, height: 100))
+        wide.lockFocus()
+        NSColor.blue.setFill()
+        NSRect(x: 0, y: 0, width: 4000, height: 100).fill()
+        wide.unlockFocus()
+
+        let scale: CGFloat = 0.1
+        let slotWidth = row.templateWidth * scale
+        let height = row.templateHeight * scale
+        let image = RowRenderer.renderViewToImage(
+            RowCanvasBackgroundView(row: row, screenshotImages: ["wide.png": wide], displayScale: scale, blurRadius: 0),
+            width: slotWidth * 3,
+            height: height,
+            label: "override fill bleed"
+        )
+        let tiff = try #require(image.tiffRepresentation)
+        let rep = try #require(NSBitmapImageRep(data: tiff))
+        let pxSlot = rep.pixelsWide / 3
+        let midY = rep.pixelsHigh / 2
+
+        func color(_ x: Int) throws -> NSColor {
+            try #require(rep.colorAt(x: x, y: midY)?.usingColorSpace(.sRGB))
+        }
+        for x in [pxSlot / 2, pxSlot - 3, 2 * pxSlot + 3, 2 * pxSlot + pxSlot / 2] {
+            let c = try color(x)
+            #expect(c.redComponent > 0.8 && c.blueComponent < 0.2, "override image bled into neighbour at x=\(x): \(c)")
+        }
+        let middle = try color(pxSlot + pxSlot / 2)
+        #expect(middle.blueComponent > 0.8 && middle.redComponent < 0.2, "override image missing from its own slot: \(middle)")
+    }
 }
