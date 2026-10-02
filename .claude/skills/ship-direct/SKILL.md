@@ -89,12 +89,15 @@ If notarization reports `Invalid`, fetch the reason with `xcrun notarytool log <
 ```bash
 V=<MARKETING_VERSION>; B=<CURRENT_PROJECT_VERSION>
 DMG="ScreenshotBro-$V-$B.dmg"
-rm -rf build/dmg && mkdir build/dmg && cp -R "build/direct/Screenshot Bro.app" build/dmg/ && ln -s /Applications build/dmg/Applications
-hdiutil create -volname "Screenshot Bro" -srcfolder build/dmg -format UDZO -ov "build/direct/$DMG"
+./tools/dmg/make-dmg.sh "build/direct/Screenshot Bro.app" "build/direct/$DMG"
 codesign -s "Developer ID Application: Taras Leskiv (XW3GM347XY)" --timestamp "build/direct/$DMG"
 xcrun notarytool submit "build/direct/$DMG" "${NOTARY[@]}" --wait
 xcrun stapler staple "build/direct/$DMG"
 ```
+`make-dmg.sh` lays out the drag-to-Applications window (background from `tools/dmg/make-background.swift`,
+icon positions) by scripting Finder, so it needs a GUI session and Automation access to Finder for the
+terminal; it ejects any mounted "Screenshot Bro" volume first. Open the result once and check the window
+before signing.
 
 ## 5. Update the appcast
 ```bash
