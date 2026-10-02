@@ -186385,6 +186385,334 @@
           }
         }
       }
+    },
+    "Thank you for testing!" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Danke fürs Testen!"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "¡Gracias por probarla!"
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "از اینکه تست کردید سپاسگزارم!"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Merci d’avoir testé !"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Grazie per aver testato!"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "テストにご協力いただきありがとうございます！"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "테스트해 주셔서 감사합니다!"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Obrigado por testar!"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Спасибо за тестирование!"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Test ettiğiniz için teşekkürler!"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Дякую за тестування!"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "感谢参与测试！"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "感謝參與測試！"
+          }
+        }
+      }
+    },
+    "Screenshot Bro is now on the App Store, and your feedback helped get it there. This beta will stop receiving updates soon, so please install the App Store version — it replaces this one, and your projects stay right where they are." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Screenshot Bro ist jetzt im App Store – und dein Feedback hat dazu beigetragen. Diese Beta erhält bald keine Updates mehr. Bitte installiere die App-Store-Version – sie ersetzt diese hier, und deine Projekte bleiben genau dort, wo sie sind."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Screenshot Bro ya está en la App Store, y tus comentarios ayudaron a llegar hasta aquí. Esta beta dejará de recibir actualizaciones pronto, así que instala la versión de la App Store: reemplaza a esta y tus proyectos se quedan justo donde están."
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Screenshot Bro اکنون در App Store منتشر شده است و بازخورد شما در رسیدن به اینجا نقش داشت. این نسخهٔ بتا به‌زودی دیگر به‌روزرسانی نمی‌شود، پس لطفاً نسخهٔ App Store را نصب کنید — جایگزین همین نسخه می‌شود و پروژه‌هایتان همان‌جا که هستند می‌مانند."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Screenshot Bro est désormais sur l’App Store, et vos retours l’ont aidé à y arriver. Cette bêta ne recevra bientôt plus de mises à jour : installez la version de l’App Store. Elle remplace celle-ci, et vos projets restent exactement où ils sont."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Screenshot Bro è ora sull’App Store, e il tuo feedback ha contribuito ad arrivarci. Questa beta smetterà presto di ricevere aggiornamenti, quindi installa la versione dell’App Store: sostituisce questa e i tuoi progetti restano esattamente dove sono."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Screenshot Bro が App Store で公開されました。ここまで来られたのは皆さんのフィードバックのおかげです。このベータ版はまもなくアップデートが終了するため、App Store 版をインストールしてください。このベータ版と置き換わり、プロジェクトはそのまま残ります。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Screenshot Bro가 이제 App Store에 출시되었으며, 여러분의 피드백 덕분에 여기까지 올 수 있었습니다. 이 베타는 곧 업데이트가 중단되니 App Store 버전을 설치해 주세요. 이 버전을 대체하며, 프로젝트는 그대로 유지됩니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O Screenshot Bro agora está na App Store, e seu feedback ajudou a chegar até aqui. Esta beta deixará de receber atualizações em breve, então instale a versão da App Store — ela substitui esta, e seus projetos continuam exatamente onde estão."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Screenshot Bro теперь в App Store, и ваши отзывы помогли этого добиться. Эта бета-версия скоро перестанет получать обновления, поэтому установите версию из App Store — она заменит эту, а ваши проекты останутся на своих местах."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Screenshot Bro artık App Store’da ve geri bildirimleriniz buraya gelmesine yardımcı oldu. Bu beta yakında güncelleme almayı bırakacak, bu yüzden lütfen App Store sürümünü yükleyin — bunun yerini alır ve projeleriniz olduğu yerde kalır."
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Screenshot Bro тепер в App Store, і ваші відгуки допомогли цього досягти. Ця бета-версія незабаром перестане отримувати оновлення, тож установіть версію з App Store — вона замінить цю, а ваші проєкти залишаться на своїх місцях."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Screenshot Bro 现已登陆 App Store，这离不开你的反馈。此测试版即将停止更新，请安装 App Store 版本——它会替换当前版本，你的项目都会原样保留。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Screenshot Bro 現已登上 App Store，這離不開你的回饋。此測試版即將停止更新，請安裝 App Store 版本——它會取代目前的版本，你的專案都會原封不動地保留。"
+          }
+        }
+      }
+    },
+    "Not Now" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nicht jetzt"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ahora no"
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "الان نه"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Plus tard"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Non ora"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "今はしない"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "나중에"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Agora não"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Не сейчас"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Şimdi değil"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Не зараз"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "以后再说"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "以後再說"
+          }
+        }
+      }
+    },
+    "Open App Store" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "App Store öffnen"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abrir App Store"
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "باز کردن App Store"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ouvrir l’App Store"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Apri App Store"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "App Store を開く"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "App Store 열기"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abrir App Store"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Открыть App Store"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "App Store’u Aç"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Відкрити App Store"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "打开 App Store"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "打開 App Store"
+          }
+        }
+      }
     }
   },
   "version" : "1.0"

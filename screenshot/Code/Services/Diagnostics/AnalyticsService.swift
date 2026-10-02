@@ -79,6 +79,10 @@ nonisolated enum AnalyticsService {
         case developerRatingDismissed = "developer_rating_dismissed"
         case developerRatingAccepted = "developer_rating_accepted"
 
+        case testFlightGraduationShown = "testflight_graduation_shown"
+        case testFlightGraduationDismissed = "testflight_graduation_dismissed"
+        case testFlightGraduationAccepted = "testflight_graduation_accepted"
+
         case mcpServerToggled = "mcp_server_toggled"
         case mcpServerStarted = "mcp_server_started"
         case mcpServerStartFailed = "mcp_server_start_failed"

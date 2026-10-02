@@ -136,6 +136,7 @@ struct ScreenshotBroApp: App {
                 .environment(purchaseService)
                 .preferredColorScheme(preferredColorScheme)
                 .background(WindowSceneBridge(role: .main))
+                .testFlightGraduationPrompt()
                 .task {
                     purchaseService.start()
                     #if DIRECT_DISTRIBUTION
@@ -488,6 +489,7 @@ struct ScreenshotBroApp: App {
                 .environment(appNavigationRouter)
                 .preferredColorScheme(preferredColorScheme)
                 .task { purchaseService.start() }
+                .testFlightGraduationPrompt(isSuppressed: launchWelcomePresented)
                 .fullScreenCover(isPresented: Binding(
                     get: { launchWelcomePresented },
                     set: { _ in }

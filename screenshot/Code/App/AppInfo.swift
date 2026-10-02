@@ -12,7 +12,14 @@ enum AppLinks {
     /// Deep-links straight to the write-a-review box on the app's own App Store page (Apple ID
     /// `6760177675`), rather than the app's storefront page or the system-controlled
     /// `SKStoreReviewController` sheet `ReviewPromptPolicy` triggers.
-    static let rateOnAppStore = URL(string: "https://apps.apple.com/app/id6760177675?action=write-review")!
+    static let rateOnAppStore = URL(string: "https://apps.apple.com/app/id\(appStoreID)?action=write-review")!
+    static let appStoreID = "6760177675"
+    /// Opens the store app directly rather than the web page.
+    #if os(macOS)
+    static let appStorePage = URL(string: "macappstore://apps.apple.com/app/id\(appStoreID)")!
+    #else
+    static let appStorePage = URL(string: "itms-apps://apps.apple.com/app/id\(appStoreID)")!
+    #endif
 
     /// Mirrors the social links in the screenshotbro.app footer.
     static let social: [SocialLink] = [
