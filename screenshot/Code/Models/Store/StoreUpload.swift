@@ -37,12 +37,14 @@ nonisolated struct UploadIssueFix: Equatable {
 /// softens its per-row issues wholesale instead and leaves this false. `scoped(to:)` is used by the
 /// App Store Connect flow, which groups issues under a per-version destination.
 nonisolated struct UploadIssue: Identifiable {
-    let severity: UploadIssueSeverity
-    let scope: String?
+    private(set) var severity: UploadIssueSeverity
+    private(set) var scope: String?
     let message: String
     let hint: String?
     let demoDowngradable: Bool
     let fix: UploadIssueFix?
+    /// Instructions an agent can follow through the MCP server to clear the issue.
+    let agentPrompt: String?
 
     // Stable identity so ForEach does not re-diff the whole panel every render.
     var id: String { "\(severity)|\(scope ?? "")|\(message)" }
@@ -53,7 +55,8 @@ nonisolated struct UploadIssue: Identifiable {
         message: String,
         hint: String? = nil,
         demoDowngradable: Bool = false,
-        fix: UploadIssueFix? = nil
+        fix: UploadIssueFix? = nil,
+        agentPrompt: String? = nil
     ) {
         self.severity = severity
         self.scope = scope
@@ -61,16 +64,20 @@ nonisolated struct UploadIssue: Identifiable {
         self.hint = hint
         self.demoDowngradable = demoDowngradable
         self.fix = fix
+        self.agentPrompt = agentPrompt
     }
 
     func with(severity: UploadIssueSeverity) -> UploadIssue {
-        UploadIssue(severity: severity, scope: scope, message: message, hint: hint, demoDowngradable: demoDowngradable, fix: fix)
+        var copy = self
+        copy.severity = severity
+        return copy
     }
 
     /// Prefix the scope with an outer destination label (App Store Connect groups issues by version).
     func scoped(to destination: String) -> UploadIssue {
-        let combinedScope = scope.map { "\(destination) · \($0)" } ?? destination
-        return UploadIssue(severity: severity, scope: combinedScope, message: message, hint: hint, demoDowngradable: demoDowngradable, fix: fix)
+        var copy = self
+        copy.scope = scope.map { "\(destination) · \($0)" } ?? destination
+        return copy
     }
 }
 

@@ -16,9 +16,22 @@ struct UploadIssuesPanel: View {
                     ForEach(issues) { issue in
                         UploadIssueRow(issue: issue, onFix: onFix)
                     }
+                    #if os(macOS)
+                    if let agentPrompt {
+                        CopyAgentPromptButton(prompt: agentPrompt)
+                            .frame(maxWidth: .infinity, alignment: .trailing)
+                    }
+                    #endif
                 }
             }
         }
+    }
+
+    /// One button for the panel: issues that share a prompt share it, distinct ones are joined.
+    private var agentPrompt: String? {
+        var seen = Set<String>()
+        let prompts = issues.compactMap(\.agentPrompt).filter { seen.insert($0).inserted }
+        return prompts.isEmpty ? nil : prompts.joined(separator: "\n\n---\n\n")
     }
 }
 
@@ -60,6 +73,31 @@ private struct UploadIssueRow: View {
         return Text(issue.message)
     }
 }
+
+#if os(macOS)
+/// The MCP server that would act on the prompt only exists on macOS.
+private struct CopyAgentPromptButton: View {
+    let prompt: String
+    @State private var copied = false
+
+    var body: some View {
+        Button {
+            PlatformPasteboard.copyString(prompt)
+            copied = true
+        } label: {
+            Label(copied ? "Copied" : "Copy Agent Prompt", systemImage: copied ? "checkmark" : "sparkles")
+        }
+        .buttonStyle(.bordered)
+        .controlSize(.small)
+        .font(.caption)
+        .task(id: copied) {
+            guard copied else { return }
+            try? await Task.sleep(for: .seconds(2))
+            copied = false
+        }
+    }
+}
+#endif
 
 struct CalloutBox<Content: View>: View {
     let tint: Color

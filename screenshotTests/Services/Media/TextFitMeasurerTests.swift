@@ -90,6 +90,35 @@ struct TextFitMeasurerTests {
             == [TranslationCell(translationKey: shape.textTranslationKey, localeCode: "de")])
     }
 
+    @Test func overflowIssuesShareOneAgentPromptCoveringEveryRow() throws {
+        let shape = CanvasShapeModel(type: .text, width: 400, height: 70, text: "Edit fast", fontSize: 40, fontWeight: 700)
+        let german = "Bearbeite deine Bildschirmfotos blitzschnell und mühelos"
+        let state = localizedState(for: shape, german: german)
+        var first = ScreenshotRow(label: "iPhone 6.9\"", templates: [ScreenshotTemplate()], templateWidth: 400, templateHeight: 800)
+        first.shapes = [shape]
+        var second = ScreenshotRow(templates: [ScreenshotTemplate()], templateWidth: 400, templateHeight: 800)
+        second.shapes = [shape]
+        let families = PlatformFonts.familyNameSet
+
+        #expect(TextOverflowCheck.uploadIssues(rows: [first], localeState: state, availableFontFamilies: families)
+            .first?.agentPrompt == nil)
+
+        let projectId = UUID()
+        let issues = TextOverflowCheck.uploadIssues(
+            rows: [first, second], localeState: state, availableFontFamilies: families, projectId: projectId
+        )
+        #expect(issues.count == 2)
+        let prompt = try #require(issues.first?.agentPrompt)
+        #expect(issues.allSatisfy { $0.agentPrompt == prompt })
+        #expect(prompt.contains(projectId.uuidString))
+        #expect(prompt.contains(first.id.uuidString))
+        #expect(prompt.contains(second.id.uuidString))
+        #expect(prompt.contains("Shape `\(shape.id.uuidString)`"))
+        #expect(prompt.contains("- `de`: \"\(german)\""))
+        #expect(!prompt.contains("- `en`:"))
+        #expect(prompt.contains(#"### Row "iPhone 6.9\"" — "#))
+    }
+
     @Test func shrinkToFitClearsTheOverflow() {
         var shape = CanvasShapeModel(type: .text, width: 400, height: 70, text: "Edit fast", fontSize: 40, fontWeight: 700)
         shape.shrinkToFit = true

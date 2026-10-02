@@ -27,9 +27,22 @@ enum TextOverflowCheck {
         localeState: LocaleState,
         availableFontFamilies: Set<String>
     ) -> [String] {
-        let overflowing = Set(row.shapes.flatMap {
-            overflowingLocaleCodes(of: $0, localeState: localeState, availableFontFamilies: availableFontFamilies)
-        })
+        localeCodes(of: overflows(in: row, localeState: localeState, availableFontFamilies: availableFontFamilies), localeState: localeState)
+    }
+
+    static func overflows(
+        in row: ScreenshotRow,
+        localeState: LocaleState,
+        availableFontFamilies: Set<String>
+    ) -> [TextOverflow] {
+        row.shapes.compactMap { shape in
+            let codes = overflowingLocaleCodes(of: shape, localeState: localeState, availableFontFamilies: availableFontFamilies)
+            return codes.isEmpty ? nil : TextOverflow(shape: shape, localeCodes: codes)
+        }
+    }
+
+    private static func localeCodes(of overflows: [TextOverflow], localeState: LocaleState) -> [String] {
+        let overflowing = Set(overflows.flatMap(\.localeCodes))
         return localeState.locales.map(\.code).filter(overflowing.contains)
     }
 
@@ -52,20 +65,38 @@ enum TextOverflowCheck {
     }
 
     /// Warnings, never errors: a clipped line is a design problem, not a reason the store would
-    /// reject the upload.
-    static func uploadIssues(rows: [ScreenshotRow], localeState: LocaleState, availableFontFamilies: Set<String>) -> [UploadIssue] {
-        rows.compactMap { row in
-            let codes = overflowingLocaleCodes(in: row, localeState: localeState, availableFontFamilies: availableFontFamilies)
-            guard !codes.isEmpty else { return nil }
-            let languages = codes.map { $0.uppercased() }.formatted(.list(type: .and))
+    /// reject the upload. Every warning carries the same prompt, covering all of them.
+    static func uploadIssues(
+        rows: [ScreenshotRow],
+        localeState: LocaleState,
+        availableFontFamilies: Set<String>,
+        projectId: UUID? = nil
+    ) -> [UploadIssue] {
+        let affected: [TextOverflowPromptService.RowOverflows] = rows.compactMap { row in
+            let overflows = overflows(in: row, localeState: localeState, availableFontFamilies: availableFontFamilies)
+            return overflows.isEmpty ? nil : .init(row: row, overflows: overflows)
+        }
+        let prompt = projectId.flatMap { projectId in
+            affected.isEmpty ? nil : TextOverflowPromptService.prompt(projectId: projectId, rows: affected, localeState: localeState)
+        }
+        return affected.map { entry in
+            let languages = localeCodes(of: entry.overflows, localeState: localeState)
+                .map { $0.uppercased() }
+                .formatted(.list(type: .and))
             return UploadIssue(
                 severity: .warning,
-                scope: StoreUploadChecks.rowName(row.label),
+                scope: StoreUploadChecks.rowName(entry.row.label),
                 message: String(localized: "Text doesn't fit its box in \(languages)."),
-                hint: String(localized: "Enlarge the text box, shorten the translation, or turn on Shrink to Fit.")
+                hint: String(localized: "Enlarge the text box, shorten the translation, or turn on Shrink to Fit."),
+                agentPrompt: prompt
             )
         }
     }
+}
+
+struct TextOverflow {
+    let shape: CanvasShapeModel
+    let localeCodes: [String]
 }
 
 struct TranslationCell: Hashable {
@@ -81,15 +112,26 @@ final class TextOverflowIssueCache {
         let rows: [ScreenshotRow]
         let localeState: LocaleState
         let families: Set<String>
+        let projectId: UUID?
     }
 
     private var last: (input: Input, issues: [UploadIssue])?
 
-    func issues(rows: [ScreenshotRow], source: some RowRenderSource) -> [UploadIssue] {
-        let input = Input(rows: rows, localeState: source.localeState, families: source.availableFontFamilySet)
+    func issues(rows: [ScreenshotRow], source: some StoreUploadDocument) -> [UploadIssue] {
+        let input = Input(
+            rows: rows,
+            localeState: source.localeState,
+            families: source.availableFontFamilySet,
+            projectId: source.documentStamp?.projectId
+        )
         if let last, last.input == input { return last.issues }
         let issues = source.withResolvedFonts {
-            TextOverflowCheck.uploadIssues(rows: rows, localeState: input.localeState, availableFontFamilies: input.families)
+            TextOverflowCheck.uploadIssues(
+                rows: rows,
+                localeState: input.localeState,
+                availableFontFamilies: input.families,
+                projectId: input.projectId
+            )
         }
         last = (input, issues)
         return issues
