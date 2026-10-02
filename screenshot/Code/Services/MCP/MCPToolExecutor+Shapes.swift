@@ -75,6 +75,11 @@ extension MCPToolExecutor {
     func updateShape(_ args: MCPArguments) throws -> CallTool.Result {
         let location = try requireShapeLocation(args)
         try validateShapeArgs(args)
+        let textRuns = args.objectArray("text_runs")
+        let clearsFormatting = args.bool("clear_text_formatting") == true
+        if textRuns != nil || clearsFormatting {
+            try validateTextFormattingArgs(args, shape: state.rows[location.rowIndex].shapes[location.shapeIndex])
+        }
 
         if let text = args.string("text") {
             state.updateBaseText(shapeId: location.shapeId, text: text)
@@ -89,6 +94,15 @@ extension MCPToolExecutor {
         try applyShapePatch(&patch, args: args)
         if patch != base {
             state.updateShape(patch, forLocaleCode: state.localeState.baseLocaleCode)
+        }
+
+        // After the patch, so runs inherit any shape-level style set in the same call.
+        let styled = state.rows[location.rowIndex].shapes[location.shapeIndex]
+        if let textRuns {
+            let encoded = try MCPRichText.encode(textRuns, onto: styled, availableFontFamilies: state.availableFontFamilySet)
+            state.commitInlineText(shapeId: location.shapeId, text: encoded.text, richText: encoded.richText, forLocaleCode: state.localeState.baseLocaleCode)
+        } else if clearsFormatting, styled.richText != nil {
+            state.commitInlineText(shapeId: location.shapeId, text: styled.text ?? "", richText: nil, forLocaleCode: state.localeState.baseLocaleCode)
         }
 
         switch args.string("z_order") {
@@ -108,6 +122,18 @@ extension MCPToolExecutor {
         _ = try args.enumValue("text_align", TextAlign.self)
         _ = try args.enumValue("device_category", DeviceCategory.self)
         try validateFontName(args)
+    }
+
+    func validateTextFormattingArgs(_ args: MCPArguments, shape: CanvasShapeModel) throws {
+        guard shape.type == .text else {
+            throw MCPToolError.invalidArgument("shape_id", "not a text shape")
+        }
+        guard !(args.has("text_runs") && args.has("text")) else {
+            throw MCPToolError.invalidArgument("text_runs", "pass either text or text_runs, not both")
+        }
+        if let runs = args.objectArray("text_runs") {
+            try MCPRichText.validate(runs, availableFontFamilies: state.availableFontFamilySet)
+        }
     }
 
     private func validateFontName(_ args: MCPArguments) throws {
@@ -139,13 +165,22 @@ extension MCPToolExecutor {
         if let y = args.double("y") { shape.y = y }
         if let width = args.double("width") { shape.width = width }
         if let height = args.double("height") { shape.height = height }
-        if let color = try args.color("color") { shape.colorData = color }
-        if let fontSize = args.double("font_size") { shape.fontSize = fontSize }
-        if let fontName = args.string("font_name") {
+        if let color = try args.color("color"), color != shape.colorData {
+            shape.colorData = color
+            RichTextUtils.syncShapeStyleIfNeeded(in: &shape, property: .color)
+        }
+        if let fontSize = args.double("font_size").map({ CGFloat($0) }), fontSize != shape.fontSize {
+            shape.fontSize = fontSize
+            RichTextUtils.syncShapeStyleIfNeeded(in: &shape, property: .fontSize)
+        }
+        if let fontName = args.string("font_name"), fontName != shape.fontName {
             try validateFontName(args)
             shape.fontName = fontName
+            RichTextUtils.syncShapeStyleIfNeeded(in: &shape, property: .fontName)
         }
-        if let fontWeight = args.int("font_weight") { shape.fontWeight = fontWeight }
+        if let fontWeight = args.int("font_weight"), fontWeight != shape.fontWeight {
+            RichTextUtils.applyFontWeightUpdate(to: &shape, weight: fontWeight)
+        }
     }
 
     /// Fields only meaningful on update_shape.
@@ -153,9 +188,18 @@ extension MCPToolExecutor {
         if let rotation = args.double("rotation") { shape.rotation = rotation }
         if let opacity = args.double("opacity") { shape.opacity = opacity }
         if let radius = args.double("border_radius") { shape.borderRadius = radius }
-        if let align = try args.enumValue("text_align", TextAlign.self) { shape.textAlign = align }
-        if let spacing = args.double("letter_spacing") { shape.letterSpacing = spacing }
-        if let spacing = args.double("line_spacing") { shape.lineSpacing = spacing }
+        if let align = try args.enumValue("text_align", TextAlign.self) {
+            shape.textAlign = align
+            RichTextUtils.syncShapeStyleIfNeeded(in: &shape, property: .alignment)
+        }
+        if let spacing = args.double("letter_spacing") {
+            shape.letterSpacing = spacing
+            RichTextUtils.syncShapeStyleIfNeeded(in: &shape, property: .letterSpacing)
+        }
+        if let spacing = args.double("line_spacing") {
+            shape.lineSpacing = spacing
+            RichTextUtils.syncShapeStyleIfNeeded(in: &shape, property: .lineHeight)
+        }
         if let color = try args.color("outline_color") { shape.outlineColorData = color }
         if let width = args.double("outline_width") {
             shape.outlineWidth = width

@@ -58,7 +58,10 @@ struct MCPShapeSnapshot: Encodable {
     let fontSize: Double?
     let fontWeight: Int?
     let textAlign: String?
+    /// Styled spans, present only when the text has per-range formatting.
+    let textRuns: [MCPTextRun]?
     let translations: [String: String]?
+    let translationTextRuns: [String: [MCPTextRun]]?
     /// Per-locale screenshot/image files, keyed by locale code. Without this a locale-targeted
     /// import leaves no trace in the row it returns — the base file is unchanged.
     let imageOverrides: [String: String]?
@@ -182,10 +185,17 @@ enum MCPSnapshotBuilder {
 
     static func shapeSnapshot(_ shape: CanvasShapeModel, row: ScreenshotRow, localeState: LocaleState, availableFontFamilies: Set<String>) -> MCPShapeSnapshot {
         var translations: [String: String] = [:]
+        var translationRuns: [String: [MCPTextRun]] = [:]
         var imageOverrides: [String: String] = [:]
         for (localeCode, overrides) in localeState.overrides {
-            if let text = overrides[shape.textTranslationKey]?.text {
-                translations[localeCode] = text
+            if let override = overrides[shape.textTranslationKey] {
+                if let text = override.text {
+                    translations[localeCode] = text
+                }
+                if override.richText != nil {
+                    let resolved = LocaleService.resolveShape(shape, localeCode: localeCode, localeState: localeState)
+                    translationRuns[localeCode] = MCPRichText.runs(richText: resolved.richText, text: resolved.text ?? "")
+                }
             }
             if let file = overrides[shape.id.uuidString]?.overrideImageFileName {
                 imageOverrides[localeCode] = file
@@ -213,7 +223,9 @@ enum MCPSnapshotBuilder {
             fontSize: shape.fontSize.map { Double($0) },
             fontWeight: shape.fontWeight,
             textAlign: shape.textAlign?.rawValue,
+            textRuns: MCPRichText.runs(richText: shape.richText, text: shape.text ?? ""),
             translations: translations.isEmpty ? nil : translations,
+            translationTextRuns: translationRuns.isEmpty ? nil : translationRuns,
             imageOverrides: imageOverrides.isEmpty ? nil : imageOverrides,
             deviceCategory: shape.deviceCategory?.rawValue,
             deviceFrameId: shape.deviceFrameId,

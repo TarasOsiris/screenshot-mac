@@ -72,6 +72,20 @@ nonisolated enum MCPToolCatalog {
         ),
     ], required: ["stops"])
 
+    private static let textRunsSchema = MCPSchema.array(
+        of: MCPSchema.object([
+            "text": MCPSchema.string("This span's characters"),
+            "color": MCPSchema.string("Span color as #RRGGBB or #RRGGBBAA (default: the shape's color)"),
+            "font_weight": MCPSchema.integer("Font weight 100-900 (default: the shape's)"),
+            "font_size": MCPSchema.number("Font size (default: the shape's)"),
+            "font_name": MCPSchema.string("Font family (default: the shape's)"),
+            "italic": MCPSchema.boolean("Italic"),
+            "underline": MCPSchema.boolean("Underline"),
+            "strikethrough": MCPSchema.boolean("Strikethrough"),
+        ], required: ["text"]),
+        "Formatted text as styled spans, concatenated in order; replaces the text and all per-range formatting. Read the current spans from get_project's text_runs and send them back edited (e.g. change one word's color). Mutually exclusive with text."
+    )
+
     static var tools: [Tool] {
         allTools.filter { MCPToolName(rawValue: $0.name)?.isAvailable ?? false }
     }
@@ -216,7 +230,7 @@ nonisolated enum MCPToolCatalog {
         ),
         Tool(
             name: MCPToolName.updateShape.rawValue,
-            description: "Patch shape properties; only provided fields change. Text edits apply to the base locale (use set_translation for other locales).",
+            description: "Patch shape properties; only provided fields change. Text edits apply to the base locale (use set_translation for other locales). Text with per-range formatting (a highlighted word) reports it in get_project as text_runs; replacing `text` alone keeps only the first span's style, so edit formatted text through text_runs. Shape-level color/font fields restyle every span.",
             inputSchema: MCPSchema.object([
                 "shape_id": MCPSchema.string("Shape UUID"),
                 "x": MCPSchema.number("Left edge in model pixels"),
@@ -228,6 +242,8 @@ nonisolated enum MCPToolCatalog {
                 "border_radius": MCPSchema.number("Corner radius (rectangles)"),
                 "color": MCPSchema.string("Fill/text color as #RRGGBB or #RRGGBBAA"),
                 "text": MCPSchema.string("Text content (base locale)"),
+                "text_runs": textRunsSchema,
+                "clear_text_formatting": MCPSchema.boolean("Drop per-range formatting so the whole text uses the shape's own style"),
                 "font_size": MCPSchema.number("Font size"),
                 "font_name": MCPSchema.string("Font family name"),
                 "font_weight": MCPSchema.integer("Font weight 100-900"),
@@ -281,12 +297,13 @@ nonisolated enum MCPToolCatalog {
         ),
         Tool(
             name: MCPToolName.setTranslation.rawValue,
-            description: "Set a text shape's translated text for a locale.",
+            description: "Set a text shape's translated text for a locale. Plain `text` renders in the shape's own style; pass `text_runs` instead to keep per-range formatting (get_project reports existing ones as translation_text_runs).",
             inputSchema: MCPSchema.object([
                 "shape_id": MCPSchema.string("Text shape UUID"),
                 "locale_code": MCPSchema.string("Target locale code (must exist in the project)"),
                 "text": MCPSchema.string("Translated text"),
-            ], required: ["shape_id", "locale_code", "text"])
+                "text_runs": textRunsSchema,
+            ], required: ["shape_id", "locale_code"])
         ),
         Tool(
             name: MCPToolName.exportProject.rawValue,

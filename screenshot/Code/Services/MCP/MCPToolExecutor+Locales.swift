@@ -30,7 +30,8 @@ extension MCPToolExecutor {
     func setTranslation(_ args: MCPArguments) throws -> CallTool.Result {
         let location = try requireShapeLocation(args)
         let code = try args.requiredString("locale_code")
-        let text = try args.requiredString("text")
+        let textRuns = args.objectArray("text_runs")
+        if textRuns == nil { _ = try args.requiredString("text") }
 
         guard state.localeState.locales.contains(where: { $0.code == code }) else {
             throw MCPToolError.notFound("Locale \(code)")
@@ -39,12 +40,16 @@ extension MCPToolExecutor {
             throw MCPToolError.expected("\(code) is the base locale — use update_shape's text field instead")
         }
         let shape = state.rows[location.rowIndex].shapes[location.shapeIndex]
-        guard shape.type == .text else {
-            throw MCPToolError.invalidArgument("shape_id", "not a text shape")
-        }
+        try validateTextFormattingArgs(args, shape: shape)
 
-        state.updateTranslationText(shapeId: location.shapeId, localeCode: code, text: text)
-        state.finishTranslationEditIfNeeded()
+        if let textRuns {
+            let resolved = LocaleService.resolveShape(shape, localeCode: code, localeState: state.localeState)
+            let encoded = try MCPRichText.encode(textRuns, onto: resolved, availableFontFamilies: state.availableFontFamilySet)
+            state.commitInlineText(shapeId: location.shapeId, text: encoded.text, richText: encoded.richText, forLocaleCode: code)
+        } else if let text = args.string("text") {
+            state.updateTranslationText(shapeId: location.shapeId, localeCode: code, text: text)
+            state.finishTranslationEditIfNeeded()
+        }
         return try shapeResult(rowIndex: location.rowIndex, shapeId: location.shapeId)
     }
 }
