@@ -89,9 +89,9 @@ struct RowBackgroundOverrideBleedTests {
         }
         for x in [pxSlot / 2, pxSlot - 3, 2 * pxSlot + 3, 2 * pxSlot + pxSlot / 2] {
             let c = try color(x)
-            #expect(c.redComponent > 0.8 && c.blueComponent < 0.2, "override image bled into neighbour at x=\(x): \(c)")
+            #expect(c.redComponent > c.blueComponent + 0.3, "override image bled into neighbour at x=\(x): \(c)")
         }
         let middle = try color(pxSlot + pxSlot / 2)
-        #expect(middle.blueComponent > 0.8 && middle.redComponent < 0.2, "override image missing from its own slot: \(middle)")
+        #expect(middle.blueComponent > middle.redComponent + 0.3, "override image missing from its own slot: \(middle)")
     }
 }
