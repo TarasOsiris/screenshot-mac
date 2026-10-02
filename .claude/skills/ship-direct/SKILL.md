@@ -1,6 +1,6 @@
 ---
 name: ship-direct
-description: Build, notarize and publish the direct-download (Developer ID + Sparkle) macOS build — DMG to downloads.screenshotbro.app, appcast to screenshotbro.app
+description: Run /ship first, then build, notarize and publish the direct-download (Developer ID + Sparkle) macOS build — DMG to downloads.screenshotbro.app, appcast to screenshotbro.app
 disable-model-invocation: true
 ---
 
@@ -11,9 +11,13 @@ Developer ID, updates through Sparkle, and sells Pro through a RevenueCat Web Pu
 (Stripe). Pro unlocks through a redemption link on the `rc-6cc0af703b://` scheme. It shares the
 bundle id, iCloud container and version numbers with the App Store build.
 
-Run this **after** `/ship`, so the version is already bumped, tagged and pushed. Don't bump
-versions here. If you run it standalone, read `MARKETING_VERSION`/`CURRENT_PROJECT_VERSION`
-from the `screenshot Direct` target in `project.xcproj`.
+**Always run the `ship` skill first, every time, as step 0** — invoking `/ship-direct` means
+"ship both". `ship` bumps, tags and pushes the version; this skill then builds that same version.
+Never skip it because the current version "looks unshipped": the other machine may already have
+published it, and a published versioned DMG can never be overwritten. Don't bump versions here —
+after `ship` finishes, read `MARKETING_VERSION`/`CURRENT_PROJECT_VERSION` from the
+`screenshot Direct` target in `project.xcproj`, and before archiving confirm
+`$DL_URL/ScreenshotBro-$V-$B.dmg` returns 404.
 
 Shared values:
 - ASC API key: `$HOME/Library/Mobile Documents/com~apple~CloudDocs/Files/AuthKey_4KK2B86XC6_BRO.p8`, key id `4KK2B86XC6`, issuer `69a6de84-a676-47e3-e053-5b8c7c11a4d1`.
