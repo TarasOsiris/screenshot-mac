@@ -329,7 +329,7 @@ struct AppStateLocaleTests {
         state.addLocale(.init(code: "fr", label: "French"))
         state.setActiveLocale("fr")
         state.updateTranslationText(shapeId: shapeId, text: "Bonjour")
-        state.finishTranslationEditIfNeeded()
+        state.edits.translation.finish()
         #expect(!state.activeLocaleOverriddenFields(shapeId: shapeId).isEmpty)
 
         state.resetLocaleOverride(shapeId: shapeId)

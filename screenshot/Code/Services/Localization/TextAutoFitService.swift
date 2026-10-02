@@ -10,17 +10,21 @@ struct TextAutoFitResult: Equatable {
         case growAndShrink = "grow_and_shrink"
     }
 
-    var action: Action
     /// Written into this locale's override only, so the base layout and other locales never move.
     var contribution: TextAutoFitContribution
-    /// Rich text can't take a per-locale font size; set only when no other locale would shrink with it.
-    var enablesShrinkToFit: Bool
     var fontScale: CGFloat
     var stillOverflows: Bool
 
-    static let unchanged = TextAutoFitResult(
-        action: .none, contribution: TextAutoFitContribution(), enablesShrinkToFit: false, fontScale: 1, stillOverflows: false
-    )
+    var action: Action {
+        switch (contribution.addedHeight > 0, fontScale < 1) {
+        case (true, true): .growAndShrink
+        case (true, false): .grow
+        case (false, true): .shrink
+        case (false, false): .none
+        }
+    }
+
+    static let unchanged = TextAutoFitResult(contribution: TextAutoFitContribution(), fontScale: 1, stillOverflows: false)
 }
 
 /// Fits an overflowing translation with the least visible change: a mild shrink, then a taller box
@@ -31,6 +35,7 @@ enum TextAutoFitService {
 
     private enum ShrinkMethod {
         case localeFontSize
+        /// Already on for the shape; auto-fit never turns the shared flag on, since no fit could take it back.
         case shrinkToFit
     }
 
@@ -51,10 +56,7 @@ enum TextAutoFitService {
         let height = input.size.height
         if layout.fits(fontScale: 1, height: height) { return .unchanged }
 
-        let shrink = shrinkMethod(
-            for: shape, resolved: resolved, localeCode: localeCode,
-            localeState: localeState, availableFontFamilies: availableFontFamilies
-        )
+        let shrink = shrinkMethod(for: shape, resolved: resolved, localeCode: localeCode, localeState: localeState)
         if shrink != nil {
             let mild = layout.largestFittingScale(height: height)
             if mild.fits, mild.scale >= preferredMinimumScale {
@@ -64,6 +66,7 @@ enum TextAutoFitService {
 
         var growth: CGFloat = 0
         var offsetY: CGFloat = 0
+        var fitsAtPreferredScale = false
         // Obstacle checks use axis-aligned frames, which a rotated box doesn't have.
         if resolved.rotation == 0 {
             let obstacles = row.activeShapes
@@ -76,6 +79,7 @@ enum TextAutoFitService {
                     fontScale: shrink == nil ? 1 : preferredMinimumScale, minHeight: height, maxHeight: height + maxGrowth
                 )
                 growth = min(maxGrowth, needed.map { ($0 - height).rounded(.up) } ?? maxGrowth)
+                fitsAtPreferredScale = needed != nil
                 offsetY = -upwardShare(of: growth, align: resolved.textVerticalAlign ?? .center, room: room)
             }
         }
@@ -83,7 +87,10 @@ enum TextAutoFitService {
         let grownHeight = height + growth
         let fit = shrink == nil
             ? (scale: 1, fits: layout.fits(fontScale: 1, height: grownHeight))
-            : layout.largestFittingScale(height: grownHeight)
+            : layout.largestFittingScale(
+                height: grownHeight,
+                atLeast: fitsAtPreferredScale ? preferredMinimumScale : TextFitMeasurer.minimumShrinkScale
+            )
         return finish(resolved, growth: growth, offsetY: offsetY, fit: fit, shrink: shrink, families: availableFontFamilies)
     }
 
@@ -96,67 +103,48 @@ enum TextAutoFitService {
         families: Set<String>
     ) -> TextAutoFitResult {
         var contribution = TextAutoFitContribution(offsetY: offsetY, addedHeight: growth)
-        var effectiveScale: CGFloat = 1
-        var enablesShrinkToFit = false
-        var stillOverflows = !fit.fits
-
-        if fit.scale < 1, let shrink {
-            switch shrink {
-            case .shrinkToFit:
-                enablesShrinkToFit = true
-                effectiveScale = fit.scale
-            case .localeFontSize:
-                // A smaller point size isn't exactly a scaled raster (tracking stays put), so verify it.
-                let baseSize = resolved.fontSize ?? CanvasShapeModel.defaultFontSize
-                let floor = (baseSize * TextFitMeasurer.minimumShrinkScale).rounded(.up)
-                var candidate = resolved
-                candidate.height += growth
-                var size = max(floor, (baseSize * fit.scale).rounded(.down))
-                func candidateFits() -> Bool {
-                    candidate.fontSize = size
-                    return TextFitMeasurer.fits(TextFitInput(shape: candidate, availableFontFamilies: families))
-                }
-                var fits = candidateFits()
-                while !fits, size > floor {
-                    size -= 1
-                    fits = candidateFits()
-                }
-                contribution.fontSize = size
-                effectiveScale = size / baseSize
-                stillOverflows = !fits
+        guard fit.scale < 1, let shrink else {
+            return TextAutoFitResult(contribution: contribution, fontScale: 1, stillOverflows: !fit.fits)
+        }
+        switch shrink {
+        case .shrinkToFit:
+            return TextAutoFitResult(contribution: contribution, fontScale: fit.scale, stillOverflows: !fit.fits)
+        case .localeFontSize:
+            // A smaller point size isn't exactly a scaled raster (tracking stays put), so search real sizes.
+            let baseSize = resolved.fontSize ?? CanvasShapeModel.defaultFontSize
+            var candidate = resolved
+            candidate.height += growth
+            func fits(_ size: CGFloat) -> Bool {
+                candidate.fontSize = size
+                return TextFitMeasurer.fits(TextFitInput(shape: candidate, availableFontFamilies: families))
             }
+            var low = (baseSize * TextFitMeasurer.minimumShrinkScale).rounded(.up)
+            var high = max(low, (baseSize * fit.scale).rounded(.down))
+            let lowFits = fits(low)
+            if lowFits {
+                while low < high {
+                    let mid = ((low + high + 1) / 2).rounded(.down)
+                    if fits(mid) { low = mid } else { high = mid - 1 }
+                }
+            }
+            contribution.fontSize = low
+            return TextAutoFitResult(contribution: contribution, fontScale: low / baseSize, stillOverflows: !lowFits)
         }
-
-        let shrank = effectiveScale < 1
-        let action: TextAutoFitResult.Action = switch (growth > 0, shrank) {
-        case (true, true): .growAndShrink
-        case (true, false): .grow
-        case (false, true): .shrink
-        case (false, false): .none
-        }
-        return TextAutoFitResult(
-            action: action, contribution: contribution, enablesShrinkToFit: enablesShrinkToFit,
-            fontScale: effectiveScale, stillOverflows: stillOverflows
-        )
     }
 
     /// A per-locale font size where the text is plain and the locale has no size of its own;
-    /// otherwise Shrink to Fit, but only when it can't shrink any other locale.
+    /// otherwise only a Shrink to Fit the user already turned on.
     private static func shrinkMethod(
         for shape: CanvasShapeModel,
         resolved: CanvasShapeModel,
         localeCode: String,
-        localeState: LocaleState,
-        availableFontFamilies: Set<String>
+        localeState: LocaleState
     ) -> ShrinkMethod? {
         if shape.shrinkToFit == true { return .shrinkToFit }
         if resolved.richText == nil, localeState.override(forCode: localeCode, shapeId: shape.id)?.fontSize == nil {
             return .localeFontSize
         }
-        let othersFit = TextOverflowCheck.overflowingLocaleCodes(
-            of: shape, localeState: localeState, availableFontFamilies: availableFontFamilies
-        ).allSatisfy { $0 == localeCode }
-        return othersFit ? .shrinkToFit : nil
+        return nil
     }
 
     /// Free space above and below `box` before it leaves the canvas or covers a shape it doesn't already overlap.

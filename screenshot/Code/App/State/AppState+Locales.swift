@@ -156,6 +156,7 @@ extension AppState {
         // Text is keyed by the (possibly shared) translation key, so editing one member of a reused
         // string updates them all. Per-shape style fields under the shape's own id are untouched.
         LocaleService.setTextOverride(&localeState, localeCode: code, key: textKey, text: text.isEmpty ? nil : text)
+        takeBackAutoFit(textKey: textKey, localeCode: code)
         scheduleSave()
         edits.translation.arm()
     }
@@ -165,11 +166,6 @@ extension AppState {
         guard code != localeState.baseLocaleCode, localeState.hasLocale(code) else { return nil }
         guard let loc = shapeLocation(for: shapeId) else { return nil }
         return rows[loc.rowIndex].shapes[loc.shapeIndex].textTranslationKey
-    }
-
-    /// Commits a pending translation editing burst as one undo step. No-op when none is captured.
-    func finishTranslationEditIfNeeded() {
-        edits.translation.finish()
     }
 
     func resetLocaleOverride(shapeId: UUID) {
@@ -281,6 +277,7 @@ extension AppState {
         withUndo("Reset Translation") {
             // Clears plain + formatted text, so a rich-text-only translation reverts to base too.
             LocaleService.setTextOverride(&localeState, localeCode: code, key: textKey, text: nil)
+            takeBackAutoFit(textKey: textKey, localeCode: code)
         }
     }
 

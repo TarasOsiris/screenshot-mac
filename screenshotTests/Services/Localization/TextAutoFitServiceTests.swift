@@ -52,7 +52,6 @@ struct TextAutoFitServiceTests {
 
         let result = fit(shape, german: word, in: row([shape]))
         #expect(result.action == .shrink)
-        #expect(!result.enablesShrinkToFit, "plain text shrinks through this locale's font size, never the shared flag")
         #expect(result.contribution.fontSize.map { $0 < 40 } == true)
         #expect(result.fontScale >= TextAutoFitService.preferredMinimumScale)
         #expect(result.contribution.addedHeight == 0)
@@ -119,7 +118,7 @@ struct TextAutoFitServiceTests {
         #expect(result.fontScale == TextFitMeasurer.minimumShrinkScale)
     }
 
-    @Test func richTextShrinksOnlyWhenNoOtherLocaleWould() throws {
+    @Test func richTextNeverShrinksThroughTheSharedFlag() throws {
         let word = "Bildschirmfotos"
         let font = NSFont.systemFont(ofSize: 40, weight: .bold)
         let wordWidth = (word as NSString).size(withAttributes: [.font: font]).width
@@ -130,13 +129,10 @@ struct TextAutoFitServiceTests {
             NSAttributedString(string: word, attributes: [.font: font])
         )
 
-        let alone = TextAutoFitService.fit(shape: shape, localeCode: "de", row: row([shape]), localeState: state, availableFontFamilies: families)
-        #expect(alone.enablesShrinkToFit)
-
-        state.locales.append(.init(code: "fr", label: "French"))
-        state.overrides["fr"] = [shape.textTranslationKey: ShapeLocaleOverride(text: Self.longGerman)]
-        let crowded = TextAutoFitService.fit(shape: shape, localeCode: "de", row: row([shape]), localeState: state, availableFontFamilies: families)
-        #expect(!crowded.enablesShrinkToFit, "French would silently shrink to half size with it")
+        let result = TextAutoFitService.fit(shape: shape, localeCode: "de", row: row([shape]), localeState: state, availableFontFamilies: families)
+        #expect(result.contribution.fontSize == nil)
+        #expect(result.fontScale == 1)
+        #expect(result.action == .grow, "a rich-text box can only grow; shrinking it would shrink every locale")
     }
 
     // MARK: - AppState
@@ -191,6 +187,19 @@ struct TextAutoFitServiceTests {
 
         setGerman(Self.longGerman, on: shape, in: state)
         setGerman("", on: shape, in: state)
+        #expect(state.localeState.override(forCode: "de", shapeId: shape.id) == nil)
+    }
+
+    @Test func editingTheTranslationInTheAppGivesTheSpaceBack() throws {
+        let (state, tempDir, shape, _) = stateWithHeadline()
+        defer { cleanupTestState(tempDir) }
+
+        setGerman(Self.longGerman, on: shape, in: state)
+        state.updateTranslationText(shapeId: shape.id, localeCode: "de", text: "Schnell")
+        #expect(state.localeState.override(forCode: "de", shapeId: shape.id) == nil)
+
+        setGerman(Self.longGerman, on: shape, in: state)
+        state.resetTranslationText(shapeId: shape.id, localeCode: "de")
         #expect(state.localeState.override(forCode: "de", shapeId: shape.id) == nil)
     }
 

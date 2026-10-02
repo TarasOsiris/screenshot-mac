@@ -101,14 +101,9 @@ enum TextFitMeasurer {
     private static func fit(_ input: TextFitInput, cachesResult: Bool) -> (scale: CGFloat, fits: Bool) {
         let key = input.cacheKey as NSString
         if let cached = fitCache.object(forKey: key) { return cached.value }
-        let result = searchFitScale(input)
+        let result = TextFitLayout(input).largestFittingScale(height: input.size.height)
         if cachesResult { fitCache.setObject(FitResult(result), forKey: key) }
         return result
-    }
-
-    /// One attributed string and one TextKit stack for the whole search; each step only rescales.
-    private static func searchFitScale(_ input: TextFitInput) -> (scale: CGFloat, fits: Bool) {
-        TextFitLayout(input).largestFittingScale(height: input.size.height)
     }
 
     private final class FitResult {
@@ -145,7 +140,8 @@ final class TextFitLayout {
     }
 
     func fits(fontScale: CGFloat, height: CGFloat) -> Bool {
-        stack.container.size.height = height
+        // Resizing the container invalidates layout even when the size is unchanged.
+        if stack.container.size.height != height { stack.container.size.height = height }
         guard stack.container.size.width > 0, height > 0, base.length > 0 else { return true }
         if laidOutScale != fontScale {
             stack.storage.setAttributedString(fontScale == 1 ? base : RichTextUtils.scaled(base, by: fontScale))
@@ -155,10 +151,9 @@ final class TextFitLayout {
         return NSMaxRange(stack.layoutManager.glyphRange(for: stack.container)) >= stack.layoutManager.numberOfGlyphs
     }
 
-    /// The largest scale in `minimumShrinkScale...1` that fits, or the minimum when even that overflows.
-    func largestFittingScale(height: CGFloat) -> (scale: CGFloat, fits: Bool) {
+    /// The largest scale in `floor...1` that fits, or `floor` when even that overflows.
+    func largestFittingScale(height: CGFloat, atLeast floor: CGFloat = TextFitMeasurer.minimumShrinkScale) -> (scale: CGFloat, fits: Bool) {
         if fits(fontScale: 1, height: height) { return (1, true) }
-        let floor = TextFitMeasurer.minimumShrinkScale
         guard fits(fontScale: floor, height: height) else { return (floor, false) }
         var low = floor
         var high: CGFloat = 1

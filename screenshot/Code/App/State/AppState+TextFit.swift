@@ -24,30 +24,32 @@ extension AppState {
                 &localeState, localeCode: localeCode, key: textKey,
                 text: value, richText: value == nil ? nil : richText, clearsRichText: nil
             )
-            if autoFits { results = refitTranslatedText(textKey: textKey, localeCode: localeCode) }
+            takeBackAutoFit(textKey: textKey, localeCode: localeCode)
+            if autoFits { results = fitTranslatedText(textKey: textKey, localeCode: localeCode) }
         }
         return results
     }
 
-    /// Takes back each box's earlier fit for this translation, then fits it again.
-    private func refitTranslatedText(textKey: String, localeCode: String) -> [UUID: TextAutoFitResult] {
-        let hasTranslation = localeState.overrides[localeCode]?[textKey]?.hasTranslatedTextField == true
-        var results: [UUID: TextAutoFitResult] = [:]
-        for rowIndex in rows.indices {
-            for shapeIndex in rows[rowIndex].shapes.indices {
-                let shape = rows[rowIndex].shapes[shapeIndex]
-                guard shape.type == .text, shape.textTranslationKey == textKey else { continue }
-                let override = (localeState.override(forCode: localeCode, shapeId: shape.id) ?? ShapeLocaleOverride()).removingAutoFit()
-                writeShapeOverride(override, shapeId: shape.id, localeCode: localeCode)
-                // A cleared translation shows the base text, which is the base layout's business.
-                guard hasTranslation else { continue }
+    /// Every write to a translation's text calls this, so an earlier fit never outlives the text it was made for.
+    func takeBackAutoFit(textKey: String, localeCode: String) {
+        for shape in rows.flatMap(\.shapes) where shape.textTranslationKey == textKey {
+            guard let override = localeState.override(forCode: localeCode, shapeId: shape.id), override.autoFit != nil else { continue }
+            writeShapeOverride(override.removingAutoFit(), shapeId: shape.id, localeCode: localeCode)
+        }
+    }
 
+    private func fitTranslatedText(textKey: String, localeCode: String) -> [UUID: TextAutoFitResult] {
+        // A cleared translation shows the base text, which is the base layout's business.
+        guard localeState.overrides[localeCode]?[textKey]?.hasTranslatedTextField == true else { return [:] }
+        var results: [UUID: TextAutoFitResult] = [:]
+        for row in rows {
+            for shape in row.shapes where shape.type == .text && shape.textTranslationKey == textKey {
                 let result = TextAutoFitService.fit(
-                    shape: shape, localeCode: localeCode, row: rows[rowIndex],
+                    shape: shape, localeCode: localeCode, row: row,
                     localeState: localeState, availableFontFamilies: availableFontFamilySet
                 )
                 results[shape.id] = result
-                if result.enablesShrinkToFit { rows[rowIndex].shapes[shapeIndex].shrinkToFit = true }
+                let override = localeState.override(forCode: localeCode, shapeId: shape.id) ?? ShapeLocaleOverride()
                 writeShapeOverride(override.addingAutoFit(result.contribution), shapeId: shape.id, localeCode: localeCode)
             }
         }
