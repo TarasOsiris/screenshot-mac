@@ -115,7 +115,7 @@ struct BackgroundImageView: View {
         let swiftImage = Image(nsImage: image)
         switch config.fillMode {
         case .fill:
-            // A max-only flexible frame grows to its oversized child, so clipping it clipped nothing.
+            // A max-only `.frame` adopts the oversized child, which would make `.clipped()` a no-op.
             Color.clear
                 .overlay { swiftImage.resizable().aspectRatio(contentMode: .fill) }
                 .clipped()

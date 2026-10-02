@@ -265,7 +265,6 @@ struct RowCanvasBaseBackgroundView: View {
                         if !(template.overrideBackground && template.backgroundFullyCovers) {
                             row.resolvedBackgroundView(screenshotImages: screenshotImages, modelSize: templateModelSize)
                                 .frame(width: displayTemplateWidth, height: displayTemplateHeight)
-                                .clipped()
                                 .offset(x: CGFloat(index) * displayTemplateWidth, y: 0)
                         }
                     }
@@ -309,7 +308,6 @@ struct RowCanvasOverrideBackgroundView: View {
                     } else {
                         template.resolvedBackgroundView(screenshotImages: screenshotImages, modelSize: templateModelSize)
                             .frame(width: displayTemplateWidth, height: displayTemplateHeight)
-                            .clipped()
                     }
                 } else {
                     Color.clear.frame(width: displayTemplateWidth, height: displayTemplateHeight)

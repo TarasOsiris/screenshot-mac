@@ -64,11 +64,7 @@ struct RowBackgroundOverrideBleedTests {
         row.templates[1].backgroundStyle = .image
         row.templates[1].backgroundImageConfig = BackgroundImageConfig(fileName: "wide.png", fillMode: .fill)
 
-        let wide = NSImage(size: NSSize(width: 4000, height: 100))
-        wide.lockFocus()
-        NSColor.blue.setFill()
-        NSRect(x: 0, y: 0, width: 4000, height: 100).fill()
-        wide.unlockFocus()
+        let wide = makeSolidImage(.blue, width: 4000, height: 100)
 
         let scale: CGFloat = 0.1
         let slotWidth = row.templateWidth * scale
