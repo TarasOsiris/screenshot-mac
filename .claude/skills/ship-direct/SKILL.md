@@ -16,8 +16,10 @@ bundle id, iCloud container and version numbers with the App Store build.
 Never skip it because the current version "looks unshipped": the other machine may already have
 published it, and a published versioned DMG can never be overwritten. Don't bump versions here —
 after `ship` finishes, read `MARKETING_VERSION`/`CURRENT_PROJECT_VERSION` from the
-`screenshot Direct` target in `project.xcproj`, and before archiving confirm
-`$DL_URL/ScreenshotBro-$V-$B.dmg` returns 404.
+`screenshot Direct` target in `project.xcproj`, and before archiving confirm the file isn't on
+the server with `ssh -p "$DL_PORT" "$DL_HOST" "test ! -e '$DL_DIR/ScreenshotBro-$V-$B.dmg'"`.
+**Never `curl` a versioned URL before step 7b**: Cloudflare caches the 404 under the immutable
+one-year header, and that edge then serves 404 after the upload (4.19 (154) hit this).
 
 Shared values:
 - ASC API key: `$HOME/Library/Mobile Documents/com~apple~CloudDocs/Files/AuthKey_4KK2B86XC6_BRO.p8`, key id `4KK2B86XC6`, issuer `69a6de84-a676-47e3-e053-5b8c7c11a4d1`.
