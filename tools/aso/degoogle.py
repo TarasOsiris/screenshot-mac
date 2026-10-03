@@ -21,13 +21,12 @@ Google Play.
 Re-running is a no-op: the fragments are gone, so nothing matches. It is kept as
 the record of exactly which words left the listing.
 """
-import json
 import os
-import subprocess
 import sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
+from apply import asc
 
 APP_ID = "6760177675"
 LIMIT = 4000
@@ -526,14 +525,6 @@ def scrub(locale, text):
     if "\n\n\n" in text or text.rstrip() != text:
         problems.append("deletion left a blank line or trailing space")
     return text, problems
-
-
-def asc(*args):
-    p = subprocess.run(["asc", *args], capture_output=True, text=True)
-    out = (p.stdout or "").strip()
-    if p.returncode != 0:
-        raise SystemExit(f"asc {' '.join(args)} failed:\n{out}\n{p.stderr.strip()}")
-    return json.loads(out) if out else {}
 
 
 def localizations(version_id):
