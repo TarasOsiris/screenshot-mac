@@ -83,7 +83,7 @@ Baseline: **0 errors**, ~16 app warnings + ~300 test warnings (nearly all `force
 keep errors at zero.
 
 The one custom rule, `inherited_executor_async`, is an **error**: it catches a bare
-`nonisolated async func`, which under this target's `SWIFT_APPROACHABLE_CONCURRENCY` inherits the
+`nonisolated async func` (signatures split across lines included), which under this target's `SWIFT_APPROACHABLE_CONCURRENCY` inherits the
 caller's executor instead of offloading — the shape that shipped as a multi-second hang in
 4.0 (108). Two legitimate exceptions exist (a body that is itself a `Task.detached`; a function
 that must read a non-Sendable value on the caller's actor before delegating to an `@concurrent`

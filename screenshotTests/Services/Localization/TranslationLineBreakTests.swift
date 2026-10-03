@@ -15,9 +15,11 @@ struct TranslationLineBreakTests {
         "Padded  \n  line",
         "Windows\r\nbreak",
         "Blank\n\nline between",
+        "Whitespace-only\n  \nline between",
         "Trailing break\n",
         "\nLeading break",
         "Three\nshort\nlines",
+        "Icon font \u{E000} and \u{E001}\nglyphs survive",
     ])
     func identityTranslationRestoresTheOriginalExactly(_ text: String) async throws {
         let result = try await translatePreservingLineBreaks(text) { $0 }
@@ -32,6 +34,18 @@ struct TranslationLineBreakTests {
         }
         #expect(sent == ["Hello  world "])
         #expect(result == "Hello  world ")
+    }
+
+    /// Past the Private Use Area's 6400 sentinels there is nothing safe to swap in.
+    @Test func moreBreaksThanSentinelsIsSentUntouched() async throws {
+        let text = String(repeating: "a\n", count: 6401)
+        var sent: [String] = []
+        let result = try await translatePreservingLineBreaks(text) { request in
+            sent.append(request)
+            return request
+        }
+        #expect(sent == [text])
+        #expect(result == text)
     }
 
     @Test func multilineTextIsTranslatedInOneRequest() async throws {
@@ -54,12 +68,25 @@ struct TranslationLineBreakTests {
         #expect(result == "one\ntwo")
     }
 
-    @Test func droppedSentinelNeverLeaksIntoTheResult() async throws {
-        let result = try await translatePreservingLineBreaks("one\ntwo") { text in
-            String(String.UnicodeScalarView(text.unicodeScalars.filter { !Self.privateUseArea.contains($0.value) }))
+    @Test func droppedSentinelLeavesTheOtherBreaksRestored() async throws {
+        let result = try await translatePreservingLineBreaks("one\ntwo\nthree") { text in
+            var droppedFirst = false
+            return String(String.UnicodeScalarView(text.unicodeScalars.filter { scalar in
+                guard !droppedFirst, Self.privateUseArea.contains(scalar.value) else { return true }
+                droppedFirst = true
+                return false
+            }))
         }
         #expect(!containsSentinel(result))
+        #expect(result.hasSuffix("two\nthree"))
         #expect(result.contains("one"))
-        #expect(result.contains("two"))
+    }
+
+    @Test func duplicatedSentinelNeverLeaksIntoTheResult() async throws {
+        let result = try await translatePreservingLineBreaks("one\ntwo") { text in
+            text + text
+        }
+        #expect(!containsSentinel(result))
+        #expect(result.hasPrefix("one\ntwo"))
     }
 }
