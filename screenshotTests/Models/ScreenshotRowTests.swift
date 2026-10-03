@@ -554,4 +554,34 @@ struct ScreenshotRowTests {
         #expect(decoded.tileScaleY == 0.8)
     }
 
+    // MARK: - Default row factory
+
+    @Test func makeDefaultAppliesSettingsDefaults() {
+        let defaults = NewRowDefaults(size: (1290, 2796), templateCount: 3, deviceCategory: .iphone, deviceFrameId: nil)
+        let row = ScreenshotRow.makeDefault(defaults: defaults)
+        #expect(row.templateWidth == 1290)
+        #expect(row.templateHeight == 2796)
+        #expect(row.templates.count == 3)
+        #expect(row.shapes.count == 3)
+        #expect(row.shapes.allSatisfy { $0.type == .device })
+        #expect(!row.isLabelManuallySet)
+    }
+
+    @Test func makeDefaultExplicitArgumentsWinOverDefaults() {
+        let defaults = NewRowDefaults(size: (1290, 2796), templateCount: 3, deviceCategory: .iphone, deviceFrameId: nil)
+        let row = ScreenshotRow.makeDefault(label: "Hero", width: 2048, height: 2732, templateCount: 1, defaults: defaults)
+        #expect(row.templateWidth == 2048)
+        #expect(row.templateHeight == 2732)
+        #expect(row.templates.count == 1)
+        #expect(row.label == "Hero")
+        #expect(row.isLabelManuallySet)
+    }
+
+    @Test func makeDefaultWithoutDeviceCategoryHasNoShapes() {
+        let defaults = NewRowDefaults(size: nil, templateCount: 2, deviceCategory: nil, deviceFrameId: nil)
+        let row = ScreenshotRow.makeDefault(defaults: defaults)
+        #expect(row.templateWidth == 1242)
+        #expect(row.templateHeight == 2688)
+        #expect(row.shapes.isEmpty)
+    }
 }

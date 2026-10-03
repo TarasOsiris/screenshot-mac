@@ -47,7 +47,7 @@ extension AppState {
                 row.shapes[i].x += columnWidth
             }
         }
-        let color = Self.templateColors[row.templates.count % Self.templateColors.count]
+        let color = ScreenshotRow.templateColors[row.templates.count % ScreenshotRow.templateColors.count]
         row.templates.insert(ScreenshotTemplate(backgroundColor: color), at: insertIndex)
         if let defaultCategory = row.defaultDeviceCategory {
             var device = CanvasShapeModel.defaultDevice(

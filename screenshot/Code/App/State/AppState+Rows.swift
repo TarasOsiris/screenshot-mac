@@ -31,6 +31,59 @@ extension AppState {
     }
 
     /// A default row for `variantId`, or for the Original when the variant already holds that size.
+    func makeDefaultRow(
+        id: UUID = UUID(),
+        label: String? = nil,
+        width: CGFloat? = nil,
+        height: CGFloat? = nil,
+        variantId: UUID? = nil
+    ) -> ScreenshotRow {
+        var row = makeDefaultRow(
+            id: id,
+            label: label,
+            width: width,
+            height: height,
+            templateCount: nil,
+            defaultDeviceCategory: nil,
+            defaultDeviceFrameId: nil
+        )
+        row.variantId = variantId
+        return row
+    }
+
+    func makeDefaultRow(
+        id: UUID = UUID(),
+        label: String? = nil,
+        width: CGFloat? = nil,
+        height: CGFloat? = nil,
+        templateCount: Int?,
+        defaultDeviceCategory: DeviceCategory?,
+        defaultDeviceFrameId: String?
+    ) -> ScreenshotRow {
+        ScreenshotRow.makeDefault(
+            id: id,
+            label: label,
+            width: width,
+            height: height,
+            templateCount: templateCount,
+            deviceCategory: defaultDeviceCategory,
+            deviceFrameId: defaultDeviceFrameId,
+            defaults: Self.storedNewRowDefaults()
+        )
+    }
+
+    private static func storedNewRowDefaults(_ store: UserDefaults = .standard) -> NewRowDefaults {
+        let size = store.string(forKey: AppSettingsKeys.defaultScreenshotSize) ?? AppSettingsKeys.Default.defaultScreenshotSize
+        let storedTemplateCount = store.integer(forKey: AppSettingsKeys.defaultTemplateCount)
+        let category = store.string(forKey: AppSettingsKeys.defaultDeviceCategory) ?? AppSettingsKeys.Default.defaultDeviceCategory
+        return NewRowDefaults(
+            size: parseSizeString(size),
+            templateCount: storedTemplateCount > 0 ? storedTemplateCount : AppSettingsKeys.Default.defaultTemplateCount,
+            deviceCategory: DeviceCategory(rawValue: category),
+            deviceFrameId: store.string(forKey: AppSettingsKeys.defaultDeviceFrameId).flatMap { $0.isEmpty ? nil : $0 }
+        )
+    }
+
     private func newRow(inVariant variantId: UUID?) -> ScreenshotRow {
         var row = makeDefaultRow(variantId: variantId)
         if rowOccupyingSlot(of: row, in: variantId) != nil { row.variantId = nil }

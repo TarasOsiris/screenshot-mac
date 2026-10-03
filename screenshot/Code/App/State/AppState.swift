@@ -7,7 +7,6 @@ import UIKit
 @Observable
 final class AppState {
     static let maxProjectNameLength = 100
-    static let templateColors: [Color] = [.blue, .purple, .orange, .green, .pink, .teal]
 
     var projects: [Project] = []
     var activeProjectId: UUID?
@@ -312,83 +311,5 @@ final class AppState {
             delete: { [weak self] in self?.deleteSelectedShape() },
             endCrop: { [weak self] in self?.endImageCrop() ?? false }
         ))
-    }
-
-    // Undo/redo lives in AppState+Undo.swift; this flag is a stored property, which an
-    // extension can't declare, and is internal so that file can read it.
-
-    func makeDefaultRow(
-        id: UUID = UUID(),
-        label: String? = nil,
-        width: CGFloat? = nil,
-        height: CGFloat? = nil,
-        variantId: UUID? = nil
-    ) -> ScreenshotRow {
-        var row = makeDefaultRow(
-            id: id,
-            label: label,
-            width: width,
-            height: height,
-            templateCount: nil,
-            defaultDeviceCategory: nil,
-            defaultDeviceFrameId: nil
-        )
-        row.variantId = variantId
-        return row
-    }
-
-    func makeDefaultRow(
-        id: UUID = UUID(),
-        label: String? = nil,
-        width: CGFloat? = nil,
-        height: CGFloat? = nil,
-        templateCount: Int?,
-        defaultDeviceCategory: DeviceCategory?,
-        defaultDeviceFrameId: String?
-    ) -> ScreenshotRow {
-        let defaultSize = UserDefaults.standard.string(forKey: AppSettingsKeys.defaultScreenshotSize) ?? AppSettingsKeys.Default.defaultScreenshotSize
-        let parsedSize = parseSizeString(defaultSize)
-        let w: CGFloat = width ?? parsedSize?.width ?? 1242
-        let h: CGFloat = height ?? parsedSize?.height ?? 2688
-        let storedTemplateCount = UserDefaults.standard.integer(forKey: AppSettingsKeys.defaultTemplateCount)
-        let resolvedTemplateCount = templateCount ?? (storedTemplateCount > 0 ? storedTemplateCount : AppSettingsKeys.Default.defaultTemplateCount)
-        let templates = (0..<resolvedTemplateCount).map { index in
-            ScreenshotTemplate(backgroundColor: Self.templateColors[index % Self.templateColors.count])
-        }
-        let deviceCategoryRaw = UserDefaults.standard.string(forKey: AppSettingsKeys.defaultDeviceCategory) ?? AppSettingsKeys.Default.defaultDeviceCategory
-        let resolvedDeviceCategory = defaultDeviceCategory ?? DeviceCategory(rawValue: deviceCategoryRaw)
-        let storedDeviceFrameId = UserDefaults.standard.string(forKey: AppSettingsKeys.defaultDeviceFrameId).flatMap { $0.isEmpty ? nil : $0 }
-        let resolvedDeviceFrame = defaultDeviceFrameId ?? storedDeviceFrameId
-        let resolvedFrame = resolvedDeviceFrame.flatMap { DeviceFrameCatalog.frame(for: $0) }
-
-        var shapes: [CanvasShapeModel] = []
-        if let resolvedDeviceCategory {
-            shapes = (0..<resolvedTemplateCount).map { index in
-                var device = CanvasShapeModel.defaultDevice(
-                    centerX: CGFloat(index) * w + w / 2,
-                    centerY: h / 2,
-                    templateHeight: h,
-                    category: resolvedDeviceCategory
-                )
-                if let resolvedFrame {
-                    device.deviceCategory = resolvedFrame.fallbackCategory
-                    device.deviceFrameId = resolvedFrame.id
-                    device.adjustToDeviceAspectRatio(centerX: CGFloat(index) * w + w / 2)
-                }
-                return device
-            }
-        }
-        let resolvedLabel = label ?? presetLabel(forWidth: w, height: h)
-        return ScreenshotRow(
-            id: id,
-            label: resolvedLabel,
-            templates: templates,
-            templateWidth: w,
-            templateHeight: h,
-            defaultDeviceCategory: resolvedDeviceCategory,
-            defaultDeviceFrameId: resolvedDeviceFrame,
-            shapes: shapes,
-            isLabelManuallySet: label != nil
-        )
     }
 }

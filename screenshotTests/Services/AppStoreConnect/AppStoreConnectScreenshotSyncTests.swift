@@ -87,7 +87,7 @@ struct AppStoreConnectScreenshotSyncTests {
             (id: "shot-b", checksum: "pending:shot-b")
         ]
 
-        #expect(!AppStoreConnectScreenshotSyncService.matchesFinalOrder(
+        #expect(!ASCScreenshotSetWriter.matchesFinalOrder(
             actual: actual,
             expectedIds: ["shot-a", "shot-b"],
             expectedChecksums: ["abc", "def"]
@@ -249,17 +249,17 @@ struct AppStoreConnectScreenshotSyncTests {
             (id: "shot-b", checksum: "def")
         ]
 
-        #expect(AppStoreConnectScreenshotSyncService.matchesFinalOrder(
+        #expect(ASCScreenshotSetWriter.matchesFinalOrder(
             actual: actual,
             expectedIds: ["shot-a", "shot-b"],
             expectedChecksums: ["abc", "DEF"]
         ))
-        #expect(!AppStoreConnectScreenshotSyncService.matchesFinalOrder(
+        #expect(!ASCScreenshotSetWriter.matchesFinalOrder(
             actual: actual,
             expectedIds: ["shot-b", "shot-a"],
             expectedChecksums: ["def", "abc"]
         ))
-        #expect(!AppStoreConnectScreenshotSyncService.matchesFinalOrder(
+        #expect(!ASCScreenshotSetWriter.matchesFinalOrder(
             actual: actual,
             expectedIds: ["shot-a", "shot-b"],
             expectedChecksums: ["abc", "different"]
@@ -352,7 +352,7 @@ struct ASCOrphanedReservationTests {
     }
 
     @Test func sweepsAnIncompleteReservationForTheSameFileName() {
-        let ids = AppStoreConnectScreenshotSyncService.orphanedReservationIds(
+        let ids = ASCScreenshotSetWriter.orphanedReservationIds(
             in: [screenshot("orphan", fileName: "01.png", state: "UPLOAD_COMPLETE")],
             fileName: "01.png",
             protectedRemoteIds: []
@@ -363,7 +363,7 @@ struct ASCOrphanedReservationTests {
     /// A delivered screenshot is real content, not a leftover — deleting it would destroy the
     /// user's existing App Store listing.
     @Test func neverSweepsACompletedScreenshot() {
-        let ids = AppStoreConnectScreenshotSyncService.orphanedReservationIds(
+        let ids = ASCScreenshotSetWriter.orphanedReservationIds(
             in: [screenshot("live", fileName: "01.png", state: "COMPLETE")],
             fileName: "01.png",
             protectedRemoteIds: []
@@ -372,7 +372,7 @@ struct ASCOrphanedReservationTests {
     }
 
     @Test func completeStateIsMatchedCaseInsensitively() {
-        let ids = AppStoreConnectScreenshotSyncService.orphanedReservationIds(
+        let ids = ASCScreenshotSetWriter.orphanedReservationIds(
             in: [screenshot("live", fileName: "01.png", state: "complete")],
             fileName: "01.png",
             protectedRemoteIds: []
@@ -383,7 +383,7 @@ struct ASCOrphanedReservationTests {
     /// Anything the plan is keeping or has already uploaded this run is off limits, even if
     /// App Store Connect has not finished delivering it yet.
     @Test func neverSweepsAProtectedId() {
-        let ids = AppStoreConnectScreenshotSyncService.orphanedReservationIds(
+        let ids = ASCScreenshotSetWriter.orphanedReservationIds(
             in: [screenshot("kept", fileName: "01.png", state: nil)],
             fileName: "01.png",
             protectedRemoteIds: ["kept"]
@@ -392,7 +392,7 @@ struct ASCOrphanedReservationTests {
     }
 
     @Test func ignoresOtherFileNames() {
-        let ids = AppStoreConnectScreenshotSyncService.orphanedReservationIds(
+        let ids = ASCScreenshotSetWriter.orphanedReservationIds(
             in: [screenshot("other", fileName: "02.png", state: nil)],
             fileName: "01.png",
             protectedRemoteIds: []
@@ -401,7 +401,7 @@ struct ASCOrphanedReservationTests {
     }
 
     @Test func picksOnlyTheOrphansOutOfAMixedSet() {
-        let ids = AppStoreConnectScreenshotSyncService.orphanedReservationIds(
+        let ids = ASCScreenshotSetWriter.orphanedReservationIds(
             in: [
                 screenshot("live", fileName: "01.png", state: "COMPLETE"),
                 screenshot("kept", fileName: "01.png", state: nil),

@@ -2,62 +2,6 @@ import ImageIO
 import SwiftUI
 import UniformTypeIdentifiers
 
-enum ImageResourceIO {
-    static let defaultWriteData: (Data, URL) throws -> Void = { data, url in
-        try data.write(to: url, options: .atomic)
-    }
-    static var writeData: (Data, URL) throws -> Void = defaultWriteData
-}
-
-/// One image handed to a batch import. `sourceURL` is present only when the caller read the image
-/// off disk (the MCP `import_screenshots` tool), which is what lets the writer copy an
-/// already-PNG file verbatim; drag-and-drop yields an `NSImage` with no durable originating file.
-struct ImageImportSource {
-    let image: NSImage
-    var sourceURL: URL?
-}
-
-/// How a screenshot reached the document, as the `source` dimension on `screenshots_imported`.
-/// Raw values are our own vocabulary, never user content. Getting an image in is the defining
-/// action of the app, and until 4.9 only the row-level batch drop reported it — so 859 exported
-/// images produced one import event.
-enum ImageImportOrigin: String, CaseIterable {
-    /// Multiple files dropped on a row, fanned out across its templates.
-    case dropRow = "drop_row"
-    /// A single image dropped on empty canvas, becoming a new image shape.
-    case dropCanvas = "drop_canvas"
-    /// A single image dropped onto an existing device or image shape.
-    case dropShape = "drop_shape"
-    /// Photos / Camera / Files on iOS, and the double-tap or context-menu picker.
-    case picker
-    /// The macOS open panel.
-    case panel
-    /// Pasted from the system pasteboard.
-    case paste
-    case mcp
-    /// A folder whose subfolders or file names say which locale each screenshot belongs to.
-    case folder
-    /// DEBUG-only simulator capture. Analytics is off in DEBUG, so this never ships —
-    /// it exists so the path is labelled rather than silently inheriting the default.
-    case simulator
-}
-
-/// Which locale variant an import writes into.
-///
-/// `.active` is what the editor wants: the locale the switcher is on. Anything driving the app
-/// from outside — MCP above all — needs to say so explicitly instead, because the active locale
-/// is invisible to it. Importing eight Spanish screenshots while the switcher happened to sit on
-/// German filed them all as `de-DE`, reported `imported: 8`, and left `es-ES` falling back to the
-/// base English images with nothing anywhere reporting a problem.
-enum ImageImportLocale {
-    /// Whatever the locale switcher is on. The editor's behaviour.
-    case active
-    /// The base image every locale falls back to.
-    case base
-    /// One named locale, regardless of what the UI is showing.
-    case locale(String)
-}
-
 /// A resource the batch import has already pointed the document at but not yet written to disk.
 /// The write happens after the undo step commits, off the main actor — a 20-image import used to
 /// block the main thread for 1.5-3.1 s and trip the app-hang watchdog (SCREENSHOT-BRO-W).
@@ -291,107 +235,6 @@ extension AppState {
         case .base: return nil
         case .locale(let code): return code == localeState.baseLocaleCode ? nil : code
         }
-    }
-
-    /// How many decoded images to publish at a time. Every merge invalidates each canvas view
-    /// that reads `screenshotImages`, so this is not per-image; it's small enough that a large
-    /// project fills in visibly from the top instead of appearing all at once at the end.
-    private static let imagePublishBatchSize = 4
-
-    func loadScreenshotImages() {
-        guard let activeId = activeProjectId else {
-            projectOpen.finishImages()
-            return
-        }
-        let resourcesURL = PersistenceService.resourcesDir(activeId)
-
-        imageStore.cancelLoad()
-
-        let toLoad = imageStore.retain(only: editorReferencedImageFileNames())
-        guard !toLoad.isEmpty else {
-            projectOpen.finishImages()
-            return
-        }
-        projectOpen.beginImages(total: toLoad.count)
-        imageStore.isLoading = true
-
-        // Load downsampled images on a background thread, then publish in batches on main.
-        // Full-resolution images are loaded from disk on-demand in export paths.
-        let maxDim = ImageDownsampler.editorImageMaxDimension
-        let batchSize = Self.imagePublishBatchSize
-        imageStore.loadTask = Task.detached { [weak self] in
-            var batch: [String: NSImage] = [:]
-            var unloadable = UnloadableResources()
-            var completed = 0
-
-            for fileName in toLoad {
-                if Task.isCancelled { return }
-                let url = resourcesURL.appendingPathComponent(fileName)
-                autoreleasepool {
-                    if let image = ImageDownsampler.downsampledImage(at: url, maxDimension: maxDim)
-                        ?? NSImage(contentsOf: url) {
-                        batch[fileName] = image
-                    } else {
-                        unloadable.record(fileName, at: url)
-                    }
-                }
-                completed += 1
-                if batch.count >= batchSize || completed == toLoad.count {
-                    let published = batch
-                    batch = [:]
-                    await self?.publishLoadedImages(published, completed: completed, for: activeId)
-                }
-            }
-            guard !Task.isCancelled else { return }
-            await self?.finishImageLoading(unloadable, in: resourcesURL, for: activeId)
-        }
-    }
-
-    /// Both main-actor tails of the decode loop guard on the same thing: a switch may have landed
-    /// while we were decoding, and the incoming project must not inherit these images.
-    private func publishLoadedImages(_ images: [String: NSImage], completed: Int, for projectId: UUID) {
-        guard activeProjectId == projectId else { return }
-        imageStore.publish(images)
-        projectOpen.advanceImages(to: completed)
-    }
-
-    private func finishImageLoading(_ unloadable: UnloadableResources, in resourcesURL: URL, for projectId: UUID) {
-        guard activeProjectId == projectId else { return }
-        imageStore.isLoading = false
-        projectOpen.finishImages()
-        if !unloadable.isEmpty {
-            requestDownload(of: unloadable.missing.union(unloadable.pending), in: resourcesURL)
-            imageStore.record(unloadable)
-        }
-        guard imageStore.needsReload else { return }
-        imageStore.needsReload = false
-        reloadUnresolvedScreenshotImages()
-    }
-
-    /// Re-reads what the last pass couldn't, once resources under the project change. Anything
-    /// unresolved is absent from `screenshotImages`, so the ordinary load re-attempts exactly those
-    /// names — and with nothing unresolved there is nothing to re-read, the common case.
-    ///
-    /// Missing counts as unresolved, not just pending: a peer's `project.json` is one small file
-    /// and arrives before the file provider has placeholders for the resources it names, so those
-    /// names stat as absent rather than not-downloaded. Gating the retry on `pending` alone left
-    /// exactly the case this is for — a project opened mid-sync — stuck on the missing badge.
-    func reloadUnresolvedScreenshotImages() {
-        guard imageStore.hasUnresolved else { return }
-        guard !imageStore.isLoading else {
-            imageStore.needsReload = true
-            return
-        }
-        loadScreenshotImages()
-    }
-
-    /// The container-wide prefetch pass is opportunistic, unordered and 24 URLs at a time, so the
-    /// project actually on screen asks for its own resources by name. Absent names are asked for
-    /// too: the file provider answers for an item it knows and errors harmlessly for one it
-    /// doesn't, and we cannot tell those apart from here.
-    private func requestDownload(of fileNames: Set<String>, in resourcesURL: URL) {
-        guard !fileNames.isEmpty else { return }
-        iCloudMonitor?.requestDownload(fileNames.map { resourcesURL.appendingPathComponent($0) })
     }
 
     func addImageShape(image: NSImage, centerX: CGFloat, centerY: CGFloat, source: ImageImportOrigin) {
@@ -713,7 +556,6 @@ extension AppState {
 
         return best?.index
     }
-
 }
 
 /// The document half of an import, waiting for its files to be written.
