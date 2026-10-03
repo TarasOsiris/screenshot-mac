@@ -78,8 +78,7 @@ struct TemplateControlBar: View {
     /// working row until the throttle writes it back, so reading `template` directly here would
     /// show (and re-submit) a value the user has already changed.
     private var liveTemplate: ScreenshotTemplate {
-        if state.continuousRowEditId == row.id,
-           let workingRow = state.edits.continuousRowEditWorkingRow,
+        if let workingRow = state.continuousEditWorkingRow(for: row.id),
            index < workingRow.templates.count {
             return workingRow.templates[index]
         }

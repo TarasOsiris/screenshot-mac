@@ -1,7 +1,6 @@
 #if os(macOS)
 import Foundation
 import MCP
-import SwiftUI
 
 enum MCPToolError: Error, LocalizedError {
     case unknownTool(String)

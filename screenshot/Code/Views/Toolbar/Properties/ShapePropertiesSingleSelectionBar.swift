@@ -108,12 +108,12 @@ struct ShapePropertiesSingleSelectionBar: View, ShapeEditing {
 
                 #if os(macOS)
                 ActionButton(icon: "xmark", tooltip: "Deselect shape (Esc)", frameSize: UIMetrics.IconButton.frameSize) {
-                    state.selectedShapeIds = []
+                    state.deselectShapes()
                 }
                 .padding(.trailing, 8)
                 #else
                 ActionButton(icon: "xmark", tooltip: "Deselect shape", frameSize: UIMetrics.IconButton.frameSize) {
-                    state.selectedShapeIds = []
+                    state.deselectShapes()
                 }
                 .padding(.trailing, 8)
                 #endif

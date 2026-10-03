@@ -400,3 +400,8 @@ enum UIMetrics {
         #endif
     }
 }
+
+extension Color {
+    /// Accent color used for non-base locale UI (banner, window border).
+    static let localeWarning = Color.orange
+}

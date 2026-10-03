@@ -1,9 +1,4 @@
 import SwiftUI
-#if os(macOS)
-import AppKit
-#else
-import UIKit
-#endif
 
 nonisolated struct CodableColor: Codable, Equatable {
     var red: Double
@@ -85,43 +80,5 @@ nonisolated struct CodableColor: Codable, Equatable {
 
     var color: Color {
         Color(red: red, green: green, blue: blue, opacity: opacity)
-    }
-}
-
-nonisolated extension NSImage {
-    /// Load an image from a security-scoped URL (e.g., from file importers). Call only from off the
-    /// main actor — on it, use `fromSecurityScopedURLOffMain`.
-    static func fromSecurityScopedURL(_ url: URL) -> NSImage? {
-        let didAccess = url.startAccessingSecurityScopedResource()
-        defer { if didAccess { url.stopAccessingSecurityScopedResource() } }
-        return NSImage(contentsOf: url)
-    }
-
-    /// The same, for main-actor callers: only the file read leaves the main actor.
-    @MainActor static func fromSecurityScopedURLOffMain(_ url: URL) async -> NSImage? {
-        guard let data = await Data.fromSecurityScopedURLOffMain(url) else { return nil }
-        return NSImage(data: data)
-    }
-}
-
-nonisolated extension Color {
-    /// Accent color used for non-base locale UI (banner, window border).
-    static let localeWarning = Color.orange
-
-    /// Extract sRGB components from a Color. Returns (0,0,0,1) on conversion failure.
-    var sRGBComponents: (r: CGFloat, g: CGFloat, b: CGFloat, a: CGFloat) {
-        var r: CGFloat = 0, g: CGFloat = 0, b: CGFloat = 0, a: CGFloat = 0
-        #if os(macOS)
-        let nsColor = NSColor(self).usingColorSpace(.sRGB) ?? .black
-        nsColor.getRed(&r, green: &g, blue: &b, alpha: &a)
-        #else
-        UIColor(self).getRed(&r, green: &g, blue: &b, alpha: &a)
-        #endif
-        return (r, g, b, a)
-    }
-
-    var hexString: String {
-        let c = sRGBComponents
-        return String(format: "#%02x%02x%02x", Int(round(c.r * 255)), Int(round(c.g * 255)), Int(round(c.b * 255)))
     }
 }

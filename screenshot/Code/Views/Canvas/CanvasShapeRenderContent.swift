@@ -548,13 +548,6 @@ struct CanvasShapeRenderContent: View {
     }
 }
 
-/// True while a view is being rasterized offscreen (`RowRenderer.renderViewToImage`)
-/// rather than composited live on screen. Used to compensate for AppKit's flipped-view
-/// shadow handling. Defaults to false (live rendering).
-extension EnvironmentValues {
-    @Entry var isExportRendering = false
-}
-
 /// Applies a shape's configurable drop shadow.
 ///
 /// `.compositingGroup()` flattens the shape's sub-layers (e.g. a device frame's screenshot +

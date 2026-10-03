@@ -1,8 +1,8 @@
 #if os(macOS)
 import Foundation
 import MCP
+import Observation
 import OSLog
-import SwiftUI
 
 /// Hosts the in-app MCP server (Debug builds only): SDK `Server` + stateless HTTP transport
 /// behind a loopback NWListener, so agents like Claude Code can drive the app at

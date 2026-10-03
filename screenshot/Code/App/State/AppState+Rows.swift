@@ -228,6 +228,19 @@ extension AppState {
         edits.rowEdit.arm()
     }
 
+    /// The in-flight composition of `rowId` while an `updateRowContinuous` burst is open, else nil.
+    /// Controls must read it before `rows`, which only catches up on the throttled write.
+    func continuousEditWorkingRow(for rowId: UUID) -> ScreenshotRow? {
+        guard continuousRowEditId == rowId else { return nil }
+        return edits.continuousRowEditWorkingRow
+    }
+
+    /// One undoable edit to one row — the discrete counterpart of `updateRowContinuous`.
+    func updateRow(_ rowId: UUID, actionName: String = "Edit Row", _ mutate: (inout ScreenshotRow) -> Void) {
+        guard let idx = rowIndex(for: rowId) else { return }
+        withUndo(actionName) { mutate(&rows[idx]) }
+    }
+
     /// Throttle-invoked write of the composed working row into the document.
     func applyContinuousRowValue(_ row: ScreenshotRow) {
         guard let rowId = edits.rowEdit.activeId, let idx = rowIndex(for: rowId) else { return }

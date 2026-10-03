@@ -435,7 +435,7 @@ struct RowInspector: View {
     private func continuousRowBinding<T>(_ rowId: UUID, keyPath: WritableKeyPath<ScreenshotRow, T>, default defaultValue: T, actionName: String = "Edit Background") -> Binding<T> {
         Binding(
             get: {
-                if state.continuousRowEditId == rowId, let row = state.edits.continuousRowEditWorkingRow {
+                if let row = state.continuousEditWorkingRow(for: rowId) {
                     return row[keyPath: keyPath]
                 }
                 guard let idx = state.rowIndex(for: rowId) else { return defaultValue }
@@ -454,10 +454,7 @@ struct RowInspector: View {
                 return state.rows[idx][keyPath: keyPath]
             },
             set: { newValue in
-                guard let idx = state.rowIndex(for: rowId) else { return }
-                state.withUndo("Edit Row") {
-                    state.rows[idx][keyPath: keyPath] = newValue
-                }
+                state.updateRow(rowId) { $0[keyPath: keyPath] = newValue }
             }
         )
     }

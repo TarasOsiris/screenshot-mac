@@ -101,11 +101,16 @@ extension AppState {
         textEdit.isActive = false
     }
 
+    /// Clears the shape selection but keeps its row selected.
+    func deselectShapes() {
+        selectedShapeIds = []
+    }
+
     /// Esc: a shape selection steps back to its row, and a row selection to nothing.
     func stepBackSelection() {
         guard !endImageCrop() else { return }
         if hasSelection {
-            selectedShapeIds = []
+            deselectShapes()
         } else if selectedRowId != nil {
             deselectAll()
         }

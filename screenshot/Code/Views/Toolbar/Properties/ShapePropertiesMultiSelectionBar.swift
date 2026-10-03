@@ -77,7 +77,7 @@ struct ShapePropertiesMultiSelectionBar: View, MultiShapeEditing {
             Spacer(minLength: 0)
 
             ActionButton(icon: "xmark", tooltip: "Deselect all (Esc)", frameSize: UIMetrics.IconButton.frameSize) {
-                state.selectedShapeIds = []
+                state.deselectShapes()
             }
             .padding(.trailing, 8)
         }

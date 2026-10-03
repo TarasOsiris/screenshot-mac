@@ -1,7 +1,7 @@
 #if os(macOS)
+import AppKit
 import Foundation
 import MCP
-import SwiftUI
 
 extension MCPToolExecutor {
 

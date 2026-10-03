@@ -1,7 +1,6 @@
 #if os(macOS)
 import Foundation
 import MCP
-import SwiftUI
 
 /// Bridges MCP tool calls onto the main actor and the live AppState. Being @MainActor makes it
 /// implicitly Sendable, so the SDK Server's handler closures can capture it and every call hops
