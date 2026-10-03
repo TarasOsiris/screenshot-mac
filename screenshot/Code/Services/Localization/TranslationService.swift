@@ -1,4 +1,5 @@
 import OSLog
+import RegexBuilder
 @preconcurrency import Translation
 
 extension Optional where Wrapped == TranslationSession.Configuration {
@@ -108,8 +109,7 @@ enum TranslationRunResult: String, Equatable, CaseIterable {
 /// triggers Apple's native inline download confirmation when the pair is supported but not
 /// yet installed. Returns `nil` when translation may proceed, or the blocking result.
 /// This guards against the engine silently substituting a different installed language.
-// swiftlint:disable:next inherited_executor_async - uses the non-Sendable TranslationSession `.translationTask` handed the caller, so it must stay on the caller's executor; the CPU work is trivial
-nonisolated func ensureTranslationAvailable(
+nonisolated(nonsending) func ensureTranslationAvailable(
     session: TranslationSession,
     source: String,
     target: String
@@ -137,8 +137,7 @@ nonisolated func ensureTranslationAvailable(
 
 /// Thin wrapper that translates via the given session. Delegates to the primary overload.
 /// Source is always the base locale — terms are only ever translated from base.
-// swiftlint:disable:next inherited_executor_async - uses the non-Sendable TranslationSession `.translationTask` handed the caller, so it must stay on the caller's executor; the CPU work is trivial
-nonisolated func translateShapes(
+nonisolated(nonsending) func translateShapes(
     session: TranslationSession,
     state: AppState,
     targetLocaleCode: String,
@@ -208,8 +207,7 @@ private nonisolated struct TranslationWorkItem: Sendable {
     let isTranslated: Bool
 }
 
-// swiftlint:disable:next inherited_executor_async - uses the non-Sendable TranslationSession `.translationTask` handed the caller, so it must stay on the caller's executor; the CPU work is trivial
-nonisolated func translatePreservingLineBreaks(
+nonisolated(nonsending) func translatePreservingLineBreaks(
     _ text: String,
     session: TranslationSession,
     requestedTarget: String
@@ -220,11 +218,9 @@ nonisolated func translatePreservingLineBreaks(
     }
 }
 
-/// Translate the full text in one request while protecting the original newline
-/// separators. This keeps sentence context across lines, but prevents Apple's
-/// translation session from adding padding around explicit newlines.
-// swiftlint:disable:next inherited_executor_async - `translate` may close over the caller's non-Sendable TranslationSession; the work around it is string surgery
-nonisolated func translatePreservingLineBreaks(
+/// Translates in one request, so lines keep their sentence context, with each newline swapped for
+/// a sentinel the engine can't pad.
+nonisolated(nonsending) func translatePreservingLineBreaks(
     _ text: String,
     translate: (String) async throws -> String
 ) async throws -> String {
@@ -232,129 +228,49 @@ nonisolated func translatePreservingLineBreaks(
         return try await translate(text)
     }
     let translated = try await translate(protected.text)
-    return restoringLineBreaks(in: translated, breaks: protected.breaks)
+    return restoringLineBreaks(in: translated, originals: protected.originals)
 }
 
-private nonisolated struct ProtectedLineBreak {
-    let token: String
-    let separator: String
-    let beforePadding: String
-    let afterPadding: String
-}
+/// Private Use Area: opaque to the translation engine, so a sentinel is never translated or stripped.
+nonisolated let lineBreakSentinelRange: ClosedRange<UInt32> = 0xE000...0xF8FF
 
 /// nil when there is nothing to protect, or more breaks than free sentinels — translate as is.
-private nonisolated func protectLineBreaks(in text: String) -> (text: String, breaks: [ProtectedLineBreak])? {
-    guard text.contains(where: \.isNewline) else { return nil }
-    var tokens = lineBreakTokens(avoiding: text).makeIterator()
+private nonisolated func protectLineBreaks(in text: String) -> (text: String, originals: [Unicode.Scalar: String])? {
+    // Icon fonts live in the Private Use Area too; never reuse a scalar the text already has.
+    let used = Set(text.unicodeScalars.filter { lineBreakSentinelRange.contains($0.value) })
+    var sentinels = lineBreakSentinelRange.lazy.compactMap(Unicode.Scalar.init).filter { !used.contains($0) }.makeIterator()
     var protected = ""
-    var breaks: [ProtectedLineBreak] = []
-    var index = text.startIndex
-    var lastAppendWasLineBreakToken = false
-
-    while index < text.endIndex {
-        let character = text[index]
-        guard character.isNewline else {
-            protected.append(character)
-            lastAppendWasLineBreakToken = false
-            index = text.index(after: index)
-            continue
-        }
-
-        guard let token = tokens.next() else { return nil }
-        let beforePadding: String
-        if lastAppendWasLineBreakToken {
-            beforePadding = ""
-        } else {
-            beforePadding = protected.removingTrailingHorizontalWhitespace()
-        }
-        // "\r\n" is a single Character, so it arrives here whole.
-        let separator = String(character)
-        var afterLineBreakIndex = text.index(after: index)
-
-        var afterPadding = ""
-        while afterLineBreakIndex < text.endIndex, text[afterLineBreakIndex].isHorizontalWhitespace {
-            afterPadding.append(text[afterLineBreakIndex])
-            afterLineBreakIndex = text.index(after: afterLineBreakIndex)
-        }
-
-        breaks.append(ProtectedLineBreak(
-            token: token,
-            separator: separator,
-            beforePadding: beforePadding,
-            afterPadding: afterPadding
-        ))
-        protected += " \(token) "
-        lastAppendWasLineBreakToken = true
-        index = afterLineBreakIndex
+    var originals: [Unicode.Scalar: String] = [:]
+    var cursor = text.startIndex
+    for lineBreak in text.matches(of: /\h*\R\h*/) {
+        guard let sentinel = sentinels.next() else { return nil }
+        protected += text[cursor..<lineBreak.range.lowerBound]
+        protected += " \(Character(sentinel)) "
+        originals[sentinel] = String(lineBreak.output)
+        cursor = lineBreak.range.upperBound
     }
-
-    return (protected, breaks)
+    guard !originals.isEmpty else { return nil }
+    protected += text[cursor...]
+    return (protected, originals)
 }
 
-private nonisolated func restoringLineBreaks(in text: String, breaks: [ProtectedLineBreak]) -> String {
-    var restored = text
-
-    // Last to first, or a token's padding scan swallows the previous break's afterPadding.
-    for lineBreak in breaks.reversed() {
-        guard let tokenRange = restored.range(of: lineBreak.token) else {
-            // Sentinel mangled/dropped by the translator — skip rather than leak it.
-            AppLogger.translation.error("Line-break sentinel did not survive translation; newline could not be restored")
-            continue
-        }
-        let replacementRange = horizontalWhitespacePaddedRange(around: tokenRange, in: restored)
-        restored.replaceSubrange(replacementRange, with: lineBreak.beforePadding + lineBreak.separator + lineBreak.afterPadding)
+/// One forward pass: each sentinel, with whatever padding the engine put around it, becomes the
+/// line break it replaced.
+private nonisolated func restoringLineBreaks(in text: String, originals: [Unicode.Scalar: String]) -> String {
+    let sentinel = Regex {
+        ZeroOrMore(.horizontalWhitespace)
+        Capture(CharacterClass.anyOf(originals.keys.map(Character.init)))
+        ZeroOrMore(.horizontalWhitespace)
     }
-
-    let tokenScalars = Set(breaks.flatMap(\.token.unicodeScalars))
-    if restored.unicodeScalars.contains(where: tokenScalars.contains) {
-        AppLogger.translation.error("Translator duplicated a line-break sentinel; dropping the extra copy")
-        restored.unicodeScalars.removeAll(where: tokenScalars.contains)
+    var restoredCount = 0
+    let restored = text.replacing(sentinel) { match in
+        restoredCount += 1
+        return match.output.1.unicodeScalars.first.flatMap { originals[$0] } ?? ""
     }
-
+    if restoredCount < originals.count {
+        AppLogger.translation.error("A line-break sentinel did not survive translation; its newline could not be restored")
+    }
     return restored
-}
-
-/// Line-break sentinels: Private Use Area scalars, opaque to the translation engine (no
-/// words/brackets/digits to translate, strip, or localize). Skips any the text already contains —
-/// icon fonts live in this block — so restoring can never touch the user's own characters.
-private nonisolated func lineBreakTokens(avoiding text: String) -> some Sequence<String> {
-    let used = Set(text.unicodeScalars.map(\.value))
-    return (UInt32(0xE000)...0xF8FF).lazy
-        .filter { !used.contains($0) }
-        .compactMap { Unicode.Scalar($0) }
-        .map { String(Character($0)) }
-}
-
-private nonisolated func horizontalWhitespacePaddedRange(around range: Range<String.Index>, in text: String) -> Range<String.Index> {
-    var lowerBound = range.lowerBound
-    while lowerBound > text.startIndex {
-        let previous = text.index(before: lowerBound)
-        guard text[previous].isHorizontalWhitespace else { break }
-        lowerBound = previous
-    }
-
-    var upperBound = range.upperBound
-    while upperBound < text.endIndex, text[upperBound].isHorizontalWhitespace {
-        upperBound = text.index(after: upperBound)
-    }
-
-    return lowerBound..<upperBound
-}
-
-private nonisolated extension Character {
-    var isHorizontalWhitespace: Bool {
-        unicodeScalars.allSatisfy { CharacterSet.whitespaces.contains($0) }
-    }
-}
-
-private nonisolated extension String {
-    mutating func removingTrailingHorizontalWhitespace() -> String {
-        var removed = ""
-        while let last = self.last, last.isHorizontalWhitespace {
-            removed.insert(removeLast(), at: removed.startIndex)
-        }
-        return removed
-    }
 }
 
 // MARK: - Language Issue Alert

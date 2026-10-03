@@ -30,14 +30,14 @@ only_rules:
 # func` inherits the *caller's* executor: called from @MainActor code it runs on the main thread,
 # and with no suspension point in its body the `await` doesn't even yield. That shipped as a
 # multi-second app hang in 4.0 (108) (Sentry SCREENSHOT-BRO-2/-3). `@concurrent` is what actually
-# offloads. Legitimate exceptions exist — a body that is itself a `Task.detached`, or a function
-# that must touch a non-Sendable value on the caller's actor before delegating — so this is an
-# error you silence per-site with a reason, not a rule you argue with in review.
+# offloads; `nonisolated(nonsending)` says the inheritance is intended (e.g. the function must use
+# a non-Sendable value on the caller's actor). Pick one of the two. The only remaining suppression
+# is a body that is itself a `Task.detached`.
 custom_rules:
   inherited_executor_async:
     name: "Inherited Executor"
-    regex: '^[ \t]*(?:@discardableResult\s+)?(?:public |internal |private |fileprivate )?nonisolated\s+(?:static\s+)?func\s+\w+[^{]*?\)\s*(?:throws\s+)?async\b'
-    message: "A bare `nonisolated async func` inherits the caller's executor and does not offload. Use @concurrent, or silence this with a reason."
+    regex: '^[ \t]*(?:@discardableResult\s+)?(?:public |internal |private |fileprivate )?nonisolated\s+(?:static\s+)?func\s+\w+[^{]*?\)\s*async\b'
+    message: "A bare `nonisolated async func` inherits the caller's executor and does not offload. Use @concurrent to offload, or nonisolated(nonsending) if inheriting is intended."
     severity: error
 
 included:

@@ -273,7 +273,7 @@ extension AppStateTests {
         for scalar in seenByTranslator.unicodeScalars {
             let isOriginal = scalar == "1" || scalar == "2"
             let isSpace = scalar == " "
-            let isPrivateUse = (0xE000...0xF8FF).contains(scalar.value)
+            let isPrivateUse = lineBreakSentinelRange.contains(scalar.value)
             #expect(isOriginal || isSpace || isPrivateUse)
         }
     }

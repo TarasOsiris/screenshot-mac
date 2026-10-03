@@ -83,11 +83,13 @@ Baseline: **0 errors**, ~16 app warnings + ~300 test warnings (nearly all `force
 keep errors at zero.
 
 The one custom rule, `inherited_executor_async`, is an **error**: it catches a bare
-`nonisolated async func` (signatures split across lines included), which under this target's `SWIFT_APPROACHABLE_CONCURRENCY` inherits the
-caller's executor instead of offloading — the shape that shipped as a multi-second hang in
-4.0 (108). Two legitimate exceptions exist (a body that is itself a `Task.detached`; a function
-that must read a non-Sendable value on the caller's actor before delegating to an `@concurrent`
-overload) and both carry `// swiftlint:disable:next inherited_executor_async` with the reason.
+`nonisolated async func` (even across lines), which under this target's
+`SWIFT_APPROACHABLE_CONCURRENCY` inherits the caller's executor instead of offloading — the shape
+that shipped as a multi-second hang in 4.0 (108). Spell the intent instead: `@concurrent` to
+offload, `nonisolated(nonsending)` when inheriting is the point (a function that must use a
+non-Sendable value on the caller's actor — `ExportImageEncoder.opaquePNGDataOffMain(from:)`, the
+`TranslationSession` functions). The one suppression left is a body that is itself a
+`Task.detached`, which carries `// swiftlint:disable:next inherited_executor_async` with the reason.
 
 `.codex/` mirrors the hooks and agent definitions for the cloud (Codex) harness and is **generated** — edit `.claude/agents/` or the `hooks` in `.claude/settings.json`, then run `python3 tools/sync_agent_config.py` (`--check` fails if `.codex/` is stale); `AGENTS.md` is the agent registry. `tools/` holds Python utilities: `gen_template.py` (SVG→template), `translate_catalog.py` + `translate_popular_languages.py` + `xcstrings_format.py` (localization), and `project-schema.json` (JSON Schema for `project.json`).
 

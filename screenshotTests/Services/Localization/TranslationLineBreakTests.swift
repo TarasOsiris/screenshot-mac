@@ -4,10 +4,8 @@ import Testing
 
 @MainActor
 struct TranslationLineBreakTests {
-    private static let privateUseArea: ClosedRange<UInt32> = 0xE000...0xF8FF
-
-    private func containsSentinel(_ text: String) -> Bool {
-        text.unicodeScalars.contains { Self.privateUseArea.contains($0.value) }
+    private static func isSentinel(_ scalar: Unicode.Scalar) -> Bool {
+        lineBreakSentinelRange.contains(scalar.value)
     }
 
     @Test(arguments: [
@@ -26,19 +24,12 @@ struct TranslationLineBreakTests {
         #expect(result == text)
     }
 
-    @Test func textWithoutNewlinesIsSentUntouched() async throws {
-        var sent: [String] = []
-        let result = try await translatePreservingLineBreaks("Hello  world ") { text in
-            sent.append(text)
-            return text
-        }
-        #expect(sent == ["Hello  world "])
-        #expect(result == "Hello  world ")
-    }
-
-    /// Past the Private Use Area's 6400 sentinels there is nothing safe to swap in.
-    @Test func moreBreaksThanSentinelsIsSentUntouched() async throws {
-        let text = String(repeating: "a\n", count: 6401)
+    /// No newline, or more breaks than there are free sentinels: nothing to protect.
+    @Test(arguments: [
+        "Hello  world ",
+        String(repeating: "a\n", count: lineBreakSentinelRange.count + 1),
+    ])
+    func textIsSentUntouched(_ text: String) async throws {
         var sent: [String] = []
         let result = try await translatePreservingLineBreaks(text) { request in
             sent.append(request)
@@ -61,32 +52,28 @@ struct TranslationLineBreakTests {
     /// The engine pads around tokens it doesn't recognize; that padding must not survive.
     @Test func paddingTheTranslatorAddsAroundSentinelsIsDropped() async throws {
         let result = try await translatePreservingLineBreaks("one\ntwo") { text in
-            text.unicodeScalars.map { scalar in
-                Self.privateUseArea.contains(scalar.value) ? "   \(scalar)   " : String(scalar)
-            }.joined()
+            text.unicodeScalars.map { Self.isSentinel($0) ? "   \($0)   " : String($0) }.joined()
         }
         #expect(result == "one\ntwo")
     }
 
     @Test func droppedSentinelLeavesTheOtherBreaksRestored() async throws {
         let result = try await translatePreservingLineBreaks("one\ntwo\nthree") { text in
-            var droppedFirst = false
-            return String(String.UnicodeScalarView(text.unicodeScalars.filter { scalar in
-                guard !droppedFirst, Self.privateUseArea.contains(scalar.value) else { return true }
-                droppedFirst = true
-                return false
-            }))
+            var dropped = text
+            if let first = dropped.unicodeScalars.firstIndex(where: Self.isSentinel) {
+                dropped.unicodeScalars.remove(at: first)
+            }
+            return dropped
         }
-        #expect(!containsSentinel(result))
+        #expect(!result.unicodeScalars.contains(where: Self.isSentinel))
         #expect(result.hasSuffix("two\nthree"))
         #expect(result.contains("one"))
     }
 
-    @Test func duplicatedSentinelNeverLeaksIntoTheResult() async throws {
+    @Test func duplicatedSentinelIsRestoredNotLeaked() async throws {
         let result = try await translatePreservingLineBreaks("one\ntwo") { text in
             text + text
         }
-        #expect(!containsSentinel(result))
-        #expect(result.hasPrefix("one\ntwo"))
+        #expect(result == "one\ntwoone\ntwo")
     }
 }
