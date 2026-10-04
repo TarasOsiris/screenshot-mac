@@ -11,7 +11,7 @@ typealias GooglePlayAPIError = StoreAPIError<GooglePlayAPIOrigin>
 /// Thin wrapper over the Google Play Android Publisher API v3 (raw URLSession, no SDK).
 /// Mirrors `AppStoreConnectAPIService`: bearer auth, JSON error extraction, and a demo
 /// mode that short-circuits every call so App Review / dev can walk the flow offline.
-final class GooglePlayAPIService {
+final class GooglePlayAPIService: StoreDemoPacing {
     static let shared = GooglePlayAPIService()
 
     private static let baseURL = "https://androidpublisher.googleapis.com"
@@ -40,10 +40,6 @@ final class GooglePlayAPIService {
     }
 
     private var isDemoMode: Bool { credentials.isDemoMode }
-
-    private func demoDelay() async {
-        try? await Task.sleep(for: .milliseconds(80))
-    }
 
     /// Validates the credential by exchanging the JWT for an access token (no package needed).
     func testConnection() async throws -> String {
@@ -171,22 +167,14 @@ final class GooglePlayAPIService {
         }
         let path = "/upload/androidpublisher/v3/applications/\(packageName)/edits/\(editId)/listings/\(language)/\(imageType)?uploadType=media"
         let data = try await rawRequest(method: "POST", path: path, body: png, contentType: "image/png", fileName: fileName)
-        do {
-            return try Self.decoder.decode(GPImageUploadResponse.self, from: data).image
-        } catch {
-            throw GooglePlayAPIError.decodingFailed(error)
-        }
+        return try GooglePlayAPIError.decode(GPImageUploadResponse.self, from: data, using: Self.decoder).image
     }
 
     // MARK: - HTTP
 
     private func request<T: Decodable>(method: String, path: String) async throws -> T {
         let data = try await rawRequest(method: method, path: path, body: nil, contentType: nil)
-        do {
-            return try Self.decoder.decode(T.self, from: data)
-        } catch {
-            throw GooglePlayAPIError.decodingFailed(error)
-        }
+        return try GooglePlayAPIError.decode(T.self, from: data, using: Self.decoder)
     }
 
     private func rawRequest(method: String, path: String, body: Data?, contentType: String?, fileName: String? = nil) async throws -> Data {

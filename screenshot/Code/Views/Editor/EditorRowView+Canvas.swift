@@ -118,14 +118,7 @@ extension EditorRowView {
                             }
 
                             AddTemplateButton(width: row.displayWidth(zoom: zoom), height: row.displayHeight(zoom: zoom)) {
-                                store.requirePro(
-                                    allowed: store.canAddTemplate(currentCount: row.templates.count),
-                                    context: .templateLimit
-                                ) {
-                                    withAnimation(.easeInOut(duration: 0.2)) {
-                                        state.addTemplate(to: row.id)
-                                    }
-                                }
+                                addTemplateIfAllowed { state.addTemplate(to: row.id) }
                             }
                         }
                         // Canvas geometry is model-space and anchored `.topLeading`; under an RTL
@@ -265,44 +258,16 @@ extension EditorRowView {
                                 state.saveBackgroundSvg(svgContent, for: row.id, templateIndex: index)
                             },
                             onDuplicate: {
-                                store.requirePro(
-                                    allowed: store.canAddTemplate(currentCount: row.templates.count),
-                                    context: .templateLimit
-                                ) {
-                                    withAnimation(.easeInOut(duration: 0.2)) {
-                                        state.duplicateTemplate(template.id, in: row.id)
-                                    }
-                                }
+                                addTemplateIfAllowed { state.duplicateTemplate(template.id, in: row.id) }
                             },
                             onDuplicateToEnd: {
-                                store.requirePro(
-                                    allowed: store.canAddTemplate(currentCount: row.templates.count),
-                                    context: .templateLimit
-                                ) {
-                                    withAnimation(.easeInOut(duration: 0.2)) {
-                                        state.duplicateTemplateToEnd(template.id, in: row.id)
-                                    }
-                                }
+                                addTemplateIfAllowed { state.duplicateTemplateToEnd(template.id, in: row.id) }
                             },
                             onInsertBefore: {
-                                store.requirePro(
-                                    allowed: store.canAddTemplate(currentCount: row.templates.count),
-                                    context: .templateLimit
-                                ) {
-                                    withAnimation(.easeInOut(duration: 0.2)) {
-                                        state.insertTemplateBefore(template.id, in: row.id)
-                                    }
-                                }
+                                addTemplateIfAllowed { state.insertTemplateBefore(template.id, in: row.id) }
                             },
                             onInsertAfter: {
-                                store.requirePro(
-                                    allowed: store.canAddTemplate(currentCount: row.templates.count),
-                                    context: .templateLimit
-                                ) {
-                                    withAnimation(.easeInOut(duration: 0.2)) {
-                                        state.insertTemplateAfter(template.id, in: row.id)
-                                    }
-                                }
+                                addTemplateIfAllowed { state.insertTemplateAfter(template.id, in: row.id) }
                             },
                             onDelete: {
                                 withAnimation(.easeInOut(duration: 0.2)) {
@@ -623,5 +588,14 @@ extension EditorRowView {
         }
         let locked = resolvedShapes.first { $0.id == hoveredId }?.resolvedIsLocked ?? false
         PlatformCursor.hover(locked ? nil : .openHand, for: .canvas)
+    }
+}
+
+extension EditorRowView {
+    /// Runs a template-adding action behind the free tier's template limit.
+    func addTemplateIfAllowed(_ action: () -> Void) {
+        store.requirePro(allowed: store.canAddTemplate(currentCount: row.templates.count), context: .templateLimit) {
+            withAnimation(.easeInOut(duration: 0.2)) { action() }
+        }
     }
 }

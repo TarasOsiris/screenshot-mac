@@ -135,6 +135,95 @@ struct ICloudStatusLabel: View {
     }
 }
 
+/// Plan, renewal and RevenueCat ID rows, the head of the Purchase section on both platforms.
+struct PurchasePlanRows: View {
+    let store: PurchaseService
+
+    var body: some View {
+        // Plain HStack rather than LabeledContent: LabeledContent gives its trailing
+        // content a flexible frame, which made this (conditional Label) row balloon
+        // to a huge height.
+        HStack {
+            Text("Plan")
+            Spacer()
+            if store.isProUnlocked {
+                Label(store.proTier?.displayName ?? String(localized: "Pro"), systemImage: "checkmark.seal.fill")
+                    .foregroundStyle(.green)
+            } else {
+                Text("Free").foregroundStyle(.secondary)
+            }
+        }
+
+        if let tier = store.proTier {
+            PlanDetailRows(tier: tier)
+        }
+
+        if let appUserID = store.appUserID {
+            LabeledContent("RevenueCat ID") {
+                HStack(spacing: 6) {
+                    Text(appUserID)
+                        .font(.system(.callout, design: .monospaced))
+                        .textSelection(.enabled)
+                        .lineLimit(1)
+                        .truncationMode(.middle)
+                        .foregroundStyle(.secondary)
+                    ActionButton(icon: "doc.on.doc", tooltip: "Copy RevenueCat ID") {
+                        PlatformPasteboard.copyString(appUserID)
+                    }
+                }
+            }
+        }
+    }
+}
+
+struct ProIncludedSection: View {
+    var body: some View {
+        Section("Included") {
+            ProFeatureRow(text: "Unlimited projects")
+            ProFeatureRow(text: "Unlimited rows per project")
+            ProFeatureRow(text: "Unlimited screenshots per row")
+        }
+    }
+}
+
+struct LegalLinksSection: View {
+    var body: some View {
+        Section("Legal") {
+            Link("Terms of Use", destination: AppLinks.terms)
+            Link("Privacy Policy", destination: AppLinks.privacy)
+        }
+    }
+}
+
+struct ExportFormatPicker: View {
+    @Binding var selection: String
+
+    var body: some View {
+        Picker("Format", selection: $selection) {
+            Text("PNG").tag("png")
+            Text("JPEG").tag("jpeg")
+        }
+    }
+}
+
+/// The export naming footer: an example file name for the chosen layout, format and suffix.
+struct ExportFileNameExample: View {
+    let scheme: ExportNamingScheme
+    let format: String
+    let customSuffix: String
+
+    var body: some View {
+        let suffixPart = ExportFileNaming.formattedFileSuffix(customSuffix)
+        let ext = (ExportImageFormat(rawValue: format.lowercased()) ?? .png).fileExtension
+        switch scheme {
+        case .standard:
+            Text("Example: 01_Onboarding_en\(suffixPart).\(ext)")
+        case .fastlane:
+            Text("Example: en-US/01_Onboarding\(suffixPart).\(ext) — ready for fastlane deliver. One folder per App Store language, numbered across rows.")
+        }
+    }
+}
+
 struct PlanDetailRows: View {
     let tier: PurchaseService.ProTier
 

@@ -3,7 +3,6 @@ import AppKit
 #else
 import UIKit
 #endif
-import SwiftUI
 
 enum TextFontResolver {
     private static let fontCache: NSCache<NSString, NSFont> = {
@@ -40,10 +39,6 @@ enum TextFontResolver {
         }
         fontCache.setObject(resolved, forKey: cacheKey)
         return resolved
-    }
-
-    static func fontWeight(_ weight: Int) -> Font.Weight {
-        CSSFontWeight(css: weight).font
     }
 
     private static func customFontName(for shape: CanvasShapeModel, availableFontFamilies: Set<String>) -> String? {

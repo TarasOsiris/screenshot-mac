@@ -62,10 +62,6 @@ struct ContentView: View {
     /// Reading the path here is what re-renders the export button when Settings clears it.
     @AppStorage(ExportFolderBookmark.pathKey) var lastExportFolderPath = ""
     @AppStorage(AppSettingsKeys.projectSortOrder) var projectSortOrder = AppSettingsKeys.Default.projectSortOrder
-    @AppStorage("reviewExportCount") var reviewExportCount = 0
-    @AppStorage("reviewLastPromptedVersion") var reviewLastPromptedVersion = ""
-    @AppStorage("reviewFirstExportDate") var reviewFirstExportDate: Double = 0
-    @AppStorage("reviewLastPromptDate") var reviewLastPromptDate: Double = 0
     @AppStorage("inspectorPresented") var isInspectorPresented = true
     #if os(macOS)
     @AppStorage(AppSettingsKeys.selectionInspector) var isSelectionInspectorEnabled = AppSettingsKeys.Default.selectionInspector
@@ -543,17 +539,7 @@ struct ContentView: View {
         // On iPad the paywall/celebration sheets live at the navigation root (`iPadRootView`)
         // so they also present from the Projects home screen, not just the pushed editor.
         #if os(macOS)
-        .sheet(isPresented: paywallPresented,
-               onDismiss: { store.presentPendingCelebrationIfNeeded() }) {
-            PaywallSheetContent(store: store)
-                .screenView(.paywall, restoring: .editor)
-        }
-        .sheet(isPresented: celebrationPresented) {
-            PostPurchaseCelebrationView(context: store.purchaseCelebrationContext ?? .general) {
-                store.dismissPurchaseCelebration()
-            }
-            .screenView(.purchaseCelebration, restoring: .editor)
-        }
+        .purchaseSheets(store: store, restoring: .editor)
         #endif
         // Upload wizards: fitted sheet on macOS, native full-screen screen on iPad.
         .platformAdaptiveSheet(isPresented: $showingASCUploadSheet) {
@@ -649,16 +635,6 @@ struct ContentView: View {
         }
     }
 
-    #if os(macOS)
-    private var paywallPresented: Binding<Bool> {
-        Binding(get: { store.showPaywall }, set: { _ in store.dismissPaywall() })
-    }
-
-    private var celebrationPresented: Binding<Bool> {
-        Binding(get: { store.purchaseCelebrationContext != nil },
-                set: { if !$0 { store.dismissPurchaseCelebration() } })
-    }
-    #endif
 }
 
 #Preview {

@@ -294,6 +294,6 @@ extension CanvasShapeView {
     }
 
     func fontWeight(_ weight: Int) -> Font.Weight {
-        TextFontResolver.fontWeight(weight)
+        CSSFontWeight(css: weight).font
     }
 }

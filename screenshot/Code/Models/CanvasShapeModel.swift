@@ -898,6 +898,7 @@ struct CanvasShapeModel: Identifiable, Codable, Equatable {
         if letterSpacing != oldBase.letterSpacing { result.letterSpacing = letterSpacing }
         if lineSpacing != oldBase.lineSpacing { result.lineSpacing = lineSpacing }
         if lineHeightMultiple != oldBase.lineHeightMultiple { result.lineHeightMultiple = lineHeightMultiple }
+        if translationKey != oldBase.translationKey { result.translationKey = translationKey }
 
         if shrinkToFit != oldBase.shrinkToFit { result.shrinkToFit = shrinkToFit }
 

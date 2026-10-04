@@ -38,7 +38,7 @@ struct IPadSettingsView: View {
             iCloudSection
             BetaSettingsSection()
             purchaseSection
-            legalSection
+            LegalLinksSection()
             attributionsSection
             aboutSection
         }
@@ -143,10 +143,7 @@ struct IPadSettingsView: View {
 
     private var exportSection: some View {
         Section {
-            Picker("Format", selection: $exportFormat) {
-                Text("PNG").tag("png")
-                Text("JPEG").tag("jpeg")
-            }
+            ExportFormatPicker(selection: $exportFormat)
             Picker("File layout", selection: $exportNamingScheme) {
                 ForEach(ExportNamingScheme.allCases) { Text($0.title).tag($0) }
             }
@@ -157,9 +154,7 @@ struct IPadSettingsView: View {
         } header: {
             Text("Export")
         } footer: {
-            let suffixPart = ExportFileNaming.formattedFileSuffix(exportCustomSuffix)
-            let ext = (ExportImageFormat(rawValue: exportFormat.lowercased()) ?? .png).fileExtension
-            Text("Example: 01_Onboarding_en\(suffixPart).\(ext)")
+            ExportFileNameExample(scheme: exportNamingScheme, format: exportFormat, customSuffix: exportCustomSuffix)
         }
     }
 
@@ -197,59 +192,17 @@ struct IPadSettingsView: View {
     @ViewBuilder
     private var purchaseSection: some View {
         Section("Purchase") {
-            // Plain HStack rather than LabeledContent: LabeledContent gives its trailing
-            // content a flexible frame, which made this (conditional Label) row balloon
-            // to a huge height.
-            HStack {
-                Text("Plan")
-                Spacer()
-                if store.isProUnlocked {
-                    Label(store.proTier?.displayName ?? String(localized: "Pro"), systemImage: "checkmark.seal.fill")
-                        .foregroundStyle(.green)
-                } else {
-                    Text("Free").foregroundStyle(.secondary)
-                }
-            }
-
-            if let tier = store.proTier {
-                PlanDetailRows(tier: tier)
-            }
-
-            if let appUserID = store.appUserID {
-                LabeledContent("RevenueCat ID") {
-                    HStack(spacing: 6) {
-                        Text(appUserID)
-                            .font(.system(.callout, design: .monospaced))
-                            .lineLimit(1)
-                            .truncationMode(.middle)
-                            .foregroundStyle(.secondary)
-                        ActionButton(icon: "doc.on.doc", tooltip: "Copy RevenueCat ID") {
-                            PlatformPasteboard.copyString(appUserID)
-                        }
-                    }
-                }
-            }
+            PurchasePlanRows(store: store)
         }
 
         if store.isProUnlocked {
-            Section("Included") {
-                ProFeatureRow(text: "Unlimited projects")
-                ProFeatureRow(text: "Unlimited rows per project")
-                ProFeatureRow(text: "Unlimited screenshots per row")
-            }
+            ProIncludedSection()
         } else {
             FreeTierSections(store: store)
         }
     }
 
-    // MARK: - Legal & Attributions
-
-    private var legalSection: some View {
-        Section("Legal") {
-            Link("Terms of Use", destination: AppLinks.terms)
-            Link("Privacy Policy", destination: AppLinks.privacy)
-        }
-    }
+    // MARK: - Attributions
 
     private var attributionsSection: some View {
         Section("Attributions") {

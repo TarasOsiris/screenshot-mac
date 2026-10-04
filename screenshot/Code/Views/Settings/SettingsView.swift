@@ -311,10 +311,7 @@ struct SettingsView: View {
                     .foregroundStyle(.secondary)
             }
 
-            Picker("Format", selection: $exportFormat) {
-                Text("PNG").tag("png")
-                Text("JPEG").tag("jpeg")
-            }
+            ExportFormatPicker(selection: $exportFormat)
 
             Section {
                 Picker("File layout", selection: $exportNamingScheme) {
@@ -322,16 +319,8 @@ struct SettingsView: View {
                 }
                 TextField("Custom filename suffix", text: $exportCustomSuffix, prompt: Text("optional"))
             } footer: {
-                let suffixPart = ExportFileNaming.formattedFileSuffix(exportCustomSuffix)
-                let ext = (ExportImageFormat(rawValue: exportFormat.lowercased()) ?? .png).fileExtension
-                switch exportNamingScheme {
-                case .standard:
-                    Text("Example: 01_Onboarding_en\(suffixPart).\(ext)")
-                        .foregroundStyle(.secondary)
-                case .fastlane:
-                    Text("Example: en-US/01_Onboarding\(suffixPart).\(ext) — ready for fastlane deliver. One folder per App Store language, numbered across rows.")
-                        .foregroundStyle(.secondary)
-                }
+                ExportFileNameExample(scheme: exportNamingScheme, format: exportFormat, customSuffix: exportCustomSuffix)
+                    .foregroundStyle(.secondary)
             }
 
             Toggle("Reveal in Finder after export", isOn: $openExportFolderOnSuccess)
@@ -402,12 +391,12 @@ struct SettingsView: View {
                     }
                     agentPromptPreview
                     Button {
-                        copyToPasteboard(mcpServer.agentPrompt)
+                        PlatformPasteboard.copyString(mcpServer.agentPrompt)
                     } label: {
                         Label("Copy Agent Prompt", systemImage: "sparkles")
                     }
                     Button("Copy Configuration (JSON)") {
-                        copyToPasteboard(mcpServer.configurationJSON)
+                        PlatformPasteboard.copyString(mcpServer.configurationJSON)
                     }
                     if mcpServer.authToken != nil {
                         Button("Regenerate Access Token") {
@@ -491,64 +480,21 @@ struct SettingsView: View {
                 .truncationMode(.middle)
                 .foregroundStyle(.secondary)
             ActionButton(icon: "doc.on.doc", tooltip: tooltip) {
-                copyToPasteboard(value)
+                PlatformPasteboard.copyString(value)
             }
         }
-    }
-
-    private func copyToPasteboard(_ string: String) {
-        NSPasteboard.general.clearContents()
-        NSPasteboard.general.setString(string, forType: .string)
     }
 
     private var purchaseSettings: some View {
         Form {
             Section {
-                // Plain HStack rather than LabeledContent: LabeledContent gives its trailing
-                // content a flexible frame, which made this (conditional Label) row balloon
-                // to a huge height.
-                HStack {
-                    Text("Plan")
-                    Spacer()
-                    if store.isProUnlocked {
-                        Label(store.proTier?.displayName ?? String(localized: "Pro"), systemImage: "checkmark.seal.fill")
-                            .foregroundStyle(.green)
-                    } else {
-                        Text("Free")
-                            .foregroundStyle(.secondary)
-                    }
-                }
-
-                if let tier = store.proTier {
-                    PlanDetailRows(tier: tier)
-                }
-
-                if let appUserID = store.appUserID {
-                    LabeledContent("RevenueCat ID") {
-                        HStack(spacing: 6) {
-                            Text(appUserID)
-                                .font(.system(.callout, design: .monospaced))
-                                .textSelection(.enabled)
-                                .lineLimit(1)
-                                .truncationMode(.middle)
-                                .foregroundStyle(.secondary)
-                            ActionButton(icon: "doc.on.doc", tooltip: "Copy RevenueCat ID") {
-                                NSPasteboard.general.clearContents()
-                                NSPasteboard.general.setString(appUserID, forType: .string)
-                            }
-                        }
-                    }
-                }
+                PurchasePlanRows(store: store)
             }
 
             purchaseStatusSection
 
             if store.isProUnlocked {
-                Section("Included") {
-                    ProFeatureRow(text: "Unlimited projects")
-                    ProFeatureRow(text: "Unlimited rows per project")
-                    ProFeatureRow(text: "Unlimited screenshots per row")
-                }
+                ProIncludedSection()
 
                 Section("Purchase Status") {
                     Label("Screenshot Bro Pro is unlocked.", systemImage: "checkmark.seal.fill")
@@ -562,10 +508,7 @@ struct SettingsView: View {
                 FreeTierSections(store: store)
             }
 
-            Section("Legal") {
-                Link("Terms of Use", destination: AppLinks.terms)
-                Link("Privacy Policy", destination: AppLinks.privacy)
-            }
+            LegalLinksSection()
         }
         .formStyle(.grouped)
     }

@@ -566,6 +566,83 @@ struct CanvasShapeModelTests {
         #expect(result.resolvedIsLocked == true)
     }
 
+    @Test func fullyPopulatedFixtureLeavesNoFieldNil() {
+        let nilPaths = Self.nilOptionalPaths(in: Self.fullyPopulatedShape(id: UUID()))
+        #expect(nilPaths.isEmpty, "Set these in fullyPopulatedShape so rebase coverage includes them: \(nilPaths)")
+    }
+
+    @Test func rebasedCarriesEveryChangedField() {
+        let id = UUID()
+        let base = CanvasShapeModel(id: id, type: .rectangle, x: 0, y: 0, width: 100, height: 100)
+        let edited = Self.fullyPopulatedShape(id: id)
+        #expect(edited.rebased(from: base, onto: base) == edited)
+    }
+
+    private static func fullyPopulatedShape(id: UUID) -> CanvasShapeModel {
+        var shape = CanvasShapeModel(id: id, type: .text, x: 11, y: 12, width: 130, height: 140)
+        shape.rotation = 15
+        shape.borderRadius = 6
+        shape.colorData = CodableColor(.red)
+        shape.opacity = 0.5
+        shape.text = "Hello"
+        shape.richText = "cnRm"
+        shape.fontName = "Helvetica"
+        shape.fontSize = 33
+        shape.fontWeight = 700
+        shape.textAlign = .right
+        shape.textVerticalAlign = .bottom
+        shape.italic = true
+        shape.uppercase = true
+        shape.letterSpacing = 1.5
+        shape.lineSpacing = 2.5
+        shape.lineHeightMultiple = 1.2
+        shape.translationKey = "shared-key"
+        shape.shrinkToFit = true
+        shape.textBackgroundColorData = CodableColor(.blue)
+        shape.textBackgroundCornerRadius = 4
+        shape.textBackgroundPadding = 8
+        shape.textBackgroundOutlineColorData = CodableColor(.green)
+        shape.textBackgroundOutlineWidth = 2
+        shape.textBackgroundOpacity = 0.7
+        shape.deviceCategory = .ipadPro13
+        shape.deviceBodyColorData = CodableColor(.gray)
+        shape.deviceFrameId = "frame"
+        shape.screenshotFileName = "shot.png"
+        shape.devicePitch = -10
+        shape.deviceYaw = 20
+        shape.deviceBodyMaterial = DeviceBodyMaterial(finish: .matte)
+        shape.deviceLighting = DeviceLighting(ambientIntensity: 1, keyIntensity: 2, rimIntensity: 3)
+        shape.hideCameraCutout = true
+        shape.shadow = .strong
+        shape.fillStyle = .gradient
+        shape.fillGradientConfig = GradientConfig()
+        shape.fillImageConfig = BackgroundImageConfig(fileName: "fill.png")
+        shape.outlineColorData = CodableColor(.orange)
+        shape.outlineWidth = 3
+        shape.imageFileName = "image.png"
+        shape.imageCrop = ImageCrop(scale: 2, offsetX: 3, offsetY: -3)
+        shape.svgContent = "<svg/>"
+        shape.svgUseColor = true
+        shape.starPointCount = 7
+        shape.clipToTemplate = true
+        shape.isLocked = true
+        return shape
+    }
+
+    /// Optional stored properties left nil, one level into the type-specific payload structs.
+    private static func nilOptionalPaths(in shape: CanvasShapeModel) -> [String] {
+        func nils(_ value: Any, prefix: String) -> [String] {
+            Mirror(reflecting: value).children.flatMap { child -> [String] in
+                let path = prefix + (child.label ?? "?")
+                let mirror = Mirror(reflecting: child.value)
+                if mirror.displayStyle == .optional { return mirror.children.isEmpty ? [path] : [] }
+                if (child.label ?? "").hasSuffix("Payload") { return nils(child.value, prefix: path + ".") }
+                return []
+            }
+        }
+        return nils(shape, prefix: "")
+    }
+
     // MARK: - Shadow
 
     @Test func shadowConfigRoundTripsThroughCodable() throws {

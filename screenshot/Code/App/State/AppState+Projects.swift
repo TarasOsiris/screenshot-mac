@@ -142,6 +142,12 @@ extension AppState {
         }
     }
 
+    /// Stamps a write made outside the open document (an MCP checkout); the caller owns the save.
+    func recordProjectModified(_ id: UUID, at date: Date) {
+        guard let idx = projects.firstIndex(where: { $0.id == id }) else { return }
+        projects[idx].modifiedAt = date
+    }
+
     func setProjectStarred(_ id: UUID, _ starred: Bool) {
         if let idx = projects.firstIndex(where: { $0.id == id }), projects[idx].isStarred != starred {
             projects[idx].isStarred = starred

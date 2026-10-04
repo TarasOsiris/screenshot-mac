@@ -8,7 +8,7 @@ nonisolated enum AppStoreConnectAPIOrigin: StoreAPIOrigin {
 
 typealias AppStoreConnectAPIError = StoreAPIError<AppStoreConnectAPIOrigin>
 
-final class AppStoreConnectAPIService {
+final class AppStoreConnectAPIService: StoreDemoPacing {
     static let shared = AppStoreConnectAPIService()
 
     private static let baseURL = "https://api.appstoreconnect.apple.com"
@@ -43,12 +43,6 @@ final class AppStoreConnectAPIService {
     }
 
     var isDemoMode: Bool { credentials.isDemoMode }
-
-    /// Short pause so the upload wizard's progress UI animates believably in demo mode.
-    /// Kept small because real upload flows make ~6 sequential calls per (template × locale).
-    func demoDelay() async {
-        try? await Task.sleep(for: .milliseconds(80))
-    }
 
     func testConnection() async throws -> String {
         if isDemoMode {
@@ -535,11 +529,7 @@ final class AppStoreConnectAPIService {
         let data = try await rawRequest(
             method: method, path: path, body: body, retryPolicy: retryPolicy, repeatable: repeatable
         )
-        do {
-            return try Self.decoder.decode(T.self, from: data)
-        } catch {
-            throw AppStoreConnectAPIError.decodingFailed(error)
-        }
+        return try AppStoreConnectAPIError.decode(T.self, from: data, using: Self.decoder)
     }
 
     private func rawRequest<Body: Encodable>(

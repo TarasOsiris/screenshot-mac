@@ -29,6 +29,15 @@ nonisolated enum StoreAPIError<Origin: StoreAPIOrigin>: StoreAPIFailure, Localiz
         }
     }
 
+    /// Decodes a response body, reporting a shape mismatch as `.decodingFailed`.
+    static func decode<T: Decodable>(_ type: T.Type, from data: Data, using decoder: JSONDecoder) throws -> T {
+        do {
+            return try decoder.decode(type, from: data)
+        } catch {
+            throw Self.decodingFailed(error)
+        }
+    }
+
     var httpStatus: Int? {
         if case let .httpError(status, _) = self { return status }
         return nil

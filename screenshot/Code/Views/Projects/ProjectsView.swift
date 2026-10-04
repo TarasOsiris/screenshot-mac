@@ -37,17 +37,7 @@ struct iPadRootView: View {
         }
         // Paywall/celebration are presented from the root so they work on the Projects home
         // screen (e.g. tapping New Project at the free-tier limit) as well as the editor.
-        .sheet(isPresented: paywallPresented,
-               onDismiss: { store.presentPendingCelebrationIfNeeded() }) {
-            PaywallSheetContent(store: store)
-                .screenView(.paywall, restoring: hostScreen)
-        }
-        .sheet(isPresented: celebrationPresented) {
-            PostPurchaseCelebrationView(context: store.purchaseCelebrationContext ?? .general) {
-                store.dismissPurchaseCelebration()
-            }
-            .screenView(.purchaseCelebration, restoring: hostScreen)
-        }
+        .purchaseSheets(store: store, restoring: hostScreen, suppressed: launchWelcomeActive)
     }
 
     /// What the root's sheets return to when dismissed. They present over whatever is showing, so
@@ -55,15 +45,6 @@ struct iPadRootView: View {
     private var hostScreen: AnalyticsService.Screen {
         if router.selectedTab == .settings { return .settings }
         return openedProjectId != nil ? .editor : .projects
-    }
-
-    private var paywallPresented: Binding<Bool> {
-        Binding(get: { store.showPaywall && !launchWelcomeActive }, set: { _ in store.dismissPaywall() })
-    }
-
-    private var celebrationPresented: Binding<Bool> {
-        Binding(get: { store.purchaseCelebrationContext != nil && !launchWelcomeActive },
-                set: { if !$0 { store.dismissPurchaseCelebration() } })
     }
 
     private var openedBinding: Binding<Bool> { $openedProjectId.isPresent() }

@@ -114,9 +114,7 @@ final class DetachedProjectHost: ProjectMutationHost {
 
         // Without the mtime stamp the project card sorts stale and `diskCachedImage` keeps
         // serving the pre-edit thumbnail forever.
-        if let index = state.projects.firstIndex(where: { $0.id == projectId }) {
-            state.projects[index].modifiedAt = data.modifiedAt
-        }
+        state.recordProjectModified(projectId, at: data.modifiedAt)
         // Without this the monitor reads our own write as a remote change and reloads the *open*
         // project, costing the user their undo stack over an edit to a different project.
         state.iCloudMonitor?.recordOwnWrite([
