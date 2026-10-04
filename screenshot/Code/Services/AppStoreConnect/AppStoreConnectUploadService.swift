@@ -52,7 +52,14 @@ struct ASCUploadTarget: Identifiable {
     let rowSize: CGSize
     let displayType: ASCDisplayType
     let localizations: [ASCUploadLocalization]
-    let templateCount: Int
+    var templateCount: Int
+
+    /// The row can lose screenshots after planning; rendering past its last one would crash.
+    func fitted(to row: ScreenshotRow) -> ASCUploadTarget {
+        var fitted = self
+        fitted.templateCount = min(templateCount, row.templates.count)
+        return fitted
+    }
 }
 
 enum ASCLocaleMatcher {

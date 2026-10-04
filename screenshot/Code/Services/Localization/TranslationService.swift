@@ -62,6 +62,8 @@ func translateShapes(
     translate: @MainActor (String) async throws -> String
 ) async -> Bool {
     let items = state.textShapesForTranslation(localeCode: targetLocaleCode)
+    // Shapes sharing a translation key share one string; the first write already covers the rest.
+    var translatedKeys = Set<String>()
     for item in items {
         if let filter = shapeFilter, !filter(item.shape.id) { continue }
         // `isTranslated` counts plain text AND manually-formatted rich-text overrides, so
@@ -69,6 +71,7 @@ func translateShapes(
         if onlyUntranslated && item.isTranslated { continue }
         // Translations always start from the base locale's text — never a non-base override.
         guard let baseText = item.shape.text, !baseText.isEmpty else { continue }
+        guard translatedKeys.insert(item.shape.textTranslationKey).inserted else { continue }
         do {
             let translatedText = try await translatePreservingLineBreaks(baseText, translate: translate)
             state.updateTranslationText(
@@ -160,6 +163,7 @@ nonisolated(nonsending) func translateShapes(
         state.textShapesForTranslation(localeCode: targetLocaleCode).map { item in
             TranslationWorkItem(
                 shapeId: item.shape.id,
+                translationKey: item.shape.textTranslationKey,
                 baseText: item.shape.text,
                 isTranslated: item.isTranslated
             )
@@ -167,10 +171,13 @@ nonisolated(nonsending) func translateShapes(
     }
 
     var translated = 0
+    var translatedKeys = Set<String>()
     for item in items {
         if let shapeFilter, !shapeFilter(item.shapeId) { continue }
         if onlyUntranslated && item.isTranslated { continue }
         guard let baseText = item.baseText, !baseText.isEmpty else { continue }
+        // Still a shape translated, so `shapeCount` keeps meaning shapes.
+        guard translatedKeys.insert(item.translationKey).inserted else { translated += 1; continue }
         do {
             let translatedText = try await translatePreservingLineBreaks(
                 baseText,
@@ -203,6 +210,7 @@ nonisolated(nonsending) func translateShapes(
 
 private nonisolated struct TranslationWorkItem: Sendable {
     let shapeId: UUID
+    let translationKey: String
     let baseText: String?
     let isTranslated: Bool
 }

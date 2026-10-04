@@ -6,32 +6,50 @@ import Testing
 struct ProjectWriteStampsTests {
     private let earlier = Date(timeIntervalSince1970: 100)
     private let later = Date(timeIntervalSince1970: 200)
+    private let project = UUID()
 
     @Test func knownIsNilBeforeAnyReadOrWrite() {
-        #expect(ProjectWriteStamps().known == nil)
+        #expect(ProjectWriteStamps().known(for: project) == nil)
     }
 
     @Test func anInFlightWriteNewerThanTheLandedOneIsKnown() {
         let stamps = ProjectWriteStamps()
-        stamps.landed = earlier
-        stamps.beginWrite(modifiedAt: later)
-        #expect(stamps.known == later)
+        stamps.recordLanded(project, at: earlier)
+        stamps.beginWrite(project, modifiedAt: later)
+        #expect(stamps.known(for: project) == later)
     }
 
     @Test func theInFlightStampClearsOnlyWhenTheLastWriteEnds() {
         let stamps = ProjectWriteStamps()
-        stamps.beginWrite(modifiedAt: later)
-        stamps.beginWrite(modifiedAt: earlier)
-        stamps.endWrite()
-        #expect(stamps.known == later, "one write is still in flight")
-        stamps.endWrite()
-        #expect(stamps.known == nil)
+        stamps.beginWrite(project, modifiedAt: later)
+        stamps.beginWrite(project, modifiedAt: earlier)
+        stamps.endWrite(project)
+        #expect(stamps.known(for: project) == later, "one write is still in flight")
+        stamps.endWrite(project)
+        #expect(stamps.known(for: project) == nil)
     }
 
     @Test func aLandedStampNewerThanTheInFlightOneWins() {
         let stamps = ProjectWriteStamps()
-        stamps.beginWrite(modifiedAt: earlier)
-        stamps.landed = later
-        #expect(stamps.known == later)
+        stamps.beginWrite(project, modifiedAt: earlier)
+        stamps.recordLanded(project, at: later)
+        #expect(stamps.known(for: project) == later)
+    }
+
+    /// The write a project switch queues for the outgoing project must not make the incoming one
+    /// look newer on disk than it is, or a genuine remote change to it would be ignored.
+    @Test func anotherProjectsInFlightWriteDoesNotCount() {
+        let stamps = ProjectWriteStamps()
+        stamps.beginWrite(UUID(), modifiedAt: later)
+        #expect(stamps.known(for: project) == nil)
+    }
+
+    /// A reload that moves the active project (the open one was deleted elsewhere) must open the
+    /// new one rather than compare its file against the old project's save and keep the old rows.
+    @Test func anotherProjectsLandedStampDoesNotCount() {
+        let stamps = ProjectWriteStamps()
+        stamps.recordWrite(UUID(), modifiedAt: later, catalogModified: later)
+        #expect(stamps.known(for: project) == nil)
+        #expect(stamps.catalogModified(for: project) == nil)
     }
 }

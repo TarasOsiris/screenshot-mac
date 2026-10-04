@@ -41,6 +41,8 @@ extension AppState {
             )
         }
         document = ProjectDocument(rows: configuredRows.isEmpty ? [makeDefaultRow()] : configuredRows)
+        // Stamped as read, so a reload before the first save lands compares instead of re-opening from disk.
+        writeStamps.recordWrite(project.id, modifiedAt: project.modifiedAt, catalogModified: nil)
         selectRow(rows.first?.id)
         CrashReportingService.breadcrumb(.project, "Created blank project", data: ["rows": rows.count])
         AnalyticsService.capture(.projectCreated, [.source: "blank", .rowCount: rows.count])
@@ -114,7 +116,13 @@ extension AppState {
             let data = await load()
             guard !Task.isCancelled, self.activeProjectId == id else { return }
             await self.loadProjectContents(for: id, preloaded: data)
+            // A superseded open must leave the newer open's handle alone: saves and reloads wait on it.
+            guard !Task.isCancelled, self.activeProjectId == id else { return }
             self.projectOpenTask = nil
+            if self.reloadDeferredByOpen {
+                self.reloadDeferredByOpen = false
+                self.reloadFromDisk()
+            }
         }
     }
 
@@ -219,28 +227,45 @@ extension AppState {
         AnalyticsService.capture(.projectDeleted, [.wasActive: activeProjectId == id])
 
         if activeProjectId == id {
-            teardownActiveProject()
-            PersistenceService.deleteProject(id)
+            Self.deleteProjectAfterQueuedWrites(id)
             if let nextProject = visibleProjects.first {
                 switchToProject(nextProject.id)
             } else {
-                // No visible projects left — drop to the empty "Create Project" state.
-                deselectAll()
-                document = ProjectDocument(rows: [])
-                viewMode.reconcilePreviewingRows(against: [])
-                activeProjectId = nil
-                writeStamps.landed = nil
+                closeActiveProject()
             }
         } else {
-            PersistenceService.deleteProject(id)
+            Self.deleteProjectAfterQueuedWrites(id)
         }
         saveIndex()
+    }
+
+    /// No visible projects left — drop to the empty "Create Project" state.
+    func closeActiveProject() {
+        teardownActiveProject()
+        deselectAll()
+        document = ProjectDocument(rows: [])
+        viewMode.reconcilePreviewingRows(against: [])
+        activeProjectId = nil
+        writeStamps.forgetLanded()
+    }
+
+    /// Behind queued writes, which would otherwise recreate the directory, but in the root deleted from.
+    private static func deleteProjectAfterQueuedWrites(_ id: UUID) {
+        let root = PersistenceService.rootURL
+        saveQueue.async {
+            PersistenceService.deleteProject(id, at: root)
+            PersistenceService.deleteThumbnail(id)
+        }
     }
 
     /// Cancels in-flight work, drops undo steps, unregisters fonts, and clears images for the
     /// current project. Undo belongs here: a step captured against the outgoing document would
     /// restore it over the incoming one, and deleting the last project has nothing to clear it.
     private func teardownActiveProject() {
+        // An open of the outgoing project can't finish now, and only it would clear its own handle.
+        projectOpenTask?.cancel()
+        projectOpenTask = nil
+        reloadDeferredByOpen = false
         presentation.dismissAll()
         textEdit.isActive = false
         cancelPendingDebounceTasks()

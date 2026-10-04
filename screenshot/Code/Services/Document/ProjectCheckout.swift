@@ -128,13 +128,12 @@ final class DetachedProjectHost: ProjectMutationHost {
         // The shared save queue, not a private one: `loadProjectAfterQueuedWrites` puts its
         // barrier here too, so an open enqueued after this write reads these bytes.
         AppState.saveQueue.async {
-            do {
-                try PersistenceService.saveProject(id, data: data)
-                monitor?.snapshotAfterWrite()
-            } catch {
+            if case .failure(let error) = AppState.writeProject(id, data: data) {
                 // Through the shared reporter, so a failed detached write raises `saveError` like
                 // every other save path instead of reaching Sentry and nobody else.
                 Task { @MainActor in owner.reportProjectSaveFailure(error) }
+            } else {
+                monitor?.snapshotAfterWrite()
             }
         }
         state.saveIndexAsync()

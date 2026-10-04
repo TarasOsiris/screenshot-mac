@@ -75,7 +75,14 @@ struct GPUploadTarget: Identifiable {
     let rowSize: CGSize
     let imageType: GPImageType
     let languages: [GPUploadLanguage]
-    let templateCount: Int
+    var templateCount: Int
+
+    /// The row can lose screenshots after planning; rendering past its last one would crash.
+    func fitted(to row: ScreenshotRow) -> GPUploadTarget {
+        var fitted = self
+        fitted.templateCount = min(templateCount, row.templates.count)
+        return fitted
+    }
 }
 
 /// A step of the Play publish. `diagnosticName` is stable English for breadcrumbs; `phrase`

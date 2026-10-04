@@ -128,6 +128,47 @@ extension AppStateTests {
         #expect(state.rows.isEmpty)
     }
 
+    /// A project created while another is still opening must not inherit that open's handle, or
+    /// every save of the new project is skipped as "a load is in flight".
+    @Test func creatingAProjectWhileAnotherIsOpeningStillSaves() throws {
+        let (state, tempDir) = makeState()
+        defer { cleanup(tempDir) }
+        let first = try #require(state.activeProjectId)
+        state.createProject(name: "Second")
+        state.selectProject(first)
+        #expect(state.projectOpenTask != nil)
+
+        state.createProject(name: "Third")
+
+        #expect(state.projectOpenTask == nil)
+        let third = try #require(state.activeProjectId)
+        #expect(PersistenceService.loadProject(third) != nil, "the new project was written")
+    }
+
+    /// The open project deleted on another device: the reload must switch properly, so the old
+    /// rows are torn down rather than kept on screen (and saved) under the next project's id.
+    @Test func aReloadThatFindsTheOpenProjectGoneSwitchesToAnother() async throws {
+        let (state, tempDir) = makeState()
+        defer { cleanup(tempDir) }
+        let doomed = try #require(state.activeProjectId)
+        state.createProject(name: "Survivor")
+        let survivor = try #require(state.activeProjectId)
+        state.selectProject(doomed)
+        await state.projectOpenTask?.value
+        #expect(state.activeProjectId == doomed)
+
+        var index = try #require(PersistenceService.loadIndex())
+        let doomedIndex = try #require(index.projects.firstIndex { $0.id == doomed })
+        index.projects[doomedIndex].markDeleted()
+        try PersistenceService.saveIndex(index)
+        state.reloadFromDisk()
+
+        #expect(state.activeProjectId == survivor)
+        #expect(state.projectOpenTask != nil, "a full switch, so saves wait for the survivor to load")
+        await state.projectOpenTask?.value
+        #expect(state.projectOpenTask == nil)
+    }
+
     @Test func selectProjectClearsOpeningIndicatorAfterStructureThenStreamsImages() async throws {
         let (state, tempDir) = makeState()
         defer { cleanup(tempDir) }

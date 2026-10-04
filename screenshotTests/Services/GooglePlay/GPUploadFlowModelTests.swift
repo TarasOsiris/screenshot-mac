@@ -406,6 +406,42 @@ struct GPUploadFlowModelTests {
         #expect(model.uploadTask == nil, "the task handle is released so the button re-enables")
     }
 
+    /// The document can change under the plan (an MCP agent editing the project); the summary
+    /// must count the row as it is when the upload starts, not as it was planned.
+    @Test func theSummaryCountsTheRowAsItIsWhenTheUploadStarts() async {
+        let uploader = FakeGPUploader()
+        let h = await readyHarness(uploader: uploader)
+        h.document.rows[0].templates.removeLast()
+
+        await h.model.startUpload()
+
+        #expect(h.model.uploadSummary?.counts.screenshots == 4, "2 remaining templates × 2 languages")
+    }
+
+    /// Preflight runs on the reconciled plan, so a row that fell below Play's minimum is caught
+    /// before an edit is opened rather than rejected by Play at commit.
+    @Test func aRowThatFellBelowPlaysMinimumIsCaughtByPreflight() async {
+        let uploader = FakeGPUploader()
+        let h = await readyHarness(uploader: uploader)
+        h.document.rows[0].templates.removeLast(2)
+
+        await h.model.startUpload()
+
+        #expect(uploader.callCount == 0)
+        #expect(h.model.validationIssues.hasErrors)
+    }
+
+    @Test func aRowRemovedAfterPlanningIsNotUploaded() async {
+        let uploader = FakeGPUploader()
+        let h = await readyHarness(uploader: uploader)
+        h.document.rows = []
+
+        await h.model.startUpload()
+
+        #expect(uploader.callCount == 0)
+        #expect(h.model.errorMessage != nil)
+    }
+
     /// The summary reports what the service actually did — Google Play can reject the draft flag
     /// and send the edit to review anyway — not what the toggle asked for.
     @Test func theSummaryEchoesTheServiceNotTheToggle() async {

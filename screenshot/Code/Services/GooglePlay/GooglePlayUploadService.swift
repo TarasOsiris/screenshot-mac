@@ -53,9 +53,16 @@ final class GooglePlayUploadService {
         source: any RowRenderSource,
         progress: @escaping (UploadProgress) -> Void
     ) async throws -> Bool {
-        guard !targets.isEmpty else { throw GooglePlayUploadError.noRowsSelected }
+        // A row removed after planning isn't work, so it's out of the denominator too (as in ASC's `buildPlan`).
+        let work = targets.compactMap { target -> (target: GPUploadTarget, row: ScreenshotRow)? in
+            rows.first { $0.id == target.rowId }.map { (target.fitted(to: $0), $0) }
+        }
+        guard !work.isEmpty else { throw GooglePlayUploadError.noRowsSelected }
+        if work.count < targets.count {
+            CrashReportingService.breadcrumb(.upload, "Play upload skipped removed rows", data: ["count": targets.count - work.count])
+        }
 
-        let totalSteps = targets.reduce(0) { $0 + ($1.templateCount * $1.languages.count) }
+        let totalSteps = work.reduce(0) { $0 + ($1.target.templateCount * $1.target.languages.count) }
         var completedSteps = 0
         var imageCache: [String: NSImage] = [:]
 
@@ -66,14 +73,12 @@ final class GooglePlayUploadService {
         }
 
         emit(completedSteps, String(localized: "Starting…"))
-        let edit = try await performStep(.openEdit, target: targets[0], language: targets[0].languages.first) {
+        let edit = try await performStep(.openEdit, target: work[0].target, language: work[0].target.languages.first) {
             try await api.insertEdit(packageName: packageName)
         }
 
         do {
-            for target in targets {
-                guard let row = rows.first(where: { $0.id == target.rowId }) else { continue }
-
+            for (target, row) in work {
                 // Backgrounds are locale-independent, so the (blur-only) precomposed row strip is
                 // built once and shared across every language — same as `ExportService.exportAll`.
                 var context: RowRenderContext?
@@ -121,7 +126,7 @@ final class GooglePlayUploadService {
             }
 
             emit(completedSteps, sendForReview ? String(localized: "Submitting for review…") : String(localized: "Saving draft…"))
-            let didSendForReview = try await performStep(.commitEdit, target: targets[0], language: targets[0].languages.first) {
+            let didSendForReview = try await performStep(.commitEdit, target: work[0].target, language: work[0].target.languages.first) {
                 try await api.commitEdit(packageName: packageName, editId: edit.id, sendForReview: sendForReview)
             }
             emit(completedSteps, String(localized: "Done"))

@@ -59,6 +59,24 @@ struct TranslationServiceTests {
         #expect(shapes.compactMap { frenchText(state, $0) } == requests.prefix(1).map { "fr:\($0)" })
     }
 
+    /// Shapes sharing a translation key share one string, so it is translated once, not per shape.
+    @Test func aSharedStringIsTranslatedOnce() async throws {
+        let (state, tempDir, shapes) = makeState(texts: ["Shared", "Other"])
+        defer { cleanupTestState(tempDir) }
+        state.linkTranslation(shapeId: shapes[1].id, toTargetKey: shapes[0].textTranslationKey)
+        let sharedKey = try #require(state.allTextShapes().first { $0.id == shapes[1].id }?.translationKey)
+
+        var requests: [String] = []
+        let completed = await translateShapes(state: state, targetLocaleCode: "fr", onlyUntranslated: false) { text in
+            requests.append(text)
+            return "fr:\(text)"
+        }
+
+        #expect(completed)
+        #expect(requests == ["Shared"])
+        #expect(state.localeState.overrides["fr"]?[sharedKey]?.text == "fr:Shared")
+    }
+
     @Test func emptyBaseTextAndFilteredShapesAreNeverSent() async {
         let (state, tempDir, shapes) = makeState(texts: ["Keep", "", "Filtered"])
         defer { cleanupTestState(tempDir) }

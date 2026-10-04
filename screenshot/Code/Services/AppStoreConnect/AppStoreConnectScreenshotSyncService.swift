@@ -89,7 +89,7 @@ final class AppStoreConnectScreenshotSyncService {
         // Connect — is not work, so it must not be in the denominator either. `previewRenderCount`
         // sizes the job before this is known; the first callback below corrects it.
         let rowsById = Dictionary(rows.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
-        let renderable = targets.compactMap { target in rowsById[target.rowId].map { (target, $0) } }
+        let renderable = targets.compactMap { target in rowsById[target.rowId].map { (target.fitted(to: $0), $0) } }
         let droppedIssues = targets.filter { rowsById[$0.rowId] == nil }.map {
             String(localized: "Skipped \($0.rowLabel) · \($0.versionLabel): its row is no longer in the project.")
         }

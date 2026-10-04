@@ -168,7 +168,7 @@ extension AppState {
         if let snapshot = projectSnapshot {
             ownWriteURLs.append(PersistenceService.projectDataURL(snapshot.id))
             ownWriteURLs.append(PersistenceService.translationCatalogURL(snapshot.id))
-            writeStamps.beginWrite(modifiedAt: snapshot.data.modifiedAt)
+            writeStamps.beginWrite(snapshot.id, modifiedAt: snapshot.data.modifiedAt)
         }
         monitor?.recordOwnWrite(ownWriteURLs)
 
@@ -176,34 +176,22 @@ extension AppState {
             let writeSpan = PerfSignpost.begin("AppState.saveWrite", "project=\(projectSnapshot != nil)")
             defer { PerfSignpost.end("AppState.saveWrite", writeSpan) }
             var indexError: Error?
-            var projectError: Error?
-            var catalogModified: Date?
+            var projectWrite: Result<Date?, Error>?
             do { try PersistenceService.saveIndex(index) } catch { indexError = error }
             if let snapshot = projectSnapshot {
-                do {
-                    try PersistenceService.saveProject(snapshot.id, data: snapshot.data)
-                    catalogModified = PersistenceService.translationCatalogModifiedDate(snapshot.id)
-                } catch { projectError = error }
+                projectWrite = Self.writeProject(snapshot.id, data: snapshot.data)
             }
             monitor?.snapshotAfterWrite()
             DispatchQueue.main.async {
                 guard let self else { return }
-                if projectSnapshot != nil { self.writeStamps.endWrite() }
                 if let indexError {
                     self.reportIndexSaveFailure(indexError)
                 }
-                if let projectError {
-                    self.reportProjectSaveFailure(projectError)
+                if let snapshot = projectSnapshot, let projectWrite {
+                    self.finishProjectWrite(snapshot.id, modifiedAt: snapshot.data.modifiedAt, result: projectWrite)
                 }
-                if let snapshot = projectSnapshot, projectError == nil,
-                   self.activeProjectId == snapshot.id {
-                    // Stamped only after the write lands (like saveCurrentProject) — an eagerly
-                    // stamped failed save would make reloadICloudFromDisk refuse genuinely
-                    // newer remote data forever.
-                    self.writeStamps.landed = snapshot.data.modifiedAt
-                    self.writeStamps.catalogModified = catalogModified
-                }
-                if indexError == nil && projectError == nil {
+                let projectFailed = if case .failure? = projectWrite { true } else { false }
+                if indexError == nil && !projectFailed {
                     self.cleanupUnreferencedFontsThrottled()
                 }
             }
@@ -235,15 +223,10 @@ extension AppState {
             commitAllPendingEdits()
         }
         guard let snapshot = activeProjectSnapshotForSave() else { return true }
-        do {
-            try PersistenceService.saveProject(snapshot.id, data: snapshot.data)
-            writeStamps.landed = snapshot.data.modifiedAt
-            writeStamps.catalogModified = PersistenceService.translationCatalogModifiedDate(snapshot.id)
-            return true
-        } catch {
-            reportProjectSaveFailure(error)
-            return false
-        }
+        let result = Self.writeProject(snapshot.id, data: snapshot.data)
+        finishProjectWrite(snapshot.id, modifiedAt: snapshot.data.modifiedAt, result: result, inFlight: false)
+        if case .success = result { return true }
+        return false
     }
 
     /// Snapshots the active project's data on the main actor and encodes+writes it
@@ -255,24 +238,34 @@ extension AppState {
             commitAllPendingEdits()
         }
         guard let (activeId, data) = activeProjectSnapshotForSave() else { return }
-        writeStamps.landed = data.modifiedAt
+        writeStamps.beginWrite(activeId, modifiedAt: data.modifiedAt)
         let monitor = iCloudMonitor
         monitor?.recordOwnWrite([PersistenceService.projectDataURL(activeId), PersistenceService.translationCatalogURL(activeId)])
         Self.saveQueue.async { [weak self] in
-            do {
-                try PersistenceService.saveProject(activeId, data: data)
-                let catalogModified = PersistenceService.translationCatalogModifiedDate(activeId)
-                DispatchQueue.main.async {
-                    // A project switch may have landed while we wrote off-main; only stamp the
-                    // active-project mtime if it's still the project we just saved.
-                    guard let self, self.activeProjectId == activeId else { return }
-                    self.writeStamps.catalogModified = catalogModified
-                }
-            } catch {
-                DispatchQueue.main.async {
-                    self?.reportProjectSaveFailure(error)
-                }
+            let result = Self.writeProject(activeId, data: data)
+            DispatchQueue.main.async {
+                self?.finishProjectWrite(activeId, modifiedAt: data.modifiedAt, result: result)
             }
+        }
+    }
+
+    /// The project write every save path shares; the catalog date is what the stamp records on success.
+    nonisolated static func writeProject(_ id: UUID, data: ProjectData) -> Result<Date?, Error> {
+        Result {
+            try PersistenceService.saveProject(id, data: data)
+            return PersistenceService.translationCatalogModifiedDate(id)
+        }
+    }
+
+    /// Stamps a project write only once it lands, and only while its project is still open.
+    private func finishProjectWrite(_ id: UUID, modifiedAt: Date, result: Result<Date?, Error>, inFlight: Bool = true) {
+        if inFlight { writeStamps.endWrite(id) }
+        switch result {
+        case .failure(let error):
+            reportProjectSaveFailure(error)
+        case .success(let catalogModified):
+            guard activeProjectId == id else { return }
+            writeStamps.recordWrite(id, modifiedAt: modifiedAt, catalogModified: catalogModified)
         }
     }
 

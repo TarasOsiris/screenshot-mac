@@ -97,6 +97,8 @@ final class AppState {
     /// Serializes off-main iCloud reloads so overlapping remote changes don't race on the
     /// tombstone merge / own-write bookkeeping.
     @ObservationIgnored var reloadTask: Task<Void, Never>?
+    /// A reload that arrived while a project open was in flight; the open runs it once it lands.
+    @ObservationIgnored var reloadDeferredByOpen = false
     /// Which step of a project open is running, and the text the loading overlay shows for it.
     /// Views take this object directly rather than reading through `AppState`, so a phase or
     /// image-count change invalidates the overlay instead of the whole editor shell.
@@ -151,13 +153,13 @@ final class AppState {
         visibleProjects.first { $0.id == activeProjectId }
     }
 
-    /// nil when no project is open. `writeStamps.landed` wins because it tracks the last
+    /// nil when no project is open. the landed write stamp wins because it tracks the last
     /// write of the row data itself; the project record's own timestamp is the fallback.
     var documentStamp: DocumentStamp? {
         guard let activeProjectId else { return nil }
         return DocumentStamp(
             projectId: activeProjectId,
-            modifiedAt: writeStamps.landed ?? activeProject?.modifiedAt
+            modifiedAt: writeStamps.landed(for: activeProjectId) ?? activeProject?.modifiedAt
         )
     }
 

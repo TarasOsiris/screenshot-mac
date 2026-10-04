@@ -15,6 +15,14 @@ struct GPUploadCounts: Equatable {
     var screenshots = 0
     var languages = 0
 
+    init() {}
+
+    init(targets: [GPUploadTarget]) {
+        rows = targets.count
+        screenshots = targets.reduce(0) { $0 + $1.templateCount * $1.languages.count }
+        languages = Set(targets.flatMap { $0.languages.map(\.playCode) }).count
+    }
+
     var text: String {
         switch (screenshots == 1, languages == 1) {
         case (true, true):

@@ -329,7 +329,7 @@ struct TranslationCatalogTests {
         var catalog = try #require(TranslationCatalogService.read(projectId: id))
         catalog.strings[shape.id.uuidString]?.localizations["fr"] = .init(stringUnit: .init(state: "translated", value: "Salut"))
         try TranslationCatalogService.write(catalog, projectId: id)
-        appState.writeStamps.catalogModified = .distantPast
+        appState.writeStamps.recordCatalogModified(id, at: .distantPast)
 
         appState.refreshTranslationsIfCatalogChanged()
 

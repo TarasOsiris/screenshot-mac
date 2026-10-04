@@ -277,22 +277,30 @@ final class GPUploadFlowModel {
     }
 
     var plannedCounts: GPUploadCounts {
-        var counts = GPUploadCounts()
-        var playCodes: Set<String> = []
-        for plan in rowPlans {
-            let languages = Self.uploadLanguages(for: plan)
-            guard !languages.isEmpty else { continue }
-            counts.rows += 1
-            counts.screenshots += plan.templateCount * languages.count
-            playCodes.formUnion(languages.map(\.playCode))
+        GPUploadCounts(targets: buildUploadTargets())
+    }
+
+    /// Catches the plan up with document edits made since it was built, never adding an unreviewed row.
+    func reconcileRowPlansWithDocument() {
+        let live = Dictionary(listingRows.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
+        rowPlans = rowPlans.compactMap { plan -> GPRowPlan? in
+            guard let row = live[plan.id] else { return nil }
+            var plan = plan
+            let detected = GPImageType.detect(width: row.templateWidth, height: row.templateHeight)
+            // Follow a resize unless the user picked an image type other than the detected one.
+            if plan.selectedAssetType == plan.detectedAssetType { plan.selectedAssetType = detected }
+            plan.detectedAssetType = detected
+            plan.rowLabel = row.label
+            plan.rowSize = row.templateSize
+            plan.templateCount = row.templates.count
+            return plan
         }
-        counts.languages = playCodes.count
-        return counts
     }
 
     func startUpload() async {
         errorMessage = nil
         errorDetailsText = nil
+        reconcileRowPlansWithDocument()
         guard !validationIssues.hasErrors else {
             errorMessage = String(localized: "Fix the preflight errors before uploading.")
             return

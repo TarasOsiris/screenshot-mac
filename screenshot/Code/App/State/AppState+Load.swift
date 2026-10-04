@@ -146,10 +146,14 @@ extension AppState {
     private func reloadLocalFromDisk() {
         if let loaded = PersistenceService.loadIndexOrRecover() {
             projects = loaded.index.projects.purgingOldTombstones()
-            selectActiveProjectAfterReload(preferred: loaded.index.activeProjectId)
+            let switched = selectActiveProjectAfterReload(preferred: loaded.index.activeProjectId)
             // Write the rebuild back now: the next launch must not have to recover again, and
             // nothing else here schedules a save.
             if loaded.wasRecovered { saveIndex(at: loaded.root) }
+            if switched {
+                hasCompletedInitialLoad = true
+                return
+            }
         }
         hasCompletedInitialLoad = true
         guard let activeId = activeProjectId else { return }
@@ -208,7 +212,10 @@ extension AppState {
             // `snapshotAfterWrite` still stamps the live index, so it only suppresses the reload
             // while `loaded.root` is the live root — which is the case this write-back expects.
             if needsWriteBack { writeIndexBack(at: loaded.root) }
-            selectActiveProjectAfterReload(preferred: loaded.index.activeProjectId)
+            if selectActiveProjectAfterReload(preferred: loaded.index.activeProjectId) {
+                hasCompletedInitialLoad = true
+                return
+            }
         } else if adoptedFromConflict {
             writeIndexBack(at: root)
         }
@@ -218,13 +225,17 @@ extension AppState {
         hasCompletedInitialLoad = true
 
         guard let activeId = activeProjectId else { return }
+        // A second apply alongside an open in flight would wipe edits made after the first; run after it instead.
+        guard projectOpenTask == nil else {
+            reloadDeferredByOpen = true
+            return
+        }
 
-        // Raised before the read, not after: this is the one path where an undownloaded iCloud
-        // file really does block for seconds, so it is the path that most needs to say so.
-        let isFirstRead = writeStamps.known == nil
-        if isFirstRead {
-            beginProjectOpening(for: activeId)
-            projectOpen.advance(to: .reading)
+        // A project not yet read opens like a switch: its overlay goes up before an undownloaded
+        // iCloud file blocks for seconds, and saves and reloads wait on `projectOpenTask` meanwhile.
+        guard writeStamps.known(for: activeId) != nil else {
+            openProject(activeId) { await AppState.loadProjectAfterQueuedWrites(activeId) }
+            return
         }
 
         let diskData = await AppState.loadProjectAfterQueuedWrites(activeId)
@@ -233,18 +244,14 @@ extension AppState {
         // project's rows now would let the next save write them into the new project's file.
         guard activeProjectId == activeId else { return }
 
-        if !isFirstRead, let localModified = writeStamps.known {
-            // Only reload if the on-disk version is newer than our in-memory version. No overlay
-            // here: this is a background re-sync of a project already on screen, and the common
-            // case is that nothing changed.
-            if let diskData, diskData.modifiedAt > localModified {
-                await loadCustomFontsAsync()
-                guard !Task.isCancelled, activeProjectId == activeId else { return }
-                applyProjectData(diskData, for: activeId, origin: .remoteReload)
-                loadScreenshotImages()
-            }
-        } else {
-            await loadProjectContents(for: activeId, preloaded: diskData)
+        // Only reload if the on-disk version is newer than our in-memory version. No overlay
+        // here: this is a background re-sync of a project already on screen, and the common
+        // case is that nothing changed.
+        if let diskData, let localModified = writeStamps.known(for: activeId), diskData.modifiedAt > localModified {
+            await loadCustomFontsAsync()
+            guard !Task.isCancelled, activeProjectId == activeId else { return }
+            applyProjectData(diskData, for: activeId, origin: .remoteReload)
+            loadScreenshotImages()
         }
     }
 
@@ -269,14 +276,18 @@ extension AppState {
         iCloudMonitor?.snapshotAfterWrite()
     }
 
-    private func selectActiveProjectAfterReload(preferred: UUID?) {
+    /// True when it moved off a project that's gone; that runs a full switch, leaving the caller nothing to load.
+    @discardableResult
+    private func selectActiveProjectAfterReload(preferred: UUID?) -> Bool {
         let visible = visibleProjects
-        guard activeProjectId == nil || !visible.contains(where: { $0.id == activeProjectId }) else { return }
-        if let preferred, visible.contains(where: { $0.id == preferred }) {
-            activeProjectId = preferred
-        } else {
-            activeProjectId = visible.first?.id
+        guard activeProjectId == nil || !visible.contains(where: { $0.id == activeProjectId }) else { return false }
+        let next = visible.first { $0.id == preferred }?.id ?? visible.first?.id
+        guard activeProjectId != nil else {
+            activeProjectId = next
+            return false
         }
+        if let next { switchToProject(next) } else { closeActiveProject() }
+        return true
     }
 
     func applyProjectData(_ data: ProjectData, for projectId: UUID, origin: ProjectLoadOrigin) {
@@ -292,8 +303,11 @@ extension AppState {
         cancelPendingDebounceTasks()
         undoManager?.removeAllActions()
         document = ProjectDocument(data)
-        writeStamps.landed = data.modifiedAt
-        writeStamps.catalogModified = PersistenceService.translationCatalogModifiedDate(projectId)
+        writeStamps.recordWrite(
+            projectId,
+            modifiedAt: data.modifiedAt,
+            catalogModified: PersistenceService.translationCatalogModifiedDate(projectId)
+        )
         // Drop any preview-mode entries that don't refer to a row in the new data.
         viewMode.reconcilePreviewingRows(against: Set(rows.map(\.id)))
         // The outgoing project's model-resolution rasters are the largest thing the cache holds and
@@ -322,8 +336,8 @@ extension AppState {
     func refreshTranslationsIfCatalogChanged() {
         guard let id = activeProjectId,
               let diskModified = PersistenceService.translationCatalogModifiedDate(id),
-              diskModified > (writeStamps.catalogModified ?? .distantPast) else { return }
-        writeStamps.catalogModified = diskModified
+              diskModified > (writeStamps.catalogModified(for: id) ?? .distantPast) else { return }
+        writeStamps.recordCatalogModified(id, at: diskModified)
 
         let updated = TranslationCatalogService.merging(localeState, projectId: id, rows: rows)
         guard updated != localeState else { return }
@@ -349,7 +363,7 @@ extension AppState {
                 degradedLoadProjectId = nil
             }
             document = ProjectDocument(rows: [makeDefaultRow()])
-            writeStamps.landed = nil
+            writeStamps.forgetLanded()
             selectRow(rows.first?.id)
         }
     }
