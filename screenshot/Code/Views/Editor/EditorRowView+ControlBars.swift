@@ -42,16 +42,16 @@ extension EditorRowView {
                                 state.saveBackgroundSvg(svgContent, for: row.id, templateIndex: index)
                             },
                             onDuplicate: {
-                                addTemplateIfAllowed { state.duplicateTemplate(template.id, in: row.id) }
+                                store.addTemplateIfAllowed(currentCount: row.templates.count) { state.duplicateTemplate(template.id, in: row.id) }
                             },
                             onDuplicateToEnd: {
-                                addTemplateIfAllowed { state.duplicateTemplateToEnd(template.id, in: row.id) }
+                                store.addTemplateIfAllowed(currentCount: row.templates.count) { state.duplicateTemplateToEnd(template.id, in: row.id) }
                             },
                             onInsertBefore: {
-                                addTemplateIfAllowed { state.insertTemplateBefore(template.id, in: row.id) }
+                                store.addTemplateIfAllowed(currentCount: row.templates.count) { state.insertTemplateBefore(template.id, in: row.id) }
                             },
                             onInsertAfter: {
-                                addTemplateIfAllowed { state.insertTemplateAfter(template.id, in: row.id) }
+                                store.addTemplateIfAllowed(currentCount: row.templates.count) { state.insertTemplateAfter(template.id, in: row.id) }
                             },
                             onDelete: {
                                 withAnimation(.easeInOut(duration: 0.2)) {
@@ -67,12 +67,5 @@ extension EditorRowView {
             }
         }
         .frame(height: UIMetrics.TemplateBar.height)
-    }
-
-    /// Runs a template-adding action behind the free tier's template limit.
-    func addTemplateIfAllowed(_ action: () -> Void) {
-        store.requirePro(allowed: store.canAddTemplate(currentCount: row.templates.count), context: .templateLimit) {
-            withAnimation(.easeInOut(duration: 0.2)) { action() }
-        }
     }
 }

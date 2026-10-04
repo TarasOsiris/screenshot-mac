@@ -78,7 +78,7 @@ nonisolated extension PersistenceService {
     }
 
     static func projectDirectoryURL(_ id: UUID) -> URL {
-        projectDir(id, at: rootURL)
+        projectDirectoryURL(id, at: rootURL)
     }
 
     static func projectDataURL(_ id: UUID) -> URL {
@@ -105,12 +105,12 @@ nonisolated extension PersistenceService {
         root.appendingPathComponent(projectsDirName, isDirectory: true)
     }
 
-    static func projectDir(_ id: UUID, at root: URL) -> URL {
+    static func projectDirectoryURL(_ id: UUID, at root: URL) -> URL {
         projectsDir(at: root).appendingPathComponent(id.uuidString, isDirectory: true)
     }
 
     static func projectDataURL(_ id: UUID, at root: URL) -> URL {
-        projectDir(id, at: root).appendingPathComponent(projectDataFileName)
+        projectDirectoryURL(id, at: root).appendingPathComponent(projectDataFileName)
     }
 
     // MARK: - Thumbnails

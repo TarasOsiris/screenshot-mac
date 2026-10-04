@@ -13,9 +13,7 @@ extension ContentView {
         ToolbarItem(id: "projectActions", placement: .navigation) {
             projectActionsToolbarMenu
         }
-        #endif
 
-        #if os(macOS)
         ToolbarItem(id: "export", placement: .principal) {
             exportControlGroup
         }

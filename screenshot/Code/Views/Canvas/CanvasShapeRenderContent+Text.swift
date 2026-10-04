@@ -183,8 +183,7 @@ extension CanvasShapeRenderContent {
 
     private func resolvedTextFont(italic: Bool) -> NSFont {
         let fontSize = shape.fontSize ?? CanvasShapeModel.defaultFontSize
-        let weight = fontWeightResolver(shape.fontWeight ?? 700)
-        return resolveNSFont(fontSize, weight.nsWeight, italic)
+        return resolveNSFont(fontSize, CSSFontWeight(css: shape.fontWeight ?? 700).platform, italic)
     }
 
     /// The scale of the committed text, held for the whole edit: re-fitting per keystroke would

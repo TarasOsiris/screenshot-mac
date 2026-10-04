@@ -150,7 +150,6 @@ struct ShowcaseExportSheet: View {
 
     // MARK: - Preview column
 
-    @ViewBuilder
     private var previewColumn: some View {
         ShowcasePreviewColumn(
             rows: selection.selectedRowsOrdered,
@@ -165,7 +164,6 @@ struct ShowcaseExportSheet: View {
 
     // MARK: - Settings panel
 
-    @ViewBuilder
     private var settingsPanel: some View {
         ShowcaseSettingsPanel(
             candidateRows: candidateRows,

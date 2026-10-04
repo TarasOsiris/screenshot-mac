@@ -174,10 +174,13 @@ extension ContentView {
         return [ShowcaseExportConfig.transientBackgroundKey: backgroundImage]
     }
 
+    /// Filters the live rows rather than the sheet's snapshot, so an export reflects the current document.
     func showcaseRows(selectedRowIds: Set<UUID>, excludedTemplateIds: Set<UUID>) -> [ScreenshotRow] {
-        state.rows
-            .filter { selectedRowIds.contains($0.id) }
-            .compactMap { $0.filtering(excluding: excludedTemplateIds) }
+        ShowcaseExportSelection(
+            candidateRows: state.rows,
+            selectedRowIds: selectedRowIds,
+            excludedTemplateIds: excludedTemplateIds
+        ).selectedRowsOrdered
     }
 
     func runShowcaseExport(
@@ -198,9 +201,8 @@ extension ContentView {
                 await context.showcaseImage(config: config)
             }
         case .singleRow:
-            guard let rowId = selectedRowIds.first,
-                  let baseRow = state.rows.first(where: { $0.id == rowId }),
-                  let row = baseRow.filtering(excluding: excludedTemplateIds) else { return }
+            guard let row = showcaseRows(selectedRowIds: selectedRowIds, excludedTemplateIds: excludedTemplateIds).first
+            else { return }
             let localeCode = state.localeState.activeLocaleCode
             Task {
                 if let message = await ExportService.saveRowImageViaPanel(defaultName: row.label, render: {

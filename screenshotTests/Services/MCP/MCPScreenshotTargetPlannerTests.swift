@@ -15,7 +15,7 @@ struct MCPScreenshotTargetPlannerTests {
     ]
 
     private func iPhoneRow(label: String = "Hero") -> ScreenshotRow {
-        ScreenshotRow(label: label, templates: [ScreenshotTemplate()], templateWidth: 1290, templateHeight: 2796)
+        makeTestRow(label: label, width: 1290, height: 2796)
     }
 
     @Test func eligibleRowTargetsEveryMappedLocale() {

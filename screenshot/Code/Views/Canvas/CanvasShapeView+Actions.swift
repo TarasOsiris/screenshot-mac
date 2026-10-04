@@ -292,8 +292,4 @@ extension CanvasShapeView {
             italic: italic
         )
     }
-
-    func fontWeight(_ weight: Int) -> Font.Weight {
-        CSSFontWeight(css: weight).font
-    }
 }

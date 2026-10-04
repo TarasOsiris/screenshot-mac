@@ -18,12 +18,8 @@ struct GooglePlayAuthServiceTests {
     }
 
     private func makeTestKey() throws -> TestKey {
-        let attributes: [String: Any] = [
-            kSecAttrKeyType as String: kSecAttrKeyTypeRSA,
-            kSecAttrKeySizeInBits as String: 2048
-        ]
+        let priv = try makeTestRSAPrivateKey()
         var error: Unmanaged<CFError>?
-        let priv = try #require(SecKeyCreateRandomKey(attributes as CFDictionary, &error))
         let pub = try #require(SecKeyCopyPublicKey(priv))
         let pkcs1 = try #require(SecKeyCopyExternalRepresentation(priv, &error) as Data?)
         let pkcs8 = Self.wrapPKCS8(pkcs1: pkcs1)
@@ -31,9 +27,9 @@ struct GooglePlayAuthServiceTests {
             privateKey: priv,
             publicKey: pub,
             pkcs1DER: pkcs1,
-            pkcs1PEM: Self.pem(pkcs1, label: "RSA PRIVATE KEY"),
+            pkcs1PEM: pemEncoded(pkcs1, label: "RSA PRIVATE KEY"),
             pkcs8DER: pkcs8,
-            pkcs8PEM: Self.pem(pkcs8, label: "PRIVATE KEY")
+            pkcs8PEM: pemEncoded(pkcs8, label: "PRIVATE KEY")
         )
     }
 
@@ -54,11 +50,6 @@ struct GooglePlayAuthServiceTests {
         let inner = version + algId + octet
         let outer = [0x30] + derLength(inner.count) + inner
         return Data(outer)
-    }
-
-    private static func pem(_ der: Data, label: String) -> String {
-        let b64 = der.base64EncodedString(options: [.lineLength64Characters, .endLineWithLineFeed])
-        return "-----BEGIN \(label)-----\n\(b64)\n-----END \(label)-----\n"
     }
 
     private func base64urlDecode(_ s: String) -> Data {

@@ -9,12 +9,12 @@ struct ShowcaseExportSelection {
     }
 
     let candidateRows: [ScreenshotRow]
-    let selectedRowIds: Set<UUID>
-    let excludedTemplateIds: Set<UUID>
-
     /// Rows whose screenshots are all excluded drop out: they would render empty.
-    var selectedRowsOrdered: [ScreenshotRow] {
-        candidateRows
+    let selectedRowsOrdered: [ScreenshotRow]
+
+    init(candidateRows: [ScreenshotRow], selectedRowIds: Set<UUID>, excludedTemplateIds: Set<UUID>) {
+        self.candidateRows = candidateRows
+        selectedRowsOrdered = candidateRows
             .filter { selectedRowIds.contains($0.id) }
             .compactMap { $0.filtering(excluding: excludedTemplateIds) }
     }

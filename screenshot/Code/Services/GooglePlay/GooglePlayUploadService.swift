@@ -127,10 +127,10 @@ final class GooglePlayUploadService {
             emit(completedSteps, String(localized: "Done"))
             return didSendForReview
         } catch {
-            // Abandon the half-finished edit so it doesn't linger in the Play Console. Unstructured,
-            // because inside a cancelled upload the retry policy throws before the DELETE is sent.
-            let abandon = await Task { try await api.deleteEdit(packageName: packageName, editId: edit.id) }.result
-            if case .failure(let abandonError) = abandon {
+            // Abandon the half-finished edit so it doesn't linger in the Play Console.
+            do {
+                try await api.deleteEdit(packageName: packageName, editId: edit.id)
+            } catch let abandonError {
                 // The abandon failed, so a dangling edit is now stuck in the user's real console.
                 CrashReportingService.report(.googlePlayEditAbandonFailed, error: abandonError)
             }

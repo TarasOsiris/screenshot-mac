@@ -1,28 +1,18 @@
 import Foundation
 
-/// When the active project was last read or written, so a reload can tell our own save from newer
-/// remote data. Reset on every project load via `applyProjectData`.
+/// When the active project was last read or written, so a reload can tell our own save from newer remote data.
 final class ProjectWriteStamps {
-    /// `modifiedAt` of the last load or *landed* save; a failed save must never stamp it, or
-    /// `reloadICloudFromDisk` would refuse genuinely newer remote data forever.
+    /// The last load or *landed* save; a failed save stamping it would make reloads refuse newer remote data.
     var landed: Date?
-    /// `translations.xcstrings` mod-date last read or written, so an external (Xcode/translator)
-    /// edit can be told apart from our own dual-write on re-activation.
+    /// `translations.xcstrings` mod-date last read or written, so an external edit stands out from our own.
     var catalogModified: Date?
 
     private var inFlight: Date?
     private var inFlightCount = 0
 
-    /// The newest local write we know of, landed or still in flight. Without the in-flight half,
-    /// the file we are in the middle of writing looks newer than memory and triggers a reload —
-    /// which clears the undo stack and drops in-flight edits.
+    /// Includes writes still in flight: otherwise the file we are writing looks newer than memory and reloads.
     var known: Date? {
-        switch (landed, inFlight) {
-        case let (landed?, inFlight?): max(landed, inFlight)
-        case let (landed?, nil): landed
-        case let (nil, inFlight?): inFlight
-        case (nil, nil): nil
-        }
+        [landed, inFlight].compactMap { $0 }.max()
     }
 
     func beginWrite(modifiedAt: Date) {

@@ -5,7 +5,6 @@ import UIKit
 #endif
 import StoreKit
 import SwiftUI
-import UniformTypeIdentifiers
 
 struct ContentView: View {
     enum ShowcaseExportMode {
@@ -249,7 +248,6 @@ struct ContentView: View {
         }
         #endif
     }
-
 }
 
 #Preview {

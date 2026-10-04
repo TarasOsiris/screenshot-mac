@@ -35,14 +35,7 @@ struct EditorRowMenuContent: View {
     @ViewBuilder
     private var addSection: some View {
         Button("Add Screenshot", systemImage: "plus.rectangle") {
-            store.requirePro(
-                allowed: store.canAddTemplate(currentCount: row.templates.count),
-                context: .templateLimit
-            ) {
-                withAnimation(.easeInOut(duration: 0.2)) {
-                    state.addTemplate(to: row.id)
-                }
-            }
+            store.addTemplateIfAllowed(currentCount: row.templates.count) { state.addTemplate(to: row.id) }
         }
         #if os(macOS)
         Button("Import Localized Screenshots…", systemImage: "folder.badge.plus", action: importLocalizedScreenshots)

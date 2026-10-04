@@ -61,8 +61,8 @@ nonisolated extension PersistenceService {
     /// Copies to a temp location first, then swaps, to avoid data loss if the copy fails.
     static func replaceProjectDir(_ id: UUID, from sourceRoot: URL, to destRoot: URL) throws {
         let fm = FileManager.default
-        let srcDir = projectDir(id, at: sourceRoot)
-        let dstDir = projectDir(id, at: destRoot)
+        let srcDir = projectDirectoryURL(id, at: sourceRoot)
+        let dstDir = projectDirectoryURL(id, at: destRoot)
         guard fm.fileExists(atPath: srcDir.path) else { return }
 
         if !fm.fileExists(atPath: dstDir.path) {

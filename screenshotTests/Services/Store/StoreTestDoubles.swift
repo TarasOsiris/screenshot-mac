@@ -4,6 +4,7 @@ import AppKit
 import UIKit
 #endif
 import Foundation
+import Security
 @testable import Screenshot_Bro
 import Testing
 
@@ -59,6 +60,8 @@ final class StubGPDocument: GPUploadDocument {
     var availableFontFamilySet: Set<String> = []
     var documentStamp: DocumentStamp?
     var savedGooglePlayPackageName: String?
+    /// Image names a row claims to need; nothing loads, so any entry reads as unreadable.
+    var referencedFileNames: Set<String> = []
     /// Every value the flow asked to persist, so a test can assert demo mode never writes one.
     private(set) var rememberedPackageNames: [String?] = []
 
@@ -79,7 +82,7 @@ final class StubGPDocument: GPUploadDocument {
         savedGooglePlayPackageName = packageName
     }
 
-    func referencedImageFileNames(forRow row: ScreenshotRow, localeCode: String) -> Set<String> { [] }
+    func referencedImageFileNames(forRow row: ScreenshotRow, localeCode: String) -> Set<String> { referencedFileNames }
 
     func loadFullResolutionImages(fileNames: Set<String>, cache: inout [String: NSImage]) -> [String: NSImage] { [:] }
 }
@@ -344,4 +347,19 @@ final class Gate {
         waiters.forEach { $0.resume() }
         waiters = []
     }
+}
+
+/// A fresh 2048-bit RSA private key, for credentials whose token minting really signs.
+func makeTestRSAPrivateKey() throws -> SecKey {
+    let attributes: [String: Any] = [
+        kSecAttrKeyType as String: kSecAttrKeyTypeRSA,
+        kSecAttrKeySizeInBits as String: 2048
+    ]
+    var error: Unmanaged<CFError>?
+    return try #require(SecKeyCreateRandomKey(attributes as CFDictionary, &error))
+}
+
+func pemEncoded(_ der: Data, label: String) -> String {
+    let b64 = der.base64EncodedString(options: [.lineLength64Characters, .endLineWithLineFeed])
+    return "-----BEGIN \(label)-----\n\(b64)\n-----END \(label)-----\n"
 }

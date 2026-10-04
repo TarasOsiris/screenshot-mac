@@ -191,7 +191,7 @@ nonisolated struct PersistenceService {
     }
 
     static func deleteProject(_ id: UUID, at root: URL) {
-        try? FileManager.default.removeItem(at: projectDir(id, at: root))
+        try? FileManager.default.removeItem(at: projectDirectoryURL(id, at: root))
     }
 
     static func deleteThumbnail(_ id: UUID, at baseURL: URL? = nil) {

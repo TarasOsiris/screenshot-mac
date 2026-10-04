@@ -118,7 +118,7 @@ extension EditorRowView {
                             }
 
                             AddTemplateButton(width: row.displayWidth(zoom: zoom), height: row.displayHeight(zoom: zoom)) {
-                                addTemplateIfAllowed { state.addTemplate(to: row.id) }
+                                store.addTemplateIfAllowed(currentCount: row.templates.count) { state.addTemplate(to: row.id) }
                             }
                         }
                         // Canvas geometry is model-space and anchored `.topLeading`; under an RTL

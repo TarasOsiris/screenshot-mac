@@ -34,7 +34,6 @@ struct CanvasShapeRenderContent: View {
     var onSelectionChange: (([NSAttributedString.Key: Any]?, NSRange?) -> Void)?
     var formatController: RichTextFormatController?
     let resolveNSFont: (CGFloat, NSFont.Weight, Bool) -> NSFont
-    let fontWeightResolver: (Int) -> Font.Weight
     let renderSvgImage: (String, Bool, Color, CGSize?) -> NSImage?
     @Environment(\.displayScale) private var screenScale
     @Environment(\.isLiveShapeEdit) private var isLiveShapeEdit

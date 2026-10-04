@@ -84,11 +84,7 @@ private struct FlipCompensatedShadow: ViewModifier {
     @Environment(\.isExportRendering) private var isExportRendering
 
     private var compensatedY: CGFloat {
-        #if os(macOS)
-        return isExportRendering ? -y : y
-        #else
-        return y
-        #endif
+        ShadowModifier.compensatedOffset(ox: 0, oy: y, rotationDegrees: 0, isExportRendering: isExportRendering).y
     }
 
     func body(content: Content) -> some View {

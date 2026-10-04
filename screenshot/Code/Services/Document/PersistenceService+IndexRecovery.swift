@@ -6,9 +6,6 @@ nonisolated extension PersistenceService {
         return index
     }
 
-    /// `ensureDirectories` first, mirroring `saveProject`'s `ensureProjectDirs`: the root is
-    /// otherwise created only at launch, so a folder removed mid-session (external cleaner,
-    /// container reset, restore) made every later index write fail with ENOENT on the parent.
     static func saveIndex(_ index: ProjectIndex) throws {
         try saveIndex(index, at: rootURL)
     }
@@ -162,6 +159,7 @@ nonisolated extension PersistenceService {
 
     /// The write counterpart of `loadIndex(at:)`: coordination follows the root being written.
     static func saveIndex(_ index: ProjectIndex, at root: URL) throws {
+        // A root removed mid-session (cleaner, container reset) otherwise fails every write with ENOENT.
         ensureDirectories(at: root)
         let url = indexURL(at: root)
         let data = try encoder.encode(index)

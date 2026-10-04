@@ -31,33 +31,12 @@ nonisolated extension SCNNode {
             accumulated = Self.bounds(covering: corners)
         }
 
-        for child in childNodes {
+        // An empty leaf (light, camera) would drag the box toward the origin.
+        for child in childNodes where child.geometry != nil || !child.childNodes.isEmpty {
             let childBounds = child.worldBounds()
-            let isEmptyLeaf =
-                child.geometry == nil &&
-                child.childNodes.isEmpty &&
-                childBounds.min.x == childBounds.max.x &&
-                childBounds.min.y == childBounds.max.y &&
-                childBounds.min.z == childBounds.max.z
-            if isEmptyLeaf {
-                continue
-            }
-            if let existing = accumulated {
-                accumulated = (
-                    min: SCNVector3(
-                        min(existing.min.x, childBounds.min.x),
-                        min(existing.min.y, childBounds.min.y),
-                        min(existing.min.z, childBounds.min.z)
-                    ),
-                    max: SCNVector3(
-                        max(existing.max.x, childBounds.max.x),
-                        max(existing.max.y, childBounds.max.y),
-                        max(existing.max.z, childBounds.max.z)
-                    )
-                )
-            } else {
-                accumulated = childBounds
-            }
+            accumulated = accumulated.map {
+                Self.bounds(covering: [$0.min, $0.max, childBounds.min, childBounds.max])
+            } ?? childBounds
         }
 
         return accumulated ?? (SCNVector3Zero, SCNVector3Zero)

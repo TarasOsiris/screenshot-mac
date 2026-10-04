@@ -124,8 +124,7 @@ final class GooglePlayAPIService: StoreDemoPacing {
                 startNext()
             }
         }
-        // Unstructured, so a cancelled read still deletes its edit instead of leaving it open beside the upload's.
-        await Task { try? await self.deleteEdit(packageName: packageName, editId: edit.id) }.value
+        try? await deleteEdit(packageName: packageName, editId: edit.id)
         for language in failedLanguages { counts[language] = nil }
         return counts
     }
@@ -141,10 +140,12 @@ final class GooglePlayAPIService: StoreDemoPacing {
         }
     }
 
+    /// Only ever cleanup, so it runs unstructured: inside a cancelled caller the retry policy
+    /// would throw before the DELETE is sent and leave the edit open in the Play Console.
     func deleteEdit(packageName: String, editId: String) async throws {
         if isDemoMode { await demoDelay(); return }
         let path = "/androidpublisher/v3/applications/\(packageName)/edits/\(editId)"
-        _ = try await rawRequest(method: "DELETE", path: path, body: nil, contentType: nil)
+        _ = try await Task { try await rawRequest(method: "DELETE", path: path, body: nil, contentType: nil) }.value
     }
 
     // MARK: - Images

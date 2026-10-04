@@ -355,7 +355,6 @@ struct CanvasShapeView: View {
             },
             formatController: formatController,
             resolveNSFont: resolvedNSFont,
-            fontWeightResolver: fontWeight,
             renderSvgImage: Self.svgImage
         )
     }

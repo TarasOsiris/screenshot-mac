@@ -566,9 +566,13 @@ struct CanvasShapeModelTests {
         #expect(result.resolvedIsLocked == true)
     }
 
-    @Test func fullyPopulatedFixtureLeavesNoFieldNil() {
-        let nilPaths = Self.nilOptionalPaths(in: Self.fullyPopulatedShape(id: UUID()))
-        #expect(nilPaths.isEmpty, "Set these in fullyPopulatedShape so rebase coverage includes them: \(nilPaths)")
+    /// Guards the next test: a field the fixture leaves at the base's value is a field it doesn't cover.
+    @Test func fullyPopulatedFixtureChangesEveryField() {
+        let id = UUID()
+        let base = Self.leafValues(of: CanvasShapeModel(id: id, type: .rectangle, x: 0, y: 0, width: 100, height: 100))
+        let edited = Self.leafValues(of: Self.fullyPopulatedShape(id: id))
+        let unchanged = edited.keys.filter { $0 != "id" && edited[$0] == base[$0] }.sorted()
+        #expect(unchanged.isEmpty, "Set these in fullyPopulatedShape so rebase coverage includes them: \(unchanged)")
     }
 
     @Test func rebasedCarriesEveryChangedField() {
@@ -629,18 +633,20 @@ struct CanvasShapeModelTests {
         return shape
     }
 
-    /// Optional stored properties left nil, one level into the type-specific payload structs.
-    private static func nilOptionalPaths(in shape: CanvasShapeModel) -> [String] {
-        func nils(_ value: Any, prefix: String) -> [String] {
-            Mirror(reflecting: value).children.flatMap { child -> [String] in
-                let path = prefix + (child.label ?? "?")
-                let mirror = Mirror(reflecting: child.value)
-                if mirror.displayStyle == .optional { return mirror.children.isEmpty ? [path] : [] }
-                if (child.label ?? "").hasSuffix("Payload") { return nils(child.value, prefix: path + ".") }
-                return []
+    /// Every stored property, one level into the type-specific payload structs.
+    private static func leafValues(of shape: CanvasShapeModel) -> [String: String] {
+        var values: [String: String] = [:]
+        for child in Mirror(reflecting: shape).children {
+            let label = child.label ?? "?"
+            if label.hasSuffix("Payload") {
+                for leaf in Mirror(reflecting: child.value).children {
+                    values[label + "." + (leaf.label ?? "?")] = String(describing: leaf.value)
+                }
+            } else {
+                values[label] = String(describing: child.value)
             }
         }
-        return nils(shape, prefix: "")
+        return values
     }
 
     // MARK: - Shadow

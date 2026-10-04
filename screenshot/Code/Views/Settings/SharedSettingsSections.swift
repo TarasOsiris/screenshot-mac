@@ -200,8 +200,8 @@ struct ExportFormatPicker: View {
 
     var body: some View {
         Picker("Format", selection: $selection) {
-            Text("PNG").tag("png")
-            Text("JPEG").tag("jpeg")
+            Text("PNG").tag(ExportImageFormat.png.rawValue)
+            Text("JPEG").tag(ExportImageFormat.jpeg.rawValue)
         }
     }
 }

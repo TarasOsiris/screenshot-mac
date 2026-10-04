@@ -1,4 +1,3 @@
-import AppKit
 import Foundation
 @testable import Screenshot_Bro
 import Security
@@ -78,17 +77,6 @@ nonisolated private final class PlayStubProtocol: URLProtocol, @unchecked Sendab
     override func stopLoading() {}
 }
 
-/// A source whose rows reference an image disk can't produce.
-@MainActor
-private final class MissingImageSource: RowRenderSource {
-    var localeState: LocaleState = .default
-    var availableFontFamilySet: Set<String> = []
-
-    func referencedImageFileNames(forRow row: ScreenshotRow, localeCode: String) -> Set<String> { ["gone.png"] }
-
-    func loadFullResolutionImages(fileNames: Set<String>, cache: inout [String: NSImage]) -> [String: NSImage] { [:] }
-}
-
 @MainActor
 private final class ProgressLog {
     var entries: [UploadProgress] = []
@@ -137,16 +125,9 @@ struct GooglePlayUploadServiceTests {
     /// Token minting really signs, so the credential needs a real RSA key.
     private static func serviceAccountJSON() throws -> String {
         if let cached = cachedServiceAccountJSON { return cached }
-        let attributes: [String: Any] = [
-            kSecAttrKeyType as String: kSecAttrKeyTypeRSA,
-            kSecAttrKeySizeInBits as String: 2048
-        ]
         var error: Unmanaged<CFError>?
-        let key = try #require(SecKeyCreateRandomKey(attributes as CFDictionary, &error))
-        let pkcs1 = try #require(SecKeyCopyExternalRepresentation(key, &error) as Data?)
-        let pem = "-----BEGIN RSA PRIVATE KEY-----\n"
-            + pkcs1.base64EncodedString(options: [.lineLength64Characters, .endLineWithLineFeed])
-            + "\n-----END RSA PRIVATE KEY-----\n"
+        let pkcs1 = try #require(SecKeyCopyExternalRepresentation(try makeTestRSAPrivateKey(), &error) as Data?)
+        let pem = pemEncoded(pkcs1, label: "RSA PRIVATE KEY")
         let object = [
             "client_email": "uploader@example.iam.gserviceaccount.com",
             "private_key": pem,
@@ -175,12 +156,7 @@ struct GooglePlayUploadServiceTests {
     }
 
     private func makeRow(templates: Int) -> ScreenshotRow {
-        ScreenshotRow(
-            label: "Hero",
-            templates: (0..<templates).map { _ in ScreenshotTemplate() },
-            templateWidth: 90,
-            templateHeight: 160
-        )
+        makeTestRow(label: "Hero", width: 90, height: 160, templateCount: templates)
     }
 
     private func makeTarget(_ row: ScreenshotRow, _ languages: [GPUploadLanguage]) -> GPUploadTarget {
@@ -212,13 +188,10 @@ struct GooglePlayUploadServiceTests {
         ) { log.entries.append($0) }
     }
 
-    private func thrownError(_ body: () async throws -> Void) async -> Error? {
-        do {
-            try await body()
-            return nil
-        } catch {
-            return error
-        }
+    private func missingImageDocument(_ row: ScreenshotRow) -> StubGPDocument {
+        let document = StubGPDocument(rows: [row])
+        document.referencedFileNames = ["gone.png"]
+        return document
     }
 
     private func failureContext(_ error: Error?) -> GPUploadFailureContext? {
@@ -273,7 +246,7 @@ struct GooglePlayUploadServiceTests {
     @Test func noTargetsFailsBeforeOpeningAnEdit() async throws {
         let h = try Harness()
 
-        let error = await thrownError {
+        let error = await #expect(throws: (any Error).self) {
             try await h.service.upload(
                 packageName: packageName, targets: [], sendForReview: true,
                 rows: [], source: StubGPDocument()
@@ -293,7 +266,7 @@ struct GooglePlayUploadServiceTests {
             call.method == "POST" && call.path.hasSuffix("/edits") ? (403, #"{"error":{"message":"denied"}}"#) : nil
         }
 
-        let error = await thrownError { try await upload(h, row: makeRow(templates: 1), languages: [english]) }
+        let error = await #expect(throws: (any Error).self) { try await upload(h, row: makeRow(templates: 1), languages: [english]) }
 
         let context = try #require(failureContext(error))
         #expect(context.operation == .openEdit)
@@ -307,7 +280,7 @@ struct GooglePlayUploadServiceTests {
             return call.path.hasPrefix("/upload/") && priorUploads == 1 ? (400, #"{"error":{"message":"bad image"}}"#) : nil
         }
 
-        let error = await thrownError { try await upload(h, row: makeRow(templates: 2), languages: [english, german]) }
+        let error = await #expect(throws: (any Error).self) { try await upload(h, row: makeRow(templates: 2), languages: [english, german]) }
 
         let context = try #require(failureContext(error))
         #expect(context.operation == .uploadScreenshot(number: 2))
@@ -320,9 +293,10 @@ struct GooglePlayUploadServiceTests {
 
     @Test func unreadableImagesAbandonTheEditBeforeTouchingAnyListing() async throws {
         let h = try Harness()
+        let row = makeRow(templates: 1)
 
-        let error = await thrownError {
-            try await upload(h, row: makeRow(templates: 1), languages: [english], source: MissingImageSource())
+        let error = await #expect(throws: (any Error).self) {
+            try await upload(h, row: row, languages: [english], source: missingImageDocument(row))
         }
 
         guard case .unreadableImages(_, let languageLabel, let fileNames)? = error as? GooglePlayUploadError else {
@@ -362,7 +336,7 @@ struct GooglePlayUploadServiceTests {
             call.path.hasPrefix("/upload/") ? (503, #"{"error":{"message":"backend"}}"#) : nil
         }
 
-        let error = await thrownError { try await upload(h, row: makeRow(templates: 1), languages: [english]) }
+        let error = await #expect(throws: (any Error).self) { try await upload(h, row: makeRow(templates: 1), languages: [english]) }
 
         let context = try #require(failureContext(error))
         #expect(context.operation == .uploadScreenshot(number: 1))
