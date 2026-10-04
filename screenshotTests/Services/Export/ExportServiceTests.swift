@@ -342,20 +342,6 @@ struct ExportServiceTests {
     static let testRed = Color(red: 0.9, green: 0, blue: 0)
     static let testGreen = Color(red: 0, green: 0.8, blue: 0)
 
-    func makeTestRow(
-        width: CGFloat = 200,
-        height: CGFloat = 400,
-        templateCount: Int = 1,
-        bgColor: Color = .blue
-    ) -> ScreenshotRow {
-        ScreenshotRow(
-            templates: (0..<templateCount).map { _ in ScreenshotTemplate() },
-            templateWidth: width,
-            templateHeight: height,
-            bgColor: bgColor
-        )
-    }
-
     func makeEditorTextRow() -> ScreenshotRow {
         var row = makeTestRow(width: 400, height: 400, bgColor: .white)
         row.shapes = [CanvasShapeModel(
@@ -374,18 +360,12 @@ struct ExportServiceTests {
     ) -> (row: ScreenshotRow, tw: CGFloat, th: CGFloat) {
         let tw: CGFloat = 400
         let th: CGFloat = 800
-        var row = ScreenshotRow(
-            templates: [ScreenshotTemplate(), ScreenshotTemplate()],
-            templateWidth: tw,
-            templateHeight: th,
-            bgColor: .red
-        )
-        row.shapes = [CanvasShapeModel(
+        let row = makeTestRow(width: tw, height: th, templateCount: 2, bgColor: .red, shapes: [CanvasShapeModel(
             type: .rectangle,
             x: tw * shapeX, y: th * shapeY,
             width: tw * shapeW, height: th * shapeH,
             color: .clear, opacity: 0
-        )]
+        )])
         return (row, tw, th)
     }
 

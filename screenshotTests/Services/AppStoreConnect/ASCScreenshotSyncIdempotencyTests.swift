@@ -207,10 +207,6 @@ struct ASCScreenshotSyncIdempotencyTests {
         )
     }
 
-    private func makeRow(id: UUID) -> ScreenshotRow {
-        ScreenshotRow(id: id, templates: [ScreenshotTemplate()], templateWidth: 60, templateHeight: 120)
-    }
-
     private func build(
         _ service: AppStoreConnectScreenshotSyncService,
         localizations: [String] = ["loc-1"],
@@ -220,7 +216,7 @@ struct ASCScreenshotSyncIdempotencyTests {
         needsPreviews: Bool = true
     ) async throws -> (plan: ASCScreenshotSyncPlan, stamp: DocumentStamp) {
         let rowId = UUID()
-        let row = makeRow(id: rowId)
+        let row = makeTestRow(id: rowId, width: 60, height: 120)
         let stamp = DocumentStamp(projectId: projectId, modifiedAt: modifiedAt)
         let plan = try await service.buildPlan(
             appId: "123",
@@ -245,7 +241,7 @@ struct ASCScreenshotSyncIdempotencyTests {
         let plan = try await service.buildPlan(
             appId: "123",
             targets: [makeTarget(rowId: rowId, localizations: ["tloc-1"], parentKind: .treatmentLocalization)],
-            rows: [makeRow(id: rowId)],
+            rows: [makeTestRow(id: rowId, width: 60, height: 120)],
             source: StubRenderSource(),
             document: stamp,
             needsPreviews: false
@@ -301,7 +297,7 @@ struct ASCScreenshotSyncIdempotencyTests {
                 // build was awaiting App Store Connect.
                 makeTarget(rowId: UUID(), localizations: ["loc-2"]),
             ],
-            rows: [makeRow(id: presentId)],
+            rows: [makeTestRow(id: presentId, width: 60, height: 120)],
             source: StubRenderSource(),
             document: DocumentStamp(projectId: UUID(), modifiedAt: Date()),
             progress: { last = $0 }
@@ -599,7 +595,7 @@ struct ASCScreenshotSyncIdempotencyTests {
                     localizations: localizations, templateCount: 1
                 )
             },
-            rows: [makeRow(id: rowId)],
+            rows: [makeTestRow(id: rowId, width: 60, height: 120)],
             source: StubRenderSource(),
             document: stamp,
             needsPreviews: false

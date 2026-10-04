@@ -91,7 +91,7 @@ non-Sendable value on the caller's actor — `ExportImageEncoder.opaquePNGDataOf
 `TranslationSession` functions). The one suppression left is a body that is itself a
 `Task.detached`, which carries `// swiftlint:disable:next inherited_executor_async` with the reason.
 
-`.codex/` mirrors the hooks and agent definitions for the cloud (Codex) harness and is **generated** — edit `.claude/agents/` or the `hooks` in `.claude/settings.json`, then run `python3 tools/sync_agent_config.py` (`--check` fails if `.codex/` is stale); `AGENTS.md` is the agent registry. `tools/` holds Python utilities: `gen_template.py` (SVG→template), `translate_catalog.py` + `translate_popular_languages.py` + `xcstrings_format.py` (localization), and `project-schema.json` (JSON Schema for `project.json`).
+`.codex/` mirrors the hooks and agent definitions for the cloud (Codex) harness, and the gitignored `.agents/skills/` mirrors `.claude/skills/`; both are **generated** — edit `.claude/agents/`, `.claude/skills/` or the `hooks` in `.claude/settings.json`, then run `python3 tools/sync_agent_config.py` (`--check` fails if either is stale); `AGENTS.md` is the agent registry. `tools/` holds Python utilities: `gen_template.py` (SVG→template), `translate_catalog.py` + `translate_popular_languages.py` + `xcstrings_format.py` (localization), and `project-schema.json` (JSON Schema for `project.json`).
 
 ### In-app MCP server (macOS, shipping)
 

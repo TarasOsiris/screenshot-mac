@@ -36,18 +36,6 @@ private final class StubDocument: ExportDocument {
 @MainActor
 struct ExportFlowModelTests {
 
-    private func makeRow(_ label: String) -> ScreenshotRow {
-        var row = ScreenshotRow(
-            templates: [ScreenshotTemplate()],
-            templateWidth: 80,
-            templateHeight: 120,
-            bgColor: .white
-        )
-        row.label = label
-        row.shapes = []
-        return row
-    }
-
     private func waitForIdle(_ model: ExportFlowModel) async throws {
         for _ in 0..<400 where model.isExporting {
             try await Task.sleep(for: .milliseconds(25))
@@ -57,7 +45,10 @@ struct ExportFlowModelTests {
 
     @Test func rowExportWritesOneZeroPaddedFilePerRow() async throws {
         let model = ExportFlowModel(defaults: makeIsolatedDefaults("rows"))
-        let document = StubDocument(rows: [makeRow("Alpha"), makeRow("Beta")])
+        let document = StubDocument(rows: [
+            makeTestRow(label: "Alpha", width: 80, height: 120, bgColor: .white),
+            makeTestRow(label: "Beta", width: 80, height: 120, bgColor: .white),
+        ])
         let base = makeTemporaryDataDirectory(label: "export-flow-rows")
         defer { try? FileManager.default.removeItem(at: base) }
 
@@ -87,7 +78,7 @@ struct ExportFlowModelTests {
     /// six call sites in the view; a staged export that fails must not leave the folder behind.
     @Test func failedStagedExportRemovesTheTempFolder() async throws {
         let model = ExportFlowModel(defaults: makeIsolatedDefaults("cleanup"))
-        let document = StubDocument(rows: [makeRow("Alpha")])
+        let document = StubDocument(rows: [makeTestRow(label: "Alpha", width: 80, height: 120, bgColor: .white)])
         let base = makeTemporaryDataDirectory(label: "export-flow-cleanup")
         // Removing the base folder makes `createDirectory` inside it fail, standing in for any
         // mid-render failure.
@@ -149,7 +140,7 @@ struct ExportFlowModelTests {
     /// got "12 screenshots exported" over a folder of blank frames and uploaded them.
     @Test func anExportThatDrewHolesSaysSoInsteadOfClaimingSuccess() async throws {
         let model = ExportFlowModel(defaults: makeIsolatedDefaults("holes"))
-        let document = StubDocument(rows: [makeRow("Alpha")])
+        let document = StubDocument(rows: [makeTestRow(label: "Alpha", width: 80, height: 120, bgColor: .white)])
         document.unreadableResourceNames = ["gone.png"]
         let base = makeTemporaryDataDirectory(label: "export-flow-holes")
         defer { try? FileManager.default.removeItem(at: base) }
@@ -177,7 +168,7 @@ struct ExportFlowModelTests {
         model.incompleteMessage = "left over from the previous run"
 
         model.exportRows(
-            document: StubDocument(rows: [makeRow("Alpha")]),
+            document: StubDocument(rows: [makeTestRow(label: "Alpha", width: 80, height: 120, bgColor: .white)]),
             into: base,
             folderName: "clean",
             delivery: .revealInPlace

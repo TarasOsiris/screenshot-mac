@@ -9,24 +9,13 @@ struct ExportVariantFolderTests {
     init() { BetaFeatures.shared.setABTesting(true, persist: false) }
 
 
-    private func makeRow(label: String, variantId: UUID? = nil) -> ScreenshotRow {
-        ScreenshotRow(
-            label: label,
-            templates: [ScreenshotTemplate()],
-            templateWidth: 200,
-            templateHeight: 400,
-            bgColor: .white,
-            variantId: variantId
-        )
-    }
-
     @Test func variantsExportIntoTheirOwnTopLevelFolders() async throws {
         let tempDir = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         defer { try? FileManager.default.removeItem(at: tempDir) }
         let variant = ScreenshotVariant(name: "Dark hero")
 
         let export = try await ExportService.exportAll(
-            rows: [makeRow(label: "Phone"), makeRow(label: "Phone", variantId: variant.id)],
+            rows: [makeTestRow(label: "Phone", bgColor: .white), makeTestRow(label: "Phone", bgColor: .white, variantId: variant.id)],
             projectName: "VariantProject",
             to: tempDir,
             source: EmptyDiskRenderSource(),
@@ -47,10 +36,10 @@ struct ExportVariantFolderTests {
         let tempDir = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         defer { try? FileManager.default.removeItem(at: tempDir) }
         let variant = ScreenshotVariant(name: "Dark hero")
-        let original = makeRow(label: "Phone")
+        let original = makeTestRow(label: "Phone", bgColor: .white)
 
         let export = try await ExportService.exportAll(
-            rows: [original, makeRow(label: "Phone", variantId: variant.id)],
+            rows: [original, makeTestRow(label: "Phone", bgColor: .white, variantId: variant.id)],
             projectName: "VariantProject",
             to: tempDir,
             source: EmptyDiskRenderSource(),
@@ -66,7 +55,7 @@ struct ExportVariantFolderTests {
         defer { try? FileManager.default.removeItem(at: tempDir) }
 
         let export = try await ExportService.exportAll(
-            rows: [makeRow(label: "Phone")],
+            rows: [makeTestRow(label: "Phone", bgColor: .white)],
             projectName: "PlainProject",
             to: tempDir,
             source: EmptyDiskRenderSource(),

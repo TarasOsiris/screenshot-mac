@@ -30,18 +30,10 @@ struct ExportAllTests {
     }
 
     private func makeTextRow(label: String, text: String) -> ScreenshotRow {
-        var row = ScreenshotRow(
-            templates: [ScreenshotTemplate(), ScreenshotTemplate()],
-            templateWidth: 200,
-            templateHeight: 400,
-            bgColor: .white
-        )
-        row.label = label
-        row.shapes = [CanvasShapeModel(
+        makeTestRow(label: label, templateCount: 2, bgColor: .white, shapes: [CanvasShapeModel(
             type: .text, x: 10, y: 10, width: 180, height: 100,
             color: .black, text: text, fontSize: 40, fontWeight: 700
-        )]
-        return row
+        )])
     }
 
     // MARK: - rowIsLocaleNeutral

@@ -10,11 +10,10 @@ struct AppStateVariantTests {
     init() { BetaFeatures.shared.setABTesting(true, persist: false) }
 
 
-    private func makeState() -> (AppState, URL) { makeTestState() }
     private func cleanup(_ tempDir: URL) { cleanupTestState(tempDir) }
 
     @Test func createVariantCopiesRowIntoNewVariant() throws {
-        let (state, tempDir) = makeState()
+        let (state, tempDir) = makeTestState()
         defer { cleanup(tempDir) }
         let source = try #require(state.rows.first)
 
@@ -33,7 +32,7 @@ struct AppStateVariantTests {
     }
 
     @Test func createVariantCopiesLocaleOverridesToNewShapeIds() throws {
-        let (state, tempDir) = makeState()
+        let (state, tempDir) = makeTestState()
         defer { cleanup(tempDir) }
         let source = try #require(state.rows.first)
         let shapeId = try #require(source.shapes.first?.id)
@@ -46,7 +45,7 @@ struct AppStateVariantTests {
     }
 
     @Test func createVariantIsOneUndoStepCoveringRowsAndVariants() throws {
-        let (state, tempDir) = makeState()
+        let (state, tempDir) = makeTestState()
         defer { cleanup(tempDir) }
         let source = try #require(state.rows.first)
 
@@ -63,7 +62,7 @@ struct AppStateVariantTests {
     }
 
     @Test func secondVariantTakesNextLetter() throws {
-        let (state, tempDir) = makeState()
+        let (state, tempDir) = makeTestState()
         defer { cleanup(tempDir) }
         let source = try #require(state.rows.first)
 
@@ -74,7 +73,7 @@ struct AppStateVariantTests {
     }
 
     @Test func setRowVariantMovesRowAndRejectsUnknownVariant() throws {
-        let (state, tempDir) = makeState()
+        let (state, tempDir) = makeTestState()
         defer { cleanup(tempDir) }
         let source = try #require(state.rows.first)
         let variantId = try #require(state.createVariant(fromRow: source.id))
@@ -92,7 +91,7 @@ struct AppStateVariantTests {
     }
 
     @Test func deleteVariantRemovesItsRows() throws {
-        let (state, tempDir) = makeState()
+        let (state, tempDir) = makeTestState()
         defer { cleanup(tempDir) }
         let source = try #require(state.rows.first)
         let variantId = try #require(state.createVariant(fromRow: source.id))
@@ -104,7 +103,7 @@ struct AppStateVariantTests {
     }
 
     @Test func deleteVariantOwningEveryRowMovesThemToOriginal() throws {
-        let (state, tempDir) = makeState()
+        let (state, tempDir) = makeTestState()
         defer { cleanup(tempDir) }
         let source = try #require(state.rows.first)
         let variantId = try #require(state.createVariant(fromRow: source.id))
@@ -119,7 +118,7 @@ struct AppStateVariantTests {
     }
 
     @Test func resetRowKeepsVariant() throws {
-        let (state, tempDir) = makeState()
+        let (state, tempDir) = makeTestState()
         defer { cleanup(tempDir) }
         let source = try #require(state.rows.first)
         let variantId = try #require(state.createVariant(fromRow: source.id))
@@ -131,7 +130,7 @@ struct AppStateVariantTests {
     }
 
     @Test func renameVariantTrimsAndIgnoresBlank() throws {
-        let (state, tempDir) = makeState()
+        let (state, tempDir) = makeTestState()
         defer { cleanup(tempDir) }
         let source = try #require(state.rows.first)
         let variantId = try #require(state.createVariant(fromRow: source.id))
@@ -144,7 +143,7 @@ struct AppStateVariantTests {
     }
 
     @Test func variantsSurviveSaveAndReload() throws {
-        let (state, tempDir) = makeState()
+        let (state, tempDir) = makeTestState()
         defer { cleanup(tempDir) }
         let source = try #require(state.rows.first)
         let variantId = try #require(state.createVariant(fromRow: source.id))
@@ -158,7 +157,7 @@ struct AppStateVariantTests {
     }
 
     @Test func variantRowsAreLeftOutOfTheAppStoreListing() throws {
-        let (state, tempDir) = makeState()
+        let (state, tempDir) = makeTestState()
         defer { cleanup(tempDir) }
         let source = try #require(state.rows.first)
         _ = state.createVariant(fromRow: source.id)
@@ -167,7 +166,7 @@ struct AppStateVariantTests {
     }
 
     @Test func movingARowUnderAVariantFilterSkipsHiddenRows() throws {
-        let (state, tempDir) = makeState()
+        let (state, tempDir) = makeTestState()
         defer { cleanup(tempDir) }
         let first = try #require(state.rows.first)
         let variantId = try #require(state.createVariant(fromRow: first.id))
@@ -186,7 +185,7 @@ struct AppStateVariantTests {
     }
 
     @Test func createVariantKeepsAnAutomaticLabelAutomatic() throws {
-        let (state, tempDir) = makeState()
+        let (state, tempDir) = makeTestState()
         defer { cleanup(tempDir) }
         let source = try #require(state.rows.first)
         #expect(!source.isLabelManuallySet)
@@ -197,7 +196,7 @@ struct AppStateVariantTests {
     }
 
     @Test func aVariantTakesOneRowPerScreenshotSize() throws {
-        let (state, tempDir) = makeState()
+        let (state, tempDir) = makeTestState()
         defer { cleanup(tempDir) }
         let source = try #require(state.rows.first)
         let variantId = try #require(state.createVariant(fromRow: source.id))
@@ -212,7 +211,7 @@ struct AppStateVariantTests {
     }
 
     @Test func variantRowsCannotBeRenamed() throws {
-        let (state, tempDir) = makeState()
+        let (state, tempDir) = makeTestState()
         defer { cleanup(tempDir) }
         let source = try #require(state.rows.first)
         state.updateRowLabel(source.id, text: "Welcome")
@@ -225,7 +224,7 @@ struct AppStateVariantTests {
     }
 
     @Test func aRowMovedIntoAVariantKeepsItsOwnEditableLabel() throws {
-        let (state, tempDir) = makeState()
+        let (state, tempDir) = makeTestState()
         defer { cleanup(tempDir) }
         let source = try #require(state.rows.first)
         let variantId = try #require(state.createVariant(fromRow: source.id))
@@ -239,7 +238,7 @@ struct AppStateVariantTests {
     }
 
     @Test func renamingTheSourceRowRenamesItsVariantCopies() throws {
-        let (state, tempDir) = makeState()
+        let (state, tempDir) = makeTestState()
         defer { cleanup(tempDir) }
         let source = try #require(state.rows.first)
         let b = try #require(state.createVariant(fromRow: source.id))
@@ -253,7 +252,7 @@ struct AppStateVariantTests {
     }
 
     @Test func aRowAddedInsideAVariantCanBeRenamed() throws {
-        let (state, tempDir) = makeState()
+        let (state, tempDir) = makeTestState()
         defer { cleanup(tempDir) }
         let source = try #require(state.rows.first)
         let variantId = try #require(state.createVariant(fromRow: source.id))
@@ -266,7 +265,7 @@ struct AppStateVariantTests {
     }
 
     @Test func deletingTheSourceUnlocksItsCopies() throws {
-        let (state, tempDir) = makeState()
+        let (state, tempDir) = makeTestState()
         defer { cleanup(tempDir) }
         let source = try #require(state.rows.first)
         state.addRowBelow(source.id)
@@ -280,7 +279,7 @@ struct AppStateVariantTests {
     }
 
     @Test func resettingALinkedCopyKeepsFollowingItsSource() throws {
-        let (state, tempDir) = makeState()
+        let (state, tempDir) = makeTestState()
         defer { cleanup(tempDir) }
         let source = try #require(state.rows.first)
         state.updateRowLabel(source.id, text: "Welcome")
@@ -294,7 +293,7 @@ struct AppStateVariantTests {
     }
 
     @Test func excludedRowsDoNotTakeAVariantSlot() throws {
-        let (state, tempDir) = makeState()
+        let (state, tempDir) = makeTestState()
         defer { cleanup(tempDir) }
         let source = try #require(state.rows.first)
         let variantId = try #require(state.createVariant(fromRow: source.id))
@@ -307,7 +306,7 @@ struct AppStateVariantTests {
     }
 
     @Test func aNewVariantNeverTakesAnExistingNameInAnotherCase() throws {
-        let (state, tempDir) = makeState()
+        let (state, tempDir) = makeTestState()
         defer { cleanup(tempDir) }
         let source = try #require(state.rows.first)
         let first = try #require(state.createVariant(fromRow: source.id))
@@ -320,7 +319,7 @@ struct AppStateVariantTests {
     }
 
     @Test func copyingIntoAFilteredOutVariantWidensTheFilter() throws {
-        let (state, tempDir) = makeState()
+        let (state, tempDir) = makeTestState()
         defer { cleanup(tempDir) }
         let source = try #require(state.rows.first)
         state.setVariantFilter(.variant(nil))
@@ -331,7 +330,7 @@ struct AppStateVariantTests {
     }
 
     @Test func filteringMovesTheSelectionOffAHiddenRow() throws {
-        let (state, tempDir) = makeState()
+        let (state, tempDir) = makeTestState()
         defer { cleanup(tempDir) }
         let source = try #require(state.rows.first)
         let variantId = try #require(state.createVariant(fromRow: source.id))
@@ -344,7 +343,7 @@ struct AppStateVariantTests {
     }
 
     @Test func variantsKeepTheirColourSlotWhenAnotherIsDeleted() throws {
-        let (state, tempDir) = makeState()
+        let (state, tempDir) = makeTestState()
         defer { cleanup(tempDir) }
         let source = try #require(state.rows.first)
         let b = try #require(state.createVariant(fromRow: source.id))
@@ -357,7 +356,7 @@ struct AppStateVariantTests {
     }
 
     @Test func variantRowsCannotBeDuplicatedInPlace() throws {
-        let (state, tempDir) = makeState()
+        let (state, tempDir) = makeTestState()
         defer { cleanup(tempDir) }
         let source = try #require(state.rows.first)
         _ = state.createVariant(fromRow: source.id)
@@ -369,7 +368,7 @@ struct AppStateVariantTests {
     }
 
     @Test func aSizeClashInsideAVariantIsReported() throws {
-        let (state, tempDir) = makeState()
+        let (state, tempDir) = makeTestState()
         defer { cleanup(tempDir) }
         let source = try #require(state.rows.first)
         let variantId = try #require(state.createVariant(fromRow: source.id))
@@ -387,7 +386,7 @@ struct AppStateVariantTests {
     }
 
     @Test func renamingToATakenNameNumbersIt() throws {
-        let (state, tempDir) = makeState()
+        let (state, tempDir) = makeTestState()
         defer { cleanup(tempDir) }
         let source = try #require(state.rows.first)
         let b = try #require(state.createVariant(fromRow: source.id))
@@ -401,7 +400,7 @@ struct AppStateVariantTests {
     }
 
     @Test func deletingTheSelectedRowUnderAFilterSelectsAVisibleOne() throws {
-        let (state, tempDir) = makeState()
+        let (state, tempDir) = makeTestState()
         defer { cleanup(tempDir) }
         let source = try #require(state.rows.first)
         state.addRowBelow(source.id)
@@ -417,7 +416,7 @@ struct AppStateVariantTests {
     }
 
     @Test func aCopyOfAnAutoLabelledRowIsNamedOnItsOwn() throws {
-        let (state, tempDir) = makeState()
+        let (state, tempDir) = makeTestState()
         defer { cleanup(tempDir) }
         let source = try #require(state.rows.first)
         #expect(!source.isLabelManuallySet)
@@ -431,7 +430,7 @@ struct AppStateVariantTests {
     }
 
     @Test func aVariantCopyLeavesItsSharedTranslationGroup() throws {
-        let (state, tempDir) = makeState()
+        let (state, tempDir) = makeTestState()
         defer { cleanup(tempDir) }
         let source = try #require(state.rows.first)
         var text = CanvasShapeModel(type: .text, x: 10, y: 10, width: 200, height: 80, color: .black, text: "Hello", fontSize: 40, fontWeight: 700)
@@ -447,7 +446,7 @@ struct AppStateVariantTests {
     }
 
     @Test func undoUnderAFilterKeepsTheSelectionVisible() throws {
-        let (state, tempDir) = makeState()
+        let (state, tempDir) = makeTestState()
         defer { cleanup(tempDir) }
         let source = try #require(state.rows.first)
         let variantId = try #require(state.createVariant(fromRow: source.id))
@@ -461,7 +460,7 @@ struct AppStateVariantTests {
     }
 
     @Test func aCopyCanBeNamedSeparately() throws {
-        let (state, tempDir) = makeState()
+        let (state, tempDir) = makeTestState()
         defer { cleanup(tempDir) }
         let source = try #require(state.rows.first)
         state.updateRowLabel(source.id, text: "Welcome")
@@ -477,7 +476,7 @@ struct AppStateVariantTests {
     }
 
     @Test func aRowAddedToAVariantWhoseSizeIsTakenGoesToTheOriginal() throws {
-        let (state, tempDir) = makeState()
+        let (state, tempDir) = makeTestState()
         defer { cleanup(tempDir) }
         let source = try #require(state.rows.first)
         let variantId = try #require(state.createVariant(fromRow: source.id))

@@ -178,11 +178,10 @@ struct ProjectMergeTests {
 @Suite(.serialized)
 @MainActor
 struct AppStateDeleteTests {
-    private func makeState() -> (AppState, URL) { makeTestState() }
     private func cleanup(_ tempDir: URL) { cleanupTestState(tempDir) }
 
     @Test func deleteProjectCreatesTombstone() {
-        let (state, tempDir) = makeState()
+        let (state, tempDir) = makeTestState()
         defer { cleanup(tempDir) }
 
         state.createProject(name: "Second")
@@ -199,7 +198,7 @@ struct AppStateDeleteTests {
     }
 
     @Test func deleteLastProjectLeavesEmptyState() {
-        let (state, tempDir) = makeState()
+        let (state, tempDir) = makeTestState()
         defer { cleanup(tempDir) }
 
         let onlyId = state.visibleProjects.first!.id

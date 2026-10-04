@@ -1,6 +1,7 @@
 import AppKit
 import Foundation
 import Observation
+import SwiftUI
 import Testing
 
 /// Shared bitmap boilerplate behind the image factories below.
@@ -123,10 +124,18 @@ func makeTestState(fonts: CustomFontLibrary = CustomFontLibrary()) -> (AppState,
 @MainActor
 func makeEmptyTestState(fonts: CustomFontLibrary = CustomFontLibrary()) -> (AppState, URL) {
     let tempDir = makeTemporaryDataDirectory()
-    setenv("SCREENSHOT_DATA_DIR", tempDir.path, 1)
+    pointDataDirectory(at: tempDir)
     normalizeUserDefaultsForTest(directory: tempDir)
     let state = AppState(fonts: fonts)
     return (state, tempDir)
+}
+
+/// The save queue resolves the data root when a write *runs*, so a write an earlier test queued
+/// would otherwise land in this test's fresh directory and hand it a project it never made.
+@MainActor
+private func pointDataDirectory(at directory: URL) {
+    AppState.saveQueue.sync {}
+    setenv("SCREENSHOT_DATA_DIR", directory.path, 1)
 }
 
 /// `makeEmptyTestState` with a chance to lay files down first, for the paths that only run inside
@@ -137,7 +146,7 @@ func makeTestStateSeedingDataDirectory(
     seed: (URL) throws -> Void
 ) rethrows -> (AppState, URL) {
     let tempDir = makeTemporaryDataDirectory()
-    setenv("SCREENSHOT_DATA_DIR", tempDir.path, 1)
+    pointDataDirectory(at: tempDir)
     normalizeUserDefaultsForTest(directory: tempDir)
     do {
         try seed(tempDir)
@@ -150,6 +159,7 @@ func makeTestStateSeedingDataDirectory(
 
 @MainActor
 func cleanupTestState(_ tempDir: URL) {
+    AppState.saveQueue.sync {}
     unsetenv("SCREENSHOT_DATA_DIR")
     restoreUserDefaultsForTest(directory: tempDir)
     try? FileManager.default.removeItem(at: tempDir)
@@ -274,4 +284,28 @@ func settle(_ host: NSView) async throws {
     host.layoutSubtreeIfNeeded()
     host.window?.displayIfNeeded()
     try await Task.sleep(for: .milliseconds(50))
+}
+
+/// A plain row of blank templates; `label: nil` keeps `ScreenshotRow`'s own default.
+func makeTestRow(
+    id: UUID = UUID(),
+    label: String? = nil,
+    width: CGFloat = 200,
+    height: CGFloat = 400,
+    templateCount: Int = 1,
+    bgColor: Color = .blue,
+    variantId: UUID? = nil,
+    shapes: [CanvasShapeModel] = []
+) -> ScreenshotRow {
+    var row = ScreenshotRow(
+        id: id,
+        templates: (0..<templateCount).map { _ in ScreenshotTemplate() },
+        templateWidth: width,
+        templateHeight: height,
+        bgColor: bgColor,
+        shapes: shapes,
+        variantId: variantId
+    )
+    if let label { row.label = label }
+    return row
 }

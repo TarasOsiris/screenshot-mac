@@ -29,12 +29,7 @@ struct RenderCostBenchmarks {
     // MARK: - Fixtures
 
     private func makeRow(shadowRadius: CGFloat?) -> ScreenshotRow {
-        var row = ScreenshotRow(
-            templates: [ScreenshotTemplate()],
-            templateWidth: Self.templateWidth,
-            templateHeight: Self.templateHeight,
-            bgColor: .white
-        )
+        var row = makeTestRow(width: Self.templateWidth, height: Self.templateHeight, bgColor: .white)
         row.shapes = (0..<Self.deviceCount).map { index in
             var device = CanvasShapeModel(
                 type: .device,
