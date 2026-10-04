@@ -168,8 +168,7 @@ extension AppState {
         if let snapshot = projectSnapshot {
             ownWriteURLs.append(PersistenceService.projectDataURL(snapshot.id))
             ownWriteURLs.append(PersistenceService.translationCatalogURL(snapshot.id))
-            inFlightSaveModifiedAt = max(inFlightSaveModifiedAt ?? .distantPast, snapshot.data.modifiedAt)
-            inFlightSaveCount += 1
+            writeStamps.beginWrite(modifiedAt: snapshot.data.modifiedAt)
         }
         monitor?.recordOwnWrite(ownWriteURLs)
 
@@ -189,10 +188,7 @@ extension AppState {
             monitor?.snapshotAfterWrite()
             DispatchQueue.main.async {
                 guard let self else { return }
-                if projectSnapshot != nil {
-                    self.inFlightSaveCount -= 1
-                    if self.inFlightSaveCount == 0 { self.inFlightSaveModifiedAt = nil }
-                }
+                if projectSnapshot != nil { self.writeStamps.endWrite() }
                 if let indexError {
                     self.reportIndexSaveFailure(indexError)
                 }
@@ -204,8 +200,8 @@ extension AppState {
                     // Stamped only after the write lands (like saveCurrentProject) — an eagerly
                     // stamped failed save would make reloadICloudFromDisk refuse genuinely
                     // newer remote data forever.
-                    self.activeProjectDataModifiedAt = snapshot.data.modifiedAt
-                    self.lastSeenCatalogModified = catalogModified
+                    self.writeStamps.landed = snapshot.data.modifiedAt
+                    self.writeStamps.catalogModified = catalogModified
                 }
                 if indexError == nil && projectError == nil {
                     self.cleanupUnreferencedFontsThrottled()
@@ -241,8 +237,8 @@ extension AppState {
         guard let snapshot = activeProjectSnapshotForSave() else { return true }
         do {
             try PersistenceService.saveProject(snapshot.id, data: snapshot.data)
-            activeProjectDataModifiedAt = snapshot.data.modifiedAt
-            lastSeenCatalogModified = PersistenceService.translationCatalogModifiedDate(snapshot.id)
+            writeStamps.landed = snapshot.data.modifiedAt
+            writeStamps.catalogModified = PersistenceService.translationCatalogModifiedDate(snapshot.id)
             return true
         } catch {
             reportProjectSaveFailure(error)
@@ -259,7 +255,7 @@ extension AppState {
             commitAllPendingEdits()
         }
         guard let (activeId, data) = activeProjectSnapshotForSave() else { return }
-        activeProjectDataModifiedAt = data.modifiedAt
+        writeStamps.landed = data.modifiedAt
         let monitor = iCloudMonitor
         monitor?.recordOwnWrite([PersistenceService.projectDataURL(activeId), PersistenceService.translationCatalogURL(activeId)])
         Self.saveQueue.async { [weak self] in
@@ -270,7 +266,7 @@ extension AppState {
                     // A project switch may have landed while we wrote off-main; only stamp the
                     // active-project mtime if it's still the project we just saved.
                     guard let self, self.activeProjectId == activeId else { return }
-                    self.lastSeenCatalogModified = catalogModified
+                    self.writeStamps.catalogModified = catalogModified
                 }
             } catch {
                 DispatchQueue.main.async {

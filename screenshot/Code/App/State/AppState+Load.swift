@@ -221,7 +221,7 @@ extension AppState {
 
         // Raised before the read, not after: this is the one path where an undownloaded iCloud
         // file really does block for seconds, so it is the path that most needs to say so.
-        let isFirstRead = knownProjectDataModifiedAt == nil
+        let isFirstRead = writeStamps.known == nil
         if isFirstRead {
             beginProjectOpening(for: activeId)
             projectOpen.advance(to: .reading)
@@ -233,7 +233,7 @@ extension AppState {
         // project's rows now would let the next save write them into the new project's file.
         guard activeProjectId == activeId else { return }
 
-        if !isFirstRead, let localModified = knownProjectDataModifiedAt {
+        if !isFirstRead, let localModified = writeStamps.known {
             // Only reload if the on-disk version is newer than our in-memory version. No overlay
             // here: this is a background re-sync of a project already on screen, and the common
             // case is that nothing changed.
@@ -292,8 +292,8 @@ extension AppState {
         cancelPendingDebounceTasks()
         undoManager?.removeAllActions()
         document = ProjectDocument(data)
-        activeProjectDataModifiedAt = data.modifiedAt
-        lastSeenCatalogModified = PersistenceService.translationCatalogModifiedDate(projectId)
+        writeStamps.landed = data.modifiedAt
+        writeStamps.catalogModified = PersistenceService.translationCatalogModifiedDate(projectId)
         // Drop any preview-mode entries that don't refer to a row in the new data.
         viewMode.reconcilePreviewingRows(against: Set(rows.map(\.id)))
         // The outgoing project's model-resolution rasters are the largest thing the cache holds and
@@ -322,8 +322,8 @@ extension AppState {
     func refreshTranslationsIfCatalogChanged() {
         guard let id = activeProjectId,
               let diskModified = PersistenceService.translationCatalogModifiedDate(id),
-              diskModified > (lastSeenCatalogModified ?? .distantPast) else { return }
-        lastSeenCatalogModified = diskModified
+              diskModified > (writeStamps.catalogModified ?? .distantPast) else { return }
+        writeStamps.catalogModified = diskModified
 
         let updated = TranslationCatalogService.merging(localeState, projectId: id, rows: rows)
         guard updated != localeState else { return }
@@ -349,7 +349,7 @@ extension AppState {
                 degradedLoadProjectId = nil
             }
             document = ProjectDocument(rows: [makeDefaultRow()])
-            activeProjectDataModifiedAt = nil
+            writeStamps.landed = nil
             selectRow(rows.first?.id)
         }
     }

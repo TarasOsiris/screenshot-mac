@@ -89,28 +89,7 @@ final class AppState {
     /// Canvas "scroll into view" request signals (see `CanvasFocusController`).
     let canvasFocus = CanvasFocusController()
     @ObservationIgnored var iCloudMonitor: ICloudMonitor?
-    /// Tracks when the active project data was last saved/loaded, for merge decisions.
-    @ObservationIgnored var activeProjectDataModifiedAt: Date?
-    /// `modifiedAt` of a project write dispatched to `saveQueue` but not yet stamped into
-    /// `activeProjectDataModifiedAt` — that stamp only lands once the write succeeds, so
-    /// without this the file we are in the middle of writing looks newer than memory.
-    @ObservationIgnored var inFlightSaveModifiedAt: Date?
-    @ObservationIgnored var inFlightSaveCount = 0
-    /// The newest local project write we know of, landed or still in flight. `reloadICloudFromDisk`
-    /// compares against this so it can't mistake our own save for newer remote data and reload —
-    /// which now also clears the undo stack and drops in-flight edits.
-    var knownProjectDataModifiedAt: Date? {
-        switch (activeProjectDataModifiedAt, inFlightSaveModifiedAt) {
-        case let (stamped?, inFlight?): max(stamped, inFlight)
-        case let (stamped?, nil): stamped
-        case let (nil, inFlight?): inFlight
-        case (nil, nil): nil
-        }
-    }
-    /// `translations.xcstrings` mod-date the active project last read or wrote, so an external
-    /// (Xcode/translator) edit can be told apart from our own dual-write on re-activation.
-    /// Reset on every project load via `applyProjectData`, so it always tracks the active project.
-    @ObservationIgnored var lastSeenCatalogModified: Date?
+    @ObservationIgnored let writeStamps = ProjectWriteStamps()
 
     @ObservationIgnored var saveTask: Task<Void, Never>?
 
@@ -172,13 +151,13 @@ final class AppState {
         visibleProjects.first { $0.id == activeProjectId }
     }
 
-    /// nil when no project is open. `activeProjectDataModifiedAt` wins because it tracks the last
+    /// nil when no project is open. `writeStamps.landed` wins because it tracks the last
     /// write of the row data itself; the project record's own timestamp is the fallback.
     var documentStamp: DocumentStamp? {
         guard let activeProjectId else { return nil }
         return DocumentStamp(
             projectId: activeProjectId,
-            modifiedAt: activeProjectDataModifiedAt ?? activeProject?.modifiedAt
+            modifiedAt: writeStamps.landed ?? activeProject?.modifiedAt
         )
     }
 

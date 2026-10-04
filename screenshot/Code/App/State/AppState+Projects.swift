@@ -229,7 +229,7 @@ extension AppState {
                 document = ProjectDocument(rows: [])
                 viewMode.reconcilePreviewingRows(against: [])
                 activeProjectId = nil
-                activeProjectDataModifiedAt = nil
+                writeStamps.landed = nil
             }
         } else {
             PersistenceService.deleteProject(id)
