@@ -22,31 +22,10 @@ struct ContentView: View {
     @Environment(AppState.self) var state
     @Environment(PurchaseService.self) var store
     #if os(iOS)
-    /// Scroll room reserved under the canvas for the floating bottom chrome
-    /// (shape-properties bar and, while editing text, the format bar above it).
-    var floatingBottomChromeMargin: CGFloat {
-        var margin: CGFloat = 0
-        if state.hasSelection { margin += 72 }
-        if state.textEdit.isActive { margin += RichTextFormatBarMetrics.height + 16 }
-        return margin
-    }
     /// Always-reserved scroll room so canvas content can clear the floating
     /// editor-mode pill (44pt tall + 16pt inset + an 8pt gap).
     let editorModeFabClearance: CGFloat = 68
-    #endif
-
-    /// Keeps the image-loading pill clear of the floating properties bar on iPad; on macOS that
-    /// bar is a sibling below the canvas, so the corner is already free.
-    var imageLoadingPillBottomPadding: CGFloat {
-        #if os(iOS)
-        return state.hasSelection ? floatingBottomChromeMargin + 12 : 12
-        #else
-        return 12
-        #endif
-    }
-    #if os(iOS)
     @Environment(\.horizontalSizeClass) var horizontalSizeClass
-    private var isInspectorCompact: Bool { horizontalSizeClass == .compact }
     #endif
     // macOS-only: see AppRootView — \.openWindow must not be read on iPadOS.
     #if os(macOS)
@@ -65,23 +44,9 @@ struct ContentView: View {
     @AppStorage("inspectorPresented") var isInspectorPresented = true
     #if os(macOS)
     @AppStorage(AppSettingsKeys.selectionInspector) var isSelectionInspectorEnabled = AppSettingsKeys.Default.selectionInspector
-
-    /// The coach's inspector step points at the row form, so the tour keeps it on screen.
-    var inspectorIncludesShapes: Bool {
-        isSelectionInspectorEnabled && state.coach.step != .inspector
-    }
-
-    var showsPropertiesBar: Bool {
-        let rowIsPreviewing = state.selectedRowId.map { state.viewMode.previewingRows.contains($0) } ?? false
-        return InspectorContent.showsPropertiesBar(
-            hasShapeSelection: state.hasSelection,
-            inspectorShowsShapes: InspectorContent.showsShapeProperties(includesShapes: inspectorIncludesShapes, rowIsPreviewing: rowIsPreviewing),
-            inspectorPresented: isInspectorPresented
-        )
-    }
     #endif
     #if os(iOS)
-    @State private var inspectorSheetDetent: PresentationDetent = .large
+    @State var inspectorSheetDetent: PresentationDetent = .large
     #endif
     @State var exportFlow = ExportFlowModel()
     @State var isDeletingProject = false
@@ -100,7 +65,7 @@ struct ContentView: View {
     @State var showingASCExperimentSheet = false
     @State var showcasePresentation: ShowcasePresentation?
     /// Which way the developer rating sheet was left, read once by `reportDeveloperRatingOutcome`.
-    @State private var didRateFromDeveloperSheet = false
+    @State var didRateFromDeveloperSheet = false
     @State var projectNamePrompt: ProjectNamePrompt?
 
     var body: some View {
@@ -160,6 +125,44 @@ struct ContentView: View {
 
     /// The editor shell: canvas, inspector, toolbar, and canvas-level change handlers.
     private var coreContent: some View {
+        inspectorPresentation(editorOverlays(editorColumn))
+        .toolbar(id: "main") { mainToolbar }
+        #if os(macOS)
+        .toolbarRole(.editor)
+        #endif
+        .onChange(of: store.isProUnlocked, initial: true) { _, isUnlocked in
+            state.coach.proStepAvailable = !isUnlocked
+        }
+        // The inspector step anchors inside the inspector, which the user may have closed.
+        .onChange(of: state.coach.step) { _, step in
+            openInspectorIfCoachNeedsIt(step)
+        }
+        #if os(iOS)
+        // Open it during the transition gap so the anchor is laid out before the
+        // popover presents — iPadOS won't present from a not-yet-visible anchor.
+        .onChange(of: state.coach.preparingStep) { _, step in
+            openInspectorIfCoachNeedsIt(step)
+        }
+        #endif
+        #if os(iOS)
+        // Without inline mode iPadOS reserves a large-title header, leaving a blank
+        // band between the nav bar and the editor content.
+        .navigationBarTitleDisplayMode(.inline)
+        // Leaving the editor mid-tour (back to Projects, tab switch) would otherwise
+        // strand a coach step with no anchor — no popover, no way to end the tour.
+        .onDisappear { state.coach.cancelActive() }
+        // The inspector is a docked side panel at regular width (iPad/Mac) but a blocking
+        // sheet at compact width (iPhone) — don't auto-present it there, or it covers the
+        // canvas on open. The toolbar toggle still opens it on demand.
+        .onAppear {
+            if horizontalSizeClass == .compact {
+                isInspectorPresented = false
+            }
+        }
+        #endif
+    }
+
+    private var editorColumn: some View {
         VStack(spacing: 0) {
             LocaleBar(state: state)
 
@@ -209,30 +212,8 @@ struct ContentView: View {
                 // horizontal section scroller would otherwise inherit the bottom inset and
                 // inflate the bar's height.
                 .contentMargins(.bottom, max(floatingBottomChromeMargin, editorModeFabClearance), for: .scrollContent)
-                // Floating bottom chrome: the rich-text format bar (while editing text) stacked
-                // above the shape-properties bar, both hovering over the canvas with a transparent
-                // surround. `richTextSelectionState` is read so the format bar appears once the
-                // controller publishes.
-                .overlay(alignment: .bottom) {
-                    VStack(spacing: 8) {
-                        if state.textEdit.isActive, state.textEdit.richTextSelectionState != nil,
-                           let controller = state.textEdit.richTextFormatController {
-                            RichTextDockedBar(controller: controller)
-                                .transition(.move(edge: .bottom).combined(with: .opacity))
-                        }
-                        if state.hasSelection {
-                            ShapePropertiesBar(state: state)
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                                .padding(.horizontal, 12)
-                        }
-                    }
-                    .padding(.bottom, 8)
-                }
-                .overlay(alignment: .bottomTrailing) {
-                    editorModeFloatingButton
-                        .padding(.trailing, 16)
-                        .padding(.bottom, state.hasSelection ? floatingBottomChromeMargin + 8 : 16)
-                }
+                .overlay(alignment: .bottom) { floatingBottomChrome }
+                .overlay(alignment: .bottomTrailing) { positionedEditorModeButton }
                 #endif
                 .onGeometryChange(for: CGSize.self) { proxy in
                     proxy.size
@@ -267,372 +248,6 @@ struct ContentView: View {
             }
         }
         #endif
-        #if os(macOS)
-        .overlay {
-            if state.textEdit.isActive,
-               let selectionState = state.textEdit.richTextSelectionState,
-               let anchor = state.textEdit.richTextFormatBarAnchor,
-               let controller = state.textEdit.richTextFormatController {
-                GeometryReader { proxy in
-                    let localPoint = proxy.frame(in: .global).origin
-                    let barHalfW = RichTextFormatBarMetrics.width / 2
-                    let barHalfH = RichTextFormatBarMetrics.height / 2
-                    let rawX = anchor.x - localPoint.x
-                    let rawY = anchor.y - localPoint.y - barHalfH
-                    let inset = RichTextFormatBarMetrics.edgeInset
-                    let clampedX = min(max(barHalfW + inset, rawX), proxy.size.width - barHalfW - inset)
-                    let clampedY = min(max(barHalfH + inset, rawY), proxy.size.height - barHalfH - inset)
-                    RichTextFormatBar(
-                        selectionState: selectionState,
-                        onApplyFormat: { action in
-                            controller.applyAction(action)
-                        }
-                    )
-                    .frame(width: RichTextFormatBarMetrics.width, height: RichTextFormatBarMetrics.height)
-                    .position(x: clampedX, y: clampedY)
-                }
-                .zIndex(999)
-            }
-        }
-        #endif
-        .overlay {
-            if !state.localeState.isBaseLocale {
-                Rectangle()
-                    .strokeBorder(Color.localeWarning.opacity(0.5), lineWidth: 2)
-                    .allowsHitTesting(false)
-            }
-        }
-        .overlay {
-            if exportFlow.isExporting {
-                ExportProgressOverlay(
-                    progress: exportFlow.progress,
-                    total: exportFlow.total,
-                    onCancel: { exportFlow.cancel() }
-                )
-            }
-        }
-        .overlay {
-            // macOS + in-editor re-opens/switches only: blocks during the brief structural-open
-            // phase (hides the teardown→reload flash). On iPad the cold first open is owned by
-            // `ProjectOpenGate`, which paints this same spinner before ContentView is built.
-            // Image downsampling streams in behind the live UI so row controls stay visible.
-            if !exportFlow.isExporting {
-                ProjectOpenOverlay(progress: state.projectOpen)
-            }
-        }
-        #if os(macOS)
-        .inspector(isPresented: $isInspectorPresented) {
-            // Shape sections need more room than the row's.
-            InspectorPanel(state: state, includesShapes: inspectorIncludesShapes)
-                .inspectorColumnWidth(
-                    min: isSelectionInspectorEnabled ? 250 : 220,
-                    ideal: isSelectionInspectorEnabled ? 280 : 260,
-                    max: isSelectionInspectorEnabled ? 360 : 320
-                )
-                .frame(minHeight: 200)
-        }
-        // Below `.inspector` so Esc also steps back while focus is in the sidebar.
-        .onExitCommand {
-            state.stepBackSelection()
-        }
-        .onChange(of: isSelectionInspectorEnabled) { _, isEnabled in
-            // Turning it on is asking to see it.
-            if isEnabled { isInspectorPresented = true }
-        }
-        #else
-        // Docked side panel only at regular width. Apple's `.inspector` ignores
-        // presentation-detent resizing when it auto-adapts to a sheet (it snaps back to
-        // full height), so present a real `.sheet` at compact width instead, where detents
-        // resize and the grabber persist properly.
-        .inspector(isPresented: Binding(
-            get: { !isInspectorCompact && isInspectorPresented },
-            set: { if !isInspectorCompact { isInspectorPresented = $0 } }
-        )) {
-            InspectorPanel(state: state)
-                .inspectorColumnWidth(min: 340, ideal: 380, max: 480)
-                .frame(minHeight: 200)
-        }
-        .sheet(isPresented: Binding(
-            get: { isInspectorCompact && isInspectorPresented },
-            set: { isInspectorPresented = $0 }
-        )) {
-            InspectorPanel(state: state)
-                .presentationDetents(BarSheet.detents(compact: isInspectorCompact), selection: $inspectorSheetDetent)
-                .presentationDragIndicator(.visible)
-        }
-        #endif
-        .toolbar(id: "main") {
-            // On iPad the Projects home screen + back button own project navigation,
-            // so the editor toolbar drops the project name / actions menu.
-            #if os(macOS)
-            ToolbarItem(id: "projectSwitcher", placement: .navigation) {
-                projectSwitcherToolbarMenu
-            }
-
-            ToolbarItem(id: "projectActions", placement: .navigation) {
-                projectActionsToolbarMenu
-            }
-            #endif
-
-            #if os(macOS)
-            ToolbarItem(id: "export", placement: .principal) {
-                exportControlGroup
-            }
-
-            if !store.isProUnlocked {
-                ToolbarItem(id: "buyPro", placement: .principal) {
-                    Button {
-                        store.presentPaywall(for: .general)
-                    } label: {
-                        Label("Upgrade to Pro", systemImage: "crown")
-                    }
-                    .buttonStyle(.bordered)
-                    .controlSize(.small)
-                    .help("Unlock all projects, rows, and templates")
-                    .coachPopover(step: .pro, coach: state.coach, arrowEdge: .top)
-                }
-            }
-
-            ToolbarItem(id: "trailingControls", placement: .primaryAction) {
-                HStack(spacing: 6) {
-                    if isSelectionInspectorEnabled {
-                        InsertShapeToolbarMenu(state: state)
-                        Divider()
-                            .frame(height: 16)
-                    }
-                    if BetaFeatures.shared.isABTestingEnabled {
-                        VariantsToolbarMenu(state: state)
-                        Divider()
-                            .frame(height: 16)
-                    }
-                    ZoomControls(onFit: fitZoomToWindow, fitHelpText: fitZoomHelpText)
-                    Divider()
-                        .frame(height: 16)
-                    inspectorToggleButton
-                }
-            }
-            #else
-            // Compact width (iPhone, narrow Split View) keeps the title in the roomy
-            // center slot and drops the Buy Pro capsule — the leading cluster can't
-            // also fit the title next to back/undo/redo/locale there.
-            if horizontalSizeClass == .compact {
-                ToolbarItem(id: "iPadTitleCompact", placement: .principal) {
-                    iPadProjectTitleMenu
-                }
-            } else {
-                if !store.isProUnlocked {
-                    ToolbarItem(id: "iPadBuyPro", placement: .principal) {
-                        iPadBuyProButton
-                            .coachPopover(step: .pro, coach: state.coach, arrowEdge: .top)
-                    }
-                }
-
-                ToolbarItem(id: "iPadTitle", placement: .topBarLeading) {
-                    iPadProjectTitleMenu
-                }
-            }
-
-            ToolbarItem(id: "iPadUndo", placement: .navigation) {
-                iPadUndoButton
-            }
-            ToolbarItem(id: "iPadRedo", placement: .navigation) {
-                iPadRedoButton
-            }
-            ToolbarItem(id: "iPadLocale", placement: .navigation) {
-                LocaleToolbarButton(state: state)
-            }
-
-            ToolbarItem(id: "iPadZoom", placement: .primaryAction) {
-                iPadZoomMenu
-            }
-            ToolbarItem(id: "iPadInspector", placement: .primaryAction) {
-                inspectorToggleButton
-            }
-            ToolbarItem(id: "iPadExport", placement: .primaryAction) {
-                iPadExportControl
-            }
-            #endif
-
-        }
-        #if os(macOS)
-        .toolbarRole(.editor)
-        #endif
-        .onChange(of: store.isProUnlocked, initial: true) { _, isUnlocked in
-            state.coach.proStepAvailable = !isUnlocked
-        }
-        // The inspector step anchors inside the inspector, which the user may have closed.
-        .onChange(of: state.coach.step) { _, step in
-            openInspectorIfCoachNeedsIt(step)
-        }
-        #if os(iOS)
-        // Open it during the transition gap so the anchor is laid out before the
-        // popover presents — iPadOS won't present from a not-yet-visible anchor.
-        .onChange(of: state.coach.preparingStep) { _, step in
-            openInspectorIfCoachNeedsIt(step)
-        }
-        #endif
-        #if os(iOS)
-        // Without inline mode iPadOS reserves a large-title header, leaving a blank
-        // band between the nav bar and the editor content.
-        .navigationBarTitleDisplayMode(.inline)
-        // Leaving the editor mid-tour (back to Projects, tab switch) would otherwise
-        // strand a coach step with no anchor — no popover, no way to end the tour.
-        .onDisappear { state.coach.cancelActive() }
-        // The inspector is a docked side panel at regular width (iPad/Mac) but a blocking
-        // sheet at compact width (iPhone) — don't auto-present it there, or it covers the
-        // canvas on open. The toolbar toggle still opens it on demand.
-        .onAppear {
-            if horizontalSizeClass == .compact {
-                isInspectorPresented = false
-            }
-        }
-        #endif
-    }
-
-    /// Sheets, alerts, covers, and window lifecycle attached to the editor shell.
-    private func contentModals(_ base: some View) -> some View {
-        base
-        .exportFailedAlert($exportFlow.errorMessage)
-        .exportIncompleteAlert($exportFlow.incompleteMessage)
-        .sheet(isPresented: developerRatingPresented, onDismiss: reportDeveloperRatingOutcome) {
-            DeveloperRatingSheet(onMaybeLater: dismissDeveloperRatingSheet, onRate: rateOnAppStore)
-                .screenView(.developerRating, restoring: .editor)
-                .onAppear { exportFlow.markDeveloperRatingShown() }
-        }
-        #if os(iOS)
-        .sheet(item: $exportFlow.pendingExport, onDismiss: { discardPendingExport() }) { _ in
-            ExportDestinationSheet(title: pendingExportTitle) { destination in
-                runPendingExport(to: destination)
-            }
-            .screenView(.exportDestination, restoring: .editor)
-        }
-        #endif
-        .alert(resetTemplate != nil ? String(localized: "Reset Project from Template") : String(localized: "Reset Project"), isPresented: $isResettingProject) {
-            Button("Reset", role: .destructive) {
-                if let id = state.activeProjectId {
-                    if let template = resetTemplate {
-                        state.resetProjectFromTemplate(id, template: template)
-                        resetTemplate = nil
-                    } else {
-                        state.resetProject(id)
-                    }
-                }
-            }
-            Button("Cancel", role: .cancel) { resetTemplate = nil }
-        } message: {
-            if let template = resetTemplate {
-                Text("Are you sure you want to reset \"\(state.activeProject?.name ?? "")\" using the \"\(template.name)\" template? All current rows and shapes will be replaced. This cannot be undone.")
-            } else {
-                Text("Are you sure you want to reset \"\(state.activeProject?.name ?? "")\"? All rows and shapes will be removed. This cannot be undone.")
-            }
-        }
-        .alert("Delete Project", isPresented: $isDeletingProject) {
-            Button("Delete", role: .destructive) {
-                if let id = state.activeProjectId {
-                    state.deleteProject(id)
-                }
-            }
-            Button("Cancel", role: .cancel) {}
-        } message: {
-            Text("Are you sure you want to delete \"\(state.activeProject?.name ?? "")\"? This cannot be undone.")
-        }
-        // On iPad the paywall/celebration sheets live at the navigation root (`iPadRootView`)
-        // so they also present from the Projects home screen, not just the pushed editor.
-        #if os(macOS)
-        .purchaseSheets(store: store, restoring: .editor)
-        #endif
-        // Upload wizards: fitted sheet on macOS, native full-screen screen on iPad.
-        .platformAdaptiveSheet(isPresented: $showingASCUploadSheet) {
-            UploadToAppStoreConnectView()
-                .environment(state)
-                .screenView(.ascUpload, restoring: .editor)
-        }
-        .platformAdaptiveSheet(isPresented: $showingASCMetadataSheet) {
-            UploadToAppStoreConnectView(mode: .metadata)
-                .environment(state)
-                .screenView(.ascMetadata, restoring: .editor)
-        }
-        .platformAdaptiveSheet(isPresented: $showingASCExperimentSheet) {
-            UploadExperimentToAppStoreConnectView()
-                .environment(state)
-                .screenView(.ascExperimentUpload, restoring: .editor)
-        }
-        .platformAdaptiveSheet(isPresented: $showingGooglePlayUploadSheet) {
-            UploadToGooglePlayView()
-                .environment(state)
-                .screenView(.googlePlayUpload, restoring: .editor)
-        }
-        .sheet(item: $projectNamePrompt) { prompt in
-            ProjectNameSheet(prompt: prompt)
-        }
-        #if os(macOS)
-        .sheet(item: $showcasePresentation) { presentation in
-            showcaseExportScreen(for: presentation)
-                .presentationSizing(.page)
-                .screenView(.showcaseExport, restoring: .editor)
-        }
-        #else
-        // iPad: showcase export is a desktop-grade split view — present it as its own
-        // full-screen screen with a native nav bar rather than a fitted sheet.
-        .fullScreenCover(item: $showcasePresentation) { presentation in
-            showcaseExportScreen(for: presentation)
-                .exportFailedAlert($exportFlow.errorMessage)
-                .screenView(.showcaseExport, restoring: .editor)
-        }
-        #endif
-        .middleMousePan()
-        .task {
-            projectTemplates = await TemplateService.availableTemplatesAsync()
-        }
-        .onAppear {
-            // `requestReview` is an environment value, so only a view can hand it over.
-            // Outside the App Store the system review sheet has no listing to send a review to.
-            if !DistributionChannel.isDirect {
-                exportFlow.requestReview = { requestReview() }
-            }
-            #if os(iOS)
-            if state.selectedRowId == nil, let firstRow = state.rows.first {
-                state.selectRow(firstRow.id)
-            }
-            #endif
-            scrollWheelZoom.install(state: state)
-        }
-        .onDisappear {
-            scrollWheelZoom.remove()
-        }
-    }
-
-    /// Held back while the showcase cover owns the window: on iPad that cover deliberately stays
-    /// up across the export's success, and SwiftUI presents one modal at a time, so asking now
-    /// would drop the sheet silently. The getter re-opens it once the cover closes.
-    private var developerRatingPresented: Binding<Bool> {
-        // Direct-download installs can't review on the App Store.
-        Binding(get: { !DistributionChannel.isDirect && exportFlow.showDeveloperRatingSheet && showcasePresentation == nil },
-                set: { if !$0 { exportFlow.showDeveloperRatingSheet = false } })
-    }
-
-    private func dismissDeveloperRatingSheet() {
-        exportFlow.showDeveloperRatingSheet = false
-    }
-
-    private func rateOnAppStore() {
-        didRateFromDeveloperSheet = true
-        exportFlow.showDeveloperRatingSheet = false
-        openURL(AppLinks.rateOnAppStore)
-    }
-
-    /// Reported from `onDismiss` rather than the buttons so every way out of the sheet is counted
-    /// — Esc, a click outside, and the iPad swipe-down all leave by this path and none of them
-    /// touch a button.
-    private func reportDeveloperRatingOutcome() {
-        AnalyticsService.capture(didRateFromDeveloperSheet ? .developerRatingAccepted : .developerRatingDismissed)
-        didRateFromDeveloperSheet = false
-    }
-
-    private func openInspectorIfCoachNeedsIt(_ step: OnboardingCoachStep?) {
-        if step == .inspector {
-            isInspectorPresented = true
-        }
     }
 
 }

@@ -1,102 +1,8 @@
 #if os(macOS)
-import AppKit
 import Foundation
 import MCP
 
 extension MCPToolExecutor {
-
-    struct ASCScreenshotPreviewResult: Encodable {
-        let planId: String
-        /// Echoed so a caller can assert which project the plan was built from rather than
-        /// trusting that the app happened to have the right one open.
-        let projectId: String
-        let projectName: String
-        let appId: String
-        let expiresAt: String
-        let issues: [String]
-        let sets: [SetResult]
-
-        struct SetResult: Encodable {
-            let setId: String
-            let remoteSetId: String?
-            let versionId: String
-            let version: String
-            let locale: String
-            let displayType: String
-            let status: String
-            let canApply: Bool
-            let unchanged: Int
-            let moved: Int
-            let new: Int
-            let removed: Int
-            let capacityFirstDeletions: Int
-            let issues: [String]
-            /// Non-blocking notices — most usefully "these have no App Store checksum, so they
-            /// will be replaced rather than preserved", i.e. a preserve that is really a replace.
-            let warnings: [String]
-        }
-    }
-
-    struct ASCScreenshotApplyResult: Encodable {
-        let planId: String
-        let succeeded: Bool
-        /// Whether anything was written to the live listing. The single most useful bit on a
-        /// partial failure, and previously invisible to an agent.
-        let didMutate: Bool
-        let attempted: Int
-        let alreadyApplied: Int
-        let sets: [SetResult]
-
-        struct SetResult: Encodable {
-            let setId: String
-            let state: String
-            let uploaded: Int
-            let removed: Int
-            let moved: Int
-            let preserved: Int
-            let finalVerified: Bool
-            let assetDeliveryStates: [String: Int]
-            let nonCompleteAssets: [ASCScreenshotDeliveryProblem]
-            let warnings: [String]
-            let error: String?
-        }
-    }
-
-    struct ASCMetadataResult: Encodable {
-        let appId: String
-        let versions: [VersionMeta]
-
-        struct VersionMeta: Encodable {
-            let versionId: String
-            let platform: String?
-            let versionString: String
-            let appStoreState: String?
-            let editable: Bool
-            let locales: [LocaleDescription]
-        }
-
-        struct LocaleDescription: Encodable {
-            let locale: String
-            let description: String?
-        }
-    }
-
-    struct ASCDescriptionUpdateResult: Encodable {
-        let appId: String
-        let results: [VersionResult]
-
-        struct VersionResult: Encodable {
-            let versionId: String
-            let platform: String?
-            let updated: [String]
-            let skipped: [Skip]
-        }
-
-        struct Skip: Encodable {
-            let locale: String
-            let reason: String
-        }
-    }
 
     func getAppStoreMetadata(_ args: MCPArguments) async throws -> CallTool.Result {
         try requireASCConfigured()
@@ -209,56 +115,14 @@ extension MCPToolExecutor {
 
         var targets: [ASCUploadTarget] = []
         for version in candidateVersions {
-            var claimedSetKeys = Set<String>()
-            let remoteLocalizations = try await ascAPI.listLocalizations(versionId: version.id)
-            let assigned = ASCLocaleMatcher.assign(appCodes: localeCodes, to: remoteLocalizations)
-            for code in localeCodes where assigned[code, default: []].isEmpty {
-                issues.append("Skipped \(version.id) · \(code): no unambiguous App Store localization mapping.")
-            }
-            for row in rows {
-                guard !row.excludeFromAppStoreConnect else {
-                    issues.append("Skipped row \(row.id.uuidString): excluded from App Store Connect.")
-                    continue
-                }
-                guard row.isOriginal else {
-                    issues.append("Skipped row \(row.id.uuidString): belongs to an A/B variant, not the product page.")
-                    continue
-                }
-                guard let displayType = ASCDisplayType.detect(width: row.templateWidth, height: row.templateHeight) else {
-                    issues.append("Skipped row \(row.id.uuidString): its \(Int(row.templateWidth))×\(Int(row.templateHeight)) display type is ambiguous or unsupported.")
-                    continue
-                }
-                guard displayType.accepts(platform: version.attributes.ascPlatform) else {
-                    issues.append("Skipped row \(row.id.uuidString) for version \(version.id): \(displayType.label) is incompatible with \(version.attributes.displayPlatform ?? "the version platform").")
-                    continue
-                }
-                let candidates = localeCodes.flatMap { code in
-                    assigned[code, default: []].map {
-                        ASCUploadLocalization(id: $0.id, label: $0.attributes.locale, localeCode: code)
-                    }
-                }
-                let localizations = candidates.filter { localization in
-                    let key = "\(localization.id)|\(displayType.appStoreConnectValue)"
-                    guard !claimedSetKeys.contains(key) else {
-                        issues.append("Skipped row \(row.id.uuidString) · \(localization.label): another row already targets this display-type set.")
-                        return false
-                    }
-                    claimedSetKeys.insert(key)
-                    return true
-                }
-                guard !localizations.isEmpty else { continue }
-                targets.append(ASCUploadTarget(
-                    versionId: version.id,
-                    versionLabel: "\(version.attributes.displayPlatform ?? "App Store") · Version \(version.attributes.versionString)",
-                    parentKind: .versionLocalization,
-                    rowId: row.id,
-                    rowLabel: row.label.isEmpty ? "Row" : row.label,
-                    rowSize: row.templateSize,
-                    displayType: displayType,
-                    localizations: localizations,
-                    templateCount: row.templates.count
-                ))
-            }
+            let planned = MCPScreenshotTargetPlanner.targets(
+                version: version,
+                remoteLocalizations: try await ascAPI.listLocalizations(versionId: version.id),
+                rows: rows,
+                localeCodes: localeCodes
+            )
+            targets += planned.targets
+            issues += planned.issues
         }
         guard !targets.isEmpty else {
             throw MCPToolError.expected("No compatible editable version × row × locale screenshot sets were found. \(issues.joined(separator: " "))")
@@ -302,7 +166,7 @@ extension MCPToolExecutor {
             )
             // Composited here rather than inside `update`: that closure is nonisolated and the
             // contact sheet is drawn with AppKit on the main actor.
-            let contactSheet = Self.makeScreenshotContactSheet(plan: plan)
+            let contactSheet = MCPContactSheet.png(plan: plan)
             handle.update {
                 $0.planId = plan.id
                 $0.sets = plan.sets.map { MCPJobSetProgress(setId: $0.id) }
@@ -513,48 +377,6 @@ extension MCPToolExecutor {
             throw MCPToolError.expected("App \(appId) has no editable App Store version (a version must be in an editable state such as Prepare for Submission)")
         }
         return editable
-    }
-
-    private static func makeScreenshotContactSheet(plan: ASCScreenshotSyncPlan) -> Data? {
-        let previews = plan.sets.flatMap(\.proposedAssets).compactMap { $0.localAsset?.previewData }.prefix(20)
-        let images = previews.compactMap { NSImage(data: $0) }
-        guard !images.isEmpty else { return nil }
-        let columns = min(5, images.count)
-        let rows = Int(ceil(Double(images.count) / Double(columns)))
-        let cell = CGSize(width: 150, height: 210)
-        let canvasSize = CGSize(width: CGFloat(columns) * cell.width, height: CGFloat(rows) * cell.height)
-        guard let bitmap = NSBitmapImageRep(
-            bitmapDataPlanes: nil,
-            pixelsWide: Int(canvasSize.width),
-            pixelsHigh: Int(canvasSize.height),
-            bitsPerSample: 8,
-            samplesPerPixel: 4,
-            hasAlpha: true,
-            isPlanar: false,
-            colorSpaceName: .deviceRGB,
-            bytesPerRow: 0,
-            bitsPerPixel: 0
-        ), let context = NSGraphicsContext(bitmapImageRep: bitmap) else { return nil }
-        NSGraphicsContext.saveGraphicsState()
-        NSGraphicsContext.current = context
-        NSColor.windowBackgroundColor.setFill()
-        NSBezierPath(rect: CGRect(origin: .zero, size: canvasSize)).fill()
-        for (index, image) in images.enumerated() {
-            let column = index % columns
-            let row = index / columns
-            let cellRect = CGRect(
-                x: CGFloat(column) * cell.width + 8,
-                y: canvasSize.height - CGFloat(row + 1) * cell.height + 8,
-                width: cell.width - 16,
-                height: cell.height - 16
-            )
-            let scale = min(cellRect.width / image.size.width, cellRect.height / image.size.height)
-            let size = CGSize(width: image.size.width * scale, height: image.size.height * scale)
-            let rect = CGRect(x: cellRect.midX - size.width / 2, y: cellRect.midY - size.height / 2, width: size.width, height: size.height)
-            image.draw(in: rect, from: .zero, operation: .sourceOver, fraction: 1)
-        }
-        NSGraphicsContext.restoreGraphicsState()
-        return bitmap.representation(using: .png, properties: [:])
     }
 }
 #endif

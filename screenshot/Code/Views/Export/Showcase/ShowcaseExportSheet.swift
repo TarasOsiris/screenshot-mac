@@ -57,19 +57,12 @@ struct ShowcaseExportSheet: View {
         backgroundImage.map { [ShowcaseExportConfig.transientBackgroundKey: $0] } ?? [:]
     }
 
-    /// Selected rows in their candidate order, with excluded templates filtered out.
-    /// Rows whose templates are all excluded are dropped — they would render empty.
-    private var selectedRowsOrdered: [ScreenshotRow] {
-        candidateRows
-            .filter { selectedRowIds.contains($0.id) }
-            .compactMap { $0.filtering(excluding: excludedTemplateIds) }
-    }
-
-    /// Row used to render aspect preset thumbnails. Prefers a selected row so the
-    /// thumbnails reflect what the user is about to export; falls back to the first
-    /// candidate, then to nil if there are none.
-    private var sampleRowForAspectPreview: ScreenshotRow? {
-        selectedRowsOrdered.first ?? candidateRows.first
+    private var selection: ShowcaseExportSelection {
+        ShowcaseExportSelection(
+            candidateRows: candidateRows,
+            selectedRowIds: selectedRowIds,
+            excludedTemplateIds: excludedTemplateIds
+        )
     }
 
     var body: some View {
@@ -99,7 +92,7 @@ struct ShowcaseExportSheet: View {
             Text("Showcase Export"),
             confirmTitle: Text("Export…"),
             confirmSystemImage: "square.and.arrow.up",
-            confirmDisabled: selectedRowsOrdered.isEmpty,
+            confirmDisabled: selection.selectedRowsOrdered.isEmpty,
             showsCancel: true,
             confirmMenu: { exportDestinationMenu }
         )
@@ -160,7 +153,7 @@ struct ShowcaseExportSheet: View {
     @ViewBuilder
     private var previewColumn: some View {
         ShowcasePreviewColumn(
-            rows: selectedRowsOrdered,
+            rows: selection.selectedRowsOrdered,
             config: config,
             transientBackgroundImages: transientBackgroundImages,
             loadImages: loadImages,
@@ -181,7 +174,7 @@ struct ShowcaseExportSheet: View {
             config: $config,
             backgroundImage: backgroundImage,
             predictedOutputDimensionsText: predictedOutputDimensionsText,
-            sampleRowForAspectPreview: sampleRowForAspectPreview,
+            sampleRowForAspectPreview: selection.sampleRow,
             onReset: { showingResetConfirmation = true },
             onPickBackgroundImage: pickBackgroundImage,
             onRemoveBackgroundImage: removeBackgroundImage,
@@ -193,18 +186,18 @@ struct ShowcaseExportSheet: View {
     /// Predicted export dimensions for the first selected row, so the user sees
     /// the actual output size before clicking Export.
     private var predictedOutputDimensionsText: String {
-        let rows = selectedRowsOrdered.isEmpty ? candidateRows : selectedRowsOrdered
-        guard let row = rows.first else { return "" }
+        guard let row = selection.sampleRow else { return "" }
         let size = ShowcaseLayout(row: row, config: config)
             .outputSize(maxDimension: config.maxOutputDimension)
         return "\(Int(size.width)) × \(Int(size.height)) px"
     }
 
     private var exportCountText: LocalizedStringKey {
-        let count = selectedRowIds.count
-        if count == 0 { return "No rows selected" }
-        if count == candidateRows.count { return "Exporting all \(count) rows" }
-        return "Exporting \(count) of \(candidateRows.count) rows"
+        switch selection.summary {
+        case .empty: "No rows selected"
+        case .all(let count): "Exporting all \(count) rows"
+        case .partial(let count, let total): "Exporting \(count) of \(total) rows"
+        }
     }
 
     // MARK: - Export destination menu (iPad)
@@ -212,7 +205,7 @@ struct ShowcaseExportSheet: View {
     #if os(iOS)
     @ViewBuilder
     private var exportDestinationMenu: some View {
-        let count = selectedRowsOrdered.count
+        let count = selection.selectedRowsOrdered.count
         Section(exportDestinationTitle(count)) {
             Button { export(to: .photos) } label: {
                 Label("Save to Photos", systemImage: "photo.on.rectangle")
@@ -229,11 +222,11 @@ struct ShowcaseExportSheet: View {
     private func exportDestinationTitle(_ screenshotCount: Int) -> LocalizedStringKey {
         screenshotCount == 1 ? "Export 1 screenshot to…" : "Export \(screenshotCount) screenshots to…"
     }
+    #endif
 
     private func export(to destination: ExportDestination) {
         onExport(config, backgroundImage, selectedRowIds, excludedTemplateIds, destination)
     }
-    #endif
 
     // MARK: - Footer
 
@@ -252,12 +245,10 @@ struct ShowcaseExportSheet: View {
             Spacer()
             Button("Cancel") { dismiss() }
                 .keyboardShortcut(.cancelAction)
-            Button("Export…") {
-                onExport(config, backgroundImage, selectedRowIds, excludedTemplateIds, .files)
-            }
+            Button("Export…") { export(to: .files) }
             .keyboardShortcut(.defaultAction)
             .buttonStyle(.borderedProminent)
-            .disabled(selectedRowsOrdered.isEmpty)
+            .disabled(selection.selectedRowsOrdered.isEmpty)
         }
         .padding(EdgeInsets(top: 10, leading: 16, bottom: 10, trailing: 16))
     }
@@ -301,317 +292,5 @@ struct ShowcaseExportSheet: View {
             backgroundImage = nil
             excludedTemplateIds = []
         }
-    }
-}
-
-private struct ShowcasePreviewColumn: View {
-    let rows: [ScreenshotRow]
-    let config: ShowcaseExportConfig
-    let transientBackgroundImages: [String: NSImage]
-    let loadImages: (ScreenshotRow) -> [String: NSImage]
-    let localeCode: String?
-    let localeState: LocaleState
-    let availableFontFamilies: Set<String>
-
-    var body: some View {
-        if rows.isEmpty {
-            emptyPreview
-        } else {
-            GeometryReader { geo in
-                let inset = ShowcaseExportSheetMetrics.previewContentInset
-                let contentWidth = max(geo.size.width - inset * 2, 80)
-                if rows.count == 1 {
-                    singleRowPreview(row: rows[0], geo: geo, inset: inset, contentWidth: contentWidth)
-                } else {
-                    multiRowPreview(contentWidth: contentWidth, inset: inset)
-                }
-            }
-        }
-    }
-
-    private func singleRowPreview(
-        row: ScreenshotRow,
-        geo: GeometryProxy,
-        inset: CGFloat,
-        contentWidth: CGFloat
-    ) -> some View {
-        let contentHeight = max(geo.size.height - inset * 2, 80)
-        return ShowcaseRowPreview(
-            row: row,
-            config: config,
-            transientBackgroundImages: transientBackgroundImages,
-            containerSize: CGSize(width: contentWidth, height: contentHeight),
-            loadImages: { loadImages(row) },
-            localeCode: localeCode,
-            localeState: localeState,
-            availableFontFamilies: availableFontFamilies
-        )
-        .padding(inset)
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-    }
-
-    private func multiRowPreview(contentWidth: CGFloat, inset: CGFloat) -> some View {
-        let layout = ShowcasePreviewGridLayout(contentWidth: contentWidth, rowCount: rows.count)
-        return ScrollView(.vertical) {
-            LazyVGrid(
-                columns: Array(
-                    repeating: GridItem(.flexible(minimum: 80), spacing: layout.spacing, alignment: .top),
-                    count: layout.columnCount
-                ),
-                spacing: layout.spacing
-            ) {
-                ForEach(rows) { row in
-                    ShowcaseRowPreview(
-                        row: row,
-                        config: config,
-                        transientBackgroundImages: transientBackgroundImages,
-                        containerSize: CGSize(width: layout.columnWidth, height: .infinity),
-                        loadImages: { loadImages(row) },
-                        localeCode: localeCode,
-                        localeState: localeState,
-                        availableFontFamilies: availableFontFamilies
-                    )
-                    .id(row.id)
-                }
-            }
-            .padding(inset)
-            .frame(maxWidth: .infinity)
-        }
-    }
-
-    private var emptyPreview: some View {
-        ContentUnavailableView(
-            "No rows selected",
-            systemImage: "rectangle.stack.badge.minus",
-            description: Text("Select at least one row to preview and export.")
-        )
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-    }
-}
-
-private struct ShowcasePreviewGridLayout {
-    let contentWidth: CGFloat
-    let rowCount: Int
-
-    var spacing: CGFloat {
-        ShowcaseExportSheetMetrics.previewItemSpacing
-    }
-
-    var columnCount: Int {
-        contentWidth >= ShowcaseExportSheetMetrics.gridTwoColumnThreshold && rowCount >= 2 ? 2 : 1
-    }
-
-    var columnWidth: CGFloat {
-        columnCount == 2 ? max((contentWidth - spacing) / 2, 80) : contentWidth
-    }
-}
-
-struct ShowcaseRowsSection: View {
-    let candidateRows: [ScreenshotRow]
-    @Binding var selectedRowIds: Set<UUID>
-    @Binding var excludedTemplateIds: Set<UUID>
-
-    private var allSelected: Bool {
-        selectedRowIds.count == candidateRows.count
-    }
-
-    var body: some View {
-        // A single row has no row-level selection to make — surface its screenshots directly.
-        if candidateRows.count == 1, let row = candidateRows.first {
-            ShowcaseScreenshotsSection(row: row, excludedTemplateIds: $excludedTemplateIds)
-        } else {
-            VStack(alignment: .leading, spacing: 8) {
-                header
-                VStack(spacing: 2) {
-                    ForEach(candidateRows) { row in
-                        ShowcaseRowToggle(
-                            row: row,
-                            selectedRowIds: $selectedRowIds,
-                            excludedTemplateIds: $excludedTemplateIds
-                        )
-                    }
-                }
-            }
-        }
-    }
-
-    private var header: some View {
-        HStack {
-            ShowcaseSectionTitle(text: "Rows", systemImage: "rectangle.stack")
-            Spacer()
-            Button(allSelected ? "None" : "All", action: toggleAllRows)
-                .buttonStyle(.borderless)
-                .scaledFont(UIMetrics.FontSize.inlineLabel, weight: .semibold)
-        }
-    }
-
-    private func toggleAllRows() {
-        selectedRowIds = allSelected ? [] : Set(candidateRows.map(\.id))
-    }
-}
-
-/// Single-row variant: toggle individual screenshots on/off directly, with no
-/// redundant row checkbox. Excluding every screenshot leaves nothing to export,
-/// which disables the Export button (`selectedRowsOrdered` drops empty rows).
-private struct ShowcaseScreenshotsSection: View {
-    let row: ScreenshotRow
-    @Binding var excludedTemplateIds: Set<UUID>
-
-    private var allIncluded: Bool {
-        row.templates.allSatisfy { !excludedTemplateIds.contains($0.id) }
-    }
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack {
-                ShowcaseSectionTitle(text: "Screenshots", systemImage: "photo.on.rectangle")
-                Spacer()
-                Button(allIncluded ? "None" : "All", action: toggleAll)
-                    .buttonStyle(.borderless)
-                    .scaledFont(UIMetrics.FontSize.inlineLabel, weight: .semibold)
-            }
-            ShowcaseTemplateChipStrip(templates: row.templates, excludedTemplateIds: $excludedTemplateIds)
-        }
-    }
-
-    private func toggleAll() {
-        if allIncluded {
-            excludedTemplateIds.formUnion(row.templates.map(\.id))
-        } else {
-            row.templates.forEach { excludedTemplateIds.remove($0.id) }
-        }
-    }
-}
-
-private struct ShowcaseTemplateChipStrip: View {
-    let templates: [ScreenshotTemplate]
-    @Binding var excludedTemplateIds: Set<UUID>
-
-    var body: some View {
-        HStack(spacing: 4) {
-            ForEach(templates.indices, id: \.self) { index in
-                ShowcaseTemplateChip(
-                    index: index,
-                    template: templates[index],
-                    excludedTemplateIds: $excludedTemplateIds
-                )
-            }
-        }
-    }
-}
-
-private struct ShowcaseRowToggle: View {
-    let row: ScreenshotRow
-    @Binding var selectedRowIds: Set<UUID>
-    @Binding var excludedTemplateIds: Set<UUID>
-
-    private var rowSelected: Bool {
-        selectedRowIds.contains(row.id)
-    }
-
-    private var includedCount: Int {
-        row.templates.count(where: { !excludedTemplateIds.contains($0.id) })
-    }
-
-    private var selectionBinding: Binding<Bool> {
-        Binding(
-            get: { rowSelected },
-            set: { isOn in
-                if isOn { selectedRowIds.insert(row.id) } else { selectedRowIds.remove(row.id) }
-            }
-        )
-    }
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Toggle(isOn: selectionBinding) {
-                HStack(spacing: 8) {
-                    Text(row.displayLabel)
-                        .scaledFont(UIMetrics.FontSize.menuRow)
-                        .lineLimit(1)
-                        .truncationMode(.tail)
-                    Spacer(minLength: 8)
-                    Text("\(includedCount)/\(row.templates.count)")
-                        .scaledFont(UIMetrics.FontSize.inlineLabel)
-                        .monospacedDigit()
-                        .foregroundStyle(.secondary)
-                }
-            }
-            #if os(macOS)
-            .toggleStyle(.checkbox)
-            #endif
-
-            if rowSelected, row.templates.count > 1 {
-                ShowcaseTemplateChipStrip(templates: row.templates, excludedTemplateIds: $excludedTemplateIds)
-                    .padding(.leading, 18)
-            }
-        }
-        .padding(EdgeInsets(top: 2, leading: 4, bottom: 2, trailing: 6))
-    }
-}
-
-private struct ShowcaseTemplateChip: View {
-    let index: Int
-    let template: ScreenshotTemplate
-    @Binding var excludedTemplateIds: Set<UUID>
-
-    private var included: Bool {
-        !excludedTemplateIds.contains(template.id)
-    }
-
-    var body: some View {
-        Button(action: toggleIncluded) {
-            Text("\(index + 1)")
-                .scaledFont(UIMetrics.FontSize.inlineLabel, weight: .medium)
-                .monospacedDigit()
-                .frame(width: 20, height: 18)
-                .background(chipShape.fill(chipFill))
-                .overlay { chipShape.strokeBorder(chipStroke, lineWidth: UIMetrics.BorderWidth.hairline) }
-                .foregroundStyle(included ? Color.accentColor : Color.secondary)
-                .opacity(included ? 1 : 0.55)
-        }
-        .buttonStyle(.plain)
-        .help(included ? "Exclude screenshot \(index + 1)" : "Include screenshot \(index + 1)")
-    }
-
-    private var chipShape: RoundedRectangle {
-        RoundedRectangle(cornerRadius: UIMetrics.CornerRadius.chip, style: .continuous)
-    }
-
-    private var chipFill: Color {
-        included
-            ? Color.accentColor.opacity(UIMetrics.Opacity.accentBadge)
-            : Color.primary.opacity(UIMetrics.Opacity.sectionFill)
-    }
-
-    private var chipStroke: Color {
-        included
-            ? Color.accentColor.opacity(UIMetrics.Opacity.accentBorder)
-            : Color.primary.opacity(UIMetrics.Opacity.sectionBorder)
-    }
-
-    private func toggleIncluded() {
-        if included {
-            excludedTemplateIds.insert(template.id)
-        } else {
-            excludedTemplateIds.remove(template.id)
-        }
-    }
-}
-
-struct ShowcaseSectionTitle: View {
-    let text: LocalizedStringKey
-    let systemImage: String
-
-    var body: some View {
-        HStack(spacing: 5) {
-            Image(systemName: systemImage)
-                .scaledFont(UIMetrics.FontSize.inlineLabel, weight: .semibold)
-            Text(text)
-                .textCase(.uppercase)
-                .scaledFont(UIMetrics.FontSize.inlineLabel, weight: .semibold)
-                .tracking(0.6)
-        }
-        .foregroundStyle(.secondary)
     }
 }

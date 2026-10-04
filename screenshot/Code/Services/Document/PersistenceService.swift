@@ -1,28 +1,6 @@
 import Foundation
 
 nonisolated struct PersistenceService {
-    private static let rootDirectoryOverrideKey = "SCREENSHOT_DATA_DIR"
-    private static let useTemporaryRootDirectoryKey = "SCREENSHOT_USE_TEMP_DATA_DIR"
-    private static let temporaryRootURL: URL = {
-        let root = URL(fileURLWithPath: NSTemporaryDirectory(), isDirectory: true)
-        let directory = root
-            .appendingPathComponent("screenshot-clean-install", isDirectory: true)
-            .appendingPathComponent(UUID().uuidString, isDirectory: true)
-        try? FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
-        return directory
-    }()
-
-    static var hasDataDirOverride: Bool {
-        ProcessInfo.processInfo.environment[rootDirectoryOverrideKey]?.isEmpty == false
-            || isUsingTemporaryRootDirectory
-            || isRunningUnderXCTest
-    }
-
-    // Tests override SCREENSHOT_DATA_DIR per-test, but the env var is process-global and
-    // debounced saves can fire after a test unsets it — without this guard those saves
-    // land in the user's real (iCloud) store, leaking test projects.
-    static var isRunningUnderXCTest: Bool { PlatformProcess.isRunningUnderXCTest }
-
     static let encoder: JSONEncoder = {
         let e = JSONEncoder()
         e.outputFormatting = [.sortedKeys]
@@ -30,77 +8,6 @@ nonisolated struct PersistenceService {
     }()
 
     static let decoder = JSONDecoder()
-
-    static var localRootURL: URL {
-        FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
-            .appendingPathComponent("screenshot", isDirectory: true)
-    }
-
-    static var isUsingICloud: Bool {
-        ICloudSyncService.shared.isUsingICloud
-    }
-
-    static var rootURL: URL {
-        rootURL(isUsingICloud: isUsingICloud)
-    }
-
-    /// Takes the flag rather than reading it, so a caller that gates on `isUsingICloud` reads the
-    /// root that flag describes — a container resolving between the two lets them disagree.
-    static func rootURL(isUsingICloud: Bool) -> URL {
-        if !hasDataDirOverride, isUsingICloud, let url = ICloudSyncService.shared.iCloudDataURL {
-            return url
-        }
-        return localBaseURL
-    }
-
-    /// Like `rootURL`, but always local — never the iCloud container. For derived data
-    /// (e.g. thumbnails) that must not sync. Honors the test data-dir overrides.
-    static var localBaseURL: URL {
-        if let override = ProcessInfo.processInfo.environment[rootDirectoryOverrideKey], !override.isEmpty {
-            return URL(fileURLWithPath: override, isDirectory: true)
-        }
-        if isUsingTemporaryRootDirectory || isRunningUnderXCTest {
-            return temporaryRootURL
-        }
-        return localRootURL
-    }
-
-    private static var isUsingTemporaryRootDirectory: Bool {
-        guard let value = ProcessInfo.processInfo.environment[useTemporaryRootDirectoryKey] else {
-            return false
-        }
-        return !value.isEmpty && value != "0" && value.lowercased() != "false"
-    }
-
-    private static let indexFileName = "projects.json"
-    private static let projectDataFileName = "project.json"
-    private static let projectsDirName = "projects"
-
-    private static var projectsDir: URL {
-        rootURL.appendingPathComponent(projectsDirName, isDirectory: true)
-    }
-
-    static var indexURL: URL {
-        rootURL.appendingPathComponent(indexFileName)
-    }
-
-    private static func projectDir(_ id: UUID) -> URL {
-        projectsDir.appendingPathComponent(id.uuidString, isDirectory: true)
-    }
-
-    static func projectDirectoryURL(_ id: UUID) -> URL {
-        projectDir(id)
-    }
-
-    static func projectDataURL(_ id: UUID) -> URL {
-        projectDataURL(id, at: rootURL)
-    }
-
-    static let resourcesDirName = "resources"
-
-    static func resourcesDir(_ id: UUID) -> URL {
-        projectDir(id).appendingPathComponent(resourcesDirName, isDirectory: true)
-    }
 
     static func projectDataExists(_ id: UUID) -> Bool {
         FileManager.default.fileExists(atPath: projectDataURL(id).path)
@@ -137,12 +44,6 @@ nonisolated struct PersistenceService {
         return status == .notDownloaded ? .notDownloaded : .present
     }
 
-    /// Per-project String Catalog holding the screenshot-content translations. Lives inside the
-    /// project directory so directory-level copies (duplication, iCloud) carry it along.
-    static func translationCatalogURL(_ id: UUID) -> URL {
-        projectDir(id).appendingPathComponent("translations.xcstrings")
-    }
-
     /// Modification date of the project's translation catalog, used to detect translator edits
     /// made outside the app (e.g. in Xcode's String Catalog editor). Nil when the file is absent.
     static func translationCatalogModifiedDate(_ id: UUID) -> Date? {
@@ -155,41 +56,19 @@ nonisolated struct PersistenceService {
         try? url.resourceValues(forKeys: [.contentModificationDateKey]).contentModificationDate
     }
 
-    /// Rendered project-card thumbnails. Always local (never the iCloud root) — derived data
-    /// that must not sync or be file-coordinated. Keyed per project; freshness is decided by
-    /// comparing the PNG's file mod-date against the project's `modifiedAt`.
-    static var thumbnailsDir: URL {
-        thumbnailsDir(at: localBaseURL)
-    }
-
-    static func thumbnailsDir(at baseURL: URL) -> URL {
-        baseURL.appendingPathComponent("thumbnails", isDirectory: true)
-    }
-
-    static func thumbnailURL(_ id: UUID) -> URL {
-        thumbnailURL(id, at: localBaseURL)
-    }
-
-    static func thumbnailURL(_ id: UUID, at baseURL: URL) -> URL {
-        thumbnailsDir(at: baseURL).appendingPathComponent("\(id.uuidString).png")
-    }
-
-    static func thumbnailVersionURL(_ id: UUID) -> URL {
-        thumbnailVersionURL(id, at: localBaseURL)
-    }
-
-    static func thumbnailVersionURL(_ id: UUID, at baseURL: URL) -> URL {
-        thumbnailURL(id, at: baseURL).appendingPathExtension("version")
-    }
-
     // MARK: - Setup
 
     static func ensureDirectories() {
         ensureDirectories(at: rootURL)
     }
 
+    static func ensureDirectories(at root: URL) {
+        createDirectory(at: root, label: "root")
+        createDirectory(at: projectsDir(at: root), label: "projects")
+    }
+
     static func ensureProjectDirs(_ id: UUID) {
-        createDirectory(at: projectDir(id), label: "project")
+        createDirectory(at: projectDirectoryURL(id), label: "project")
         createDirectory(at: resourcesDir(id), label: "resources")
     }
 
@@ -207,11 +86,15 @@ nonisolated struct PersistenceService {
     static func load<T: Decodable>(_ type: T.Type, from url: URL) -> T? {
         let data = readData(from: url)
         guard let data else { return nil }
+        // Callers can't tell a nil here apart from "file missing" and fall back to an empty
+        // document, which the next autosave then writes over the real one — hence the report.
+        return decodeReportingFailure(type, from: data, file: url)
+    }
+
+    static func decodeReportingFailure<T: Decodable>(_ type: T.Type, from data: Data, file url: URL) -> T? {
         do {
             return try decoder.decode(type, from: data)
         } catch {
-            // Callers can't tell this apart from "file missing" and fall back to an empty
-            // document, which the next autosave then writes over the real one.
             CrashReportingService.report(.projectDecodeFailed, error: error, extra: [
                 "file": url.lastPathComponent,
                 "type": String(describing: type),
@@ -245,7 +128,16 @@ nonisolated struct PersistenceService {
     /// Split out so callers can encode on one thread (e.g. the main actor) and
     /// perform the potentially-blocking coordinated write on another.
     static func writeData(_ data: Data, to url: URL) throws {
-        if isUsingICloud {
+        try writeData(data, to: url, coordinated: isUsingICloud)
+    }
+
+    /// For a write under an explicit root: coordination follows the root, never the global flag.
+    static func writeData(_ data: Data, to url: URL, inRoot root: URL) throws {
+        try writeData(data, to: url, coordinated: isICloudRoot(root))
+    }
+
+    private static func writeData(_ data: Data, to url: URL, coordinated: Bool) throws {
+        if coordinated {
             try ICloudSyncService.shared.coordinatedWrite(data, to: url)
         } else {
             try data.write(to: url, options: .atomic)
@@ -258,126 +150,6 @@ nonisolated struct PersistenceService {
         } else if FileManager.default.fileExists(atPath: url.path) {
             try FileManager.default.removeItem(at: url)
         }
-    }
-
-    // MARK: - Project index
-
-    static func loadIndex() -> ProjectIndex? {
-        guard case .loaded(let index) = loadIndex(at: rootURL) else { return nil }
-        return index
-    }
-
-    /// `root` is where the index was read from, and the only root a `wasRecovered` write-back may
-    /// go to: resolving it again at the write moves this function's race to the caller.
-    struct LoadedIndex {
-        let index: ProjectIndex
-        let wasRecovered: Bool
-        let root: URL
-    }
-
-    /// The index is the one file whose loss makes every project invisible even though each
-    /// project's data is still sitting in `projects/<uuid>/` — without this, a missing
-    /// `projects.json` presents as "all your projects are gone" and the next save writes an empty
-    /// index over the top. Returns nil (callers keep their current list) when there is nothing to
-    /// recover.
-    static func loadIndexOrRecover() -> LoadedIndex? {
-        loadIndexOrRecover(isUsingICloud: isUsingICloud)
-    }
-
-    /// `isUsingICloud` is injected so both branches are testable — the real flag needs a resolved
-    /// ubiquity container, which a test process never has.
-    static func loadIndexOrRecover(isUsingICloud: Bool) -> LoadedIndex? {
-        // One root for the whole operation, so the read and the rebuild guard below can't
-        // disagree about the storage mode.
-        let root = rootURL(isUsingICloud: isUsingICloud)
-        let result = loadIndex(at: root)
-        switch result {
-        case .loaded(let index):
-            return LoadedIndex(index: index, wasRecovered: false, root: root)
-        case .absent, .unreadable:
-            // Local only, and the reason is the same for both: an iCloud index may simply not be
-            // there *yet* — the container can still be materializing, the coordinated read can
-            // fail, the device can be offline — and a rebuild would push an index missing every
-            // project this device has never opened out to all the others.
-            //
-            // For `.absent` the damage is worse still. A rebuild has no names to work from: they
-            // live in the index, and `ProjectData.name` only mirrors them for projects saved since
-            // that mirror shipped. So a rebuilt index renames every project to "Recovered Project"
-            // — and then syncs that over the real names everywhere. That happened; it cost 51
-            // names. Coming back with nothing costs a launch, because `ICloudMonitor` re-runs this
-            // as soon as the real index lands.
-            guard !isUsingICloud, let rebuilt = rebuildIndexFromProjectDirs(at: root) else { return nil }
-            let reason: String
-            if case .unreadable = result {
-                // Keeps the bytes we couldn't parse, so a rebuild never destroys the only copy.
-                preserveUnreadableIndex(at: root)
-                reason = "unreadable"
-            } else {
-                reason = "absent"
-            }
-            reportRebuild(rebuilt, reason: reason)
-            return LoadedIndex(index: rebuilt, wasRecovered: true, root: root)
-        }
-    }
-
-    /// Best-effort scan of `projects/` for anything that still decodes. Junk entries are skipped
-    /// silently — the point is to salvage what is there, not to audit the folder.
-    static func rebuildIndexFromProjectDirs(at root: URL) -> ProjectIndex? {
-        let entries = (try? FileManager.default.contentsOfDirectory(
-            at: projectsDir(at: root),
-            includingPropertiesForKeys: nil,
-            options: [.skipsHiddenFiles]
-        )) ?? []
-
-        var recovered: [Project] = []
-        for entry in entries {
-            guard let id = UUID(uuidString: entry.lastPathComponent),
-                  let data = recoverableProjectData(id, at: root) else { continue }
-            var project = Project(id: id, name: data.name ?? String(localized: "Recovered Project"))
-            project.modifiedAt = data.modifiedAt
-            recovered.append(project)
-        }
-
-        guard !recovered.isEmpty else { return nil }
-        recovered.sort { $0.modifiedAt > $1.modifiedAt }
-        return ProjectIndex(projects: recovered, activeProjectId: recovered.first?.id)
-    }
-
-    /// Quiet counterpart of `loadProject` for the recovery scan: no decode report, and no catalog
-    /// merge — the rebuild only needs `name` and `modifiedAt`. Bypasses `readData` for the reason
-    /// `loadIndex(at:)` does; the call site's guard already makes `root` local.
-    private static func recoverableProjectData(_ id: UUID, at root: URL) -> ProjectData? {
-        guard let data = try? Data(contentsOf: projectDataURL(id, at: root)) else { return nil }
-        return try? decoder.decode(ProjectData.self, from: data)
-    }
-
-    /// Keeps the bytes we couldn't parse so a rebuild never destroys the only copy of the list.
-    private static func preserveUnreadableIndex(at root: URL) {
-        let url = indexURL(at: root)
-        let backup = url.appendingPathExtension("corrupt")
-        try? FileManager.default.removeItem(at: backup)
-        try? FileManager.default.moveItem(at: url, to: backup)
-    }
-
-    private static func reportRebuild(_ index: ProjectIndex, reason: String) {
-        CrashReportingService.breadcrumb(
-            .persistence,
-            "Rebuilt project index",
-            data: ["projects": index.projects.count, "reason": reason],
-            level: .warning
-        )
-        CrashReportingService.report(
-            .projectIndexRebuilt,
-            extra: ["projects": index.projects.count, "reason": reason],
-            level: .warning
-        )
-    }
-
-    /// `ensureDirectories` first, mirroring `saveProject`'s `ensureProjectDirs`: the root is
-    /// otherwise created only at launch, so a folder removed mid-session (external cleaner,
-    /// container reset, restore) made every later index write fail with ENOENT on the parent.
-    static func saveIndex(_ index: ProjectIndex) throws {
-        try saveIndex(index, at: rootURL)
     }
 
     // MARK: - Project data
@@ -413,48 +185,13 @@ nonisolated struct PersistenceService {
         }
     }
 
-    @discardableResult
-    static func copyProject(from sourceId: UUID, to destId: UUID) -> Bool {
-        copyDirectory(from: projectDir(sourceId), to: projectDir(destId))
-    }
-
-    @discardableResult
-    static func copyProjectFromURL(_ sourceURL: URL, to destId: UUID) -> Bool {
-        guard copyDirectory(from: sourceURL, to: projectDir(destId)) else { return false }
-        TemplateService.stripTemplateArtifacts(in: projectDir(destId))
-        let loaded = loadProject(destId)
-        copySharedFonts(to: destId, referencedBy: loaded)
-        // Update modifiedAt so iCloud sync treats this as a fresh project
-        if var data = loaded {
-            data.modifiedAt = Date()
-            try? saveProject(destId, data: data)
-        }
-        return true
-    }
-
-    /// A template's fonts live in the bundle's `shared/fonts`; the project gets its own copy so it
-    /// survives iCloud sync and transfer. Only the ones it actually uses — copying all of them put
-    /// ~1.2 MB of dead weight in every project, which nothing reclaimed. `data` is nil only when
-    /// the copied `project.json` won't decode, where copying everything is the safe guess.
-    private static func copySharedFonts(to projectId: UUID, referencedBy data: ProjectData?) {
-        guard let sharedFontsURL = TemplateService.sharedFontsURL else { return }
-        let fm = FileManager.default
-        guard let fonts = try? fm.contentsOfDirectory(at: sharedFontsURL, includingPropertiesForKeys: nil, options: [.skipsHiddenFiles]) else { return }
-        let referenced = data?.referencedFontNames()
-        let destResources = resourcesDir(projectId)
-        try? fm.createDirectory(at: destResources, withIntermediateDirectories: true)
-        for fontURL in fonts {
-            if let referenced, referenced.isDisjoint(with: CustomFont.identityKeys(at: fontURL)) { continue }
-            let destURL = destResources.appendingPathComponent(fontURL.lastPathComponent)
-            if !fm.fileExists(atPath: destURL.path) {
-                try? fm.copyItem(at: fontURL, to: destURL)
-            }
-        }
-    }
-
     static func deleteProject(_ id: UUID) {
-        try? FileManager.default.removeItem(at: projectDir(id))
+        try? FileManager.default.removeItem(at: projectDirectoryURL(id))
         deleteThumbnail(id)
+    }
+
+    static func deleteProject(_ id: UUID, at root: URL) {
+        try? FileManager.default.removeItem(at: projectDir(id, at: root))
     }
 
     static func deleteThumbnail(_ id: UUID, at baseURL: URL? = nil) {
@@ -462,141 +199,5 @@ nonisolated struct PersistenceService {
         let versionURL = baseURL.map { thumbnailVersionURL(id, at: $0) } ?? thumbnailVersionURL(id)
         try? FileManager.default.removeItem(at: url)
         try? FileManager.default.removeItem(at: versionURL)
-    }
-
-    static func deleteProject(_ id: UUID, at root: URL) {
-        try? FileManager.default.removeItem(at: projectDir(id, at: root))
-    }
-
-    private static func copyDirectory(from src: URL, to dst: URL) -> Bool {
-        let fm = FileManager.default
-        try? fm.removeItem(at: dst)
-        do {
-            // copyItem does not create intermediates, and a missing projects/ makes it fail with
-            // an ENOENT that names the *source* — which reads as a broken template, not a
-            // missing destination.
-            try fm.createDirectory(at: dst.deletingLastPathComponent(), withIntermediateDirectories: true)
-            try fm.copyItem(at: src, to: dst)
-            return true
-        } catch {
-            // Silently yields an empty duplicated / template-instantiated project.
-            CrashReportingService.report(.projectDirectoryCopyFailed, error: error)
-            return false
-        }
-    }
-
-    // MARK: - Explicit-root helpers
-    // Coordination follows the root these take, not the global `isUsingICloud`, which still
-    // describes the old mode while an enable/disable migration is in flight.
-
-    static func indexURL(at root: URL) -> URL {
-        root.appendingPathComponent(indexFileName)
-    }
-
-    private static func projectsDir(at root: URL) -> URL {
-        root.appendingPathComponent(projectsDirName, isDirectory: true)
-    }
-
-    private static func projectDir(_ id: UUID, at root: URL) -> URL {
-        projectsDir(at: root).appendingPathComponent(id.uuidString, isDirectory: true)
-    }
-
-    static func projectDataURL(_ id: UUID, at root: URL) -> URL {
-        projectDir(id, at: root).appendingPathComponent(projectDataFileName)
-    }
-
-    /// Distinguishing these two is what stops a migration from merging against an empty set:
-    /// an index that is merely unreadable must not look like a first run.
-    enum IndexLoadResult {
-        case absent
-        case loaded(ProjectIndex)
-        case unreadable
-    }
-
-    /// The migration counterpart of `loadIndex()`. It can't just delegate, because `readData`
-    /// picks coordination from the global `isUsingICloud`, which still describes the *old* mode
-    /// while a switch is in flight — so the root being read decides instead.
-    static func loadIndex(at root: URL) -> IndexLoadResult {
-        let url = indexURL(at: root)
-        let data: Data?
-
-        if isICloudRoot(root) {
-            data = ICloudSyncService.shared.coordinatedRead(from: url)
-        } else {
-            do {
-                data = try Data(contentsOf: url)
-            } catch {
-                guard indexExists(at: url) else { return .absent }
-                CrashReportingService.report(.projectReadFailed, error: error, extra: ["file": url.lastPathComponent])
-                return .unreadable
-            }
-        }
-
-        guard let data else {
-            return indexExists(at: url) ? .unreadable : .absent
-        }
-
-        do {
-            return .loaded(try decoder.decode(ProjectIndex.self, from: data))
-        } catch {
-            CrashReportingService.report(.projectDecodeFailed, error: error, extra: [
-                "file": url.lastPathComponent,
-                "type": String(describing: ProjectIndex.self),
-                "bytes": data.count,
-            ])
-            return .unreadable
-        }
-    }
-
-    private static func isICloudRoot(_ root: URL) -> Bool {
-        guard let dataURL = ICloudSyncService.shared.iCloudDataURL else { return false }
-        return root.standardizedFileURL == dataURL.standardizedFileURL
-    }
-
-    /// Reading a not-yet-materialized index as "absent" is exactly what let a merge run against
-    /// zero projects, so its placeholder counts as present.
-    private static func indexExists(at url: URL) -> Bool {
-        let fm = FileManager.default
-        return fm.fileExists(atPath: url.path)
-            || fm.fileExists(atPath: ubiquitousPlaceholderURL(for: url).path)
-    }
-
-    /// The write counterpart of `loadIndex(at:)`, and for the same reason: `writeData` picks
-    /// coordination from the global flag, so the root being written decides instead.
-    static func saveIndex(_ index: ProjectIndex, at root: URL) throws {
-        ensureDirectories(at: root)
-        let url = indexURL(at: root)
-        let data = try encoder.encode(index)
-        if isICloudRoot(root) {
-            try ICloudSyncService.shared.coordinatedWrite(data, to: url)
-        } else {
-            try data.write(to: url, options: .atomic)
-        }
-    }
-
-    static func ensureDirectories(at root: URL) {
-        createDirectory(at: root, label: "root")
-        createDirectory(at: projectsDir(at: root), label: "projects")
-    }
-
-    /// Safely replace a project directory at destination with source.
-    /// Copies to a temp location first, then swaps, to avoid data loss if the copy fails.
-    static func replaceProjectDir(_ id: UUID, from sourceRoot: URL, to destRoot: URL) throws {
-        let fm = FileManager.default
-        let srcDir = projectDir(id, at: sourceRoot)
-        let dstDir = projectDir(id, at: destRoot)
-        guard fm.fileExists(atPath: srcDir.path) else { return }
-
-        if !fm.fileExists(atPath: dstDir.path) {
-            try fm.copyItem(at: srcDir, to: dstDir)
-        } else {
-            // Copy to temp first, then swap — if copy fails, destination is preserved
-            let tmpDir = dstDir.deletingLastPathComponent()
-                .appendingPathComponent(id.uuidString + ".tmp", isDirectory: true)
-            try? fm.removeItem(at: tmpDir)
-            try fm.copyItem(at: srcDir, to: tmpDir)
-            try? fm.removeItem(at: dstDir)
-            try fm.moveItem(at: tmpDir, to: dstDir)
-        }
     }
 }

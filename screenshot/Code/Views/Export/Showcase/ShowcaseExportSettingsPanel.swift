@@ -337,3 +337,20 @@ private struct ShowcasePercentSliderRow: View {
         }
     }
 }
+
+struct ShowcaseSectionTitle: View {
+    let text: LocalizedStringKey
+    let systemImage: String
+
+    var body: some View {
+        HStack(spacing: 5) {
+            Image(systemName: systemImage)
+                .scaledFont(UIMetrics.FontSize.inlineLabel, weight: .semibold)
+            Text(text)
+                .textCase(.uppercase)
+                .scaledFont(UIMetrics.FontSize.inlineLabel, weight: .semibold)
+                .tracking(0.6)
+        }
+        .foregroundStyle(.secondary)
+    }
+}
