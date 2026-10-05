@@ -42,7 +42,7 @@ extension AppState {
         }
         document = ProjectDocument(rows: configuredRows.isEmpty ? [makeDefaultRow()] : configuredRows)
         // If the first save below fails, a reload must compare against disk rather than reopen the missing file over this.
-        writeStamps.recordLoad(project.id, modifiedAt: Date(), catalogModified: nil)
+        writeStamps.recordLoad(project.id, modifiedAt: Date(), catalogModified: nil, sequence: ProjectWriteStamps.currentLandedSequence())
         selectRow(rows.first?.id)
         CrashReportingService.breadcrumb(.project, "Created blank project", data: ["rows": rows.count])
         AnalyticsService.capture(.projectCreated, [.source: "blank", .rowCount: rows.count])
@@ -105,7 +105,7 @@ extension AppState {
     /// raises the loading phase on the caller's turn (so the overlay paints before the read
     /// stalls), then reads the project off the main thread — a large project.json must not
     /// freeze the window — and applies it if the transition is still current.
-    func openProject(_ id: UUID, loading load: @escaping @Sendable () async -> ProjectRead) {
+    func openProject(_ id: UUID, loading load: @escaping @Sendable () async -> ProjectRead?) {
         projectOpenTask?.cancel()
         // This open reads after every queued write, so a reload deferred by the one it replaces is moot.
         reloadDeferredByOpen = false
@@ -265,8 +265,8 @@ extension AppState {
     /// restore it over the incoming one, and deleting the last project has nothing to clear it.
     private func teardownActiveProject() {
         // An open of the outgoing project can't finish now, and only it would clear its own handle.
-        if projectOpenTask != nil {
-            projectOpenTask?.cancel()
+        if let outgoingOpen = projectOpenTask {
+            outgoingOpen.cancel()
             projectOpenTask = nil
             projectOpen.finish()
         }
@@ -284,7 +284,7 @@ extension AppState {
                           isRemote: PersistenceService.isUsingICloud)
     }
 
-    func loadProjectContents(for id: UUID, preloaded read: ProjectRead) async {
+    func loadProjectContents(for id: UUID, preloaded read: ProjectRead?) async {
         projectOpen.advance(to: .fonts)
         await loadCustomFontsAsync()
         guard activeProjectId == id else { return }

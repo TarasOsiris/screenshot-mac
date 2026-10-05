@@ -65,7 +65,7 @@ struct OrphanedResourceSweepTests {
         let projectId = try #require(state.activeProjectId)
         let stray = try seedResource(named: "stray.png", in: projectId)
 
-        state.applyProjectData(ProjectData(rows: state.rows), for: projectId, origin: .remoteReload)
+        state.applyProjectData(projectRead(ProjectData(rows: state.rows)), for: projectId, origin: .remoteReload)
         try await Task.sleep(for: .milliseconds(300))
 
         #expect(FileManager.default.fileExists(atPath: stray.path))
@@ -78,7 +78,7 @@ struct OrphanedResourceSweepTests {
         let stray = try seedResource(named: "stray.png", in: projectId)
         let placeholder = try seedResource(named: ".pending.png.icloud", in: projectId)
 
-        state.applyProjectData(ProjectData(rows: state.rows), for: projectId, origin: .open)
+        state.applyProjectData(projectRead(ProjectData(rows: state.rows)), for: projectId, origin: .open)
 
         let fm = FileManager.default
         for _ in 0..<40 where fm.fileExists(atPath: stray.path) {

@@ -4,12 +4,7 @@ import Foundation
 import Testing
 
 struct GooglePlayUploadValidatorTests {
-    private typealias Plan = GPRowPlan
     private typealias Target = GPLocaleTarget
-
-    private func locale(_ play: String, enabled: Bool = true) -> Target {
-        makeGPLocaleTarget(play, enabled: enabled)
-    }
 
     /// A project locale Play has no listing language for.
     private func unsupportedLocale(_ code: String, enabled: Bool = false) -> Target {
@@ -20,20 +15,10 @@ struct GooglePlayUploadValidatorTests {
         Target(appLocaleCode: code, appLocaleLabel: code, playLanguageCode: play, isEnabled: true)
     }
 
-    private func plan(
-        size: CGSize = CGSize(width: 1080, height: 1920),
-        count: Int = 3,
-        enabled: Bool = true,
-        type: GPImageType = .phoneScreenshots,
-        locales: [Target] = [makeGPLocaleTarget("en-US")]
-    ) -> Plan {
-        makeGPRowPlan(size: size, count: count, enabled: enabled, type: type, locales: locales)
-    }
-
     @Test func validPlanHasNoErrors() {
         let issues = GooglePlayUploadValidator.validate(
             packageName: "com.example.app",
-            plans: [plan()],
+            plans: [makeGPRowPlan()],
             isDemoMode: false
         )
         #expect(!issues.hasErrors)
@@ -42,21 +27,21 @@ struct GooglePlayUploadValidatorTests {
     @Test func rejectsInvalidPackageName() {
         let issues = GooglePlayUploadValidator.validate(
             packageName: "not a package",
-            plans: [plan()],
+            plans: [makeGPRowPlan()],
             isDemoMode: false
         )
         #expect(issues.hasErrors)
     }
 
     @Test func rejectsTooFewAndTooManyScreenshots() {
-        #expect(GooglePlayUploadValidator.validate(packageName: "com.example.app", plans: [plan(count: 1)], isDemoMode: false).hasErrors)
-        #expect(GooglePlayUploadValidator.validate(packageName: "com.example.app", plans: [plan(count: 9)], isDemoMode: false).hasErrors)
+        #expect(GooglePlayUploadValidator.validate(packageName: "com.example.app", plans: [makeGPRowPlan(count: 1)], isDemoMode: false).hasErrors)
+        #expect(GooglePlayUploadValidator.validate(packageName: "com.example.app", plans: [makeGPRowPlan(count: 9)], isDemoMode: false).hasErrors)
     }
 
     @Test func rejectsOutOfBoundsDimensions() {
         let issues = GooglePlayUploadValidator.validate(
             packageName: "com.example.app",
-            plans: [plan(size: CGSize(width: 100, height: 2000))],
+            plans: [makeGPRowPlan(size: CGSize(width: 100, height: 2000))],
             isDemoMode: false
         )
         #expect(issues.hasErrors)
@@ -65,15 +50,15 @@ struct GooglePlayUploadValidatorTests {
     @Test func requiresAtLeastOneLanguage() {
         let issues = GooglePlayUploadValidator.validate(
             packageName: "com.example.app",
-            plans: [plan(locales: [locale("en-US", enabled: false)])],
+            plans: [makeGPRowPlan(locales: [makeGPLocaleTarget("en-US", enabled: false)])],
             isDemoMode: false
         )
         #expect(issues.hasErrors)
     }
 
     @Test func detectsDuplicateLanguageAndTypeAcrossRows() {
-        let a = plan(locales: [locale("en-US")])
-        let b = plan(locales: [locale("en-US")])
+        let a = makeGPRowPlan(locales: [makeGPLocaleTarget("en-US")])
+        let b = makeGPRowPlan(locales: [makeGPLocaleTarget("en-US")])
         let issues = GooglePlayUploadValidator.validate(
             packageName: "com.example.app",
             plans: [a, b],
@@ -86,7 +71,7 @@ struct GooglePlayUploadValidatorTests {
     /// twice and was reported as colliding with itself — an error naming one row twice, which no
     /// amount of disabling rows could clear.
     @Test func aRowWhoseLocalesCollapseOntoOnePlayLanguageNamesTheLanguages() {
-        let row = plan(locales: [mappedLocale("en", to: "en-US"), mappedLocale("en-US", to: "en-US")])
+        let row = makeGPRowPlan(locales: [mappedLocale("en", to: "en-US"), mappedLocale("en-US", to: "en-US")])
         let issues = GooglePlayUploadValidator.validate(
             packageName: "com.example.app",
             plans: [row],
@@ -99,7 +84,7 @@ struct GooglePlayUploadValidatorTests {
     }
 
     @Test func languagesPlayCannotAcceptWarnButDoNotBlock() {
-        let row = plan(locales: [locale("en-US"), unsupportedLocale("ar-SA")])
+        let row = makeGPRowPlan(locales: [makeGPLocaleTarget("en-US"), unsupportedLocale("ar-SA")])
         let issues = GooglePlayUploadValidator.validate(
             packageName: "com.example.app",
             plans: [row],
@@ -111,7 +96,7 @@ struct GooglePlayUploadValidatorTests {
 
     /// An unsupported language files no claim, so it can never be mistaken for a collision.
     @Test func twoUnsupportedLanguagesDoNotCollide() {
-        let row = plan(locales: [locale("en-US"), unsupportedLocale("ar-SA", enabled: true), unsupportedLocale("uz", enabled: true)])
+        let row = makeGPRowPlan(locales: [makeGPLocaleTarget("en-US"), unsupportedLocale("ar-SA", enabled: true), unsupportedLocale("uz", enabled: true)])
         let issues = GooglePlayUploadValidator.validate(
             packageName: "com.example.app",
             plans: [row],
@@ -124,7 +109,7 @@ struct GooglePlayUploadValidatorTests {
         // Bad package + too few screenshots, but in demo mode neither should hard-block.
         let issues = GooglePlayUploadValidator.validate(
             packageName: "",
-            plans: [plan(count: 1)],
+            plans: [makeGPRowPlan(count: 1)],
             isDemoMode: true
         )
         #expect(!issues.hasErrors)

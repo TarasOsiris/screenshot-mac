@@ -236,8 +236,8 @@ extension ASCUploadFlowModel {
             let compatible = { (type: ASCDisplayType) in type.accepts(platform: platform) ? type : nil }
             // Kept when the new size is unrecognised, so preflight reports the mismatch.
             let previous = existingPlan?.selectedAssetType.flatMap(compatible)
-            let override = (existingPlan?.selectionOverride ?? nil).flatMap(compatible)
-            let detectedCompatible = (detected?.accepts(platform: platform) ?? false) ? detected : nil
+            let override = existingPlan?.selectionOverride?.flatMap(compatible)
+            let detectedCompatible = detected.flatMap(compatible)
             let detectedIncompatible = detected != nil && detectedCompatible == nil
             return ASCRowPlan(
                 id: row.id,

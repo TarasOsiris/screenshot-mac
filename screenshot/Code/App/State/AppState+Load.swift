@@ -247,10 +247,10 @@ extension AppState {
         // Only reload if the on-disk version is newer than our in-memory version. No overlay
         // here: this is a background re-sync of a project already on screen, and the common
         // case is that nothing changed.
-        if let diskData = read.data, let localModified = writeStamps.known(for: activeId), diskData.modifiedAt > localModified {
+        if let read, let localModified = writeStamps.known(for: activeId), read.data.modifiedAt > localModified {
             await loadCustomFontsAsync()
             guard !Task.isCancelled, activeProjectId == activeId else { return }
-            applyProjectData(diskData, for: activeId, origin: .remoteReload, read: read)
+            applyProjectData(read, for: activeId, origin: .remoteReload)
             loadScreenshotImages()
         }
     }
@@ -290,8 +290,8 @@ extension AppState {
         return true
     }
 
-    /// `read` carries what the stamp records about the read (see `ProjectRead`); nil reads it now.
-    func applyProjectData(_ data: ProjectData, for projectId: UUID, origin: ProjectLoadOrigin, read: ProjectRead? = nil) {
+    func applyProjectData(_ read: ProjectRead, for projectId: UUID, origin: ProjectLoadOrigin) {
+        let data = read.data
         let span = PerfSignpost.begin(
             "AppState.applyProjectData",
             "rows=\(data.rows.count) shapes=\(data.rows.reduce(0) { $0 + $1.shapes.count })"
@@ -307,8 +307,8 @@ extension AppState {
         writeStamps.recordLoad(
             projectId,
             modifiedAt: data.modifiedAt,
-            catalogModified: read.map(\.catalogModified) ?? PersistenceService.translationCatalogModifiedDate(projectId),
-            sequence: read?.landedSequence
+            catalogModified: read.catalogModified,
+            sequence: read.landedSequence
         )
         // Drop any preview-mode entries that don't refer to a row in the new data.
         viewMode.reconcilePreviewingRows(against: Set(rows.map(\.id)))
@@ -347,12 +347,12 @@ extension AppState {
         scheduleSave()
     }
 
-    func loadRowsForProject(_ id: UUID, preloaded read: ProjectRead? = nil) {
-        let span = PerfSignpost.begin("AppState.loadRowsForProject", "preloaded=\(read?.data != nil)")
+    func loadRowsForProject(_ id: UUID, preloaded: ProjectRead? = nil) {
+        let span = PerfSignpost.begin("AppState.loadRowsForProject", "preloaded=\(preloaded != nil)")
         defer { PerfSignpost.end("AppState.loadRowsForProject", span) }
-        if let data = read?.data ?? PersistenceService.loadProject(id) {
+        if let read = preloaded ?? ProjectRead.now(id) {
             if degradedLoadProjectId == id { degradedLoadProjectId = nil }
-            applyProjectData(data, for: id, origin: .open, read: read?.data == nil ? nil : read)
+            applyProjectData(read, for: id, origin: .open)
         } else {
             // The project file exists but wouldn't load. Refusing to save is what stops the next
             // autosave writing this empty fallback over the real data; the alert says why.

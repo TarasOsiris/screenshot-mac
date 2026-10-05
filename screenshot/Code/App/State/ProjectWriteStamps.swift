@@ -31,9 +31,9 @@ final class ProjectWriteStamps {
         landed = nil
     }
 
-    /// What was read from disk; `sequence` is the landed writes the read reflects, nil meaning all so far.
-    func recordLoad(_ projectId: UUID, modifiedAt: Date, catalogModified: Date?, sequence: Int? = nil) {
-        landed = (projectId, modifiedAt, sequence ?? Self.currentLandedSequence())
+    /// What was read from disk; `sequence` is the landed writes the read reflects.
+    func recordLoad(_ projectId: UUID, modifiedAt: Date, catalogModified: Date?, sequence: Int) {
+        landed = (projectId, modifiedAt, sequence)
         recordCatalogModified(projectId, at: catalogModified)
     }
 

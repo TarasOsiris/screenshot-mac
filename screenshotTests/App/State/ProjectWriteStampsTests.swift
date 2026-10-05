@@ -14,7 +14,7 @@ struct ProjectWriteStampsTests {
 
     @Test func anInFlightWriteNewerThanTheLandedOneIsKnown() {
         let stamps = ProjectWriteStamps()
-        stamps.recordLoad(project, modifiedAt: earlier, catalogModified: nil)
+        stamps.recordLoad(project, modifiedAt: earlier, catalogModified: nil, sequence: ProjectWriteStamps.currentLandedSequence())
         stamps.beginWrite(project, modifiedAt: later)
         #expect(stamps.known(for: project) == later)
     }
@@ -32,7 +32,7 @@ struct ProjectWriteStampsTests {
     @Test func aLandedStampNewerThanTheInFlightOneWins() {
         let stamps = ProjectWriteStamps()
         stamps.beginWrite(project, modifiedAt: earlier)
-        stamps.recordLoad(project, modifiedAt: later, catalogModified: nil)
+        stamps.recordLoad(project, modifiedAt: later, catalogModified: nil, sequence: ProjectWriteStamps.currentLandedSequence())
         #expect(stamps.known(for: project) == later)
     }
 
@@ -48,7 +48,7 @@ struct ProjectWriteStampsTests {
     /// new one rather than compare its file against the old project's save and keep the old rows.
     @Test func anotherProjectsLandedStampDoesNotCount() {
         let stamps = ProjectWriteStamps()
-        stamps.recordLoad(UUID(), modifiedAt: later, catalogModified: later)
+        stamps.recordLoad(UUID(), modifiedAt: later, catalogModified: later, sequence: ProjectWriteStamps.currentLandedSequence())
         #expect(stamps.known(for: project) == nil)
         #expect(stamps.catalogModified(for: project) == nil)
     }
@@ -76,7 +76,7 @@ struct ProjectWriteStampsTests {
     @Test func aLoadSupersedesWritesThatLandedBeforeIt() {
         let stamps = ProjectWriteStamps()
         let beforeLoad = ProjectWriteStamps.nextLandedSequence()
-        stamps.recordLoad(project, modifiedAt: later, catalogModified: nil)
+        stamps.recordLoad(project, modifiedAt: later, catalogModified: nil, sequence: ProjectWriteStamps.currentLandedSequence())
         stamps.recordWrite(project, modifiedAt: earlier, catalogModified: nil, sequence: beforeLoad)
         #expect(stamps.known(for: project) == later)
     }

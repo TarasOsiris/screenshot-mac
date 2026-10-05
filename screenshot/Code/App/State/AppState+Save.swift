@@ -73,38 +73,46 @@ extension AppState {
     static let saveQueue = DispatchQueue(label: "xyz.tleskiv.screenshot.project-save", qos: .utility)
 
     /// A project read, the landed writes it reflects, and its catalog date: what its stamp must carry.
-    struct ProjectRead: Sendable {
-        let data: ProjectData?
+    nonisolated struct ProjectRead: Sendable {
+        let data: ProjectData
         let landedSequence: Int
         let catalogModified: Date?
+
+        nonisolated static func reading(_ id: UUID, landedSequence: Int) -> ProjectRead? {
+            PersistenceService.loadProject(id).map {
+                ProjectRead(
+                    data: $0,
+                    landedSequence: landedSequence,
+                    catalogModified: PersistenceService.translationCatalogModifiedDate(id)
+                )
+            }
+        }
+
+        /// A read on the caller's thread with no barrier: as of every write landed so far.
+        static func now(_ id: UUID) -> ProjectRead? {
+            reading(id, landedSequence: ProjectWriteStamps.currentLandedSequence())
+        }
     }
 
-    /// Reads off-main behind every queued write, so a switch away and back opens what was saved
-    /// (`activeProjectSnapshotForSave` declines while an open is in flight, so no write slips in).
-    private static func afterQueuedWrites(_ id: UUID, _ work: @escaping @Sendable () -> ProjectData?) async -> ProjectRead {
+    /// Reads off-main behind every queued write; `activeProjectSnapshotForSave` declines while an open is in flight.
+    private static func afterQueuedWrites(_ id: UUID, installing: (@Sendable () -> Void)? = nil) async -> ProjectRead? {
         let sequence = await withCheckedContinuation { (continuation: CheckedContinuation<Int, Never>) in
             saveQueue.async { continuation.resume(returning: ProjectWriteStamps.currentLandedSequence()) }
         }
         return await Task.detached(priority: .userInitiated) {
-            ProjectRead(
-                data: work(),
-                landedSequence: sequence,
-                catalogModified: PersistenceService.translationCatalogModifiedDate(id)
-            )
+            installing?()
+            return ProjectRead.reading(id, landedSequence: sequence)
         }.value
     }
 
-    static func readProjectAfterQueuedWrites(_ id: UUID) async -> ProjectRead {
-        await afterQueuedWrites(id) { PersistenceService.loadProject(id) }
+    static func readProjectAfterQueuedWrites(_ id: UUID) async -> ProjectRead? {
+        await afterQueuedWrites(id)
     }
 
     /// Installs a project's files from `url` before reading it — a queued save would otherwise
     /// land on top of what was just installed.
-    static func replaceProjectAfterQueuedWrites(_ id: UUID, withProjectAt url: URL) async -> ProjectRead {
-        await afterQueuedWrites(id) {
-            PersistenceService.copyProjectFromURL(url, to: id)
-            return PersistenceService.loadProject(id)
-        }
+    static func replaceProjectAfterQueuedWrites(_ id: UUID, withProjectAt url: URL) async -> ProjectRead? {
+        await afterQueuedWrites(id) { PersistenceService.copyProjectFromURL(url, to: id) }
     }
 
     func scheduleSave() {

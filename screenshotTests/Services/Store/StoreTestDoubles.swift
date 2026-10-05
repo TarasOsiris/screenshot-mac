@@ -373,11 +373,10 @@ func makeGPRowPlan(
     size: CGSize = CGSize(width: 1080, height: 1920),
     count: Int = 3,
     enabled: Bool = true,
-    type: GPImageType = .phoneScreenshots,
     locales: [GPLocaleTarget] = [makeGPLocaleTarget("en-US")]
 ) -> GPRowPlan {
     GPRowPlan(
         id: id, rowLabel: "Row", rowSize: size, templateCount: count, isEnabled: enabled,
-        detectedAssetType: type, selectedAssetType: type, localeTargets: locales
+        detectedAssetType: .phoneScreenshots, selectedAssetType: .phoneScreenshots, localeTargets: locales
     )
 }

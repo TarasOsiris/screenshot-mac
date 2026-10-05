@@ -229,7 +229,7 @@ final class ProjectCheckout: RowRenderSource {
 
         // Drains the save-queue barrier first, so a write for a project the user just switched
         // away from has landed before we read it.
-        guard let data = await AppState.readProjectAfterQueuedWrites(projectId).data else {
+        guard let data = await AppState.readProjectAfterQueuedWrites(projectId)?.data else {
             throw ProjectCheckoutError.unreadable(name: project.name)
         }
         // Without the project's own fonts registered, its custom-font text renders in the system

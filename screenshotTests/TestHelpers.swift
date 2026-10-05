@@ -309,3 +309,8 @@ func makeTestRow(
     if let label { row.label = label }
     return row
 }
+
+/// A read of `data` as of every write landed so far, for applying a document without touching disk.
+func projectRead(_ data: ProjectData) -> AppState.ProjectRead {
+    AppState.ProjectRead(data: data, landedSequence: ProjectWriteStamps.currentLandedSequence(), catalogModified: nil)
+}
