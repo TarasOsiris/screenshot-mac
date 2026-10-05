@@ -59,6 +59,7 @@ nonisolated enum CrashReportingService {
         case googlePlayEditAbandonFailed
         case undoScopeViolation
         case mcpToolFailed
+        case mainWindowReopenFailed
     }
 
     // MARK: - Lifecycle
@@ -497,6 +498,8 @@ nonisolated enum CrashReportingService {
             AppLogger.upload
         case .mcpToolFailed:
             AppLogger.mcp
+        case .mainWindowReopenFailed:
+            AppLogger.app
         }
     }
 }

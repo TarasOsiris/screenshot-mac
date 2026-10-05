@@ -11,7 +11,7 @@ import CoreGraphics
 /// Editor-facing rasters only. Nothing on the export path may call this: `ViewRasterizer.bitmapRep`
 /// and `ExportImageEncoder` define the exported bytes and stay DeviceRGB.
 nonisolated enum EditorImagePresentation {
-    /// Must match the window colour space set in `AppWindowManager.registerMainWindow`.
+    /// Must match the window colour space set in `AppWindowManager.register(_:for:)`.
     static let colorSpace: CGColorSpace? = CGColorSpace(name: CGColorSpace.sRGB)
 
     /// Redraws `source` into sRGB and CoreAnimation's native layer-contents layout.

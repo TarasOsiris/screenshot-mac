@@ -10,27 +10,33 @@ final class AppWindowManager {
     private var mainWindowOpener: (() -> Void)?
     private init() {}
 
+    func setMainWindowOpener(_ opener: @escaping () -> Void) {
+        mainWindowOpener = opener
+    }
+
 #if os(macOS)
     private weak var mainWindow: NSWindow?
     private weak var helpWindow: NSWindow?
     private weak var settingsWindow: NSWindow?
+    private var showProbe: Task<Void, Never>?
 
-    func registerMainWindow(_ window: NSWindow) {
-        mainWindow = window
-        // The canvas is a WYSIWYG preview of a DeviceRGB PNG, so the backing store is pinned to the
-        // space export writes in. Letting it follow a wide-gamut display made two things go wrong:
-        // CoreAnimation colour-matched every raster on the main thread inside its commit (~100ms in
-        // a scrollbar-drag trace), and the editor showed screenshots more saturated than any export
-        // can reproduce. WindowServer still matches the whole surface to the panel, on the GPU.
-        window.colorSpace = .sRGB
-    }
+    var hasMainWindowOpener: Bool { mainWindowOpener != nil }
 
-    func registerHelpWindow(_ window: NSWindow) {
-        helpWindow = window
-    }
-
-    func registerSettingsWindow(_ window: NSWindow) {
-        settingsWindow = window
+    func register(_ window: NSWindow, for role: WindowSceneBridge.Role) {
+        switch role {
+        case .main:
+            mainWindow = window
+            // The canvas is a WYSIWYG preview of a DeviceRGB PNG, so the backing store is pinned to the
+            // space export writes in. Letting it follow a wide-gamut display made two things go wrong:
+            // CoreAnimation colour-matched every raster on the main thread inside its commit (~100ms in
+            // a scrollbar-drag trace), and the editor showed screenshots more saturated than any export
+            // can reproduce. WindowServer still matches the whole surface to the panel, on the GPU.
+            window.colorSpace = .sRGB
+        case .help:
+            helpWindow = window
+        case .settings:
+            settingsWindow = window
+        }
     }
 
     func raiseHelpWindow() {
@@ -54,17 +60,38 @@ final class AppWindowManager {
         raiseWindow(settingsWindow)
     }
 
-    func setMainWindowOpener(_ opener: @escaping () -> Void) {
-        mainWindowOpener = opener
+    /// `screen != nil` because a frame restored from an unplugged display is `isVisible` yet shows nothing.
+    private var isMainWindowShowing: Bool {
+        guard let mainWindow else { return false }
+        return mainWindow.isVisible && !mainWindow.isMiniaturized && mainWindow.screen != nil
+    }
+
+    /// Gated on the editor itself — AppKit's `hasVisibleWindows` counts Settings/Help too. True = let SwiftUI's default reopen run.
+    func reopenMainWindow() -> Bool {
+        if !isMainWindowShowing { showMainWindow() }
+        return !hasMainWindowOpener
     }
 
     func showMainWindow() {
-        if let mainWindow {
-            raiseWindow(mainWindow)
-            return
-        }
-        NSApp.activate(ignoringOtherApps: true)
+        CrashReportingService.breadcrumb(.app, "Showed main window")
+        let hadMainWindow = mainWindow != nil
+        raiseWindow(mainWindow)
+        if isMainWindowShowing { return }
         mainWindowOpener?()
+        // openWindow registers its NSWindow on a later runloop turn; no editor after that is our bug.
+        showProbe?.cancel()
+        showProbe = Task.delayed(1.0) { [self] in
+            guard NSApp.isActive, !NSApp.isHidden, !isMainWindowShowing else { return }
+            CrashReportingService.report(.mainWindowReopenFailed, extra: [
+                "had_main_window": hadMainWindow,
+                "has_main_window": mainWindow != nil,
+                "has_opener": hasMainWindowOpener,
+                "window_count": NSApp.windows.count,
+                "visible_window_count": NSApp.windows.filter(\.isVisible).count,
+                "main_miniaturized": mainWindow?.isMiniaturized ?? false,
+                "main_on_screen": mainWindow?.screen != nil,
+            ])
+        }
     }
 
     private func raiseWindow(_ window: NSWindow?) {
@@ -73,13 +100,12 @@ final class AppWindowManager {
         if window.isMiniaturized {
             window.deminiaturize(nil)
         }
+        if window.screen == nil {
+            window.center()
+        }
         window.makeKeyAndOrderFront(nil)
     }
 #else
-    func setMainWindowOpener(_ opener: @escaping () -> Void) {
-        mainWindowOpener = opener
-    }
-
     // iPad uses a single WindowGroup; there is no separate window to raise.
     func showMainWindow() {
         mainWindowOpener?()
@@ -88,7 +114,7 @@ final class AppWindowManager {
 }
 
 /// Registers a SwiftUI scene's backing `NSWindow` with `AppWindowManager` so it
-/// can be raised on demand. The `.main` role additionally wires the reopen path.
+/// can be raised on demand, and supplies the opener the reopen path falls back to.
 struct WindowSceneBridge: View {
     enum Role { case main, help, settings }
     let role: Role
@@ -97,19 +123,13 @@ struct WindowSceneBridge: View {
     @Environment(\.openWindow) private var openWindow
 
     var body: some View {
-        WindowAccessorView { window in
-            switch role {
-            case .main: AppWindowManager.shared.registerMainWindow(window)
-            case .help: AppWindowManager.shared.registerHelpWindow(window)
-            case .settings: AppWindowManager.shared.registerSettingsWindow(window)
+        WindowAccessorView(role: role)
+            .task {
+                // Any scene's action can open the editor; the editor's own is preferred once it has appeared.
+                guard role == .main || !AppWindowManager.shared.hasMainWindowOpener else { return }
+                let openWindow = openWindow
+                AppWindowManager.shared.setMainWindowOpener { openWindow(id: AppRootView.windowID) }
             }
-        }
-        .task {
-            guard role == .main else { return }
-            AppWindowManager.shared.setMainWindowOpener {
-                openWindow(id: AppRootView.windowID)
-            }
-        }
     }
 #else
     var body: some View { EmptyView() }
@@ -118,22 +138,27 @@ struct WindowSceneBridge: View {
 
 #if os(macOS)
 private struct WindowAccessorView: NSViewRepresentable {
-    let onResolve: (NSWindow) -> Void
+    let role: WindowSceneBridge.Role
 
-    func makeNSView(context: Context) -> NSView {
-        let view = NSView()
-        resolveWindow(for: view)
+    func makeNSView(context: Context) -> WindowResolvingView {
+        let view = WindowResolvingView()
+        view.role = role
         return view
     }
 
-    func updateNSView(_ nsView: NSView, context: Context) {}
+    func updateNSView(_ nsView: WindowResolvingView, context: Context) {}
+}
 
-    private func resolveWindow(for view: NSView) {
-        // Deferred: the view has no window until after makeNSView returns.
-        Task { @MainActor in
-            guard let window = view.window else { return }
-            onResolve(window)
-        }
+/// `viewDidMoveToWindow`, not a deferred check: SwiftUI can build the hierarchy before its NSWindow exists.
+private final class WindowResolvingView: NSView {
+    var role: WindowSceneBridge.Role = .main
+    private weak var resolvedWindow: NSWindow?
+
+    override func viewDidMoveToWindow() {
+        super.viewDidMoveToWindow()
+        guard let window, window !== resolvedWindow else { return }
+        resolvedWindow = window
+        AppWindowManager.shared.register(window, for: role)
     }
 }
 #endif
