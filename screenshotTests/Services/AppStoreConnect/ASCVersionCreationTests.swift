@@ -46,6 +46,17 @@ struct ASCVersionCreationTests {
         #expect(h.model.platformsAwaitingAVersion.isEmpty)
     }
 
+    /// An editable macOS version must not hide that iOS has only live ones.
+    @Test func aPlatformWithOnlyLockedVersionsIsOfferedBesideAnEditableOne() {
+        let h = Harness(versions: [
+            ("1.5", "READY_FOR_SALE", .ios),
+            ("1.5", "PREPARE_FOR_SUBMISSION", .macOS),
+            ("1.0", "READY_FOR_SALE", .macOS)
+        ])
+        #expect(h.model.platformsAwaitingAVersion == [.ios])
+        #expect(h.model.suggestedVersionString(platform: .ios) == "1.6")
+    }
+
     @Test func everyShippedPlatformIsOfferedOnceWhenAllVersionsAreLocked() {
         let h = Harness(versions: [
             ("4.13", "READY_FOR_SALE", .ios),
@@ -77,6 +88,19 @@ struct ASCVersionCreationTests {
     }
 
     // MARK: - Creating
+
+    @Test func aCreatedVersionKeepsTheOtherPlatformsSelection() async {
+        let h = Harness(versions: [
+            ("1.5", "READY_FOR_SALE", .ios),
+            ("1.5", "PREPARE_FOR_SUBMISSION", .macOS)
+        ])
+        h.model.selectedVersionIds = ["MAC_OS-1.5"]
+
+        await h.model.createAppStoreVersion(platform: .ios, versionString: "1.6")
+
+        #expect(h.model.selectedVersionIds.count == 2)
+        #expect(h.model.selectedVersionIds.contains("MAC_OS-1.5"))
+    }
 
     @Test func aCreatedVersionJoinsTheListAndBecomesTheSelection() async {
         let h = Harness(versions: [("4.14", "READY_FOR_SALE", .ios)])

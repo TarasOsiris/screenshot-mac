@@ -90931,88 +90931,6 @@
         }
       }
     },
-    "If every version of the app is live or locked for review, the version step offers **Create Version** — it prefills the next number for each platform the app ships on, and you can edit it before creating." : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Ist jede Version der App live oder für die Prüfung gesperrt, bietet der Versionsschritt **Version erstellen** an – mit der nächsten Nummer für jede Plattform der App vorausgefüllt, die du vor dem Erstellen noch ändern kannst."
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Si todas las versiones de la app están publicadas o bloqueadas en revisión, el paso de versión ofrece **Crear versión**: rellena el siguiente número para cada plataforma de la app y puedes editarlo antes de crearla."
-          }
-        },
-        "fa" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "اگر همهٔ نسخه‌های برنامه منتشر شده یا برای بازبینی قفل شده باشند، مرحلهٔ نسخه گزینهٔ **ایجاد نسخه** را پیشنهاد می‌دهد — شمارهٔ بعدی را برای هر پلتفرمی که برنامه روی آن عرضه می‌شود از پیش پر می‌کند و می‌توانید پیش از ایجاد، ویرایشش کنید."
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Si toutes les versions de l'app sont en ligne ou verrouillées pour examen, l'étape Version propose **Créer une version** : elle préremplit le numéro suivant pour chaque plateforme de l'app, et vous pouvez le modifier avant la création."
-          }
-        },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Se tutte le versioni dell'app sono pubblicate o bloccate per la revisione, il passaggio della versione propone **Crea versione**: precompila il numero successivo per ogni piattaforma su cui l'app è distribuita e puoi modificarlo prima della creazione."
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "アプリのすべてのバージョンが公開済みか審査のためにロックされている場合、バージョンの手順で **バージョンを作成** が表示されます。アプリの各プラットフォームについて次のバージョン番号があらかじめ入力され、作成前に編集できます。"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "앱의 모든 버전이 이미 출시되었거나 심사 중이라 잠겨 있으면, 버전 단계에서 **버전 생성**을 제공합니다. 앱이 출시된 각 플랫폼의 다음 버전 번호가 미리 채워지며, 만들기 전에 수정할 수 있습니다."
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Se todas as versões do app estiverem publicadas ou bloqueadas para revisão, a etapa de versão oferece **Criar versão** — ela preenche o próximo número para cada plataforma em que o app é distribuído, e você pode editá-lo antes de criar."
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Если все версии приложения опубликованы или заблокированы на время проверки, на шаге выбора версии появится **Создать версию** — номер следующей версии подставляется для каждой платформы приложения, и его можно изменить перед созданием."
-          }
-        },
-        "tr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Uygulamanın tüm sürümleri yayındaysa veya inceleme için kilitliyse, sürüm adımında **Sürüm Oluştur** seçeneği sunulur — uygulamanın yayımlandığı her platform için bir sonraki numarayı önceden doldurur ve oluşturmadan önce düzenleyebilirsiniz."
-          }
-        },
-        "uk" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Якщо всі версії програми опубліковано або заблоковано на перевірку, крок вибору версії пропонує **Створити версію** — наступний номер заповнюється автоматично для кожної платформи програми, і його можна змінити перед створенням."
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "如果该 App 的所有版本都已上线或锁定审核，版本步骤会提供 **创建版本**——它会为 App 支持的每个平台预填下一个版本号，你可以在创建前修改。"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "如果 App 的所有版本都已上架或鎖定審查中，版本步驟會提供**建立版本**——它會為 App 發佈的每個平台預先填入下一個版本號碼，你可以在建立前編輯。"
-          }
-        }
-      }
-    },
     "If sync seems stuck, open Finder ▸ iCloud Drive ▸ Screenshot Bro and check whether files are still uploading. Toggling iCloud off and on again forces a re-scan." : {
       "localizations" : {
         "de" : {
@@ -187202,6 +187120,1236 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "當它設定的譯文超出文字框時，Screenshot Bro 會立即讓它放得下：先把字體稍微縮小，再僅為該語言加高文字框（只佔用空白區域，絕不覆蓋其他形狀），之後才會進一步縮小字體。"
+          }
+        }
+      }
+    },
+    "%@, the primary language, has no %@ set, so locales without one have nothing to fall back to." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@, die Hauptsprache, hat kein Set für %@, daher können Sprachen ohne eigenes Set auf nichts zurückgreifen."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@, el idioma principal, no tiene un conjunto de %@, así que los idiomas sin uno propio no tienen nada a lo que recurrir."
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@، زبان اصلی، مجموعهٔ %@ ندارد، بنابراین زبان‌هایی که مجموعه ندارند جایگزینی برای استفاده ندارند."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@, la langue principale, n’a pas de jeu %@ : les langues qui n’en ont pas n’ont donc rien sur quoi se rabattre."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@, la lingua principale, non ha un set %@, quindi le lingue che ne sono prive non hanno nulla su cui ripiegare."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "主要言語の %@ に %@ のセットがないため、セットのない言語には代わりに表示されるものがありません。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "기본 언어인 %@에 %@ 세트가 없으므로, 세트가 없는 언어는 대신 사용할 것이 없습니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@, o idioma principal, não tem um conjunto de %@, então os idiomas sem um não têm nada para usar como alternativa."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "У %@, основного языка, нет набора %@, поэтому языкам без своего набора не на что опереться."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ana dil olan %@ için %@ seti yok, bu nedenle seti olmayan dillerin yerine kullanılabilecek bir şey yok."
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "У %@, основної мови, немає набору %@, тож мовам без власного набору нема на що спертися."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "主要语言 %@ 没有 %@ 截图组，因此没有截图组的语言无可回退。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "主要語言 %@ 沒有 %@ 螢幕截圖組，因此沒有截圖組的語言無可回退。"
+          }
+        }
+      }
+    },
+    "%@ has no %@ set, so it falls back to %@." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ hat kein Set für %@ und greift daher auf %@ zurück."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ no tiene un conjunto de %@, así que se usa en su lugar %@."
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ مجموعهٔ %@ ندارد، بنابراین از %@ استفاده می‌کند."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ n’a pas de jeu %@ et se rabat donc sur %@."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ non ha un set %@, quindi ripiega su %@."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ には %@ のセットがないため、%@ のものが使われます。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@에는 %@ 세트가 없으므로 %@의 스크린샷이 대신 사용됩니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ não tem um conjunto de %@, então usa %@ como alternativa."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "У %@ нет набора %@, поэтому используется %@."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ için %@ seti yok, bu yüzden %@ kullanılıyor."
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "У %@ немає набору %@, тому використовується %@."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ 没有 %@ 截图组，因此会回退到 %@。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ 沒有 %@ 螢幕截圖組，因此會改用 %@。"
+          }
+        }
+      }
+    },
+    "%@ have no %@ set, so they fall back to %@." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ haben kein Set für %@ und greifen daher auf %@ zurück."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ no tienen un conjunto de %@, así que se usa en su lugar %@."
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ مجموعهٔ %@ ندارند، بنابراین از %@ استفاده می‌کنند."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ n’ont pas de jeu %@ et se rabattent donc sur %@."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ non hanno un set %@, quindi ripiegano su %@."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ には %@ のセットがないため、%@ のものが使われます。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@에는 %@ 세트가 없으므로 %@의 스크린샷이 대신 사용됩니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ não têm um conjunto de %@, então usam %@ como alternativa."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "У %@ нет набора %@, поэтому для них используется %@."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ için %@ seti yok, bu yüzden %@ kullanılıyor."
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "У %@ немає набору %@, тому для них використовується %@."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ 没有 %@ 截图组，因此会回退到 %@。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ 沒有 %@ 螢幕截圖組，因此會改用 %@。"
+          }
+        }
+      }
+    },
+    "%@ has no %@ set." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ hat kein Set für %@."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ no tiene un conjunto de %@."
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ مجموعهٔ %@ ندارد."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ n’a pas de jeu %@."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ non ha un set %@."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ には %@ のセットがありません。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@에는 %@ 세트가 없습니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ não tem um conjunto de %@."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "У %@ нет набора %@."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ için %@ seti yok."
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "У %@ немає набору %@."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ 没有 %@ 截图组。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ 沒有 %@ 螢幕截圖組。"
+          }
+        }
+      }
+    },
+    "%@ have no %@ set." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ haben kein Set für %@."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ no tienen un conjunto de %@."
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ مجموعهٔ %@ ندارند."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ n’ont pas de jeu %@."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ non hanno un set %@."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ には %@ のセットがありません。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@에는 %@ 세트가 없습니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ não têm um conjunto de %@."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "У %@ нет набора %@."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ için %@ seti yok."
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "У %@ немає набору %@."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ 没有 %@ 截图组。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ 沒有 %@ 螢幕截圖組。"
+          }
+        }
+      }
+    },
+    "%@ has ^[%lld %@ screenshot](inflect: true) where every other locale has %lld." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ hat ^[%lld Screenshot](inflect: true) für %@, alle anderen Sprachen haben %lld."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ tiene ^[%lld captura](inflect: true) de %@, mientras que los demás idiomas tienen %lld."
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ دارای %lld اسکرین‌شات %@ است، در حالی که همهٔ زبان‌های دیگر %lld دارند."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ a ^[%lld capture](inflect: true) %@, alors que toutes les autres langues en ont %lld."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ ha ^[%lld screenshot](inflect: true) %@, mentre tutte le altre lingue ne hanno %lld."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ の %3$@ スクリーンショットは %2$lld 枚ですが、他のすべての言語は %4$lld 枚です。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@에는 %3$@ 스크린샷이 %2$lld개 있지만, 다른 모든 언어에는 %4$lld개 있습니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ tem ^[%lld captura](inflect: true) de %@, enquanto todos os outros idiomas têm %lld."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "В %1$@ скриншотов %3$@: %2$lld, а во всех остальных языках — %4$lld."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ dilinde %lld adet %@ ekran görüntüsü var, diğer tüm dillerde ise %lld."
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "У %1$@ знімків екрана %3$@: %2$lld, а в усіх інших мовах — %4$lld."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ 有 %lld 张 %@ 截图，而其他所有语言都有 %lld 张。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ 有 %lld 張 %@ 螢幕截圖，而其他所有語言都有 %lld 張。"
+          }
+        }
+      }
+    },
+    "Most locales have ^[%lld %@ screenshot](inflect: true), but %@." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die meisten Sprachen haben ^[%lld Screenshot](inflect: true) für %@, aber %@."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La mayoría de los idiomas tienen ^[%lld captura](inflect: true) de %@, pero %@."
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "بیشتر زبان‌ها %lld اسکرین‌شات %@ دارند، اما %@."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La plupart des langues ont ^[%lld capture](inflect: true) %@, mais %@."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La maggior parte delle lingue ha ^[%lld screenshot](inflect: true) %@, ma %@."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ほとんどの言語では %2$@ スクリーンショットが %1$lld 枚ですが、%3$@。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "대부분의 언어에는 %2$@ 스크린샷이 %1$lld개 있습니다. 예외: %3$@."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A maioria dos idiomas tem ^[%lld captura](inflect: true) de %@, mas %@."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "В большинстве языков скриншотов %2$@: %1$lld, но %3$@."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Çoğu dilde %lld adet %@ ekran görüntüsü var, ancak %@."
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "У більшості мов знімків екрана %2$@: %1$lld, але %3$@."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "大多数语言有 %lld 张 %@ 截图，但 %@。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "大多數語言有 %lld 張 %@ 螢幕截圖，但 %@。"
+          }
+        }
+      }
+    },
+    "Fix uploads this row to %@ too." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "„Beheben“ lädt diese Zeile auch für %@ hoch."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "«Corregir» también sube esta fila a %@."
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "«اصلاح» این ردیف را برای %@ هم بارگذاری می‌کند."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "« Corriger » envoie aussi cette ligne vers %@."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "«Correggi» carica questa riga anche in %@."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "「修正」を押すと、この行を %@ にもアップロードします。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "‘수정’을 누르면 이 행을 %@에도 업로드합니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "“Corrigir” também envia esta linha para %@."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "«Исправить» также загрузит эту строку в %@."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "“Düzelt”, bu satırı %@ için de yükler."
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "«Виправити» також завантажить цей рядок у %@."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "“修复”会把这一行也上传到 %@。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "「修正」會把這一列也上傳到 %@。"
+          }
+        }
+      }
+    },
+    "Not in this project: %@. Add those languages to upload this row to them." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nicht in diesem Projekt: %@. Füge diese Sprachen hinzu, um diese Zeile auch dafür hochzuladen."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No están en este proyecto: %@. Añade esos idiomas para subir esta fila a ellos."
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "در این پروژه نیست: %@. برای بارگذاری این ردیف در آن‌ها، این زبان‌ها را اضافه کنید."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Absentes de ce projet : %@. Ajoutez ces langues pour y envoyer cette ligne."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Non presenti in questo progetto: %@. Aggiungi queste lingue per caricarvi questa riga."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "このプロジェクトにない言語: %@。この行をアップロードするには、これらの言語を追加してください。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "이 프로젝트에 없는 언어: %@. 이 행을 업로드하려면 해당 언어를 추가하세요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Não estão neste projeto: %@. Adicione esses idiomas para enviar esta linha a eles."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Нет в этом проекте: %@. Добавьте эти языки, чтобы загрузить в них эту строку."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bu projede yok: %@. Bu satırı onlara yüklemek için bu dilleri ekleyin."
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Немає в цьому проєкті: %@. Додайте ці мови, щоб завантажити в них цей рядок."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "此项目中没有：%@。添加这些语言即可将这一行上传到它们。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "此專案中沒有：%@。加入這些語言即可將這一列上傳到它們。"
+          }
+        }
+      }
+    },
+    "%@ has %lld" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ hat %lld"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ tiene %lld"
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ دارای %lld"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ en a %lld"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ ne ha %lld"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ は %lld 枚"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ %lld개"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ tem %lld"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ — %lld"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ dilinde %lld"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ — %lld"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ 有 %lld 张"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ 有 %lld 張"
+          }
+        }
+      }
+    },
+    "the primary language" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "die Hauptsprache"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "el idioma principal"
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "زبان اصلی"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "la langue principale"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "la lingua principale"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "主要言語"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "기본 언어"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "o idioma principal"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "основной язык"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ana dil"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "основна мова"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "主要语言"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "主要語言"
+          }
+        }
+      }
+    },
+    "This plan no longer matches the project: its rows or languages were removed. Go back to the plan and try again." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dieser Plan passt nicht mehr zum Projekt: Zeilen oder Sprachen daraus wurden entfernt. Geh zurück zum Plan und versuch es erneut."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Este plan ya no coincide con el proyecto: se eliminaron filas o idiomas. Vuelve al plan e inténtalo de nuevo."
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "این برنامه دیگر با پروژه مطابقت ندارد: ردیف‌ها یا زبان‌های آن حذف شده‌اند. به برنامه برگردید و دوباره تلاش کنید."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ce plan ne correspond plus au projet : des lignes ou des langues ont été supprimées. Revenez au plan et réessayez."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Questo piano non corrisponde più al progetto: alcune righe o lingue sono state rimosse. Torna al piano e riprova."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "このプランはプロジェクトと一致しなくなりました。行または言語が削除されています。プランに戻ってもう一度お試しください。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "이 계획이 더 이상 프로젝트와 일치하지 않습니다. 행 또는 언어가 제거되었습니다. 계획으로 돌아가 다시 시도하세요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Este plano não corresponde mais ao projeto: linhas ou idiomas foram removidos. Volte ao plano e tente novamente."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "План больше не соответствует проекту: из него удалены строки или языки. Вернитесь к плану и попробуйте снова."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bu plan artık projeyle eşleşmiyor: satırları veya dilleri kaldırıldı. Plana geri dönüp yeniden deneyin."
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "План більше не відповідає проєкту: з нього видалено рядки або мови. Поверніться до плану й спробуйте знову."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "此计划已与项目不一致：其中的行或语言已被移除。请返回计划后重试。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "此計畫已與專案不一致：其中的列或語言已被移除。請返回計畫後重試。"
+          }
+        }
+      }
+    },
+    "If a platform the app ships on has no editable version — every one is live or locked for review — the version step offers **Create Version** for it, prefilled with the next number, which you can edit before creating." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hat eine Plattform, auf der die App erscheint, keine bearbeitbare Version – jede ist live oder für die Prüfung gesperrt –, bietet der Versionsschritt dafür **Version erstellen** an, vorausgefüllt mit der nächsten Nummer, die du vor dem Erstellen ändern kannst."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Si una plataforma en la que se publica la app no tiene ninguna versión editable —todas están publicadas o bloqueadas para revisión—, el paso de versiones ofrece **Crear versión** para ella, con el siguiente número ya rellenado, que puedes editar antes de crearla."
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "اگر پلتفرمی که برنامه روی آن منتشر می‌شود هیچ نسخهٔ قابل ویرایشی نداشته باشد — همهٔ نسخه‌ها منتشر شده یا برای بازبینی قفل شده‌اند — مرحلهٔ نسخه برای آن **ایجاد نسخه** را پیشنهاد می‌کند، با شمارهٔ بعدی از پیش پرشده که می‌توانید پیش از ایجاد ویرایشش کنید."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Si une plateforme sur laquelle l’app est publiée n’a aucune version modifiable — toutes sont en ligne ou verrouillées pour la vérification —, l’étape des versions propose **Créer une version** pour celle-ci, préremplie avec le numéro suivant, que vous pouvez modifier avant la création."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Se una piattaforma su cui è pubblicata l’app non ha versioni modificabili — sono tutte attive o bloccate per la revisione — il passaggio delle versioni offre **Crea versione** per quella piattaforma, con il numero successivo già compilato, che puoi modificare prima di crearla."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "アプリを配信しているプラットフォームに編集可能なバージョンがない場合（すべて公開中または審査のためロック中）、バージョンのステップでそのプラットフォーム用に**バージョンを作成**が表示されます。次の番号があらかじめ入力されており、作成前に編集できます。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "앱이 출시된 플랫폼에 편집 가능한 버전이 없으면(모두 출시되었거나 심사 중이라 잠긴 경우) 버전 단계에서 해당 플랫폼에 대해 **버전 생성**을 제공합니다. 다음 번호가 미리 입력되어 있으며, 생성하기 전에 수정할 수 있습니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Se uma plataforma em que o app é publicado não tiver nenhuma versão editável — todas estão publicadas ou bloqueadas para revisão —, a etapa de versões oferece **Criar versão** para ela, com o próximo número já preenchido, que você pode editar antes de criar."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Если у платформы, на которой выходит приложение, нет редактируемой версии — все опубликованы или заблокированы на проверку, — шаг выбора версий предлагает для неё **Создать версию** с уже подставленным следующим номером, который можно изменить перед созданием."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Uygulamanın yayımlandığı bir platformda düzenlenebilir sürüm yoksa — hepsi yayında ya da inceleme için kilitliyse — sürüm adımı o platform için bir sonraki numarayla önceden doldurulmuş **Sürüm Oluştur** seçeneğini sunar; oluşturmadan önce numarayı düzenleyebilirsiniz."
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Якщо платформа, на якій виходить застосунок, не має редагованої версії — усі опубліковані або заблоковані на перевірку, — крок вибору версій пропонує для неї **Створити версію** з уже підставленим наступним номером, який можна змінити перед створенням."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "如果 App 所在的某个平台没有可编辑的版本（全部已上线或因审核而锁定），版本步骤会为该平台提供**创建版本**，并预填下一个版本号，你可以在创建前修改。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "如果 App 所在的某個平台沒有可編輯的版本（全部已上架或因審查而鎖定），版本步驟會為該平台提供**建立版本**，並預先填入下一個版本號，你可以在建立前修改。"
+          }
+        }
+      }
+    },
+    "Each row also warns when, after the upload, its screenshot count would differ between locales — say 7 in most but 2 in one — or when a locale would have no set of that display type and fall back to the primary language's screenshots. **Fix** adds the locales the row can reach to the upload." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Jede Zeile warnt außerdem, wenn sich ihre Screenshot-Anzahl nach dem Upload zwischen den Sprachen unterscheiden würde – etwa 7 in den meisten, aber 2 in einer – oder wenn einer Sprache das Set dieses Anzeigetyps fehlen würde und sie auf die Screenshots der Hauptsprache zurückgreift. **Beheben** nimmt die Sprachen, die die Zeile erreichen kann, in den Upload auf."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cada fila también avisa cuando, tras la subida, su número de capturas variaría entre idiomas —por ejemplo, 7 en la mayoría pero 2 en uno— o cuando un idioma no tendría un conjunto de ese tipo de pantalla y recurriría a las capturas del idioma principal. **Corregir** añade a la subida los idiomas a los que puede llegar la fila."
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "هر ردیف همچنین هشدار می‌دهد اگر پس از بارگذاری، تعداد اسکرین‌شات‌هایش در زبان‌های مختلف متفاوت باشد — مثلاً ۷ در بیشتر زبان‌ها اما ۲ در یکی — یا اگر زبانی مجموعه‌ای از آن نوع نمایش نداشته باشد و به اسکرین‌شات‌های زبان اصلی برگردد. **اصلاح** زبان‌هایی را که ردیف می‌تواند به آن‌ها برسد به بارگذاری اضافه می‌کند."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chaque ligne signale aussi quand, après l’envoi, son nombre de captures différerait d’une langue à l’autre — 7 dans la plupart mais 2 dans une, par exemple — ou quand une langue n’aurait pas de jeu pour ce type d’affichage et se rabattrait sur les captures de la langue principale. **Corriger** ajoute à l’envoi les langues que la ligne peut atteindre."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ogni riga avvisa anche quando, dopo il caricamento, il numero di screenshot sarebbe diverso tra le lingue — ad esempio 7 nella maggior parte ma 2 in una — o quando una lingua non avrebbe un set di quel tipo di display e ripiegherebbe sugli screenshot della lingua principale. **Correggi** aggiunge al caricamento le lingue che la riga può raggiungere."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "各行は、アップロード後にスクリーンショットの枚数が言語によって異なる場合（たとえば大半は7枚なのに1つだけ2枚）や、ある言語にその表示タイプのセットがなく主要言語のスクリーンショットが代わりに使われる場合にも警告します。**修正**を押すと、その行が対象にできる言語がアップロードに追加されます。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "각 행은 업로드 후 언어마다 스크린샷 개수가 달라지는 경우(예: 대부분 7개인데 하나만 2개)나, 어떤 언어에 해당 디스플레이 유형의 세트가 없어 기본 언어의 스크린샷이 대신 사용되는 경우에도 경고합니다. **수정**을 누르면 해당 행이 업로드할 수 있는 언어가 업로드에 추가됩니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cada linha também avisa quando, após o envio, sua quantidade de capturas seria diferente entre os idiomas — por exemplo, 7 na maioria, mas 2 em um — ou quando um idioma não teria um conjunto desse tipo de exibição e usaria as capturas do idioma principal. **Corrigir** adiciona ao envio os idiomas que a linha pode alcançar."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Каждая строка также предупреждает, если после загрузки количество скриншотов будет отличаться между языками — например, 7 в большинстве, но 2 в одном, — или если у языка не окажется набора этого типа дисплея и для него будут показаны скриншоты основного языка. **Исправить** добавляет в загрузку языки, доступные этой строке."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Her satır ayrıca, yüklemeden sonra ekran görüntüsü sayısı diller arasında farklı olacaksa — örneğin çoğunda 7 ama birinde 2 — ya da bir dilde o ekran türünün seti olmayıp ana dilin ekran görüntülerine geri dönülecekse uyarır. **Düzelt**, satırın ulaşabildiği dilleri yüklemeye ekler."
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Кожен рядок також попереджає, якщо після завантаження кількість знімків екрана відрізнятиметься між мовами — скажімо, 7 у більшості, але 2 в одній, — або якщо мова не матиме набору цього типу дисплея й для неї показуватимуться знімки основної мови. **Виправити** додає до завантаження мови, доступні цьому рядку."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "如果上传后某一行的截图数量在各语言之间不一致（例如大多数为 7 张，但某一种只有 2 张），或某种语言缺少该显示类型的截图组而回退到主要语言的截图，该行也会发出警告。**修复**会把该行可覆盖的语言加入上传。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "如果上傳後某一列的螢幕截圖數量在各語言之間不一致（例如大多數為 7 張，但某一種只有 2 張），或某種語言缺少該顯示類型的截圖組而改用主要語言的螢幕截圖，該列也會發出警告。**修正**會把該列可涵蓋的語言加入上傳。"
+          }
+        }
+      }
+    },
+    "No editable %@ version" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Keine bearbeitbare %@-Version"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No hay ninguna versión de %@ editable"
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "هیچ نسخهٔ قابل ویرایشی برای %@ وجود ندارد"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aucune version %@ modifiable"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nessuna versione %@ modificabile"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "編集可能な%@バージョンがありません"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "편집 가능한 %@ 버전이 없습니다"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nenhuma versão de %@ editável"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Нет редактируемой версии для %@"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Düzenlenebilir %@ sürümü yok"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Немає редагованої версії для %@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "没有可编辑的 %@ 版本"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "沒有可編輯的 %@ 版本"
           }
         }
       }

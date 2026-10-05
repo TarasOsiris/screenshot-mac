@@ -4,12 +4,11 @@ extension ASCUploadFlowModel {
     // MARK: - Creating the next App Store version
 
     /// The platforms the version step can offer to create a version for: the ones the app already
-    /// has a version on, so the platform is known to be enabled for this app. Only meaningful when
-    /// no version is selectable — creating a second editable version for a platform is not
-    /// something App Store Connect allows.
+    /// has a version on, so the platform is known to be enabled for this app, minus any that
+    /// already have a selectable one — App Store Connect allows one editable version per platform.
     var platformsAwaitingAVersion: [ASCPlatform] {
-        guard !versions.contains(where: { $0.isSelectable(for: mode) }) else { return [] }
-        return versions.platforms
+        let covered = Set(versions.filter { $0.isSelectable(for: mode) }.compactMap(\.attributes.ascPlatform))
+        return versions.platforms.filter { !covered.contains($0) }
     }
 
     /// The version string to prefill for `platform`: a bump of the highest one the app already has
@@ -23,8 +22,8 @@ extension ASCUploadFlowModel {
     }
 
     /// Create the next version so the user doesn't have to leave for the website and come back.
-    /// On success it joins `versions` in the position a fetch would have put it in, and becomes
-    /// the selection — it is by definition the only editable one.
+    /// On success it joins `versions` in the position a fetch would have put it in, and is added
+    /// to the selection alongside whatever the user already picked on other platforms.
     func createAppStoreVersion(platform: ASCPlatform, versionString: String) async {
         let trimmed = versionString.trimmingCharacters(in: .whitespaces)
         guard let app = selectedApp, !trimmed.isEmpty, creatingVersionPlatform == nil else { return }
@@ -43,7 +42,9 @@ extension ASCUploadFlowModel {
             var updated = versions.filter { $0.id != created.id }
             updated.append(created)
             versions = sortedForSelection(updated)
-            selectedVersionIds = defaultSelectedVersionIds(from: versions)
+            if created.isSelectable(for: mode) {
+                selectedVersionIds.insert(created.id)
+            }
             localizationsByVersionId[created.id] = nil
         } catch {
             versionCreationError = error.localizedDescription

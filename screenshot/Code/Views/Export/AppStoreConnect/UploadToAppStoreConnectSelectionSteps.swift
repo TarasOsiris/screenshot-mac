@@ -137,7 +137,9 @@ struct ASCVersionSelectionStepView: View {
         VStack(alignment: .leading, spacing: 8) {
             title
             appHeader
-            if !versions.isEmpty && !hasSelectableVersion {
+            if hasSelectableVersion {
+                missingPlatformVersionBar
+            } else if !versions.isEmpty {
                 noEditableVersionCallout
             }
             versionList
@@ -174,25 +176,39 @@ struct ASCVersionSelectionStepView: View {
     }
 
     private var noEditableVersionCallout: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            Label("No editable version available", systemImage: "lock.fill")
-                .foregroundStyle(.orange)
-                .font(.callout)
-                .fontWeight(.medium)
-            Text(mode == .metadata
-                 ? "Every version on this app is already live. Create the next one below, or in App Store Connect."
-                 : "Every version on this app is locked for review or live. Create the next one below, or in App Store Connect.")
-                .font(.caption)
-                .foregroundStyle(.secondary)
-                .fixedSize(horizontal: false, vertical: true)
-            createVersionForm
-            appStoreConnectLink
+        CalloutBox(tint: .orange) {
+            VStack(alignment: .leading, spacing: 6) {
+                Label("No editable version available", systemImage: "lock.fill")
+                    .foregroundStyle(.orange)
+                    .font(.callout)
+                    .fontWeight(.medium)
+                Text(mode == .metadata
+                     ? "Every version on this app is already live. Create the next one below, or in App Store Connect."
+                     : "Every version on this app is locked for review or live. Create the next one below, or in App Store Connect.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+                createVersionForm
+                appStoreConnectLink
+            }
         }
         .padding(.horizontal, 16)
-        .padding(.vertical, 8)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color.orange.opacity(0.08), in: .rect(cornerRadius: 8))
-        .padding(.horizontal, 16)
+    }
+
+    /// Outside the list, where it would vanish whenever read-only versions are hidden.
+    @ViewBuilder
+    private var missingPlatformVersionBar: some View {
+        if let platform = activeNewVersionPlatform {
+            CalloutBox(tint: .secondary) {
+                VStack(alignment: .leading, spacing: 6) {
+                    Label("No editable \(platform.displayName) version", systemImage: "plus.circle")
+                        .font(.callout)
+                        .fontWeight(.medium)
+                    createVersionForm
+                }
+            }
+            .padding(.horizontal, 16)
+        }
     }
 
     /// Only offered for a platform the app already ships on: App Store Connect needs a platform
