@@ -140,9 +140,9 @@ nonisolated enum CrashReportingService {
 
     // MARK: - Scope
 
-    /// No-ops on a missing id rather than clearing: RevenueCat stays unconfigured in the
-    /// force-pro-unlock path and when the API key is absent, neither of which should drop a
-    /// user already attached to the scope.
+    /// No-ops on a missing id rather than clearing: RevenueCat stays unconfigured in Debug, under
+    /// tests and when the API key is absent, none of which should drop a user already attached
+    /// to the scope.
     static func setUser(id: String?) {
         guard isReportingEnabled, let id, !id.isEmpty else { return }
         let user = User()

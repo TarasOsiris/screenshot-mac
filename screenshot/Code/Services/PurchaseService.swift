@@ -3,7 +3,6 @@ import AppKit
 #else
 import UIKit
 #endif
-import OSLog
 import RevenueCat
 
 @MainActor
@@ -72,16 +71,20 @@ final class PurchaseService {
     private static let revenueCatEntitlementIDInfoDictionaryKey = "REVENUECAT_ENTITLEMENT_ID"
     private static let revenueCatProductIDEnvironmentName = "REVENUECAT_PRODUCT_ID"
     private static let revenueCatProductIDInfoDictionaryKey = "REVENUECAT_PRODUCT_ID"
-    #if DEBUG
-    private static let forceProUnlockEnvironmentName = "SCREENSHOT_FORCE_PRO_UNLOCK"
-    #endif
     private static let fallbackEntitlementId = "Nineva Studios / ScreenshotBro Pro"
     private static let fallbackProductId = "proversion"
-    #if DEBUG
-    private static let debugFallbackAPIKey = "test_KgNxrrXqBIGgiORjBPsdiXrraJL"
-    #endif
 
-    private(set) var isProUnlocked = false
+    /// Off in Debug and under XCTest (unit and UI tests, any configuration): RevenueCat is never
+    /// configured and Pro counts as unlocked, so no paywall or upsell appears.
+    nonisolated static let isStoreEnabled: Bool = {
+        #if DEBUG
+        return false
+        #else
+        return !PlatformProcess.isRunningUnderXCTest
+        #endif
+    }()
+
+    private(set) var isProUnlocked = !PurchaseService.isStoreEnabled
     private(set) var proTier: ProTier?
     private(set) var showPaywall = false
     private(set) var paywallContext: PaywallContext = .general
@@ -95,7 +98,7 @@ final class PurchaseService {
     private(set) var purchaseStatusIsError = false
 
     var appUserID: String? {
-        guard Purchases.isConfigured else { return nil }
+        guard Self.isStoreEnabled, Purchases.isConfigured else { return nil }
         return Purchases.shared.appUserID
     }
 
@@ -108,15 +111,6 @@ final class PurchaseService {
     nonisolated static let freeMaxRows = 3
     nonisolated static let freeMaxTemplatesPerRow = 5
 
-    #if DEBUG
-    private static let isForceProUnlockedForCurrentProcess: Bool = {
-        let value = ProcessInfo.processInfo.environment[forceProUnlockEnvironmentName]?
-            .trimmingCharacters(in: .whitespacesAndNewlines)
-            .lowercased()
-        return value == "1" || value == "true" || value == "yes"
-    }()
-    #endif
-
     func canAddRow(currentCount: Int) -> Bool {
         isProUnlocked || currentCount < Self.freeMaxRows
     }
@@ -126,10 +120,7 @@ final class PurchaseService {
     }
 
     func canCreateProject(currentCount: Int) -> Bool {
-        #if DEBUG
-        if Self.isForceProUnlockedForCurrentProcess { return true }
-        #endif
-        return isProUnlocked || currentCount < Self.freeMaxProjects
+        isProUnlocked || currentCount < Self.freeMaxProjects
     }
 
     func requirePro(
@@ -145,6 +136,7 @@ final class PurchaseService {
     }
 
     func presentPaywall(for context: PaywallContext = .general) {
+        guard Self.isStoreEnabled else { return }
         paywallContext = context
         clearPurchaseStatus()
         showPaywall = true
@@ -181,20 +173,7 @@ final class PurchaseService {
     func start() {
         guard !didStart else { return }
         didStart = true
-        // Tests run in the app host, so configuring here would register a fresh anonymous customer per run.
-        guard !PersistenceService.isRunningUnderXCTest else { return }
-
-        #if DEBUG
-        if Self.isForceProUnlockedForCurrentProcess {
-            isProUnlocked = true
-            configurationIssue = nil
-            return
-        }
-        #endif
-
-        #if DEBUG
-        Purchases.logLevel = .debug
-        #endif
+        guard Self.isStoreEnabled else { return }
 
         guard let apiKey = Self.resolvedAPIKey() else {
             // A shipped build with no key can never sell anything — that's a packaging bug, not
@@ -204,13 +183,11 @@ final class PurchaseService {
             return
         }
 
-        #if !DEBUG
         guard !apiKey.hasPrefix("test_") else {
             CrashReportingService.report(.storeConfigurationInvalid, extra: ["reason": "testKeyInRelease"])
             configurationIssue = String(localized: "RevenueCat is configured with a Test Store API key. Replace it with your Apple public SDK key before shipping.")
             return
         }
-        #endif
 
         Purchases.configure(withAPIKey: apiKey)
         #if os(iOS)
@@ -229,46 +206,13 @@ final class PurchaseService {
         self.delegate = d
         Purchases.shared.delegate = d
 
-        Task {
-            await refreshEntitlementStatus()
-            #if DEBUG
-            await debugDumpOfferings()
-            #endif
-        }
+        Task { await refreshEntitlementStatus() }
     }
-
-    #if DEBUG
-    private func debugDumpOfferings() async {
-        let bundleVersion = Bundle.main.shortVersion.isEmpty ? "?" : Bundle.main.shortVersion
-        let bundleBuild = Bundle.main.buildNumber.isEmpty ? "?" : Bundle.main.buildNumber
-        AppLogger.store.debug("bundle short version: \(bundleVersion, privacy: .public) (build \(bundleBuild, privacy: .public))")
-
-        Purchases.shared.invalidateCustomerInfoCache()
-        do {
-            _ = try await Purchases.shared.customerInfo(fetchPolicy: .fetchCurrent)
-            let offerings = try await Purchases.shared.offerings()
-            AppLogger.store.debug("current offering id: \(offerings.current?.identifier ?? "<nil>", privacy: .public)")
-            let currentPackages = offerings.current?.availablePackages.map { pkg in
-                "\(pkg.identifier)→\(pkg.storeProduct.productIdentifier)"
-            } ?? []
-            AppLogger.store.debug("current packages: \(currentPackages, privacy: .public)")
-            AppLogger.store.debug("all offerings: \(offerings.all.keys.sorted(), privacy: .public)")
-            for (id, offering) in offerings.all {
-                let packages = offering.availablePackages.map { pkg in
-                    "\(pkg.identifier)→\(pkg.storeProduct.productIdentifier)"
-                }
-                AppLogger.store.debug("  \(id, privacy: .public): \(packages, privacy: .public)")
-            }
-        } catch {
-            AppLogger.store.error("offerings fetch failed: \(error.localizedDescription, privacy: .public)")
-        }
-    }
-    #endif
 
     // MARK: - Entitlement
 
     private func refreshEntitlementStatus() async {
-        guard Purchases.isConfigured else { return }
+        guard Self.isStoreEnabled, Purchases.isConfigured else { return }
 
         do {
             let customerInfo = try await Purchases.shared.customerInfo()
@@ -288,15 +232,6 @@ final class PurchaseService {
         let hasSingleActiveEntitlement = activeEntitlements.count == 1 && activeEntitlements.values.first?.isActive == true
         let hasPurchasedConfiguredProduct = configuredProductId.map(customerInfo.allPurchasedProductIdentifiers.contains) == true
         let entitled = hasConfiguredEntitlement || hasSingleActiveEntitlement || hasPurchasedConfiguredProduct
-        #if DEBUG
-        if !entitled && (!activeEntitlements.isEmpty || !customerInfo.allPurchasedProductIdentifiers.isEmpty) {
-            let configuredEntitlementId = configuredEntitlementId ?? "<none>"
-            let configuredProductId = configuredProductId ?? "<none>"
-            let activeEntitlementKeys = activeEntitlements.keys.sorted().joined(separator: ", ")
-            let purchasedProductIds = customerInfo.allPurchasedProductIdentifiers.sorted().joined(separator: ", ")
-            AppLogger.store.debug("No Pro unlock for entitlement '\(configuredEntitlementId, privacy: .public)' or product '\(configuredProductId, privacy: .public)'. Active entitlements: \(activeEntitlementKeys, privacy: .public). Purchased products: \(purchasedProductIds, privacy: .public)")
-        }
-        #endif
         let newTier: ProTier? = entitled
             ? (configuredEntitlement ?? activeEntitlements.values.first).map(Self.tier(from:))
             : nil
@@ -372,6 +307,7 @@ final class PurchaseService {
     // MARK: - Restore
 
     func restore() async {
+        guard Self.isStoreEnabled else { return }
         clearPurchaseStatus()
 
         guard Purchases.isConfigured else {
@@ -412,6 +348,7 @@ final class PurchaseService {
     @discardableResult
     func redeem(_ url: URL) async -> Bool {
         guard let redemption = url.asWebPurchaseRedemption else { return false }
+        guard Self.isStoreEnabled else { return true }
         guard Purchases.isConfigured else {
             presentRedemptionFailure(configurationIssue ?? String(localized: "RevenueCat is not configured."))
             return true
@@ -488,11 +425,7 @@ final class PurchaseService {
             return infoDictionaryKey
         }
 
-        #if DEBUG
-        return Self.debugFallbackAPIKey
-        #else
         return nil
-        #endif
     }
 
     private static func resolvedEntitlementID() -> String? {

@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Overview
 
-Screenshot Bro — app for generating App Store & Google Play screenshots with device frames, shapes, and a multi-row editor. Swift + SwiftUI. **Multiplatform: macOS (primary) + iPadOS/iOS** from a single target. Integrates RevenueCat (in-app purchases), SwiftDraw (SVG rendering), and can upload finished screenshots directly to App Store Connect.
+Screenshot Bro — app for generating App Store & Google Play screenshots with device frames, shapes, and a multi-row editor. Swift + SwiftUI. **Multiplatform: macOS (primary) + iPadOS/iOS** from a single target. Integrates RevenueCat (in-app purchases), SwiftDraw (SVG rendering), and can upload finished screenshots directly to App Store Connect. RevenueCat is never configured in Debug or under XCTest (`PurchaseService.isStoreEnabled`); there Pro counts as unlocked and no paywall or upsell appears, so buying Pro can only be tested in a Release build (e.g. the `screenshot Profiling` scheme).
 
 ## Code Style
 
