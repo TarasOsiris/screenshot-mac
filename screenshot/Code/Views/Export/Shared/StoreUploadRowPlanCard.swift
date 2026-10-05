@@ -13,6 +13,9 @@ struct StoreUploadRowPlanCard<Content: View>: View {
     /// "Looks like an Android row" on Apple's wizard and the mirror of it on Play's; nil when the
     /// row's inferred platform matches the store being uploaded to.
     let foreignPlatformHint: LocalizedStringKey?
+    /// Shown collapsed too, so a row's problems are visible without opening it.
+    var issues: [UploadIssue] = []
+    var onFix: ((UploadIssueFix) -> Void)?
     @Binding var isEnabled: Bool
     let expanded: Bool
     let onToggleExpanded: () -> Void
@@ -21,6 +24,10 @@ struct StoreUploadRowPlanCard<Content: View>: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
             header
+
+            if isEnabled {
+                UploadIssuesPanel(issues: issues, onFix: onFix)
+            }
 
             if expanded && isEnabled {
                 expandedContent()

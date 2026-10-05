@@ -37,6 +37,8 @@ struct ASCUploadRowPlanCard: View {
     @Binding var displayTypeDetailsPlanId: String?
     let localeCreation: ASCLocaleCreationContext
     let remoteScreenshotCounts: [String: [String: Int]]
+    let issues: [UploadIssue]
+    let onFix: (UploadIssueFix) -> Void
     let onToggleExpanded: () -> Void
 
     var body: some View {
@@ -44,6 +46,8 @@ struct ASCUploadRowPlanCard: View {
             title: plan.displayLabel,
             sizeSummary: plan.sizeAndCountSummary,
             foreignPlatformHint: plan.inferredStorePlatform == .android ? "Looks like an Android row" : nil,
+            issues: issues,
+            onFix: onFix,
             isEnabled: $plan.isEnabled,
             expanded: expanded,
             onToggleExpanded: onToggleExpanded

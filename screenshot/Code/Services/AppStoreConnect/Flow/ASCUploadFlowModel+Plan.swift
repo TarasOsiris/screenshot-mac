@@ -24,6 +24,20 @@ extension ASCUploadFlowModel {
         return issues
     }
 
+    /// Per-row listing warnings by row id; empty while counts are in flight so a partial fetch can't skew the majority.
+    func listingConsistencyIssues(for destination: ASCDestinationPlan) -> [UUID: [UploadIssue]] {
+        guard !destination.localizations.contains(where: { remoteScreenshotCountsInFlight.contains($0.id) }) else { return [:] }
+        let primaryLocale = selectedApp?.attributes.primaryLocale
+        return Dictionary(uniqueKeysWithValues: destination.rowPlans.map { row in
+            (row.id, ASCListingConsistency.issues(
+                row: row,
+                in: destination,
+                remoteCounts: remoteScreenshotCounts,
+                primaryLocale: primaryLocale
+            ))
+        })
+    }
+
     var canStartUpload: Bool {
         !validationIssues.hasErrors
     }

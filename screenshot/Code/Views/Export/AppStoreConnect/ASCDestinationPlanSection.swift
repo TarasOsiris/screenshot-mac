@@ -6,6 +6,8 @@ struct ASCDestinationPlanSection: View {
     @Binding var displayTypeDetailsPlanId: String?
     let localeCreation: ASCLocaleCreationContext
     let remoteScreenshotCounts: [String: [String: Int]]
+    let rowIssues: [UUID: [UploadIssue]]
+    let onFix: (UploadIssueFix) -> Void
 
     private var platform: ASCPlatform? {
         destination.version.attributes.ascPlatform
@@ -68,6 +70,8 @@ struct ASCDestinationPlanSection: View {
             displayTypeDetailsPlanId: $displayTypeDetailsPlanId,
             localeCreation: localeCreation,
             remoteScreenshotCounts: remoteScreenshotCounts,
+            issues: rowIssues[plan.wrappedValue.id] ?? [],
+            onFix: onFix,
             onToggleExpanded: { toggleRowPlan(detailsId: detailsId, expanded: expanded) }
         )
     }

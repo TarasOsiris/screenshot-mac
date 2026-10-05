@@ -63,7 +63,8 @@ final class ASCUploadFlowModel {
     /// means "not known", never "empty": a failed or pending fetch shows no badge.
     var remoteScreenshotCounts: [String: [String: Int]] = [:]
     @ObservationIgnored var remoteScreenshotCountTasks: [Task<Void, Never>] = []
-    @ObservationIgnored var remoteScreenshotCountsInFlight: Set<String> = []
+    /// Observed because the plan step's listing warnings read it.
+    var remoteScreenshotCountsInFlight: Set<String> = []
     @ObservationIgnored var remoteScreenshotCountsGeneration = 0
 
     // MARK: - Collaborators

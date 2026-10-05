@@ -5,6 +5,13 @@ import Foundation
 
 typealias ASCRowPlan = StoreRowPlan<ASCDisplayType?, ASCLocaleTarget>
 
+extension ASCRowPlan {
+    /// The localizations this row writes, by the same `selectedCandidates` rule the upload uses.
+    var uploadedLocalizationIds: Set<String> {
+        Set(localeTargets.filter(\.isEnabled).flatMap(\.selectedCandidates).map(\.id))
+    }
+}
+
 nonisolated struct ASCDestinationPlan: Identifiable {
     let id: String
     var version: ASCAppStoreVersion

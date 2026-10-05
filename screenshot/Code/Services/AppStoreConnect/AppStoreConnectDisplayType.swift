@@ -120,6 +120,30 @@ enum ASCDisplayType: String, CaseIterable, Identifiable, Sendable {
         }
     }
 
+    /// `label` without its pixel sizes, for prose ("7 iPhone 6.9\" screenshots").
+    var shortLabel: String {
+        switch self {
+        case .iphone69: return "iPhone 6.9\""
+        case .iphone67: return "iPhone 6.7\""
+        case .iphone65: return "iPhone 6.5\""
+        case .iphone63: return "iPhone 6.3\""
+        case .iphone61: return "iPhone 6.1\""
+        case .iphone58: return "iPhone 5.8\""
+        case .iphone55: return "iPhone 5.5\""
+        case .iphone47: return "iPhone 4.7\""
+        case .iphone40: return "iPhone 4.0\""
+        case .iphone35: return "iPhone 3.5\""
+        case .ipadPro129M4: return "iPad Pro 13\" M4"
+        case .ipadPro3Gen129: return "iPad Pro 12.9\""
+        case .ipadPro11M4: return "iPad Pro 11\" M4"
+        case .ipadPro3Gen11: return "iPad Pro 11\""
+        case .ipad105: return "iPad 10.5\""
+        case .ipad97: return "iPad 9.7\""
+        case .desktop: return "Mac"
+        case .watchUltra, .watchSeries7, .watchSeries4, .watchSeries3, .appleTV, .visionPro: return label
+        }
+    }
+
     /// Groups exposed in the UI picker. Hides categories not targeted by the app (watch/TV/vision)
     /// unless the user explicitly needs them.
     static let userSelectableCases: [ASCDisplayType] = [

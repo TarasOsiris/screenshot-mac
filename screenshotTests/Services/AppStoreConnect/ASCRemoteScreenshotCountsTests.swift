@@ -154,6 +154,22 @@ struct ASCRemoteScreenshotCountsTests {
         #expect(h.model.remoteScreenshotCounts["v1-de-DE"] == ["APP_IPHONE_67": 9])
     }
 
+    /// A half-loaded fetch would compare a row against whichever locales happened to answer first.
+    @Test func listingIssuesWaitForTheCountsToSettle() async throws {
+        let h = Harness()
+        h.api.localizationsByVersionId["v1", default: []].append(
+            ASCAppStoreVersionLocalization(id: "v1-sk", attributes: .init(locale: "sk", description: "", keywords: ""))
+        )
+        await h.model.refreshLocalizations()
+        await h.settle()
+        let destination = try #require(h.model.destinationPlans.first)
+        let rowId = try #require(destination.rowPlans.first?.id)
+        #expect((h.model.listingConsistencyIssues(for: destination)[rowId] ?? []).contains { $0.message.contains("sk has no") })
+
+        h.model.remoteScreenshotCountsInFlight = ["v1-de-DE"]
+        #expect(h.model.listingConsistencyIssues(for: destination).isEmpty)
+    }
+
     @Test func demoCountsCoverEveryBadgeState() {
         let demo = AppStoreConnectDemoData()
         demo.updateContext(localeCodes: ["de", "fr"], rowSizes: [CGSize(width: 1290, height: 2796)])

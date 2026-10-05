@@ -445,7 +445,9 @@ extension UploadToAppStoreConnectView {
                         expandedRowPlanIds: $expandedRowPlanIds,
                         displayTypeDetailsPlanId: $displayTypeDetailsPlanId,
                         localeCreation: localeCreation(for: destination),
-                        remoteScreenshotCounts: model.remoteScreenshotCounts
+                        remoteScreenshotCounts: model.remoteScreenshotCounts,
+                        rowIssues: model.listingConsistencyIssues(for: destination),
+                        onFix: { model.apply($0) }
                     )
                 }
             }
