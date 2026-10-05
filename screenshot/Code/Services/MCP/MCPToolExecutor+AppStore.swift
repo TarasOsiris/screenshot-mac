@@ -107,7 +107,10 @@ extension MCPToolExecutor {
             : checkout.localeState.locales.map(\.code).filter(requestedLocaleCodes.contains)
 
         var issues: [String] = []
-        let rows = checkout.rows.filter { row in
+        // One snapshot before the network awaits below, so the targets and the rows they render agree.
+        let allRows = checkout.rows
+        let stamp = checkout.documentStamp
+        let rows = allRows.filter { row in
             requestedRowIds.isEmpty || requestedRowIds.contains(row.id)
         }
         let missingRows = requestedRowIds.subtracting(rows.map(\.id))
@@ -139,9 +142,6 @@ extension MCPToolExecutor {
             unitName: "renders"
         )
 
-        // Every row, not the filtered set above: `buildPlan` resolves each target's row by id.
-        let allRows = checkout.rows
-        let stamp = checkout.documentStamp
         let projectName = checkout.projectName
         let executorIssues = issues
 

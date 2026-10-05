@@ -13,6 +13,11 @@ nonisolated protocol StoreUploadErrorDescribing: Error {
 /// they contributed.
 nonisolated enum StoreUploadFailureText {
 
+    /// Everything planned left the project after the plan was made (an agent editing it meanwhile).
+    static var rowsRemoved: String {
+        String(localized: "This plan no longer matches the project: its rows or languages were removed. Go back to the plan and try again.")
+    }
+
     /// The inline banner line.
     static func summary(for error: Error) -> String {
         if let described = error as? any StoreUploadErrorDescribing {

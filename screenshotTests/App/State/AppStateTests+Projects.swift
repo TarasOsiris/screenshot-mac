@@ -141,6 +141,7 @@ extension AppStateTests {
         state.createProject(name: "Third")
 
         #expect(state.projectOpenTask == nil)
+        #expect(!state.projectOpen.isOpening, "the cancelled open's overlay must not stay up")
         let third = try #require(state.activeProjectId)
         #expect(PersistenceService.loadProject(third) != nil, "the new project was written")
     }

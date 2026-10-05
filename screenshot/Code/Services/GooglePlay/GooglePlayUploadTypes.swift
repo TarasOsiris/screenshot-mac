@@ -4,6 +4,7 @@ enum GooglePlayUploadError: StoreUploadErrorDescribing, LocalizedError {
     case renderFailed(rowLabel: String, imageTypeLabel: String, languageLabel: String, index: Int)
     case unreadableImages(rowLabel: String, languageLabel: String, fileNames: [String])
     case noRowsSelected
+    case rowsRemoved
     case requestFailed(GPUploadFailureContext)
 
     var errorDescription: String? {
@@ -17,6 +18,8 @@ enum GooglePlayUploadError: StoreUploadErrorDescribing, LocalizedError {
             return String(localized: "Could not read \(fileNames.count) images used by \(label) in \(languageLabel). Re-import the missing screenshots before uploading, or the upload would publish them as blank areas.")
         case .noRowsSelected:
             return String(localized: "No rows selected for upload.")
+        case .rowsRemoved:
+            return StoreUploadFailureText.rowsRemoved
         case .requestFailed(let context):
             return context.detailedMessage
         }
@@ -30,6 +33,8 @@ enum GooglePlayUploadError: StoreUploadErrorDescribing, LocalizedError {
             return String(localized: "Missing images for \(label) · \(languageLabel).")
         case .noRowsSelected:
             return String(localized: "No rows selected for upload.")
+        case .rowsRemoved:
+            return StoreUploadFailureText.rowsRemoved
         case .requestFailed(let context):
             return context.summaryMessage
         }
@@ -54,6 +59,8 @@ enum GooglePlayUploadError: StoreUploadErrorDescribing, LocalizedError {
             ].joined(separator: "\n")
         case .noRowsSelected:
             return "Failure: no rows selected"
+        case .rowsRemoved:
+            return "Failure: every planned row was removed from the project"
         case .requestFailed(let context):
             return context.technicalMessage
         }
@@ -75,14 +82,7 @@ struct GPUploadTarget: Identifiable {
     let rowSize: CGSize
     let imageType: GPImageType
     let languages: [GPUploadLanguage]
-    var templateCount: Int
-
-    /// The row can lose screenshots after planning; rendering past its last one would crash.
-    func fitted(to row: ScreenshotRow) -> GPUploadTarget {
-        var fitted = self
-        fitted.templateCount = min(templateCount, row.templates.count)
-        return fitted
-    }
+    let templateCount: Int
 }
 
 /// A step of the Play publish. `diagnosticName` is stable English for breadcrumbs; `phrase`

@@ -242,7 +242,8 @@ final class GPUploadFlowModel {
                 templateCount: row.templates.count,
                 isEnabled: existingPlan?.isEnabled ?? (row.inferredStorePlatform != .apple),
                 detectedAssetType: detected,
-                selectedAssetType: existingPlan?.selectedAssetType ?? detected,
+                // A pick that matched detection follows a resize; a deliberate override stays.
+                selectedAssetType: existingPlan.flatMap { $0.selectedAssetType == $0.detectedAssetType ? nil : $0.selectedAssetType } ?? detected,
                 localeTargets: targets,
                 inferredStorePlatform: row.inferredStorePlatform
             )
@@ -280,27 +281,16 @@ final class GPUploadFlowModel {
         GPUploadCounts(targets: buildUploadTargets())
     }
 
-    /// Catches the plan up with document edits made since it was built, never adding an unreviewed row.
-    func reconcileRowPlansWithDocument() {
-        let live = Dictionary(listingRows.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
-        rowPlans = rowPlans.compactMap { plan -> GPRowPlan? in
-            guard let row = live[plan.id] else { return nil }
-            var plan = plan
-            let detected = GPImageType.detect(width: row.templateWidth, height: row.templateHeight)
-            // Follow a resize unless the user picked an image type other than the detected one.
-            if plan.selectedAssetType == plan.detectedAssetType { plan.selectedAssetType = detected }
-            plan.detectedAssetType = detected
-            plan.rowLabel = row.label
-            plan.rowSize = row.templateSize
-            plan.templateCount = row.templates.count
-            return plan
-        }
-    }
-
     func startUpload() async {
         errorMessage = nil
         errorDetailsText = nil
-        reconcileRowPlansWithDocument()
+        // The document can change under the plan (an MCP agent editing the project).
+        let reviewed = rowPlans
+        rowPlans = GPRowPlan.reconciling(reviewed, with: buildRowPlans(preserving: reviewed))
+        guard !GPRowPlan.reconcileEmptied(reviewed, into: rowPlans) else {
+            errorMessage = StoreUploadFailureText.rowsRemoved
+            return
+        }
         guard !validationIssues.hasErrors else {
             errorMessage = String(localized: "Fix the preflight errors before uploading.")
             return

@@ -55,9 +55,10 @@ final class GooglePlayUploadService {
     ) async throws -> Bool {
         // A row removed after planning isn't work, so it's out of the denominator too (as in ASC's `buildPlan`).
         let work = targets.compactMap { target -> (target: GPUploadTarget, row: ScreenshotRow)? in
-            rows.first { $0.id == target.rowId }.map { (target.fitted(to: $0), $0) }
+            rows.first { $0.id == target.rowId }.map { (target, $0) }
         }
-        guard !work.isEmpty else { throw GooglePlayUploadError.noRowsSelected }
+        guard !targets.isEmpty else { throw GooglePlayUploadError.noRowsSelected }
+        guard !work.isEmpty else { throw GooglePlayUploadError.rowsRemoved }
         if work.count < targets.count {
             CrashReportingService.breadcrumb(.upload, "Play upload skipped removed rows", data: ["count": targets.count - work.count])
         }
@@ -153,7 +154,8 @@ final class GooglePlayUploadService {
         screenshots.reserveCapacity(target.templateCount)
         await context.prepareBackground()
 
-        for templateIndex in 0..<target.templateCount {
+        // Bounded by the row too: a target planned from an older snapshot must not index past its end.
+        for templateIndex in 0..<min(target.templateCount, context.row.templates.count) {
             try Task.checkCancellation()
             emit(String(localized: "Rendering \(target.rowLabel) · \(language.label) · \(templateIndex + 1)/\(target.templateCount)", comment: "Upload progress. Placeholders: row name, language, screenshot number, screenshot count."))
             let image = context.templateImage(at: templateIndex)

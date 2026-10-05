@@ -89,7 +89,7 @@ final class AppStoreConnectScreenshotSyncService {
         // Connect — is not work, so it must not be in the denominator either. `previewRenderCount`
         // sizes the job before this is known; the first callback below corrects it.
         let rowsById = Dictionary(rows.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
-        let renderable = targets.compactMap { target in rowsById[target.rowId].map { (target.fitted(to: $0), $0) } }
+        let renderable = targets.compactMap { target in rowsById[target.rowId].map { (target, $0) } }
         let droppedIssues = targets.filter { rowsById[$0.rowId] == nil }.map {
             String(localized: "Skipped \($0.rowLabel) · \($0.versionLabel): its row is no longer in the project.")
         }
@@ -772,7 +772,8 @@ final class AppStoreConnectScreenshotSyncService {
         try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
         var assets: [ASCScreenshotLocalAsset] = []
         await context.prepareBackground()
-        for index in 0..<target.templateCount {
+        // Bounded by the row too: a target planned from an older snapshot must not index past its end.
+        for index in 0..<min(target.templateCount, context.row.templates.count) {
             try Task.checkCancellation()
             // Rendering needs the main actor (ImageRenderer); everything after it does not.
             let image = context.templateImage(at: index)

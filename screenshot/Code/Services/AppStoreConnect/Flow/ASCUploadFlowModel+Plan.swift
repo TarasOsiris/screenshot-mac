@@ -168,6 +168,19 @@ extension ASCUploadFlowModel {
         }
     }
 
+    /// Catches the reviewed plan up with document edits (see `StoreRowPlan.reconciling`); false when nothing is left.
+    @discardableResult
+    func reconcileDestinationPlansWithDocument() -> Bool {
+        let reviewed = destinationPlans
+        updateDestinationPlans(buildDestinationPlans(preserving: reviewed).map { destination in
+            var destination = destination
+            let reviewedRows = reviewed.first { $0.id == destination.id }?.rowPlans ?? []
+            destination.rowPlans = ASCRowPlan.reconciling(reviewedRows, with: destination.rowPlans)
+            return destination
+        })
+        return !ASCRowPlan.reconcileEmptied(reviewed.flatMap(\.rowPlans), into: destinationPlans.flatMap(\.rowPlans))
+    }
+
     func buildDestinationPlans(preserving existingPlans: [ASCDestinationPlan] = []) -> [ASCDestinationPlan] {
         selectedVersions.map { version in
             let versionLocalizations = localizationsByVersionId[version.id] ?? []
@@ -221,7 +234,10 @@ extension ASCUploadFlowModel {
                         : (existingTarget.map { $0.isEnabled || $0.candidates.isEmpty } ?? true)
                 )
             }
-            let compatiblePreserved = existingPlan?.selectedAssetType.flatMap { $0.accepts(platform: platform) ? $0 : nil }
+            // A pick that matched detection follows a resize (kept if the new size is unrecognised); an override stays.
+            let previous = existingPlan?.selectedAssetType.flatMap { $0.accepts(platform: platform) ? $0 : nil }
+            let followsDetection = existingPlan.map { $0.selectedAssetType == $0.detectedAssetType } ?? true
+            let compatiblePreserved = followsDetection ? nil : previous
             let detectedCompatible = (detected?.accepts(platform: platform) ?? false) ? detected : nil
             let detectedIncompatible = detected != nil && detectedCompatible == nil
             return ASCRowPlan(
@@ -231,7 +247,7 @@ extension ASCUploadFlowModel {
                 templateCount: row.templates.count,
                 isEnabled: existingPlan?.isEnabled ?? (row.inferredStorePlatform != .android && !detectedIncompatible),
                 detectedAssetType: detected,
-                selectedAssetType: compatiblePreserved ?? detectedCompatible ?? demoFallbackDisplayType,
+                selectedAssetType: compatiblePreserved ?? detectedCompatible ?? previous ?? demoFallbackDisplayType,
                 localeTargets: targets,
                 inferredStorePlatform: row.inferredStorePlatform
             )

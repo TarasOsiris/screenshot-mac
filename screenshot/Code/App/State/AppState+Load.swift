@@ -157,7 +157,7 @@ extension AppState {
         }
         hasCompletedInitialLoad = true
         guard let activeId = activeProjectId else { return }
-        openProject(activeId) { await AppState.loadProjectAfterQueuedWrites(activeId) }
+        openProject(activeId) { await AppState.readProjectAfterQueuedWrites(activeId) }
     }
 
     /// iCloud reload: the blocking coordinated reads (index + active project) run off the main
@@ -234,11 +234,11 @@ extension AppState {
         // A project not yet read opens like a switch: its overlay goes up before an undownloaded
         // iCloud file blocks for seconds, and saves and reloads wait on `projectOpenTask` meanwhile.
         guard writeStamps.known(for: activeId) != nil else {
-            openProject(activeId) { await AppState.loadProjectAfterQueuedWrites(activeId) }
+            openProject(activeId) { await AppState.readProjectAfterQueuedWrites(activeId) }
             return
         }
 
-        let diskData = await AppState.loadProjectAfterQueuedWrites(activeId)
+        let read = await AppState.readProjectAfterQueuedWrites(activeId)
         if Task.isCancelled { return }
         // The blocking iCloud read above can outlive a project switch — applying the old
         // project's rows now would let the next save write them into the new project's file.
@@ -247,10 +247,10 @@ extension AppState {
         // Only reload if the on-disk version is newer than our in-memory version. No overlay
         // here: this is a background re-sync of a project already on screen, and the common
         // case is that nothing changed.
-        if let diskData, let localModified = writeStamps.known(for: activeId), diskData.modifiedAt > localModified {
+        if let diskData = read.data, let localModified = writeStamps.known(for: activeId), diskData.modifiedAt > localModified {
             await loadCustomFontsAsync()
             guard !Task.isCancelled, activeProjectId == activeId else { return }
-            applyProjectData(diskData, for: activeId, origin: .remoteReload)
+            applyProjectData(diskData, for: activeId, origin: .remoteReload, readSequence: read.landedSequence)
             loadScreenshotImages()
         }
     }
@@ -290,7 +290,8 @@ extension AppState {
         return true
     }
 
-    func applyProjectData(_ data: ProjectData, for projectId: UUID, origin: ProjectLoadOrigin) {
+    /// `readSequence` is the landed writes the read reflects (see `ProjectRead`); nil means "as of now".
+    func applyProjectData(_ data: ProjectData, for projectId: UUID, origin: ProjectLoadOrigin, readSequence: Int? = nil) {
         let span = PerfSignpost.begin(
             "AppState.applyProjectData",
             "rows=\(data.rows.count) shapes=\(data.rows.reduce(0) { $0 + $1.shapes.count })"
@@ -303,10 +304,11 @@ extension AppState {
         cancelPendingDebounceTasks()
         undoManager?.removeAllActions()
         document = ProjectDocument(data)
-        writeStamps.recordWrite(
+        writeStamps.recordLoad(
             projectId,
             modifiedAt: data.modifiedAt,
-            catalogModified: PersistenceService.translationCatalogModifiedDate(projectId)
+            catalogModified: PersistenceService.translationCatalogModifiedDate(projectId),
+            sequence: readSequence ?? ProjectWriteStamps.currentLandedSequence()
         )
         // Drop any preview-mode entries that don't refer to a row in the new data.
         viewMode.reconcilePreviewingRows(against: Set(rows.map(\.id)))
@@ -345,12 +347,12 @@ extension AppState {
         scheduleSave()
     }
 
-    func loadRowsForProject(_ id: UUID, preloaded: ProjectData? = nil) {
+    func loadRowsForProject(_ id: UUID, preloaded: ProjectData? = nil, readSequence: Int? = nil) {
         let span = PerfSignpost.begin("AppState.loadRowsForProject", "preloaded=\(preloaded != nil)")
         defer { PerfSignpost.end("AppState.loadRowsForProject", span) }
         if let data = preloaded ?? PersistenceService.loadProject(id) {
             if degradedLoadProjectId == id { degradedLoadProjectId = nil }
-            applyProjectData(data, for: id, origin: .open)
+            applyProjectData(data, for: id, origin: .open, readSequence: preloaded == nil ? nil : readSequence)
         } else {
             // The project file exists but wouldn't load. Refusing to save is what stops the next
             // autosave writing this empty fallback over the real data; the alert says why.

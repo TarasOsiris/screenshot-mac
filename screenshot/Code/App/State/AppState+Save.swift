@@ -78,20 +78,30 @@ extension AppState {
     /// (a coordinated iCloud write blocks for seconds). No write can slip in between:
     /// `activeProjectSnapshotForSave` declines while a project open is in flight. Only the
     /// barrier occupies the queue, so quit's `saveQueue.sync` never waits on the work itself.
-    private static func afterQueuedWrites<T: Sendable>(_ work: @escaping @Sendable () -> T) async -> T {
-        await withCheckedContinuation { (continuation: CheckedContinuation<Void, Never>) in
-            saveQueue.async { continuation.resume() }
+    /// A project read and the landed writes it reflects, which is what its stamp must carry.
+    struct ProjectRead: Sendable {
+        let data: ProjectData?
+        let landedSequence: Int
+    }
+
+    private static func afterQueuedWrites(_ work: @escaping @Sendable () -> ProjectData?) async -> ProjectRead {
+        let sequence = await withCheckedContinuation { (continuation: CheckedContinuation<Int, Never>) in
+            saveQueue.async { continuation.resume(returning: ProjectWriteStamps.currentLandedSequence()) }
         }
-        return await Task.detached(priority: .userInitiated, operation: work).value
+        return ProjectRead(data: await Task.detached(priority: .userInitiated, operation: work).value, landedSequence: sequence)
+    }
+
+    static func readProjectAfterQueuedWrites(_ id: UUID) async -> ProjectRead {
+        await afterQueuedWrites { PersistenceService.loadProject(id) }
     }
 
     static func loadProjectAfterQueuedWrites(_ id: UUID) async -> ProjectData? {
-        await afterQueuedWrites { PersistenceService.loadProject(id) }
+        await readProjectAfterQueuedWrites(id).data
     }
 
     /// Installs a project's files from `url` before reading it — a queued save would otherwise
     /// land on top of what was just installed.
-    static func replaceProjectAfterQueuedWrites(_ id: UUID, withProjectAt url: URL) async -> ProjectData? {
+    static func replaceProjectAfterQueuedWrites(_ id: UUID, withProjectAt url: URL) async -> ProjectRead {
         await afterQueuedWrites {
             PersistenceService.copyProjectFromURL(url, to: id)
             return PersistenceService.loadProject(id)
@@ -176,7 +186,7 @@ extension AppState {
             let writeSpan = PerfSignpost.begin("AppState.saveWrite", "project=\(projectSnapshot != nil)")
             defer { PerfSignpost.end("AppState.saveWrite", writeSpan) }
             var indexError: Error?
-            var projectWrite: Result<Date?, Error>?
+            var projectWrite: Result<LandedProjectWrite, Error>?
             do { try PersistenceService.saveIndex(index) } catch { indexError = error }
             if let snapshot = projectSnapshot {
                 projectWrite = Self.writeProject(snapshot.id, data: snapshot.data)
@@ -249,23 +259,33 @@ extension AppState {
         }
     }
 
-    /// The project write every save path shares; the catalog date is what the stamp records on success.
-    nonisolated static func writeProject(_ id: UUID, data: ProjectData) -> Result<Date?, Error> {
+    struct LandedProjectWrite {
+        let sequence: Int
+        let catalogModified: Date?
+    }
+
+    /// The project write the stamping save paths share; the catalog stat runs here, off the main actor.
+    nonisolated static func writeProject(_ id: UUID, data: ProjectData) -> Result<LandedProjectWrite, Error> {
         Result {
             try PersistenceService.saveProject(id, data: data)
-            return PersistenceService.translationCatalogModifiedDate(id)
+            return LandedProjectWrite(
+                sequence: ProjectWriteStamps.nextLandedSequence(),
+                catalogModified: PersistenceService.translationCatalogModifiedDate(id)
+            )
         }
     }
 
     /// Stamps a project write only once it lands, and only while its project is still open.
-    private func finishProjectWrite(_ id: UUID, modifiedAt: Date, result: Result<Date?, Error>, inFlight: Bool = true) {
+    private func finishProjectWrite(
+        _ id: UUID, modifiedAt: Date, result: Result<LandedProjectWrite, Error>, inFlight: Bool = true
+    ) {
         if inFlight { writeStamps.endWrite(id) }
         switch result {
         case .failure(let error):
             reportProjectSaveFailure(error)
-        case .success(let catalogModified):
+        case .success(let write):
             guard activeProjectId == id else { return }
-            writeStamps.recordWrite(id, modifiedAt: modifiedAt, catalogModified: catalogModified)
+            writeStamps.recordWrite(id, modifiedAt: modifiedAt, catalogModified: write.catalogModified, sequence: write.sequence)
         }
     }
 

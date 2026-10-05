@@ -27,6 +27,10 @@ extension ASCUploadFlowModel {
     func buildScreenshotReview() async {
         errorMessage = nil
         errorDetailsText = nil
+        guard reconcileDestinationPlansWithDocument() else {
+            errorMessage = StoreUploadFailureText.rowsRemoved
+            return
+        }
         let issues = validationIssues
         guard !issues.hasErrors else {
             errorMessage = String(localized: "Fix the preflight errors before reviewing changes.")
@@ -59,6 +63,11 @@ extension ASCUploadFlowModel {
     func buildAndApplyDirectScreenshotSync(strategy: ASCSyncStrategy) async {
         errorMessage = nil
         errorDetailsText = nil
+        guard reconcileDestinationPlansWithDocument() else {
+            errorMessage = StoreUploadFailureText.rowsRemoved
+            uploadTask = nil
+            return
+        }
         let issues = validationIssues
         guard !issues.hasErrors else {
             errorMessage = String(localized: "Fix the preflight errors before uploading.")

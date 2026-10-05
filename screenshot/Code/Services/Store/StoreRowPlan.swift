@@ -21,6 +21,7 @@ nonisolated struct DocumentStamp: Equatable {
 /// locale a real candidate for that store (ASC candidates, a Play language match) — a locale
 /// that isn't toggleable can't be flipped on regardless of `isEnabled`.
 nonisolated protocol LocaleUploadTarget: Identifiable {
+    var appLocaleCode: String { get }
     var isEnabled: Bool { get set }
     var isToggleable: Bool { get }
 }
@@ -63,6 +64,26 @@ nonisolated struct StoreRowPlan<AssetType, LocaleTarget: LocaleUploadTarget>: Id
     /// button reflects and flips.
     var allToggleableLocalesEnabled: Bool {
         hasToggleableLocaleTargets && localeTargets.allSatisfy { !$0.isToggleable || $0.isEnabled }
+    }
+
+    /// Whether a reconcile took away everything the reviewed plan would have uploaded.
+    static func reconcileEmptied(_ reviewed: [Self], into reconciled: [Self]) -> Bool {
+        func hasWork(_ plans: [Self]) -> Bool { plans.contains { $0.isEnabled && $0.localeTargets.contains(where: \.isEnabled) } }
+        return hasWork(reviewed) && !hasWork(reconciled)
+    }
+
+    /// `rebuilt` narrowed to what the user reviewed: unseen rows stay out, a locale added since starts off.
+    static func reconciling(_ reviewed: [Self], with rebuilt: [Self]) -> [Self] {
+        let reviewedById = Dictionary(reviewed.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
+        return rebuilt.compactMap { plan in
+            guard let reviewedPlan = reviewedById[plan.id] else { return nil }
+            let reviewedCodes = Set(reviewedPlan.localeTargets.map(\.appLocaleCode))
+            var plan = plan
+            for index in plan.localeTargets.indices where !reviewedCodes.contains(plan.localeTargets[index].appLocaleCode) {
+                plan.localeTargets[index].isEnabled = false
+            }
+            return plan
+        }
     }
 
     mutating func setAllLocaleTargets(enabled: Bool) {

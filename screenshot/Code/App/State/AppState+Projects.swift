@@ -41,8 +41,8 @@ extension AppState {
             )
         }
         document = ProjectDocument(rows: configuredRows.isEmpty ? [makeDefaultRow()] : configuredRows)
-        // Stamped as read, so a reload before the first save lands compares instead of re-opening from disk.
-        writeStamps.recordWrite(project.id, modifiedAt: project.modifiedAt, catalogModified: nil)
+        // If the first save below fails, a reload must compare against disk rather than reopen the missing file over this.
+        writeStamps.recordLoad(project.id, modifiedAt: Date(), catalogModified: nil)
         selectRow(rows.first?.id)
         CrashReportingService.breadcrumb(.project, "Created blank project", data: ["rows": rows.count])
         AnalyticsService.capture(.projectCreated, [.source: "blank", .rowCount: rows.count])
@@ -98,24 +98,26 @@ extension AppState {
         // (`ProjectOpenProgress.showsEditorContent`) is what keeps this turn's frame cheap.
         teardownActiveProject()
         activeProjectId = id
-        openProject(id) { await AppState.loadProjectAfterQueuedWrites(id) }
+        openProject(id) { await AppState.readProjectAfterQueuedWrites(id) }
     }
 
     /// Every project transition runs through here: it supersedes any open already in flight,
     /// raises the loading phase on the caller's turn (so the overlay paints before the read
     /// stalls), then reads the project off the main thread — a large project.json must not
     /// freeze the window — and applies it if the transition is still current.
-    func openProject(_ id: UUID, loading load: @escaping @Sendable () async -> ProjectData?) {
+    func openProject(_ id: UUID, loading load: @escaping @Sendable () async -> ProjectRead) {
         projectOpenTask?.cancel()
+        // This open reads after every queued write, so a reload deferred by the one it replaces is moot.
+        reloadDeferredByOpen = false
         beginProjectOpening(for: id)
         projectOpenTask = Task { @MainActor [weak self] in
             guard let self, !Task.isCancelled, self.activeProjectId == id else { return }
             self.projectOpen.advance(to: .reading)
             // No paint hop needed here: every `load` suspends off the main actor immediately
             // (the save-queue barrier), so the overlay commits while the read runs.
-            let data = await load()
+            let read = await load()
             guard !Task.isCancelled, self.activeProjectId == id else { return }
-            await self.loadProjectContents(for: id, preloaded: data)
+            await self.loadProjectContents(for: id, preloaded: read)
             // A superseded open must leave the newer open's handle alone: saves and reloads wait on it.
             guard !Task.isCancelled, self.activeProjectId == id else { return }
             self.projectOpenTask = nil
@@ -263,8 +265,11 @@ extension AppState {
     /// restore it over the incoming one, and deleting the last project has nothing to clear it.
     private func teardownActiveProject() {
         // An open of the outgoing project can't finish now, and only it would clear its own handle.
-        projectOpenTask?.cancel()
-        projectOpenTask = nil
+        if let outgoingOpen = projectOpenTask {
+            outgoingOpen.cancel()
+            projectOpenTask = nil
+            projectOpen.finish()
+        }
         reloadDeferredByOpen = false
         presentation.dismissAll()
         textEdit.isActive = false
@@ -279,11 +284,11 @@ extension AppState {
                           isRemote: PersistenceService.isUsingICloud)
     }
 
-    func loadProjectContents(for id: UUID, preloaded: ProjectData?) async {
+    func loadProjectContents(for id: UUID, preloaded read: ProjectRead) async {
         projectOpen.advance(to: .fonts)
         await loadCustomFontsAsync()
         guard activeProjectId == id else { return }
-        loadRowsForProject(id, preloaded: preloaded)
+        loadRowsForProject(id, preloaded: read.data, readSequence: read.landedSequence)
         // The chrome (locale bar, row headers) and canvas only need the project
         // *structure* — rows + localeState — which is now applied. Reveal the UI
         // immediately so a project with many languages / large images doesn't keep

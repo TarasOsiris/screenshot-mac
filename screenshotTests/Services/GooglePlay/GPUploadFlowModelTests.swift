@@ -439,7 +439,27 @@ struct GPUploadFlowModelTests {
         await h.model.startUpload()
 
         #expect(uploader.callCount == 0)
-        #expect(h.model.errorMessage != nil)
+        #expect(h.model.errorMessage == StoreUploadFailureText.rowsRemoved)
+    }
+
+    @Test func aLocaleRemovedAfterPlanningIsNotUploaded() async {
+        let uploader = FakeGPUploader()
+        let h = await readyHarness(uploader: uploader)
+        h.document.localeState = localeState(["en"])
+
+        await h.model.startUpload()
+
+        #expect(h.model.uploadSummary?.counts.languages == 1)
+    }
+
+    @Test func aLocaleAddedAfterPlanningStaysOffUntilReviewed() async {
+        let uploader = FakeGPUploader()
+        let h = await readyHarness(uploader: uploader)
+        h.document.localeState = localeState(["en", "de", "fr"])
+
+        await h.model.startUpload()
+
+        #expect(h.model.uploadSummary?.counts.languages == 2)
     }
 
     /// The summary reports what the service actually did — Google Play can reject the draft flag

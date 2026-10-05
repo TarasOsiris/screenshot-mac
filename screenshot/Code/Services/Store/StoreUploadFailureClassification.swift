@@ -51,6 +51,7 @@ nonisolated struct StoreUploadFailure: Equatable {
             case .renderFailed: return StoreUploadFailure(kind: .renderFailed, errorCode: nil)
             case .unreadableImages: return StoreUploadFailure(kind: .unreadableImages, errorCode: nil)
             case .noRowsSelected: return StoreUploadFailure(kind: .nothingSelected, errorCode: nil)
+            case .rowsRemoved: return StoreUploadFailure(kind: .stalePlan, errorCode: nil)
             case .requestFailed(let context): return requestFailure(status: context.httpStatus)
             }
         case let error as AppStoreConnectUploadError:

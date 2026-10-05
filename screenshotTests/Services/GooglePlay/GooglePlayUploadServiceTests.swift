@@ -263,23 +263,6 @@ struct GooglePlayUploadServiceTests {
         #expect(log.entries.last?.completedSteps == 1)
     }
 
-    /// A row that lost screenshots after planning renders what it has instead of indexing past its end.
-    @Test func aRowThatLostTemplatesUploadsOnlyWhatItStillHas() async throws {
-        let h = try Harness()
-        let planned = makeRow(templates: 3)
-        var live = planned
-        live.templates.removeLast(2)
-        let log = ProgressLog()
-
-        _ = try await h.service.upload(
-            packageName: packageName, targets: [makeTarget(planned, [english])], sendForReview: true,
-            rows: [live], source: StubGPDocument(rows: [live])
-        ) { log.entries.append($0) }
-
-        #expect(h.server.calls.map(\.route) == [openEdit, clearListing(english), uploadImage(english), commitEdit])
-        #expect(log.entries.allSatisfy { $0.totalSteps == 1 })
-    }
-
     @Test func targetsWhoseRowsAreAllGoneFailBeforeOpeningAnEdit() async throws {
         let h = try Harness()
         let removed = makeRow(templates: 1)
@@ -291,8 +274,8 @@ struct GooglePlayUploadServiceTests {
             ) { _ in }
         }
 
-        guard case .noRowsSelected? = error as? GooglePlayUploadError else {
-            Issue.record("expected noRowsSelected, got \(String(describing: error))")
+        guard case .rowsRemoved? = error as? GooglePlayUploadError else {
+            Issue.record("expected rowsRemoved, got \(String(describing: error))")
             return
         }
         #expect(h.server.calls.isEmpty)
