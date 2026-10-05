@@ -31,17 +31,16 @@ final class ProjectWriteStamps {
         landed = nil
     }
 
-    /// What was read from disk; `sequence` is the landed writes the read already reflects.
-    func recordLoad(_ projectId: UUID, modifiedAt: Date, catalogModified: Date?, sequence: Int = ProjectWriteStamps.currentLandedSequence()) {
-        landed = (projectId, modifiedAt, sequence)
+    /// What was read from disk; `sequence` is the landed writes the read reflects, nil meaning all so far.
+    func recordLoad(_ projectId: UUID, modifiedAt: Date, catalogModified: Date?, sequence: Int? = nil) {
+        landed = (projectId, modifiedAt, sequence ?? Self.currentLandedSequence())
         recordCatalogModified(projectId, at: catalogModified)
     }
 
     /// A write that reached disk before the current stamp's (a late completion) changes nothing.
     func recordWrite(_ projectId: UUID, modifiedAt: Date, catalogModified: Date?, sequence: Int) {
         if let landed, landed.projectId == projectId, landed.sequence >= sequence { return }
-        landed = (projectId, modifiedAt, sequence)
-        recordCatalogModified(projectId, at: catalogModified)
+        recordLoad(projectId, modifiedAt: modifiedAt, catalogModified: catalogModified, sequence: sequence)
     }
 
     func catalogModified(for projectId: UUID) -> Date? {

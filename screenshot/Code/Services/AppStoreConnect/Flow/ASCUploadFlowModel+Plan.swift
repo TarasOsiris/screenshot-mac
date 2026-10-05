@@ -169,7 +169,6 @@ extension ASCUploadFlowModel {
     }
 
     /// Catches the reviewed plan up with document edits (see `StoreRowPlan.reconciling`); false when nothing is left.
-    @discardableResult
     func reconcileDestinationPlansWithDocument() -> Bool {
         let reviewed = destinationPlans
         updateDestinationPlans(buildDestinationPlans(preserving: reviewed).map { destination in
@@ -234,10 +233,10 @@ extension ASCUploadFlowModel {
                         : (existingTarget.map { $0.isEnabled || $0.candidates.isEmpty } ?? true)
                 )
             }
-            // A pick that matched detection follows a resize (kept if the new size is unrecognised); an override stays.
-            let previous = existingPlan?.selectedAssetType.flatMap { $0.accepts(platform: platform) ? $0 : nil }
-            let followsDetection = existingPlan.map { $0.selectedAssetType == $0.detectedAssetType } ?? true
-            let compatiblePreserved = followsDetection ? nil : previous
+            let compatible = { (type: ASCDisplayType) in type.accepts(platform: platform) ? type : nil }
+            // Kept when the new size is unrecognised, so preflight reports the mismatch.
+            let previous = existingPlan?.selectedAssetType.flatMap(compatible)
+            let override = (existingPlan?.selectionOverride ?? nil).flatMap(compatible)
             let detectedCompatible = (detected?.accepts(platform: platform) ?? false) ? detected : nil
             let detectedIncompatible = detected != nil && detectedCompatible == nil
             return ASCRowPlan(
@@ -247,7 +246,7 @@ extension ASCUploadFlowModel {
                 templateCount: row.templates.count,
                 isEnabled: existingPlan?.isEnabled ?? (row.inferredStorePlatform != .android && !detectedIncompatible),
                 detectedAssetType: detected,
-                selectedAssetType: compatiblePreserved ?? detectedCompatible ?? previous ?? demoFallbackDisplayType,
+                selectedAssetType: override ?? detectedCompatible ?? previous ?? demoFallbackDisplayType,
                 localeTargets: targets,
                 inferredStorePlatform: row.inferredStorePlatform
             )

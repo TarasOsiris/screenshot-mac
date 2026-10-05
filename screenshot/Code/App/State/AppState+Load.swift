@@ -250,7 +250,7 @@ extension AppState {
         if let diskData = read.data, let localModified = writeStamps.known(for: activeId), diskData.modifiedAt > localModified {
             await loadCustomFontsAsync()
             guard !Task.isCancelled, activeProjectId == activeId else { return }
-            applyProjectData(diskData, for: activeId, origin: .remoteReload, readSequence: read.landedSequence)
+            applyProjectData(diskData, for: activeId, origin: .remoteReload, read: read)
             loadScreenshotImages()
         }
     }
@@ -290,8 +290,8 @@ extension AppState {
         return true
     }
 
-    /// `readSequence` is the landed writes the read reflects (see `ProjectRead`); nil means "as of now".
-    func applyProjectData(_ data: ProjectData, for projectId: UUID, origin: ProjectLoadOrigin, readSequence: Int? = nil) {
+    /// `read` carries what the stamp records about the read (see `ProjectRead`); nil reads it now.
+    func applyProjectData(_ data: ProjectData, for projectId: UUID, origin: ProjectLoadOrigin, read: ProjectRead? = nil) {
         let span = PerfSignpost.begin(
             "AppState.applyProjectData",
             "rows=\(data.rows.count) shapes=\(data.rows.reduce(0) { $0 + $1.shapes.count })"
@@ -307,8 +307,8 @@ extension AppState {
         writeStamps.recordLoad(
             projectId,
             modifiedAt: data.modifiedAt,
-            catalogModified: PersistenceService.translationCatalogModifiedDate(projectId),
-            sequence: readSequence ?? ProjectWriteStamps.currentLandedSequence()
+            catalogModified: read.map(\.catalogModified) ?? PersistenceService.translationCatalogModifiedDate(projectId),
+            sequence: read?.landedSequence
         )
         // Drop any preview-mode entries that don't refer to a row in the new data.
         viewMode.reconcilePreviewingRows(against: Set(rows.map(\.id)))
@@ -347,12 +347,12 @@ extension AppState {
         scheduleSave()
     }
 
-    func loadRowsForProject(_ id: UUID, preloaded: ProjectData? = nil, readSequence: Int? = nil) {
-        let span = PerfSignpost.begin("AppState.loadRowsForProject", "preloaded=\(preloaded != nil)")
+    func loadRowsForProject(_ id: UUID, preloaded read: ProjectRead? = nil) {
+        let span = PerfSignpost.begin("AppState.loadRowsForProject", "preloaded=\(read?.data != nil)")
         defer { PerfSignpost.end("AppState.loadRowsForProject", span) }
-        if let data = preloaded ?? PersistenceService.loadProject(id) {
+        if let data = read?.data ?? PersistenceService.loadProject(id) {
             if degradedLoadProjectId == id { degradedLoadProjectId = nil }
-            applyProjectData(data, for: id, origin: .open, readSequence: preloaded == nil ? nil : readSequence)
+            applyProjectData(data, for: id, origin: .open, read: read?.data == nil ? nil : read)
         } else {
             // The project file exists but wouldn't load. Refusing to save is what stops the next
             // autosave writing this empty fallback over the real data; the alert says why.

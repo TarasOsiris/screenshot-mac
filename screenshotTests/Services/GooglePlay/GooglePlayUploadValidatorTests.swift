@@ -8,7 +8,7 @@ struct GooglePlayUploadValidatorTests {
     private typealias Target = GPLocaleTarget
 
     private func locale(_ play: String, enabled: Bool = true) -> Target {
-        Target(appLocaleCode: play, appLocaleLabel: play, playLanguageCode: play, isEnabled: enabled)
+        makeGPLocaleTarget(play, enabled: enabled)
     }
 
     /// A project locale Play has no listing language for.
@@ -25,18 +25,9 @@ struct GooglePlayUploadValidatorTests {
         count: Int = 3,
         enabled: Bool = true,
         type: GPImageType = .phoneScreenshots,
-        locales: [Target] = []
+        locales: [Target] = [makeGPLocaleTarget("en-US")]
     ) -> Plan {
-        Plan(
-            id: UUID(),
-            rowLabel: "Row",
-            rowSize: size,
-            templateCount: count,
-            isEnabled: enabled,
-            detectedAssetType: type,
-            selectedAssetType: type,
-            localeTargets: locales.isEmpty ? [locale("en-US")] : locales
-        )
+        makeGPRowPlan(size: size, count: count, enabled: enabled, type: type, locales: locales)
     }
 
     @Test func validPlanHasNoErrors() {

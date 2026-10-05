@@ -363,3 +363,21 @@ func pemEncoded(_ der: Data, label: String) -> String {
     let b64 = der.base64EncodedString(options: [.lineLength64Characters, .endLineWithLineFeed])
     return "-----BEGIN \(label)-----\n\(b64)\n-----END \(label)-----\n"
 }
+
+func makeGPLocaleTarget(_ play: String, enabled: Bool = true) -> GPLocaleTarget {
+    GPLocaleTarget(appLocaleCode: play, appLocaleLabel: play, playLanguageCode: play, isEnabled: enabled)
+}
+
+func makeGPRowPlan(
+    id: UUID = UUID(),
+    size: CGSize = CGSize(width: 1080, height: 1920),
+    count: Int = 3,
+    enabled: Bool = true,
+    type: GPImageType = .phoneScreenshots,
+    locales: [GPLocaleTarget] = [makeGPLocaleTarget("en-US")]
+) -> GPRowPlan {
+    GPRowPlan(
+        id: id, rowLabel: "Row", rowSize: size, templateCount: count, isEnabled: enabled,
+        detectedAssetType: type, selectedAssetType: type, localeTargets: locales
+    )
+}

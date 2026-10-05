@@ -772,8 +772,7 @@ final class AppStoreConnectScreenshotSyncService {
         try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
         var assets: [ASCScreenshotLocalAsset] = []
         await context.prepareBackground()
-        // Bounded by the row too: a target planned from an older snapshot must not index past its end.
-        for index in 0..<min(target.templateCount, context.row.templates.count) {
+        for index in context.templateIndices.prefix(target.templateCount) {
             try Task.checkCancellation()
             // Rendering needs the main actor (ImageRenderer); everything after it does not.
             let image = context.templateImage(at: index)

@@ -125,7 +125,7 @@ final class DetachedProjectHost: ProjectMutationHost {
         let monitor = state.iCloudMonitor
         let id = projectId
         let owner = state
-        // The shared save queue, not a private one: `loadProjectAfterQueuedWrites` puts its
+        // The shared save queue, not a private one: `readProjectAfterQueuedWrites` puts its
         // barrier here too, so an open enqueued after this write reads these bytes.
         AppState.saveQueue.async {
             do {
@@ -229,7 +229,7 @@ final class ProjectCheckout: RowRenderSource {
 
         // Drains the save-queue barrier first, so a write for a project the user just switched
         // away from has landed before we read it.
-        guard let data = await AppState.loadProjectAfterQueuedWrites(projectId) else {
+        guard let data = await AppState.readProjectAfterQueuedWrites(projectId).data else {
             throw ProjectCheckoutError.unreadable(name: project.name)
         }
         // Without the project's own fonts registered, its custom-font text renders in the system

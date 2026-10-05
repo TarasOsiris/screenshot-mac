@@ -79,7 +79,7 @@ struct AutosaveAsyncTests {
             queuedWriteFinished.withLock { $0 = true }
         }
 
-        _ = await AppState.loadProjectAfterQueuedWrites(UUID())
+        _ = await AppState.readProjectAfterQueuedWrites(UUID())
 
         #expect(queuedWriteFinished.withLock { $0 })
     }

@@ -242,8 +242,7 @@ final class GPUploadFlowModel {
                 templateCount: row.templates.count,
                 isEnabled: existingPlan?.isEnabled ?? (row.inferredStorePlatform != .apple),
                 detectedAssetType: detected,
-                // A pick that matched detection follows a resize; a deliberate override stays.
-                selectedAssetType: existingPlan.flatMap { $0.selectedAssetType == $0.detectedAssetType ? nil : $0.selectedAssetType } ?? detected,
+                selectedAssetType: existingPlan?.selectionOverride ?? detected,
                 localeTargets: targets,
                 inferredStorePlatform: row.inferredStorePlatform
             )
@@ -281,13 +280,17 @@ final class GPUploadFlowModel {
         GPUploadCounts(targets: buildUploadTargets())
     }
 
+    /// Catches the reviewed plan up with document edits (see `StoreRowPlan.reconciling`); false when nothing is left.
+    func reconcileRowPlansWithDocument() -> Bool {
+        let reviewed = rowPlans
+        rowPlans = GPRowPlan.reconciling(reviewed, with: buildRowPlans(preserving: reviewed))
+        return !GPRowPlan.reconcileEmptied(reviewed, into: rowPlans)
+    }
+
     func startUpload() async {
         errorMessage = nil
         errorDetailsText = nil
-        // The document can change under the plan (an MCP agent editing the project).
-        let reviewed = rowPlans
-        rowPlans = GPRowPlan.reconciling(reviewed, with: buildRowPlans(preserving: reviewed))
-        guard !GPRowPlan.reconcileEmptied(reviewed, into: rowPlans) else {
+        guard reconcileRowPlansWithDocument() else {
             errorMessage = StoreUploadFailureText.rowsRemoved
             return
         }

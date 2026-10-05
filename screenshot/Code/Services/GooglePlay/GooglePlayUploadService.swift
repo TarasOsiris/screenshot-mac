@@ -154,8 +154,7 @@ final class GooglePlayUploadService {
         screenshots.reserveCapacity(target.templateCount)
         await context.prepareBackground()
 
-        // Bounded by the row too: a target planned from an older snapshot must not index past its end.
-        for templateIndex in 0..<min(target.templateCount, context.row.templates.count) {
+        for templateIndex in context.templateIndices.prefix(target.templateCount) {
             try Task.checkCancellation()
             emit(String(localized: "Rendering \(target.rowLabel) · \(language.label) · \(templateIndex + 1)/\(target.templateCount)", comment: "Upload progress. Placeholders: row name, language, screenshot number, screenshot count."))
             let image = context.templateImage(at: templateIndex)

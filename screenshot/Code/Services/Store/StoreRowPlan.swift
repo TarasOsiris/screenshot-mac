@@ -75,7 +75,7 @@ nonisolated struct StoreRowPlan<AssetType, LocaleTarget: LocaleUploadTarget>: Id
     /// `rebuilt` narrowed to what the user reviewed: unseen rows stay out, a locale added since starts off.
     static func reconciling(_ reviewed: [Self], with rebuilt: [Self]) -> [Self] {
         let reviewedById = Dictionary(reviewed.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
-        return rebuilt.compactMap { plan in
+        return rebuilt.compactMap { plan -> Self? in
             guard let reviewedPlan = reviewedById[plan.id] else { return nil }
             let reviewedCodes = Set(reviewedPlan.localeTargets.map(\.appLocaleCode))
             var plan = plan
@@ -90,5 +90,12 @@ nonisolated struct StoreRowPlan<AssetType, LocaleTarget: LocaleUploadTarget>: Id
         for index in localeTargets.indices where localeTargets[index].isToggleable {
             localeTargets[index].isEnabled = enabled
         }
+    }
+}
+
+extension StoreRowPlan where AssetType: Equatable {
+    /// The user's pick when it differs from detection; nil when it merely followed detection.
+    var selectionOverride: AssetType? {
+        selectedAssetType == detectedAssetType ? nil : selectedAssetType
     }
 }

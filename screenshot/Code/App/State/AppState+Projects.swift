@@ -83,7 +83,7 @@ extension AppState {
         // Write the OLD project while activeProjectId still points at it, then switch, then
         // persist the index so it records the NEW activeProjectId. Both writes are file-
         // coordinated under iCloud, where they block for seconds, so neither may run on the
-        // click's runloop turn — `loadProjectAfterQueuedWrites` is what keeps the switch's
+        // click's runloop turn — `readProjectAfterQueuedWrites` is what keeps the switch's
         // read behind them.
         saveCurrentProjectAsync()
         switchToProject(id)
@@ -265,8 +265,8 @@ extension AppState {
     /// restore it over the incoming one, and deleting the last project has nothing to clear it.
     private func teardownActiveProject() {
         // An open of the outgoing project can't finish now, and only it would clear its own handle.
-        if let outgoingOpen = projectOpenTask {
-            outgoingOpen.cancel()
+        if projectOpenTask != nil {
+            projectOpenTask?.cancel()
             projectOpenTask = nil
             projectOpen.finish()
         }
@@ -288,7 +288,7 @@ extension AppState {
         projectOpen.advance(to: .fonts)
         await loadCustomFontsAsync()
         guard activeProjectId == id else { return }
-        loadRowsForProject(id, preloaded: read.data, readSequence: read.landedSequence)
+        loadRowsForProject(id, preloaded: read)
         // The chrome (locale bar, row headers) and canvas only need the project
         // *structure* — rows + localeState — which is now applied. Reveal the UI
         // immediately so a project with many languages / large images doesn't keep
