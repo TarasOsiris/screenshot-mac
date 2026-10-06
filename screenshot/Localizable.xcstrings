@@ -188354,6 +188354,93 @@
         }
       }
     },
+    "Format, size, layout and background are remembered from your last showcase export, including a picked background image." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Format, Größe, Layout und Hintergrund werden von deinem letzten Showcase-Export übernommen – auch ein gewähltes Hintergrundbild."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "El formato, el tamaño, el diseño y el fondo se recuerdan de tu última exportación de escaparate, incluida una imagen de fondo elegida."
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "قالب، اندازه، چیدمان و پس‌زمینه از آخرین خروجی ویترین شما به خاطر سپرده می‌شوند، از جمله تصویر پس‌زمینه‌ای که انتخاب کرده‌اید."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Le format, la taille, la mise en page et l’arrière-plan de votre dernier export vitrine sont mémorisés, y compris une image d’arrière-plan choisie."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Formato, dimensione, layout e sfondo vengono ricordati dall’ultima esportazione vetrina, compresa un’immagine di sfondo scelta."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "フォーマット、サイズ、レイアウト、背景は、選択した背景画像も含め、前回のショーケース書き出しの設定が記憶されます。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "형식, 크기, 레이아웃, 배경은 선택한 배경 이미지를 포함해 마지막 쇼케이스 내보내기 설정이 기억됩니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Formato, tamanho, layout e fundo são lembrados da sua última exportação de vitrine, incluindo uma imagem de fundo escolhida."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Формат, размер, макет и фон запоминаются с последнего экспорта витрины, включая выбранное фоновое изображение."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Biçim, boyut, düzen ve arka plan, seçilen arka plan görseli dahil olmak üzere son vitrin dışa aktarımınızdan hatırlanır."
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Формат, розмір, макет і фон запам’ятовуються з останнього експорту вітрини, зокрема вибране фонове зображення."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "格式、尺寸、布局和背景会沿用你上次的展示图导出设置，包括所选的背景图片。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "格式、尺寸、版面配置和背景會沿用你上次的展示圖輸出設定，包括所選的背景圖片。"
+          }
+        }
+      }
+    },
+    "If every version of the app is live or locked for review, the version step offers **Create Version** — it prefills the next number for each platform the app ships on, and you can edit it before creating." : {
+      "localizations" : {
+
+      }
+    },
     "This version has no iPhone Duo screenshots. Starting April 2027, App Store submissions must include them." : {
       "localizations" : {
         "de" : {

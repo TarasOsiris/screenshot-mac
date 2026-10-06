@@ -125,7 +125,8 @@ extension ContentView {
             },
             localeCode: state.localeState.activeLocaleCode,
             localeState: state.localeState,
-            availableFontFamilies: state.availableFontFamilySet
+            availableFontFamilies: state.availableFontFamilySet,
+            restored: presentation.restoredSettings
         ) { config, backgroundImage, selectedRowIds, excludedTemplateIds, destination in
             #if os(iOS)
             // Keep the showcase sheet open; the chosen destination (Photos/Files/Share)
@@ -160,7 +161,8 @@ extension ContentView {
         }
         showcasePresentation = ShowcasePresentation(
             mode: mode,
-            candidateRows: candidates
+            candidateRows: candidates,
+            restoredSettings: ShowcaseExportSettingsStore().load()
         )
     }
 

@@ -30,8 +30,9 @@ struct ShowcaseExportSheet: View {
     #else
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     #endif
-    @State private var config = ShowcaseExportConfig()
+    @State private var config: ShowcaseExportConfig
     @State private var backgroundImage: NSImage?
+    @State private var savedBackgroundImage: NSImage?
     @State private var selectedRowIds: Set<UUID>
     @State private var excludedTemplateIds: Set<UUID> = []
     @State private var showingResetConfirmation = false
@@ -42,6 +43,7 @@ struct ShowcaseExportSheet: View {
         localeCode: String?,
         localeState: LocaleState,
         availableFontFamilies: Set<String>,
+        restored: ShowcaseExportSettingsStore.Restored,
         onExport: @escaping (ShowcaseExportConfig, NSImage?, Set<UUID>, Set<UUID>, ExportDestination) -> Void
     ) {
         self.candidateRows = candidateRows
@@ -51,6 +53,9 @@ struct ShowcaseExportSheet: View {
         self.availableFontFamilies = availableFontFamilies
         self.onExport = onExport
         _selectedRowIds = State(initialValue: Set(candidateRows.map(\.id)))
+        _config = State(initialValue: restored.config)
+        _backgroundImage = State(initialValue: restored.backgroundImage)
+        _savedBackgroundImage = State(initialValue: restored.backgroundImage)
     }
 
     private var transientBackgroundImages: [String: NSImage] {
@@ -223,6 +228,12 @@ struct ShowcaseExportSheet: View {
     #endif
 
     private func export(to destination: ExportDestination) {
+        ShowcaseExportSettingsStore().save(
+            config: config,
+            backgroundImage: backgroundImage,
+            backgroundImageChanged: backgroundImage !== savedBackgroundImage
+        )
+        savedBackgroundImage = backgroundImage
         onExport(config, backgroundImage, selectedRowIds, excludedTemplateIds, destination)
     }
 

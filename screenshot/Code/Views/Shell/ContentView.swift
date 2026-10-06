@@ -16,6 +16,8 @@ struct ContentView: View {
         let id = UUID()
         let mode: ShowcaseExportMode
         let candidateRows: [ScreenshotRow]
+        /// Read once per presentation: the sheet's init runs on every parent body pass.
+        let restoredSettings: ShowcaseExportSettingsStore.Restored
     }
 
     @Environment(AppState.self) var state

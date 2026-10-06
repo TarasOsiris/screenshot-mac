@@ -493,6 +493,7 @@ extension HelpSection {
                 .bullet("Export menu ▸ **Export Rows ▸ Showcase** for the whole project, or a row menu ▸ **Export Row ▸ Showcase** for one row."),
                 .bullet("The sheet previews the result live as you change settings."),
                 .bullet("Pick which rows to include (with **All** / **None**), then use the numbered chips to drop individual screenshots from the composition — the counter shows how many of the row's screenshots are in."),
+                .bullet("Format, size, layout and background are remembered from your last showcase export, including a picked background image."),
                 .bullet("**Reset to defaults** restores the layout settings and leaves your row selection alone."),
                 .heading("Shape and size"),
                 .bullet("**Format** presets: **Social** (1.91:1), **Square**, **Portrait** (4:5), **Story** (9:16), **YouTube** (16:9), and **Pinterest** (2:3)."),

@@ -2,8 +2,8 @@ import Foundation
 import SwiftUI
 
 struct ShowcaseExportConfig: BackgroundFillable {
-    /// In-memory key used for a user-picked background image. Never persisted;
-    /// resolved at render time via the screenshotImages dictionary.
+    /// Key for a user-picked background image, resolved at render time via the screenshotImages
+    /// dictionary; `ShowcaseExportSettingsStore` keeps the image itself outside any project.
     static let transientBackgroundKey = "__showcase_bg__"
 
     var backgroundStyle: BackgroundStyle = .color
@@ -17,6 +17,40 @@ struct ShowcaseExportConfig: BackgroundFillable {
     /// Maximum long-edge in pixels for the exported image. 0 means no cap (render at full layout
     /// resolution, which can easily exceed 4000px for multi-template iPhone rows).
     var maxOutputDimension: Double = ShowcaseOutputSize.medium.maxDimension
+}
+
+extension ShowcaseExportConfig: Codable {
+    enum CodingKeys: String, CodingKey {
+        case backgroundStyle, bgColor, gradientConfig, backgroundImageConfig
+        case spacingPercent, paddingPercent, cornerRadiusPercent, aspectRatio, maxOutputDimension
+    }
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        let defaults = ShowcaseExportConfig()
+        backgroundStyle = try c.decodeIfPresent(BackgroundStyle.self, forKey: .backgroundStyle) ?? defaults.backgroundStyle
+        bgColor = try c.decodeIfPresent(CodableColor.self, forKey: .bgColor)?.color ?? defaults.bgColor
+        gradientConfig = try c.decodeIfPresent(GradientConfig.self, forKey: .gradientConfig) ?? defaults.gradientConfig
+        backgroundImageConfig = try c.decodeIfPresent(BackgroundImageConfig.self, forKey: .backgroundImageConfig) ?? defaults.backgroundImageConfig
+        spacingPercent = try c.decodeIfPresent(Double.self, forKey: .spacingPercent) ?? defaults.spacingPercent
+        paddingPercent = try c.decodeIfPresent(Double.self, forKey: .paddingPercent) ?? defaults.paddingPercent
+        cornerRadiusPercent = try c.decodeIfPresent(Double.self, forKey: .cornerRadiusPercent) ?? defaults.cornerRadiusPercent
+        aspectRatio = try c.decodeIfPresent(Double.self, forKey: .aspectRatio) ?? defaults.aspectRatio
+        maxOutputDimension = try c.decodeIfPresent(Double.self, forKey: .maxOutputDimension) ?? defaults.maxOutputDimension
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var c = encoder.container(keyedBy: CodingKeys.self)
+        try c.encode(backgroundStyle, forKey: .backgroundStyle)
+        try c.encode(CodableColor(bgColor), forKey: .bgColor)
+        try c.encode(gradientConfig, forKey: .gradientConfig)
+        try c.encode(backgroundImageConfig, forKey: .backgroundImageConfig)
+        try c.encode(spacingPercent, forKey: .spacingPercent)
+        try c.encode(paddingPercent, forKey: .paddingPercent)
+        try c.encode(cornerRadiusPercent, forKey: .cornerRadiusPercent)
+        try c.encode(aspectRatio, forKey: .aspectRatio)
+        try c.encode(maxOutputDimension, forKey: .maxOutputDimension)
+    }
 }
 
 /// Where a rendered export goes. iPad-only: macOS always writes to a chosen folder, so the
