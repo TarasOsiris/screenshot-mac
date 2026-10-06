@@ -195,7 +195,8 @@ nonisolated enum DeviceFrameCatalogDefinitions {
             modelSpec: nil,
             landscapeOnly: false,
             landscapeRotationDegrees: 90,
-            suggestedSizePreset: nil
+            suggestedSizePreset: "2007x2853",
+            claimsSuggestedSize: true
         ),
         DeviceFrameCatalogEntry(
             groupId: "iphoneduoclosed",
@@ -207,7 +208,8 @@ nonisolated enum DeviceFrameCatalogDefinitions {
             modelSpec: nil,
             landscapeOnly: false,
             landscapeRotationDegrees: 270,
-            suggestedSizePreset: nil
+            suggestedSizePreset: "1398x2034",
+            claimsSuggestedSize: true
         ),
         DeviceFrameCatalogEntry(
             groupId: "iphoneduoopen",

@@ -251,8 +251,14 @@ private struct BlankProjectRowCard: View {
     }
 
     private func applySizePreset(_ preset: String) {
+        if let frame = DeviceFrameCatalog.dedicatedFrame(forSizePreset: preset, matchingColorOf: draft.deviceFrameId) {
+            draft.deviceCategory = frame.fallbackCategory
+            draft.deviceFrameId = frame.id
+            return
+        }
+        let keepsDedicatedFrame = draft.deviceFrameId.map(DeviceFrameCatalog.isDedicatedToOneSize) ?? false
         guard let category = DeviceCategory.suggestedCategory(forSizePreset: preset),
-              category != draft.deviceCategory else { return }
+              category != draft.deviceCategory || keepsDedicatedFrame else { return }
         draft.deviceCategory = category
         draft.deviceFrameId = DeviceFrameCatalog.firstPortraitFrameId(for: category)
     }

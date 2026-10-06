@@ -172,6 +172,8 @@ nonisolated struct DeviceFrameCatalogEntry {
     let suggestedSizePreset: String?
     /// Picker order is newest-first, so the category default is flagged rather than inferred from order.
     var isCategoryDefault = false
+    /// Only this device produces `suggestedSizePreset`, so a screenshot at that size gets this frame.
+    var claimsSuggestedSize = false
 }
 
 /// A single real device frame image — one entry per PNG file.

@@ -12,8 +12,19 @@ import Foundation
 enum ScreenshotDeviceDetector {
     static func preferredImportFrame(for image: NSImage, in row: ScreenshotRow, detectedCategory: DeviceCategory) -> DeviceFrame? {
         let isLandscape = imageIsLandscape(image)
+        let commonFrameId = mostCommonDeviceFrameId(in: row, matching: detectedCategory)
 
-        if let frameId = mostCommonDeviceFrameId(in: row, matching: detectedCategory),
+        if let rep = image.representations.first,
+           let frame = DeviceFrameCatalog.dedicatedFrame(
+               forScreenshotWidth: rep.pixelsWide,
+               height: rep.pixelsHigh,
+               matchingColorOf: commonFrameId ?? row.defaultDeviceFrameId
+           ),
+           frame.fallbackCategory == detectedCategory {
+            return frame
+        }
+
+        if let frameId = commonFrameId,
            let frame = DeviceFrameCatalog.frame(for: frameId) {
             return landscapeVariant(of: frame, isLandscape: isLandscape)
         }
@@ -68,6 +79,8 @@ enum ScreenshotDeviceDetector {
         var map = [String: DeviceCategory]()
         // iPhone
         for size in [
+            "1398x2034",  // iPhone Duo outer display
+            "2007x2853",  // iPhone Duo inner display
             "750x1334",   // iPhone SE / 8
             "828x1792",   // iPhone XR / 11
             "1080x1920",  // iPhone 6/7/8 Plus
@@ -103,7 +116,7 @@ enum ScreenshotDeviceDetector {
         guard pw > 0, ph > 0 else { return nil }
         // Normalize to portrait for lookup
         let (w, h) = pw > ph ? (ph, pw) : (pw, ph)
-        if let category = knownScreenshotSizes["\(w)x\(h)"] { return category }
+        if let category = knownScreenshotSizes[portraitSizeKey(width: w, height: h)] { return category }
         // Heuristic fallback for phones
         let ratio = CGFloat(h) / CGFloat(w)
         if w >= 640 && w <= 1600 && ratio >= 1.7 && ratio <= 2.4 { return .iphone }

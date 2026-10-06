@@ -18,6 +18,9 @@ extension ASCUploadFlowModel {
                 hint: String(localized: "To test them, use Export ▸ Upload A/B Test to App Store Connect.")
             ))
         }
+        issues += destinationPlans.filter(remoteScreenshotCountsSettled).compactMap { destination in
+            ASCDuoReadiness.issue(destination: destination, remoteCounts: remoteScreenshotCounts)?.scoped(to: destination.title)
+        }
         if let document {
             issues += textOverflowIssues.issues(rows: rows.filter(\.uploadsToAppStoreListing), source: document)
         }
@@ -26,7 +29,7 @@ extension ASCUploadFlowModel {
 
     /// Per-row listing warnings by row id; empty while counts are in flight so a partial fetch can't skew the majority.
     func listingConsistencyIssues(for destination: ASCDestinationPlan) -> [UUID: [UploadIssue]] {
-        guard !destination.localizations.contains(where: { remoteScreenshotCountsInFlight.contains($0.id) }) else { return [:] }
+        guard remoteScreenshotCountsSettled(for: destination) else { return [:] }
         let primaryLocale = selectedApp?.attributes.primaryLocale
         return Dictionary(uniqueKeysWithValues: destination.rowPlans.map { row in
             (row.id, ASCListingConsistency.issues(
@@ -36,6 +39,10 @@ extension ASCUploadFlowModel {
                 primaryLocale: primaryLocale
             ))
         })
+    }
+
+    private func remoteScreenshotCountsSettled(for destination: ASCDestinationPlan) -> Bool {
+        !destination.localizations.contains { remoteScreenshotCountsInFlight.contains($0.id) }
     }
 
     var canStartUpload: Bool {

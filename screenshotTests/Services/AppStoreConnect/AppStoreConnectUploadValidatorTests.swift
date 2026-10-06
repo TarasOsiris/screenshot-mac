@@ -267,6 +267,24 @@ struct AppStoreConnectUploadValidatorTests {
         #expect(!issues.contains { $0.severity == .warning })
     }
 
+    @Test(arguments: [
+        (CGSize(width: 2007, height: 2853), ASCDisplayType.iphoneDuo),
+        (CGSize(width: 2034, height: 1398), ASCDisplayType.iphoneDuo),
+        (CGSize(width: 1260, height: 2736), ASCDisplayType.iphone69),
+    ])
+    func newIPhoneSizesValidateClean(size: CGSize, displayType: ASCDisplayType) {
+        let localization = ASCAppStoreVersionLocalization(id: "localization-en", attributes: .init(locale: "en-US"))
+        let version = ASCAppStoreVersion(
+            id: "version-1",
+            attributes: .init(versionString: "1.0", appStoreState: "PREPARE_FOR_SUBMISSION", platform: "IOS")
+        )
+        let issues = AppStoreConnectUploadValidator.validate(
+            version: version,
+            plans: [plan(label: "iPhone", size: size, displayType: displayType, localization: localization)]
+        )
+        #expect(issues.isEmpty)
+    }
+
     @Test func assignFansBroadCodeToEveryRegionVariant() {
         let locs = ["en-US", "en-GB", "en-CA"].map {
             ASCAppStoreVersionLocalization(id: "loc-\($0)", attributes: .init(locale: $0))

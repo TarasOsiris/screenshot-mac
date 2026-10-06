@@ -5,7 +5,9 @@ import Foundation
 /// enum values because the ASC API does not expose a distinct enum case for them.
 enum ASCDisplayType: String, CaseIterable, Identifiable, Sendable {
     // iPhone
-    case iphone69 = "APP_IPHONE_69"  // 6.9" (1320x2868) — 16/17 Pro Max
+    // Missing from Apple's OpenAPI spec, but the live API creates and fills sets for it.
+    case iphoneDuo = "APP_IPHONE_DUO" // outer 1398x2034, inner 2007x2853
+    case iphone69 = "APP_IPHONE_69"  // 6.9" (1320x2868 / 1260x2736) — 16/17/18 Pro Max, Air
     case iphone67 = "APP_IPHONE_67"  // 6.7" (1290x2796) — 16 Plus / 15 Pro Max
     case iphone65 = "APP_IPHONE_65"  // 6.5" (1242x2688 / 1284x2778)
     case iphone63 = "APP_IPHONE_63"  // 6.3" (1206x2622) — 17 / 16 Pro
@@ -62,7 +64,7 @@ enum ASCDisplayType: String, CaseIterable, Identifiable, Sendable {
 
     var family: Family {
         switch self {
-        case .iphone69, .iphone67, .iphone65, .iphone63, .iphone61, .iphone58, .iphone55, .iphone47, .iphone40, .iphone35:
+        case .iphoneDuo, .iphone69, .iphone67, .iphone65, .iphone63, .iphone61, .iphone58, .iphone55, .iphone47, .iphone40, .iphone35:
             return .iphone
         case .ipadPro129M4, .ipadPro3Gen129, .ipadPro11M4, .ipadPro3Gen11, .ipad105, .ipad97:
             return .ipad
@@ -94,7 +96,8 @@ enum ASCDisplayType: String, CaseIterable, Identifiable, Sendable {
 
     var label: String {
         switch self {
-        case .iphone69: return "iPhone 6.9\" Display (1320×2868)"
+        case .iphoneDuo: return "iPhone Duo (1398×2034 / 2007×2853)"
+        case .iphone69: return "iPhone 6.9\" Display (1320×2868 / 1260×2736)"
         case .iphone67: return "iPhone 6.7\" Display (1290×2796)"
         case .iphone65: return "iPhone 6.5\" Display (1242×2688 / 1284×2778)"
         case .iphone63: return "iPhone 6.3\" Display (1206×2622)"
@@ -123,6 +126,7 @@ enum ASCDisplayType: String, CaseIterable, Identifiable, Sendable {
     /// `label` without its pixel sizes, for prose ("7 iPhone 6.9\" screenshots").
     var shortLabel: String {
         switch self {
+        case .iphoneDuo: return "iPhone Duo"
         case .iphone69: return "iPhone 6.9\""
         case .iphone67: return "iPhone 6.7\""
         case .iphone65: return "iPhone 6.5\""
@@ -147,7 +151,7 @@ enum ASCDisplayType: String, CaseIterable, Identifiable, Sendable {
     /// Groups exposed in the UI picker. Hides categories not targeted by the app (watch/TV/vision)
     /// unless the user explicitly needs them.
     static let userSelectableCases: [ASCDisplayType] = [
-        .iphone69, .iphone67, .iphone65, .iphone63, .iphone61, .iphone58, .iphone55, .iphone47,
+        .iphone69, .iphoneDuo, .iphone67, .iphone65, .iphone63, .iphone61, .iphone58, .iphone55, .iphone47,
         .ipadPro129M4, .ipadPro3Gen129, .ipadPro11M4, .ipadPro3Gen11, .ipad105, .ipad97,
         .desktop
     ]
@@ -163,7 +167,8 @@ enum ASCDisplayType: String, CaseIterable, Identifiable, Sendable {
     /// Desktop is landscape-only. Empty for display types the app doesn't target (watch/TV/vision).
     var acceptedPortraitSizes: [(Int, Int)] {
         switch self {
-        case .iphone69: return [(1320, 2868)]
+        case .iphoneDuo: return [(1398, 2034), (2007, 2853)]
+        case .iphone69: return [(1320, 2868), (1260, 2736)]
         case .iphone67: return [(1290, 2796)]
         case .iphone65: return [(1242, 2688), (1284, 2778)]
         case .iphone63: return [(1206, 2622)]

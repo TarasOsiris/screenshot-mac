@@ -76,6 +76,12 @@ struct DisplayCategory: Identifiable {
 }
 
 let displayCategories: [DisplayCategory] = [
+    DisplayCategory(name: "iPhone Duo Inner Display", deviceCategory: .iphone, portraitSizes: [
+        (2007, 2853, "iPhone Duo (open)"),
+    ]),
+    DisplayCategory(name: "iPhone Duo Outer Display", deviceCategory: .iphone, portraitSizes: [
+        (1398, 2034, "iPhone Duo (closed)"),
+    ]),
     DisplayCategory(name: "iPhone 6.9\" Display", deviceCategory: .iphone, portraitSizes: [
         (1320, 2868, "iPhone 16 Pro Max / 17 Pro Max"),
         (1290, 2796, "iPhone 16 Plus / 15 Pro Max / 15 Plus"),
@@ -133,6 +139,11 @@ nonisolated func parseSizeString(_ value: String) -> (width: CGFloat, height: CG
           let w = Double(parts[0]),
           let h = Double(parts[1]) else { return nil }
     return (CGFloat(w), CGFloat(h))
+}
+
+/// Orientation-free lookup key ("1206x2622") for a pixel size.
+nonisolated func portraitSizeKey(width: Int, height: Int) -> String {
+    "\(min(width, height))x\(max(width, height))"
 }
 
 func presetLabel(forWidth width: CGFloat, height: CGFloat) -> String {

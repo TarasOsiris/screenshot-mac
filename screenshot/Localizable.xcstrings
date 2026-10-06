@@ -188353,6 +188353,334 @@
           }
         }
       }
+    },
+    "This version has no iPhone Duo screenshots. Starting April 2027, App Store submissions must include them." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Diese Version hat keine iPhone Duo-Screenshots. Ab April 2027 müssen App Store-Einreichungen sie enthalten."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Esta versión no tiene capturas de iPhone Duo. A partir de abril de 2027, los envíos al App Store deben incluirlas."
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "این نسخه هیچ اسکرین‌شات iPhone Duo ندارد. از آوریل ۲۰۲۷، ارسال‌ها به App Store باید آن‌ها را داشته باشند."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cette version n’a aucune capture d’écran iPhone Duo. À partir d’avril 2027, les soumissions à l’App Store devront en inclure."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Questa versione non ha screenshot per iPhone Duo. Da aprile 2027 gli invii all’App Store dovranno includerli."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "このバージョンにはiPhone Duoのスクリーンショットがありません。2027年4月以降、App Storeへの提出には必須になります。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "이 버전에는 iPhone Duo 스크린샷이 없습니다. 2027년 4월부터 App Store 제출 시 반드시 포함해야 합니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Esta versão não tem capturas de tela do iPhone Duo. A partir de abril de 2027, os envios à App Store precisarão incluí-las."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "В этой версии нет скриншотов для iPhone Duo. С апреля 2027 года они обязательны при отправке в App Store."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bu sürümde iPhone Duo ekran görüntüsü yok. Nisan 2027’den itibaren App Store gönderimlerinde bunlar zorunlu olacak."
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "У цій версії немає скриншотів для iPhone Duo. З квітня 2027 року вони обовʼязкові під час надсилання в App Store."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "此版本没有 iPhone Duo 截图。自 2027 年 4 月起，提交到 App Store 必须包含这些截图。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "此版本沒有 iPhone Duo 截圖。自 2027 年 4 月起，提交至 App Store 必須包含這些截圖。"
+          }
+        }
+      }
+    },
+    "Add a row at an iPhone Duo size — 2007×2853 for the inner display or 1398×2034 for the outer display." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Füge eine Zeile in einer iPhone Duo-Größe hinzu – 2007×2853 für das innere Display oder 1398×2034 für das äußere Display."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Añade una fila con un tamaño de iPhone Duo: 2007×2853 para la pantalla interior o 1398×2034 para la exterior."
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "یک ردیف با اندازهٔ iPhone Duo اضافه کنید — 2007×2853 برای نمایشگر داخلی یا 1398×2034 برای نمایشگر بیرونی."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ajoutez une rangée à une taille iPhone Duo : 2007×2853 pour l’écran intérieur ou 1398×2034 pour l’écran extérieur."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aggiungi una riga con una dimensione iPhone Duo: 2007×2853 per lo schermo interno o 1398×2034 per quello esterno."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iPhone Duoのサイズで行を追加してください。内側ディスプレイは2007×2853、外側ディスプレイは1398×2034です。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iPhone Duo 크기로 행을 추가하세요. 내부 디스플레이는 2007×2853, 외부 디스플레이는 1398×2034입니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Adicione uma linha em um tamanho de iPhone Duo — 2007×2853 para a tela interna ou 1398×2034 para a tela externa."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Добавьте строку размера iPhone Duo — 2007×2853 для внутреннего дисплея или 1398×2034 для внешнего."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iPhone Duo boyutunda bir satır ekleyin — iç ekran için 2007×2853, dış ekran için 1398×2034."
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Додайте рядок розміру iPhone Duo — 2007×2853 для внутрішнього дисплея або 1398×2034 для зовнішнього."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "添加一个 iPhone Duo 尺寸的行——内屏为 2007×2853，外屏为 1398×2034。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "新增一個 iPhone Duo 尺寸的列——內螢幕為 2007×2853，外螢幕為 1398×2034。"
+          }
+        }
+      }
+    },
+    "For **iPhone Duo**, pick **iPhone Duo Inner Display** (2007×2853, the device open) or **iPhone Duo Outer Display** (1398×2034, closed). Screenshots at either size drop into the matching iPhone Duo frame." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wähle für **iPhone Duo** **iPhone Duo Inner Display** (2007×2853, aufgeklappt) oder **iPhone Duo Outer Display** (1398×2034, zugeklappt). Screenshots in einer dieser Größen landen im passenden iPhone Duo-Rahmen."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Para **iPhone Duo**, elige **iPhone Duo Inner Display** (2007×2853, abierto) o **iPhone Duo Outer Display** (1398×2034, cerrado). Las capturas de cualquiera de esos tamaños se colocan en el marco de iPhone Duo correspondiente."
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "برای **iPhone Duo**، گزینهٔ **iPhone Duo Inner Display** (2007×2853، دستگاه باز) یا **iPhone Duo Outer Display** (1398×2034، بسته) را انتخاب کنید. اسکرین‌شات‌هایی با هر یک از این اندازه‌ها در قاب iPhone Duo متناظر قرار می‌گیرند."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pour **iPhone Duo**, choisissez **iPhone Duo Inner Display** (2007×2853, appareil ouvert) ou **iPhone Duo Outer Display** (1398×2034, fermé). Les captures à l’une de ces tailles se placent dans le cadre iPhone Duo correspondant."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Per **iPhone Duo**, scegli **iPhone Duo Inner Display** (2007×2853, dispositivo aperto) o **iPhone Duo Outer Display** (1398×2034, chiuso). Gli screenshot in una di queste dimensioni finiscono nella cornice iPhone Duo corrispondente."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**iPhone Duo**用には、**iPhone Duo Inner Display**（2007×2853、開いた状態）または**iPhone Duo Outer Display**（1398×2034、閉じた状態）を選択します。どちらかのサイズのスクリーンショットは、対応するiPhone Duoのフレームに配置されます。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**iPhone Duo**의 경우 **iPhone Duo Inner Display**(2007×2853, 펼친 상태) 또는 **iPhone Duo Outer Display**(1398×2034, 접은 상태)를 선택하세요. 두 크기 중 하나의 스크린샷은 해당 iPhone Duo 프레임에 들어갑니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Para o **iPhone Duo**, escolha **iPhone Duo Inner Display** (2007×2853, aparelho aberto) ou **iPhone Duo Outer Display** (1398×2034, fechado). Capturas em qualquer um desses tamanhos entram na moldura do iPhone Duo correspondente."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Для **iPhone Duo** выберите **iPhone Duo Inner Display** (2007×2853, устройство раскрыто) или **iPhone Duo Outer Display** (1398×2034, сложено). Скриншоты любого из этих размеров помещаются в соответствующую рамку iPhone Duo."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**iPhone Duo** için **iPhone Duo Inner Display** (2007×2853, cihaz açık) veya **iPhone Duo Outer Display** (1398×2034, kapalı) seçin. Bu boyutlardan birindeki ekran görüntüleri ilgili iPhone Duo çerçevesine yerleşir."
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Для **iPhone Duo** виберіть **iPhone Duo Inner Display** (2007×2853, пристрій розкрито) або **iPhone Duo Outer Display** (1398×2034, складено). Скриншоти будь-якого з цих розмірів потрапляють у відповідну рамку iPhone Duo."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "对于 **iPhone Duo**，请选择 **iPhone Duo Inner Display**（2007×2853，展开状态）或 **iPhone Duo Outer Display**（1398×2034，合上状态）。任一尺寸的截图都会放入对应的 iPhone Duo 边框。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "若是 **iPhone Duo**，請選擇 **iPhone Duo Inner Display**（2007×2853，展開狀態）或 **iPhone Duo Outer Display**（1398×2034，闔上狀態）。任一尺寸的截圖都會放入對應的 iPhone Duo 外框。"
+          }
+        }
+      }
+    },
+    "**iPhone Duo** has its own display type, taking the inner (2007×2853) and outer (1398×2034) display sizes. Starting April 2027 Apple requires iPhone Duo screenshots in every submission, so the wizard warns when an iOS version would have none." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**iPhone Duo** hat einen eigenen Anzeigetyp für die Größen des inneren (2007×2853) und äußeren (1398×2034) Displays. Ab April 2027 verlangt Apple iPhone Duo-Screenshots bei jeder Einreichung, daher warnt der Assistent, wenn eine iOS-Version keine hätte."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**iPhone Duo** tiene su propio tipo de pantalla, con los tamaños de la pantalla interior (2007×2853) y exterior (1398×2034). A partir de abril de 2027, Apple exige capturas de iPhone Duo en cada envío, por lo que el asistente avisa cuando una versión de iOS no tendría ninguna."
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**iPhone Duo** نوع نمایش مخصوص خود را دارد که اندازه‌های نمایشگر داخلی (2007×2853) و بیرونی (1398×2034) را می‌پذیرد. از آوریل ۲۰۲۷ اپل در هر ارسال اسکرین‌شات‌های iPhone Duo را الزامی می‌کند، بنابراین دستیار وقتی یک نسخهٔ iOS هیچ‌کدام را نداشته باشد هشدار می‌دهد."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**iPhone Duo** a son propre type d’affichage, qui accepte les tailles de l’écran intérieur (2007×2853) et extérieur (1398×2034). À partir d’avril 2027, Apple exige des captures iPhone Duo dans chaque soumission ; l’assistant vous avertit donc lorsqu’une version iOS n’en aurait aucune."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**iPhone Duo** ha un proprio tipo di display, che accetta le dimensioni dello schermo interno (2007×2853) ed esterno (1398×2034). Da aprile 2027 Apple richiede screenshot per iPhone Duo in ogni invio, quindi la procedura avvisa quando una versione iOS non ne avrebbe nessuno."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**iPhone Duo**には専用のディスプレイタイプがあり、内側（2007×2853）と外側（1398×2034）のディスプレイサイズを受け付けます。2027年4月以降、Appleはすべての提出にiPhone Duoのスクリーンショットを求めるため、iOSバージョンにそれがない場合はウィザードが警告します。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**iPhone Duo**는 내부(2007×2853) 및 외부(1398×2034) 디스플레이 크기를 받는 별도의 디스플레이 유형이 있습니다. 2027년 4월부터 Apple은 모든 제출에 iPhone Duo 스크린샷을 요구하므로, iOS 버전에 스크린샷이 없으면 마법사가 경고합니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O **iPhone Duo** tem seu próprio tipo de tela, que aceita os tamanhos da tela interna (2007×2853) e externa (1398×2034). A partir de abril de 2027, a Apple exige capturas do iPhone Duo em todo envio, então o assistente avisa quando uma versão iOS ficaria sem nenhuma."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "У **iPhone Duo** собственный тип дисплея, принимающий размеры внутреннего (2007×2853) и внешнего (1398×2034) дисплеев. С апреля 2027 года Apple требует скриншоты iPhone Duo в каждой отправке, поэтому мастер предупреждает, если в версии iOS их не будет."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**iPhone Duo**’nun iç (2007×2853) ve dış (1398×2034) ekran boyutlarını kabul eden kendi ekran türü vardır. Nisan 2027’den itibaren Apple her gönderimde iPhone Duo ekran görüntüleri istediğinden, bir iOS sürümünde hiç olmayacaksa sihirbaz uyarır."
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**iPhone Duo** має власний тип дисплея, що приймає розміри внутрішнього (2007×2853) і зовнішнього (1398×2034) дисплеїв. З квітня 2027 року Apple вимагає скриншоти iPhone Duo в кожному надсиланні, тож майстер попереджає, якщо у версії iOS їх не буде."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**iPhone Duo** 有自己的显示类型，接受内屏（2007×2853）和外屏（1398×2034）尺寸。自 2027 年 4 月起，Apple 要求每次提交都包含 iPhone Duo 截图，因此当某个 iOS 版本没有这些截图时，向导会发出警告。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**iPhone Duo** 有專屬的顯示類型，接受內螢幕（2007×2853）與外螢幕（1398×2034）尺寸。自 2027 年 4 月起，Apple 要求每次提交都包含 iPhone Duo 截圖，因此當某個 iOS 版本沒有這些截圖時，精靈會發出警告。"
+          }
+        }
+      }
     }
   },
   "version" : "1.0"

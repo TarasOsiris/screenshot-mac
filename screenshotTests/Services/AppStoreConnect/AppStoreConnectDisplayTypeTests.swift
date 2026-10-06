@@ -14,6 +14,21 @@ struct AppStoreConnectDisplayTypeTests {
         #expect(ASCDisplayType.iphone69.accepts(width: 2868, height: 1320))
     }
 
+    @Test func iphoneDuoTakesBothDisplaysInEitherOrientation() {
+        for (width, height) in [(1398, 2034), (2034, 1398), (2007, 2853), (2853, 2007)] {
+            #expect(ASCDisplayType.detect(width: CGFloat(width), height: CGFloat(height)) == .iphoneDuo)
+        }
+        #expect(!ASCDisplayType.iphoneDuo.accepts(width: 1320, height: 2868))
+        #expect(ASCDisplayType.iphoneDuo.appStoreConnectValue == "APP_IPHONE_DUO")
+        #expect(ASCDisplayType.iphoneDuo.accepts(platform: .ios))
+        #expect(!ASCDisplayType.iphoneDuo.accepts(platform: .macOS))
+    }
+
+    @Test func iphoneAirSizeUploadsAsTheLargeDisplay() {
+        #expect(ASCDisplayType.detect(width: 1260, height: 2736) == .iphone69)
+        #expect(ASCDisplayType.detect(width: 2736, height: 1260) == .iphone69)
+    }
+
     @Test func modernDisplayTypesUseSupportedAppStoreConnectValues() {
         #expect(ASCDisplayType.iphone69.appStoreConnectValue == "APP_IPHONE_67")
         #expect(ASCDisplayType.iphone63.appStoreConnectValue == "APP_IPHONE_61")

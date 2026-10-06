@@ -26,7 +26,14 @@ final class MCPServerService {
         case tokenRotation = "token_rotation"
     }
 
+    // Debug's own key, so a `false` Release left in the shared defaults domain can't override the Debug default.
+    #if DEBUG
+    static let enabledDefaultsKey = "mcpServerEnabledDebug"
+    private static let enabledByDefault = true
+    #else
     static let enabledDefaultsKey = "mcpServerEnabled"
+    private static let enabledByDefault = false
+    #endif
     static let portDefaultsKey = "mcpServerPort"
     static let defaultPort: UInt16 = 8722
     private static let tokenAccount = "mcpAuthToken"
@@ -133,7 +140,8 @@ final class MCPServerService {
 
     /// Stored (not computed from UserDefaults) so @Observable tracks it — the Settings toggle
     /// reverts visually if flipping it mutates nothing observable.
-    private(set) var isEnabled: Bool = UserDefaults.standard.bool(forKey: MCPServerService.enabledDefaultsKey)
+    private(set) var isEnabled: Bool =
+        UserDefaults.standard.object(forKey: MCPServerService.enabledDefaultsKey) as? Bool ?? MCPServerService.enabledByDefault
 
     func autostartIfEnabled(state: AppState) {
         guard !PersistenceService.isRunningUnderXCTest else { return }
@@ -203,9 +211,9 @@ final class MCPServerService {
             await listener.stop()
             AppLogger.mcp.error("Start failed on port \(self.port): \(String(describing: error), privacy: .public)")
             status = .failed("Could not start on port \(port): \(error.localizedDescription). If the port is taken, run `defaults write xyz.tleskiv.screenshot \(Self.portDefaultsKey) -int <port>` and update .mcp.json.")
-            // Clear the persisted intent so autostart doesn't re-attempt this doomed start on every
-            // launch; isEnabled stays true in memory so the failure remains visible this session.
-            UserDefaults.standard.set(false, forKey: Self.enabledDefaultsKey)
+            // Back to the build's default: Release stops re-attempting this doomed start, Debug retries
+            // (another build usually held the port). isEnabled stays true so the failure stays visible.
+            UserDefaults.standard.removeObject(forKey: Self.enabledDefaultsKey)
             AnalyticsService.capture(.mcpServerStartFailed, [.source: reason.rawValue])
             // Without this the person property keeps claiming MCP is on, for every install that
             // ever hit a bound port.

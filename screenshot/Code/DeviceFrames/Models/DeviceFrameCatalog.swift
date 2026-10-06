@@ -88,6 +88,30 @@ nonisolated enum DeviceFrameCatalog {
         return targetColorGroup.frames.first(where: { $0.isLandscape == targetLandscape }) ?? targetColorGroup.frames.first
     }
 
+    private static let dedicatedGroupIdBySize: [String: String] = Dictionary(
+        uniqueKeysWithValues: DeviceFrameCatalogDefinitions.entries.compactMap { entry in
+            guard entry.claimsSuggestedSize,
+                  let preset = entry.suggestedSizePreset,
+                  let size = parseSizeString(preset) else { return nil }
+            return (portraitSizeKey(width: Int(size.width), height: Int(size.height)), entry.groupId)
+        }
+    )
+
+    static func dedicatedFrame(forScreenshotWidth width: Int, height: Int, matchingColorOf currentFrameId: String? = nil) -> DeviceFrame? {
+        guard let groupId = dedicatedGroupIdBySize[portraitSizeKey(width: width, height: height)],
+              let frame = preferredFrame(forGroupId: groupId, matching: currentFrameId) else { return nil }
+        return variant(forFrameId: frame.id, isLandscape: width > height)
+    }
+
+    static func dedicatedFrame(forSizePreset preset: String, matchingColorOf currentFrameId: String? = nil) -> DeviceFrame? {
+        guard let size = parseSizeString(preset) else { return nil }
+        return dedicatedFrame(forScreenshotWidth: Int(size.width), height: Int(size.height), matchingColorOf: currentFrameId)
+    }
+
+    static func isDedicatedToOneSize(_ frameId: String) -> Bool {
+        group(forFrameId: frameId).map { dedicatedGroupIdBySize.values.contains($0.id) } ?? false
+    }
+
     static func toggledOrientation(for id: String) -> DeviceFrame? {
         guard let frame = frame(for: id) else { return nil }
         return variant(forFrameId: id, isLandscape: !frame.isLandscape)
