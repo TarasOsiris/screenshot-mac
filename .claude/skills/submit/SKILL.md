@@ -182,7 +182,7 @@ Blocking 0` with that single info.
 ## Step 6: Submit for review
 
 ```bash
-asc review submit --app 6760177675 --version-id "<VID>" --build "<BID>" --confirm
+asc review submit --app 6760177675 --version-id "<VID>" --build-id "<BID>" --confirm
 ```
 
 One call per platform. It wraps `versions attach-build` + `review submissions-create` +
