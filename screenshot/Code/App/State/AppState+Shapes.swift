@@ -379,8 +379,7 @@ extension AppState {
     func bringSelectedShapesToFront() {
         guard let rowIdx = selectedRowIndex, !selectedShapeIds.isEmpty else { return }
         let ids = selectedShapeIds
-        let suffixIds = Set(rows[rowIdx].shapes.suffix(ids.count).map(\.id))
-        guard suffixIds != ids else { return }
+        guard !rows[rowIdx].areFrontmost(ids) else { return }
         withRowUndo("Bring to Front", rowId: rows[rowIdx].id) {
             let selected = rows[rowIdx].shapes.filter { ids.contains($0.id) }
             rows[rowIdx].shapes.removeAll { ids.contains($0.id) }
@@ -391,8 +390,7 @@ extension AppState {
     func sendSelectedShapesToBack() {
         guard let rowIdx = selectedRowIndex, !selectedShapeIds.isEmpty else { return }
         let ids = selectedShapeIds
-        let prefixIds = Set(rows[rowIdx].shapes.prefix(ids.count).map(\.id))
-        guard prefixIds != ids else { return }
+        guard !rows[rowIdx].areBackmost(ids) else { return }
         withRowUndo("Send to Back", rowId: rows[rowIdx].id) {
             let selected = rows[rowIdx].shapes.filter { ids.contains($0.id) }
             rows[rowIdx].shapes.removeAll { ids.contains($0.id) }

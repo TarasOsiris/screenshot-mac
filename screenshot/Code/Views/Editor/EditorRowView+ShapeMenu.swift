@@ -153,14 +153,29 @@ extension EditorRowView {
                 let ids = state.selectedShapeIds.isEmpty ? [shapeId] : state.selectedShapeIds
                 state.duplicateShapesToTemplates(Set(ids), direction: direction)
             } : nil,
+            onBringToFront: { [shapeId = shape.id] in
+                selectUnlessSelected(shapeId)
+                state.bringSelectedShapesToFront()
+            },
+            onSendToBack: { [shapeId = shape.id] in
+                selectUnlessSelected(shapeId)
+                state.sendSelectedShapesToBack()
+            },
+            canBringToFront: { !row.areFrontmost(isMulti ? selectedShapeIds : [shape.id]) },
+            canSendToBack: { !row.areBackmost(isMulti ? selectedShapeIds : [shape.id]) },
             onToggleLock: { [shapeId = shape.id] in
-                if !state.selectedShapeIds.contains(shapeId) {
-                    state.selectShape(shapeId, in: row.id)
-                }
+                selectUnlessSelected(shapeId)
                 state.toggleLockOnSelection()
             },
             lockToggleWillUnlock: isInSelection ? facts.selectionFullyLocked : shape.resolvedIsLocked
         )
+    }
+
+    /// Right-clicking an unselected shape acts on just that shape, as in Sketch.
+    private func selectUnlessSelected(_ shapeId: UUID) {
+        if !state.selectedShapeIds.contains(shapeId) {
+            state.selectShape(shapeId, in: row.id)
+        }
     }
 }
 

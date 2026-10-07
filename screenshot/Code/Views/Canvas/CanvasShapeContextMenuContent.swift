@@ -37,6 +37,10 @@ struct CanvasShapeContextMenuContent: View {
     var onAlignSelected: ((ShapeAlignment) -> Void)?
     var onMatchGeometryToThis: ((GeometryMatchMode) -> Void)?
     var onDuplicateToTemplates: ((DuplicateDirection) -> Void)?
+    var onBringToFront: (() -> Void)?
+    var onSendToBack: (() -> Void)?
+    var canBringToFront: () -> Bool = { true }
+    var canSendToBack: () -> Bool = { true }
     var onToggleLock: (() -> Void)?
     /// True when invoking `onToggleLock` would unlock (rather than lock) the active
     /// selection. Lets the menu label and icon match the action that will happen.
@@ -329,6 +333,14 @@ struct CanvasShapeContextMenuContent: View {
             } label: {
                 Label("Match to This", systemImage: "square.on.square.dashed")
             }
+        }
+
+        if let onBringToFront, let onSendToBack {
+            Divider()
+            Button("Bring to Front", systemImage: "square.3.layers.3d.top.filled", action: onBringToFront)
+                .disabled(!canBringToFront())
+            Button("Send to Back", systemImage: "square.3.layers.3d.bottom.filled", action: onSendToBack)
+                .disabled(!canSendToBack())
         }
 
         Divider()

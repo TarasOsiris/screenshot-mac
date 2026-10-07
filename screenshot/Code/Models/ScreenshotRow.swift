@@ -240,6 +240,14 @@ struct ScreenshotRow: Identifiable, Codable, Equatable, BackgroundFillable {
         hiddenShapeTypes.isEmpty ? shapes : shapes.filter { !hiddenShapeTypes.contains($0.type) }
     }
 
+    func areFrontmost(_ ids: Set<UUID>) -> Bool {
+        Set(shapes.suffix(ids.count).map(\.id)) == ids
+    }
+
+    func areBackmost(_ ids: Set<UUID>) -> Bool {
+        Set(shapes.prefix(ids.count).map(\.id)) == ids
+    }
+
     func templateOriginX(at index: Int) -> CGFloat {
         CGFloat(index) * templateWidth
     }
