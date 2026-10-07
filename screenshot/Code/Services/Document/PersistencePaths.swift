@@ -97,8 +97,10 @@ nonisolated extension PersistenceService {
 
     // MARK: - Explicit-root paths
 
+    // Without an `isDirectory` hint, appending to a file URL stats the path — on the main thread
+    // against an undownloaded iCloud directory that's a file-provider round trip.
     static func indexURL(at root: URL) -> URL {
-        root.appendingPathComponent(indexFileName)
+        root.appendingPathComponent(indexFileName, isDirectory: false)
     }
 
     static func projectsDir(at root: URL) -> URL {
@@ -110,7 +112,7 @@ nonisolated extension PersistenceService {
     }
 
     static func projectDataURL(_ id: UUID, at root: URL) -> URL {
-        projectDirectoryURL(id, at: root).appendingPathComponent(projectDataFileName)
+        projectDirectoryURL(id, at: root).appendingPathComponent(projectDataFileName, isDirectory: false)
     }
 
     // MARK: - Thumbnails

@@ -166,11 +166,12 @@ extension AppState {
     /// (`recordOwnWrite`/`saveIndex`/`snapshotAfterWrite`) never races.
     @MainActor
     private func reloadICloudFromDisk(root: URL) async {
-        let projectURLs = projects.map { PersistenceService.projectDataURL($0.id, at: root) }
+        let projectIds = projects.map(\.id)
 
         let outcome = await Task.detached(priority: .userInitiated) {
             () -> (index: PersistenceService.LoadedIndex?, recoveredFromConflict: [Project]) in
             let sync = ICloudSyncService.shared
+            let projectURLs = projectIds.map { PersistenceService.projectDataURL($0, at: root) }
             // The index merges its conflicting versions instead of discarding them, and hands back
             // what they held for this function to fold in. Project data can't — see there.
             let recovered = sync.resolveIndexConflicts(at: root)

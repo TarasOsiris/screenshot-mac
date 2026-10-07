@@ -24,8 +24,12 @@ extension EditorRowView {
         guard shape.type == .device || shape.type == .image,
               let fileName = shape.displayImageFileName,
               let projectId = state.activeProjectId else { return nil }
-        let url = PersistenceService.resourcesDir(projectId).appendingPathComponent(fileName)
-        return { PlatformReveal.inFileViewer([url]) }
+        // Built in every shape's body: resolving the path here stats the iCloud marker per shape.
+        return {
+            let url = PersistenceService.resourcesDir(projectId)
+                .appendingPathComponent(fileName, isDirectory: false)
+            PlatformReveal.inFileViewer([url])
+        }
         #else
         return nil
         #endif
