@@ -38,9 +38,9 @@ struct RowRenderContext {
     let displayScale: CGFloat
     let label: String
     /// nil unless `row.backgroundBlur > 0` — blur has to sample across template boundaries, so
-    /// only then is the oversized strip worth building. Locale-independent, so `withLocale`
-    /// carries it forward rather than re-rendering it per locale. Async callers `prepareBackground()`
-    /// first; this sync fallback builds it in one pass.
+    /// only then is the oversized strip worth building. `withLocale` carries it forward only
+    /// between locales that resolve to the same background images. Async callers
+    /// `prepareBackground()` first; this sync fallback builds it in one pass.
     var precomposedRowBackground: NSImage? {
         if let cached = backgroundCache.image { return cached }
         let built = RowRenderer.precomposedRowBackgroundIfNeeded(
@@ -84,7 +84,7 @@ struct RowRenderContext {
         resolveFonts: @escaping (() -> NSImage) -> NSImage = { $0() }
     ) {
         self.resolveFonts = resolveFonts
-        self.row = row
+        self.row = row.localizingBackgroundImages(to: localeCode)
         self.images = images
         self.localeCode = localeCode
         self.localeState = localeState
@@ -117,7 +117,7 @@ struct RowRenderContext {
     }
 
     /// The same row and settings against another locale's resolved images, reusing the already
-    /// precomposed background. Replaces the hand-managed `var rowBackground` + `if index == 0`.
+    /// precomposed background. Only for a locale whose background images resolve the same.
     ///
     /// The two report arrays are required rather than defaulted: defaulting them let a caller
     /// hand back a context claiming a clean bill of health, which is the shape of bug the reports
@@ -219,9 +219,10 @@ struct RowRenderContext {
 }
 
 extension RowRenderContext {
-    /// The image-loading preamble, once. Resolves `row`'s resources for `localeCode` through
-    /// `source` (sharing `cache` across rows and locales) and builds the context; pass the
-    /// previous context as `reusing` to keep its precomposed background when the row is the same.
+    /// The image-loading preamble, once. Resolves `row`'s background images and resources for
+    /// `localeCode` through `source` (sharing `cache` across rows and locales) and builds the
+    /// context. `reusing` collects one context per distinct resolved row, so a later locale with
+    /// the same background images keeps its precomposed background.
     /// `seedImages` carries in-memory-only resources (the showcase sheet's transient background)
     /// that disk loading can never produce — the cache is read-through, not a seed.
     static func load(
@@ -232,8 +233,9 @@ extension RowRenderContext {
         label: String,
         cache: inout [String: NSImage],
         seedImages: [String: NSImage] = [:],
-        reusing previous: RowRenderContext? = nil
+        reusing candidates: inout [RowRenderContext]
     ) -> RowRenderContext {
+        let row = row.localizingBackgroundImages(to: localeCode)
         let fileNames = source.referencedImageFileNames(forRow: row, localeCode: localeCode)
         var images = source.loadFullResolutionImages(fileNames: fileNames, cache: &cache)
         images.merge(seedImages) { _, seed in seed }
@@ -246,13 +248,13 @@ extension RowRenderContext {
             return !image.canDraw
         }.sorted()
 
-        if let previous, previous.row.id == row.id {
+        if let previous = candidates.first(where: { $0.row == row }) {
             return previous.withLocale(
                 localeCode, images: images,
                 missingImageFileNames: missing, unusableImageFileNames: unusable
             )
         }
-        return RowRenderContext(
+        let context = RowRenderContext(
             row: row,
             images: images,
             localeCode: localeCode,
@@ -263,6 +265,24 @@ extension RowRenderContext {
             missingImageFileNames: missing,
             unusableImageFileNames: unusable,
             resolveFonts: { render in source.withResolvedFonts(render) }
+        )
+        candidates.append(context)
+        return context
+    }
+
+    static func load(
+        row: ScreenshotRow,
+        localeCode: String,
+        from source: some RowRenderSource,
+        displayScale: CGFloat = 1.0,
+        label: String,
+        cache: inout [String: NSImage],
+        seedImages: [String: NSImage] = [:]
+    ) -> RowRenderContext {
+        var unshared: [RowRenderContext] = []
+        return load(
+            row: row, localeCode: localeCode, from: source, displayScale: displayScale,
+            label: label, cache: &cache, seedImages: seedImages, reusing: &unshared
         )
     }
 }

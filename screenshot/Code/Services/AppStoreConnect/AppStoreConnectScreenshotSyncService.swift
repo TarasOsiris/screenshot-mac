@@ -116,9 +116,9 @@ final class AppStoreConnectScreenshotSyncService {
         do {
             for (target, row) in renderable {
 
-                // Backgrounds are locale-independent, so the context (and its blur-only
-                // precomposed strip) is built once and reused across every localization.
-                var context: RowRenderContext?
+                // The context (and its blur-only precomposed strip) is reused across every
+                // localization whose background images resolve the same.
+                var contexts: [RowRenderContext] = []
 
                 for localization in target.localizations {
                     try Task.checkCancellation()
@@ -136,9 +136,8 @@ final class AppStoreConnectScreenshotSyncService {
                         from: source,
                         label: "asc sync row",
                         cache: &imageCache,
-                        reusing: context
+                        reusing: &contexts
                     )
-                    context = rowContext
                     // Rendering degrades silently to a hole, so refuse to ship a screenshot
                     // whose image the model references but disk can't produce.
                     if !rowContext.unrenderableImageFileNames.isEmpty {

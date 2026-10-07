@@ -188768,6 +188768,580 @@
           }
         }
       }
+    },
+    "%@ uses the %@ image. Replace it to give %@ its own." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ verwendet das Bild von %2$@. Ersetze es, um %3$@ ein eigenes Bild zu geben."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ usa la imagen de %2$@. Reemplázala para darle a %3$@ una propia."
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ از تصویر %2$@ استفاده می‌کند. آن را جایگزین کنید تا %3$@ تصویر خودش را داشته باشد."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ utilise l'image %2$@. Remplacez-la pour donner à %3$@ sa propre image."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ usa l'immagine di %2$@. Sostituiscila per dare a %3$@ un'immagine propria."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@は%2$@の画像を使用しています。置き換えると%3$@専用の画像になります。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@에서는 %2$@ 이미지를 사용합니다. 교체하면 %3$@ 전용 이미지가 됩니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ usa a imagem de %2$@. Substitua-a para dar a %3$@ uma imagem própria."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@: используется изображение языка %2$@. Замените его, чтобы у языка %3$@ было своё."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@, %2$@ görselini kullanıyor. %3$@ için ayrı bir görsel vermek üzere değiştirin."
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@: використовується зображення мови %2$@. Замініть його, щоб мова %3$@ мала власне."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ 使用%2$@的图像。替换后，%3$@ 将拥有自己的图像。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ 使用%2$@的影像。取代後，%3$@ 將擁有自己的影像。"
+          }
+        }
+      }
+    },
+    "%@ uses its own image." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ verwendet ein eigenes Bild."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ usa su propia imagen."
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ از تصویر خودش استفاده می‌کند."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ utilise sa propre image."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ usa un'immagine propria."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@は独自の画像を使用しています。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@에서는 자체 이미지를 사용합니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ usa uma imagem própria."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@: используется собственное изображение."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ kendi görselini kullanıyor."
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@: використовується власне зображення."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ 使用自己的图像。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ 使用自己的影像。"
+          }
+        }
+      }
+    },
+    "Use %@ Image" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bild von %@ verwenden"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Usar imagen de %@"
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "استفاده از تصویر %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Utiliser l'image %@"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Usa immagine di %@"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@の画像を使用"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ 이미지 사용"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Usar imagem de %@"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Использовать изображение (%@)"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ görselini kullan"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Використати зображення (%@)"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "使用%@图像"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "使用%@影像"
+          }
+        }
+      }
+    },
+    "A different image per language" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ein eigenes Bild pro Sprache"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Una imagen distinta por idioma"
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تصویری جدا برای هر زبان"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Une image différente par langue"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Un'immagine diversa per lingua"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "言語ごとに異なる画像"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "언어별로 다른 이미지"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Uma imagem diferente por idioma"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Своё изображение для каждого языка"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Her dil için farklı görsel"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Окреме зображення для кожної мови"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "每种语言使用不同图像"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "每種語言使用不同影像"
+          }
+        }
+      }
+    },
+    "Switch to another language and click **Replace** (or drop an image) to give that language its own background image. Fill mode, opacity, tiling and blur stay shared with the base language." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wechsle zu einer anderen Sprache und klicke auf **Ersetzen** (oder lege ein Bild ab), um dieser Sprache ein eigenes Hintergrundbild zu geben. Füllmodus, Deckkraft, Kacheln und Unschärfe bleiben mit der Basissprache geteilt."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cambia a otro idioma y haz clic en **Reemplazar** (o suelta una imagen) para darle a ese idioma su propia imagen de fondo. El modo de relleno, la opacidad, el mosaico y el desenfoque se comparten con el idioma base."
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "به زبان دیگری بروید و روی **جایگزینی** کلیک کنید (یا تصویری را رها کنید) تا آن زبان تصویر پس‌زمینهٔ خودش را داشته باشد. حالت پرکردن، شفافیت، کاشی‌کاری و محوشدگی با زبان پایه مشترک می‌مانند."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Passez à une autre langue et cliquez sur **Remplacer** (ou déposez une image) pour donner à cette langue sa propre image d'arrière-plan. Le mode de remplissage, l'opacité, la mosaïque et le flou restent partagés avec la langue de base."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Passa a un'altra lingua e fai clic su **Sostituisci** (o trascina un'immagine) per dare a quella lingua un'immagine di sfondo propria. Modalità di riempimento, opacità, affiancamento e sfocatura restano condivisi con la lingua di base."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "別の言語に切り替えて**置き換える**をクリック（または画像をドロップ）すると、その言語専用の背景画像を設定できます。塗りつぶしモード、不透明度、タイル、ぼかしはベース言語と共通のままです。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "다른 언어로 전환한 뒤 **교체**를 클릭하거나 이미지를 놓으면 해당 언어 전용 배경 이미지를 지정할 수 있습니다. 채우기 모드, 불투명도, 타일, 흐림은 기본 언어와 공유됩니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mude para outro idioma e clique em **Substituir** (ou solte uma imagem) para dar a esse idioma uma imagem de fundo própria. O modo de preenchimento, a opacidade, o mosaico e o desfoque continuam compartilhados com o idioma base."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Переключитесь на другой язык и нажмите **Заменить** (или перетащите изображение), чтобы задать для этого языка собственное фоновое изображение. Режим заполнения, непрозрачность, мозаика и размытие остаются общими с базовым языком."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Başka bir dile geçip **Değiştir**'e tıklayın (veya bir görsel bırakın); o dil kendi arka plan görseline sahip olur. Doldurma modu, opaklık, döşeme ve bulanıklık temel dille ortak kalır."
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Перейдіть на іншу мову й натисніть **Замінити** (або перетягніть зображення), щоб задати для цієї мови власне зображення тла. Режим заповнення, непрозорість, мозаїка й розмиття лишаються спільними з базовою мовою."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "切换到其他语言，然后点按**替换**（或拖入图像），即可为该语言设置专属背景图像。填充模式、不透明度、平铺和模糊仍与基础语言共用。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "切換到其他語言，然後按一下**取代**（或拖入影像），即可為該語言設定專屬背景影像。填滿模式、不透明度、拼貼和模糊仍與基礎語言共用。"
+          }
+        }
+      }
+    },
+    "Works for the row background and for a template's **Override background**. The button under the preview, named after your base language (for example **Use English Image**), goes back to the base language's image." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gilt für den Zeilenhintergrund und für **Hintergrund überschreiben** einer Vorlage. Die Taste unter der Vorschau, benannt nach deiner Basissprache (z. B. **Bild von English verwenden**), stellt das Bild der Basissprache wieder her."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Funciona con el fondo de la fila y con **Anular fondo** de una plantilla. El botón bajo la vista previa, con el nombre de tu idioma base (por ejemplo **Usar imagen de English**), vuelve a la imagen del idioma base."
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "برای پس‌زمینهٔ ردیف و برای **پس‌زمینهٔ اختصاصی** یک قالب کار می‌کند. دکمهٔ زیر پیش‌نمایش که به نام زبان پایهٔ شماست (مثلاً **استفاده از تصویر English**)، تصویر زبان پایه را برمی‌گرداند."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fonctionne pour l'arrière-plan de la rangée et pour **Personnaliser l'arrière-plan** d'un modèle. Le bouton sous l'aperçu, qui porte le nom de votre langue de base (par exemple **Utiliser l'image English**), revient à l'image de la langue de base."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vale per lo sfondo della riga e per **Personalizza sfondo** di un modello. Il pulsante sotto l'anteprima, che porta il nome della lingua di base (ad esempio **Usa immagine di English**), ripristina l'immagine della lingua di base."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "行の背景と、テンプレートの**背景を上書き**の両方で使えます。プレビューの下にあるベース言語名のボタン（例：**Englishの画像を使用**）で、ベース言語の画像に戻せます。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "행 배경과 템플릿의 **배경 재정의** 모두에 적용됩니다. 미리보기 아래 기본 언어 이름이 붙은 버튼(예: **English 이미지 사용**)을 누르면 기본 언어 이미지로 돌아갑니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Funciona para o plano de fundo da linha e para **Substituir plano de fundo** de um modelo. O botão sob a prévia, com o nome do seu idioma base (por exemplo **Usar imagem de English**), volta à imagem do idioma base."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Работает для фона строки и для **Переопределить фон** у шаблона. Кнопка под превью с названием базового языка (например, **Использовать изображение (English)**) возвращает изображение базового языка."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Satır arka planında ve bir şablonun **Arka planı geçersiz kıl** ayarında çalışır. Önizlemenin altındaki, temel dilinizin adını taşıyan düğme (örneğin **English görselini kullan**) temel dilin görseline geri döner."
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Працює для тла рядка і для **Перевизначити тло** шаблону. Кнопка під попереднім переглядом із назвою базової мови (наприклад, **Використати зображення (English)**) повертає зображення базової мови."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "适用于行背景，也适用于模板的**覆盖背景**。预览下方以基础语言命名的按钮（例如**使用English图像**）可恢复为基础语言的图像。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "適用於列背景，也適用於模板的**覆寫背景**。預覽下方以基礎語言命名的按鈕（例如**使用English影像**）可恢復為基礎語言的影像。"
+          }
+        }
+      }
+    },
+    "A background image can differ by language: replace it while that language is active." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ein Hintergrundbild kann je Sprache abweichen: Ersetze es, während diese Sprache aktiv ist."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Una imagen de fondo puede variar según el idioma: reemplázala mientras ese idioma esté activo."
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تصویر پس‌زمینه می‌تواند برای هر زبان متفاوت باشد: وقتی آن زبان فعال است، آن را جایگزین کنید."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Une image d'arrière-plan peut varier selon la langue : remplacez-la pendant que cette langue est active."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Un'immagine di sfondo può cambiare in base alla lingua: sostituiscila mentre quella lingua è attiva."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "背景画像は言語ごとに変えられます。その言語を選択中に置き換えてください。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "배경 이미지는 언어마다 다르게 할 수 있습니다. 해당 언어가 활성화된 상태에서 교체하세요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Uma imagem de fundo pode variar por idioma: substitua-a com esse idioma ativo."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Фоновое изображение может отличаться для каждого языка: замените его, пока этот язык активен."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Arka plan görseli dile göre farklı olabilir: o dil etkinken görseli değiştirin."
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Зображення тла може відрізнятися для кожної мови: замініть його, поки ця мова активна."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "背景图像可以按语言区分：在该语言处于活动状态时替换它即可。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "背景影像可以依語言區分：在該語言作用中時取代它即可。"
+          }
+        }
+      }
     }
   },
   "version" : "1.0"

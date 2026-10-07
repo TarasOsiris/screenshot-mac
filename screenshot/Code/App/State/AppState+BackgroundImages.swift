@@ -102,11 +102,33 @@ extension AppState {
         }
     }
 
+    /// In a language with its own image, removes only that image — the same rule as `clearImage(for:)`.
     func removeBackgroundImage(for rowId: UUID, templateIndex: Int? = nil) {
-        guard let rowIndex = rows.firstIndex(where: { $0.id == rowId }) else { return }
+        guard let rowIndex = rowIndex(for: rowId) else { return }
+        if backgroundImageIsOverridden(forRowAt: rowIndex, templateIndex: templateIndex) == true {
+            resetBackgroundImageOverride(for: rowId, templateIndex: templateIndex)
+            return
+        }
         withUndo("Remove Background Image") {
             setBackgroundImage(fileName: nil, svgContent: nil, rowIndex: rowIndex, templateIndex: templateIndex)
         }
+    }
+
+    /// Drops the active language's own background image, so it shows the base language's again.
+    func resetBackgroundImageOverride(for rowId: UUID, templateIndex: Int? = nil) {
+        guard let rowIndex = rowIndex(for: rowId),
+              let path = backgroundImageConfigPath(rowIndex: rowIndex, templateIndex: templateIndex) else { return }
+        let localeCode = localeState.activeLocaleCode
+        withUndo("Use Base Background Image") {
+            cleanupUnreferencedImage(self[keyPath: path].localeImages.removeValue(forKey: localeCode)?.fileName)
+        }
+    }
+
+    /// Whether the active language has its own image here; nil in the base language.
+    func backgroundImageIsOverridden(forRowAt rowIndex: Int, templateIndex: Int?) -> Bool? {
+        guard !localeState.isBaseLocale,
+              let path = backgroundImageConfigPath(rowIndex: rowIndex, templateIndex: templateIndex) else { return nil }
+        return self[keyPath: path].localeImages[localeState.activeLocaleCode] != nil
     }
 
     @MainActor
@@ -123,18 +145,27 @@ extension AppState {
         }
     }
 
+    /// A language's first image also seeds the base, as a shape's first localized screenshot does.
     private func setBackgroundImage(fileName: String?, svgContent: String?, rowIndex: Int, templateIndex: Int?) {
-        let oldFile: String?
-        if let templateIndex, templateIndex < rows[rowIndex].templates.count {
-            oldFile = rows[rowIndex].templates[templateIndex].backgroundImageConfig.fileName
-            rows[rowIndex].templates[templateIndex].backgroundImageConfig.fileName = fileName
-            rows[rowIndex].templates[templateIndex].backgroundImageConfig.svgContent = svgContent
+        let source = BackgroundImageSource(fileName: fileName, svgContent: svgContent)
+        let localeCode = localeState.isBaseLocale || !source.hasImage ? nil : localeState.activeLocaleCode
+        guard let path = backgroundImageConfigPath(rowIndex: rowIndex, templateIndex: templateIndex) else { return }
+        let freed: String?
+        if let localeCode {
+            if !self[keyPath: path].hasImage { self[keyPath: path].source = source }
+            freed = self[keyPath: path].localeImages.updateValue(source, forKey: localeCode)?.fileName
         } else {
-            oldFile = rows[rowIndex].backgroundImageConfig.fileName
-            rows[rowIndex].backgroundImageConfig.fileName = fileName
-            rows[rowIndex].backgroundImageConfig.svgContent = svgContent
+            freed = self[keyPath: path].fileName
+            self[keyPath: path].source = source
         }
-        cleanupUnreferencedImage(oldFile)
+        cleanupUnreferencedImage(freed)
+    }
+
+    private func backgroundImageConfigPath(rowIndex: Int, templateIndex: Int?) -> ReferenceWritableKeyPath<AppState, BackgroundImageConfig>? {
+        guard rows.indices.contains(rowIndex) else { return nil }
+        guard let templateIndex else { return \.rows[rowIndex].backgroundImageConfig }
+        guard rows[rowIndex].templates.indices.contains(templateIndex) else { return nil }
+        return \.rows[rowIndex].templates[templateIndex].backgroundImageConfig
     }
 
     func persistImageResource(

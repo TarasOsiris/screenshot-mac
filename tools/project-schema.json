@@ -147,7 +147,21 @@
         "tox":  { "description": "tileOffsetX — fraction of image width.", "type": "number" },
         "toy":  { "description": "tileOffsetY — fraction of image height.", "type": "number" },
         "tscx": { "description": "tileScaleX — 0.1..3.0 scale factor.", "type": "number" },
-        "tscy": { "description": "tileScaleY — 0.1..3.0 scale factor.", "type": "number" }
+        "tscy": { "description": "tileScaleY — 0.1..3.0 scale factor.", "type": "number" },
+        "li": {
+          "description": "localeImages — per-language image sources keyed by locale code, replacing f/sc for that language. Omitted when empty; never holds the base locale.",
+          "type": "object",
+          "additionalProperties": { "$ref": "#/$defs/BackgroundImageSource" }
+        }
+      }
+    },
+
+    "BackgroundImageSource": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "f": { "description": "fileName — raster image filename in resources/.", "type": "string" },
+        "sc": { "description": "svgContent — inline SVG XML.", "type": "string" }
       }
     },
 

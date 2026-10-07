@@ -227,8 +227,8 @@ extension AppState {
 
     func isImageFileReferenced(_ fileName: String) -> Bool {
         let referencedInRows = rows.contains { row in
-            row.backgroundImageConfig.fileName == fileName ||
-            row.templates.contains { $0.backgroundImageConfig.fileName == fileName } ||
+            row.backgroundImageConfig.references(fileName) ||
+            row.templates.contains { $0.backgroundImageConfig.references(fileName) } ||
             row.shapes.contains { shape in
                 shape.allImageFileNames.contains(fileName)
             }

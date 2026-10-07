@@ -72,7 +72,7 @@ extension AppState {
         withUndo("Remove Template") {
             // Spanning shapes survive so their visible portion on neighboring (kept) templates is preserved.
             let shapesToRemove = rows[idx].shapesContained(inTemplateAt: templateIndex)
-            let templateBgImage = rows[idx].templates[templateIndex].backgroundImageConfig.fileName
+            let templateBgImages = rows[idx].templates[templateIndex].backgroundImageConfig.allImageFileNames
             let shapeImageCandidates = imageFileNames(for: shapesToRemove)
             for shape in shapesToRemove {
                 LocaleService.removeShapeOverrides(&localeState, shapeId: shape.id)
@@ -89,7 +89,7 @@ extension AppState {
                 }
             }
             rows[idx].templates.remove(at: templateIndex)
-            let allCandidates: [String?] = shapeImageCandidates + [templateBgImage]
+            let allCandidates: [String?] = shapeImageCandidates + templateBgImages
             cleanupUnreferencedImages(allCandidates)
         }
     }

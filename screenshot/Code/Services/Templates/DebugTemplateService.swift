@@ -214,10 +214,7 @@ enum DebugTemplateService {
             if let name = shape.displayImageFileName { referencedNames.insert(name) }
             if let name = shape.fillImageConfig?.fileName { referencedNames.insert(name) }
         }
-        if let name = row.backgroundImageConfig.fileName { referencedNames.insert(name) }
-        for tp in row.templates {
-            if let name = tp.backgroundImageConfig.fileName { referencedNames.insert(name) }
-        }
+        referencedNames.formUnion(row.allBackgroundImageFileNames)
         var screenshotImages: [String: NSImage] = [:]
         for name in referencedNames {
             let fileURL = resourcesURL.appendingPathComponent(name)

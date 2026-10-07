@@ -224,7 +224,9 @@ struct RowInspector: View {
                 bgColor: safeRowBinding(rowId, keyPath: \.bgColor, default: .blue),
                 gradientConfig: continuousRowBinding(rowId, keyPath: \.gradientConfig, default: GradientConfig()),
                 backgroundImageConfig: continuousRowBinding(rowId, keyPath: \.backgroundImageConfig, default: BackgroundImageConfig()),
-                backgroundImage: state.rows[rowIndex].backgroundImageConfig.fileName.flatMap { state.screenshotImages[$0] },
+                backgroundImage: state.rows[rowIndex].backgroundImageConfig
+                    .source(forLocale: state.localeState.activeLocaleCode).fileName
+                    .flatMap { state.screenshotImages[$0] },
                 onChanged: { },
                 // macOS file-panel path; on iPad BackgroundImageEditor picks via ImageSourceMenu
                 // and saves through onDropImage below.
@@ -235,7 +237,8 @@ struct RowInspector: View {
                 },
                 onDropSvg: { svgContent in
                     state.saveBackgroundSvg(svgContent, for: rowId)
-                }
+                },
+                localeImage: BackgroundLocaleImageState(state: state, rowId: rowId, templateIndex: nil)
             )
 
             if state.rows[rowIndex].backgroundStyle != .color {

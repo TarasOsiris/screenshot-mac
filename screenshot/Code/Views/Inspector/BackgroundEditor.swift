@@ -38,6 +38,8 @@ struct BackgroundEditor: View {
     var onDropSvg: ((String) -> Void)?
     /// False hides the Image style, which is also the only place an image can be dropped or picked.
     var allowsImage = true
+    /// Non-nil while a non-base language is active and this background can carry its own image.
+    var localeImage: BackgroundLocaleImageState?
 
     #if os(macOS)
     private static let gradientPresetTileHeight: CGFloat = 24
@@ -128,7 +130,8 @@ struct BackgroundEditor: View {
                 onPickImage: onPickImage ?? {},
                 onRemoveImage: onRemoveImage ?? {},
                 onDropImage: onDropImage,
-                onDropSvg: onDropSvg
+                onDropSvg: onDropSvg,
+                localeImage: localeImage
             )
         }
     }
@@ -233,6 +236,32 @@ struct BackgroundEditor: View {
     }
 }
 
+/// What the background image editor needs to offer a per-language image.
+struct BackgroundLocaleImageState {
+    let localeCode: String
+    let languageName: String
+    let baseLanguageName: String
+    let isOverridden: Bool
+    let onReset: () -> Void
+}
+
+extension BackgroundLocaleImageState {
+    /// Nil in the base language, where an image edit is an edit to the base.
+    init?(state: AppState, rowId: UUID, templateIndex: Int?) {
+        guard let rowIndex = state.rowIndex(for: rowId),
+              let isOverridden = state.backgroundImageIsOverridden(forRowAt: rowIndex, templateIndex: templateIndex)
+        else { return nil }
+        let localeState = state.localeState
+        self.init(
+            localeCode: localeState.activeLocaleCode,
+            languageName: localeState.languageLabel(for: localeState.activeLocaleCode),
+            baseLanguageName: localeState.languageLabel(for: localeState.baseLocaleCode),
+            isOverridden: isOverridden,
+            onReset: { state.resetBackgroundImageOverride(for: rowId, templateIndex: templateIndex) }
+        )
+    }
+}
+
 struct BackgroundImageEditor: View {
     @Environment(\.reportDropFailure) private var reportDropFailure
     @Binding var config: BackgroundImageConfig
@@ -242,13 +271,19 @@ struct BackgroundImageEditor: View {
     var onRemoveImage: () -> Void
     var onDropImage: ((NSImage) -> Void)?
     var onDropSvg: ((String) -> Void)?
+    var localeImage: BackgroundLocaleImageState?
     @State private var isDropTargeted = false
     @State private var cachedSvgPreview: NSImage?
     #if os(iOS)
     @State private var showImagePicker = false
     #endif
 
-    private var hasImage: Bool { config.hasImage || image != nil }
+    /// The image source the active language draws; `config` is the stored base plus its table.
+    private var displayed: BackgroundImageSource { config.source(forLocale: localeImage?.localeCode) }
+
+    private var hasImage: Bool { displayed.hasImage || image != nil }
+
+    private var showsRemove: Bool { localeImage?.isOverridden != true }
 
     private var previewImage: NSImage? { image ?? cachedSvgPreview }
 
@@ -296,8 +331,10 @@ struct BackgroundImageEditor: View {
                 HStack(spacing: 4) {
                     Button("Replace") { onPickImage() }
                         .controlSize(.small)
-                    Button("Remove", role: .destructive) { onRemoveImage() }
-                        .controlSize(.small)
+                    if showsRemove {
+                        Button("Remove", role: .destructive) { onRemoveImage() }
+                            .controlSize(.small)
+                    }
                 }
                 .scaledFont(UIMetrics.FontSize.inlineLabel)
                 #else
@@ -314,17 +351,23 @@ struct BackgroundImageEditor: View {
                     .imageSourcePicker(isPresented: $showImagePicker) { onDropImage?($0) }
                     .accessibilityLabel("Replace Image")
 
-                    Button(role: .destructive) {
-                        onRemoveImage()
-                    } label: {
-                        Image(systemName: "trash")
+                    if showsRemove {
+                        Button(role: .destructive) {
+                            onRemoveImage()
+                        } label: {
+                            Image(systemName: "trash")
+                        }
+                        .tint(.red)
+                        .accessibilityLabel("Remove Image")
                     }
-                    .tint(.red)
-                    .accessibilityLabel("Remove Image")
                 }
                 .buttonStyle(.bordered)
                 .controlSize(.large)
                 #endif
+
+                if let localeImage {
+                    localeImageCaption(localeImage)
+                }
             } else {
                 #if os(macOS)
                 Button {
@@ -351,7 +394,7 @@ struct BackgroundImageEditor: View {
             handleImageDrop(providers)
         }
         .onAppear { updateSvgPreview() }
-        .onChange(of: config.svgContent) { updateSvgPreview() }
+        .onChange(of: displayed.svgContent) { updateSvgPreview() }
 
         #if os(macOS)
         if !hasImage {
@@ -464,8 +507,28 @@ struct BackgroundImageEditor: View {
         .frame(maxWidth: .infinity)
     }
 
+    @ViewBuilder
+    private func localeImageCaption(_ localeImage: BackgroundLocaleImageState) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            if localeImage.isOverridden {
+                HStack(spacing: 4) {
+                    Image(systemName: "globe")
+                    Text("\(localeImage.languageName) uses its own image.")
+                }
+                Button("Use \(localeImage.baseLanguageName) Image") { localeImage.onReset() }
+                    .controlSize(.small)
+                    .scaledFont(UIMetrics.FontSize.inlineLabel)
+            } else {
+                Text("\(localeImage.languageName) uses the \(localeImage.baseLanguageName) image. Replace it to give \(localeImage.languageName) its own.")
+            }
+        }
+        .scaledFont(UIMetrics.FontSize.hint)
+        .foregroundStyle(.secondary)
+        .fixedSize(horizontal: false, vertical: true)
+    }
+
     private func updateSvgPreview() {
-        guard image == nil, let svg = config.svgContent else {
+        guard image == nil, let svg = displayed.svgContent else {
             cachedSvgPreview = nil
             return
         }

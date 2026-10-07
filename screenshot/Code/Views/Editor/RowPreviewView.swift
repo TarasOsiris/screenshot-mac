@@ -36,10 +36,11 @@ struct RowPreviewView: View {
             localeState: localeState
         )
         let visiblePerTemplate = visibleShapesByTemplate(resolvedShapes)
+        let backgroundRow = row.localizingBackgroundImages(to: localeState.activeLocaleCode)
 
         HStack(alignment: .top, spacing: tileGap) {
             ForEach(Array(row.templates.enumerated()), id: \.element.id) { index, _ in
-                tile(at: index, visibleShapes: visiblePerTemplate[index])
+                tile(at: index, backgroundRow: backgroundRow, visibleShapes: visiblePerTemplate[index])
             }
         }
         .frame(
@@ -79,14 +80,14 @@ struct RowPreviewView: View {
     }
 
     @ViewBuilder
-    private func tile(at index: Int, visibleShapes visible: [CanvasShapeModel]) -> some View {
+    private func tile(at index: Int, backgroundRow: ScreenshotRow, visibleShapes visible: [CanvasShapeModel]) -> some View {
         let offsetX = -CGFloat(index) * displayTemplateWidth
 
         ZStack(alignment: .topLeading) {
             // Live (non-rasterized) background so we don't pay the per-tile cost of
             // `EditorRasterizedBackgroundView`'s blur cache + render task.
             RowCanvasBackgroundView(
-                row: row,
+                row: backgroundRow,
                 screenshotImages: screenshotImages,
                 displayScale: displayScale,
                 blurRadius: row.backgroundBlur * displayScale

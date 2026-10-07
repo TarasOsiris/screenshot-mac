@@ -163,8 +163,7 @@ extension AppState {
             var imageCandidates: [String?] = []
             for row in rows where ids.contains(row.id) {
                 imageCandidates += imageFileNames(for: row.shapes)
-                imageCandidates += row.templates.map(\.backgroundImageConfig.fileName)
-                imageCandidates.append(row.backgroundImageConfig.fileName)
+                imageCandidates += row.allBackgroundImageFileNames
                 for shape in row.shapes {
                     LocaleService.removeShapeOverrides(&localeState, shapeId: shape.id)
                 }
@@ -192,8 +191,7 @@ extension AppState {
             let oldRow = rows[idx]
 
             let shapeImageCandidates = imageFileNames(for: oldRow.shapes)
-            let templateBgImages = oldRow.templates.compactMap { $0.backgroundImageConfig.fileName }
-            let rowBgImage = oldRow.backgroundImageConfig.fileName
+            let backgroundImages = oldRow.allBackgroundImageFileNames
 
             for shape in oldRow.shapes {
                 LocaleService.removeShapeOverrides(&localeState, shapeId: shape.id)
@@ -217,7 +215,7 @@ extension AppState {
 
             selectedShapeIds = []
 
-            let allCandidates: [String?] = shapeImageCandidates + templateBgImages + [rowBgImage]
+            let allCandidates: [String?] = shapeImageCandidates + backgroundImages
             cleanupUnreferencedImages(allCandidates)
         }
     }

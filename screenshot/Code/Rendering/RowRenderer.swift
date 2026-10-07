@@ -25,6 +25,7 @@ enum RowRenderer {
         config: ShowcaseExportConfig = .init(),
         preRenderedRowBackground: NSImage? = nil
     ) async -> NSImage {
+        let row = row.localizingBackgroundImages(to: localeCode)
         let count = row.templates.count
         guard count > 0 else {
             return NSImage(size: NSSize(width: 1, height: 1))
@@ -86,6 +87,7 @@ enum RowRenderer {
         availableFontFamilies: Set<String> = PlatformFonts.familyNameSet,
         displayScale: CGFloat = 1.0
     ) -> NSImage {
+        let row = row.localizingBackgroundImages(to: localeCode)
         let count = row.templates.count
         let span = PerfSignpost.begin(
             "RowRenderer.renderRowImage",
@@ -363,6 +365,7 @@ enum RowRenderer {
         preRenderedRowBackground: NSImage? = nil,
         resolvedShapes: [CanvasShapeModel]? = nil
     ) -> NSImage {
+        let row = row.localizingBackgroundImages(to: localeCode)
         let span = PerfSignpost.begin(
             "RowRenderer.renderSingleTemplateImage",
             "index=\(index) shapes=\(row.shapes.count) scale=\(displayScale)"

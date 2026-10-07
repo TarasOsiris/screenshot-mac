@@ -66,7 +66,7 @@ struct TemplateControlBar: View {
         )
     }
     private var backgroundPreviewImage: NSImage? {
-        liveTemplate.backgroundImageConfig.fileName.flatMap { screenshotImages[$0] }
+        liveTemplate.backgroundImageConfig.source(forLocale: localeState.activeLocaleCode).fileName.flatMap { screenshotImages[$0] }
     }
     private var isImageBackgroundMissing: Bool {
         liveTemplate.overrideBackground &&
@@ -382,7 +382,8 @@ struct TemplateControlBar: View {
             onPickImage: onPickBackgroundImage,
             onRemoveImage: onRemoveBackgroundImage,
             onDropImage: onDropBackgroundImage,
-            onDropSvg: onDropBackgroundSvg
+            onDropSvg: onDropBackgroundSvg,
+            localeImage: BackgroundLocaleImageState(state: state, rowId: row.id, templateIndex: index)
         )
     }
 

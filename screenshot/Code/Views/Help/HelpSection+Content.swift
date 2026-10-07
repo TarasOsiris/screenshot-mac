@@ -308,6 +308,9 @@ extension HelpSection {
                 .bullet("**Fit** — scales so the whole image is visible; leaves transparent letterbox bars."),
                 .bullet("**Stretch** — fills exactly, distorting aspect if needed."),
                 .bullet("**Tile** — repeats the image, with spacing, offset, and scale adjustable independently for the horizontal and vertical axes."),
+                .heading("A different image per language"),
+                .bullet("Switch to another language and click **Replace** (or drop an image) to give that language its own background image. Fill mode, opacity, tiling and blur stay shared with the base language."),
+                .bullet("Works for the row background and for a template's **Override background**. The button under the preview, named after your base language (for example **Use English Image**), goes back to the base language's image."),
                 .heading("Row vs template backgrounds"),
                 .bullet("By default a row's background applies to every template in the row."),
                 .bullet("**Stretch across all screenshots** (row toggle): when on, gradients and images render once across the entire row, so a single horizon or gradient flows across all templates."),
@@ -388,6 +391,7 @@ extension HelpSection {
                 .bullet("In a non-base language, edits are saved as **per-language overrides** — they don't change the base language."),
                 .bullet("Text content and styling, image replacements, and position/size adjustments can differ by language. Shared properties such as colors and device choices are edited in the base language."),
                 .bullet("An image's **Crop** can differ by language too, so a translated screenshot can be framed on its own."),
+                .bullet("A background image can differ by language: replace it while that language is active."),
                 .bullet("If a language has no override for a shape, it falls back to the base language's content."),
                 .heading("Seeing what a language overrides"),
                 .bullet("In the inspector, every control this language overrides is tinted amber, so you can see at a glance what differs from the base language. The properties bar tints the position, size and image controls the same way."),
@@ -409,7 +413,7 @@ extension HelpSection {
                 .heading("Exporting with languages"),
                 .bullet("On export, Screenshot Bro creates one folder per language, then sub-folders per row. The structure matches what App Store Connect's localized screenshot uploads expect."),
             ],
-            seeAlso: [.shapes, .exporting, .appStoreConnect]
+            seeAlso: [.shapes, .backgrounds, .exporting, .appStoreConnect]
         )
     }
 

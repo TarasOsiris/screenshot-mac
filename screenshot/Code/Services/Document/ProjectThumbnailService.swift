@@ -119,12 +119,13 @@ enum ProjectThumbnailService {
     /// `nonisolated` so it can run off the main actor.
     nonisolated private static func loadRenderInputs(for projectId: UUID) -> RenderInputs? {
         guard let data = PersistenceService.loadProject(projectId),
-              let row = data.rows.first(where: { !$0.templates.isEmpty }) ?? data.rows.first,
-              !row.templates.isEmpty
+              let baseRow = data.rows.first(where: { !$0.templates.isEmpty }) ?? data.rows.first,
+              !baseRow.templates.isEmpty
         else { return nil }
 
         let localeState = data.localeState ?? .default
         let localeCode = localeState.activeLocaleCode
+        let row = baseRow.localizingBackgroundImages(to: localeCode)
         let imageMaxDimension = thumbnailImageMaxDimension(for: row)
         let images = loadImages(
             fileNames: referencedFileNames(row: row, localeState: localeState, localeCode: localeCode),
@@ -184,9 +185,9 @@ enum ProjectThumbnailService {
 
     nonisolated private static func referencedFileNames(row: ScreenshotRow, localeState: LocaleState, localeCode: String) -> Set<String> {
         var result = Set<String>()
-        if let f = row.backgroundImageFileName(activeOnly: true) { result.insert(f) }
+        result.formUnion(row.backgroundImageFileNames(activeOnly: true))
         for template in row.templates {
-            if let f = template.backgroundImageFileName(activeOnly: true) { result.insert(f) }
+            result.formUnion(template.backgroundImageFileNames(activeOnly: true))
         }
         for shape in row.shapes {
             for f in shape.allImageFileNames { result.insert(f) }

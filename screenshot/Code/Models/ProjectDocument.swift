@@ -48,7 +48,8 @@ extension ProjectDocument {
     /// The one traversal: rows in order, then each row's templates and shapes, then the locale
     /// overrides (keyed by translation key, not shape id, so they can't be interleaved).
     /// `activeBackgroundsOnly` drops background images whose style is switched off — see
-    /// `ScreenshotRow.backgroundImageFileName(activeOnly:)`.
+    /// `ScreenshotRow.backgroundImageFileNames(activeOnly:)`. Render paths pass rows already
+    /// resolved with `localizingBackgroundImages(to:)`, or they would load every language's file.
     ///
     /// Ordered rather than a `Set` because `loadScreenshotImages` decodes in batches and a large
     /// project should fill in from the top row down; the `Set` callers just wrap the result. Two
@@ -65,9 +66,9 @@ extension ProjectDocument {
             ordered.append(fileName)
         }
         for row in targetRows {
-            append(row.backgroundImageFileName(activeOnly: activeBackgroundsOnly))
+            for fileName in row.backgroundImageFileNames(activeOnly: activeBackgroundsOnly) { append(fileName) }
             for template in row.templates {
-                append(template.backgroundImageFileName(activeOnly: activeBackgroundsOnly))
+                for fileName in template.backgroundImageFileNames(activeOnly: activeBackgroundsOnly) { append(fileName) }
             }
             for shape in row.shapes {
                 for fileName in shape.allImageFileNames { append(fileName) }
@@ -96,7 +97,10 @@ extension ProjectDocument {
     func editorReferencedImageFileNames() -> [String] {
         let activeCode = localeState.activeLocaleCode
         let activeOverrides = localeState.overrides[activeCode].map { [activeCode: $0] } ?? [:]
-        return Self.orderedReferencedImageFileNames(rows: rows, localeOverrides: activeOverrides)
+        return Self.orderedReferencedImageFileNames(
+            rows: rows.map { $0.keepingBackgroundImages(forLocale: activeCode) },
+            localeOverrides: activeOverrides
+        )
     }
 
     /// Every referenced filename in a single pass (for batch cleanup).
@@ -109,6 +113,10 @@ extension ProjectDocument {
     /// let a stale reference report itself as a missing resource and abort an upload.
     func referencedImageFileNames(forRow row: ScreenshotRow, localeCode: String) -> Set<String> {
         let localeOverrides = localeState.overrides[localeCode].map { [localeCode: $0] } ?? [:]
-        return Self.referencedImageFileNames(rows: [row], localeOverrides: localeOverrides, activeBackgroundsOnly: true)
+        return Self.referencedImageFileNames(
+            rows: [row.localizingBackgroundImages(to: localeCode)],
+            localeOverrides: localeOverrides,
+            activeBackgroundsOnly: true
+        )
     }
 }

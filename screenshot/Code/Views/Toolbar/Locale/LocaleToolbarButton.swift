@@ -51,7 +51,7 @@ struct LocaleToolbarButton: View {
                 Button("Revert to Base Language…", systemImage: "arrow.uturn.backward", role: .destructive) {
                     state.localeMenu.pendingMenuRequest = .revertToBase
                 }
-                .disabled(!localeState.activeLocaleHasOverrides)
+                .disabled(!state.activeLocaleHasAnyOverrides)
             }
 
             Divider()

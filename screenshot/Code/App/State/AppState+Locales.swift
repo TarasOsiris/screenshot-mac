@@ -336,14 +336,29 @@ extension AppState {
 
     func resetActiveLocaleToBase() {
         let code = localeState.activeLocaleCode
-        guard code != localeState.baseLocaleCode else { return }
-        guard let localeOverrides = localeState.overrides[code], !localeOverrides.isEmpty else { return }
+        guard activeLocaleHasAnyOverrides else { return }
 
         withUndo("Reset Language to Base") {
-            let overrideImages = localeOverrides.values.compactMap(\.overrideImageFileName)
+            var overrideImages = localeState.overrides[code]?.values.compactMap(\.overrideImageFileName) ?? []
             localeState.overrides.removeValue(forKey: code)
+            overrideImages += removeBackgroundImageOverrides(forLocale: code)
             cleanupUnreferencedImages(overrideImages)
         }
+    }
+
+    /// Shape overrides plus background images, which live on the rows.
+    var activeLocaleHasAnyOverrides: Bool {
+        guard !localeState.isBaseLocale else { return false }
+        let code = localeState.activeLocaleCode
+        return localeState.activeLocaleHasShapeOverrides || rows.contains { $0.hasBackgroundImageEntry(forLocale: code) }
+    }
+
+    private func removeBackgroundImageOverrides(forLocale code: String) -> [String] {
+        var freed: [String] = []
+        for index in rows.indices where rows[index].hasBackgroundImageEntry(forLocale: code) {
+            freed += rows[index].removeBackgroundImageOverrides(forLocale: code)
+        }
+        return freed
     }
 
     func addLocale(_ locale: LocaleDefinition) {
@@ -360,8 +375,9 @@ extension AppState {
         guard code != localeState.baseLocaleCode else { return }
         guard localeState.hasLocale(code) else { return }
         withUndo("Remove Language") {
-            let overrideImages = localeState.overrides[code]?.values.compactMap(\.overrideImageFileName) ?? []
+            var overrideImages = localeState.overrides[code]?.values.compactMap(\.overrideImageFileName) ?? []
             LocaleService.removeLocale(&localeState, code: code)
+            overrideImages += removeBackgroundImageOverrides(forLocale: code)
             cleanupUnreferencedImages(overrideImages)
         }
     }

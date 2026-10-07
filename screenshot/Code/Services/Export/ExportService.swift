@@ -104,8 +104,8 @@ struct ExportService {
             // Row-outer, locale-inner: locales whose overrides don't touch a row form
             // one group sharing a single render (encoded once, bytes cloned into each
             // locale's folder); each genuinely localized locale is its own group.
-            // Backgrounds are locale-independent, so the (blur-only) precomposed row
-            // strip is shared across every group of the row.
+            // The (blur-only) precomposed row strip is shared across every group whose
+            // background images resolve the same — see `RowRenderContext.load(reusing:)`.
             for (rowIndex, row) in rows.enumerated() {
                 // fastlane numbers continue across rows within a locale folder.
                 let fastlaneOffset = isFastlane ? rows.prefix(rowIndex).reduce(0) { $0 + $1.templates.count } : 0
@@ -153,7 +153,7 @@ struct ExportService {
                 // reference different files, so a document-wide cache only retains every
                 // full-resolution PNG in the project until the export ends.
                 var imageCache: [String: NSImage] = [:]
-                var context: RowRenderContext?
+                var contexts: [RowRenderContext] = []
                 for group in localeGroups {
                     let renderCode = group[0].code
                     // `load` carries the precomposed background forward for later locales via
@@ -164,9 +164,8 @@ struct ExportService {
                         from: source,
                         label: "export row",
                         cache: &imageCache,
-                        reusing: context
+                        reusing: &contexts
                     )
-                    context = rowContext
                     unrenderable.formUnion(rowContext.unrenderableImageFileNames)
                     await rowContext.prepareBackground()
 

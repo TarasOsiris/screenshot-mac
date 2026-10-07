@@ -378,7 +378,7 @@ struct ScreenshotBroApp: App {
                 Button("Revert to Base Language…") {
                     appState.localeMenu.pendingMenuRequest = .revertToBase
                 }
-                .disabled(!appState.localeState.activeLocaleHasOverrides)
+                .disabled(!appState.activeLocaleHasAnyOverrides)
 
                 Divider()
 

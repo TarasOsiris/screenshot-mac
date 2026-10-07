@@ -39,6 +39,8 @@ struct MCPBackgroundSnapshot: Encodable {
     let color: String?
     let gradient: MCPGradientSnapshot?
     let imageFile: String?
+    /// Per-language image files that replace `imageFile`, keyed by locale code; nil when none.
+    var imageOverrides: [String: String]?
 }
 
 struct MCPShapeSnapshot: Encodable {
@@ -265,7 +267,15 @@ enum MCPSnapshotBuilder {
                 imageFile: nil
             )
         case .image:
-            MCPBackgroundSnapshot(style: "image", color: nil, gradient: nil, imageFile: imageConfig.fileName)
+            MCPBackgroundSnapshot(
+                style: "image",
+                color: nil,
+                gradient: nil,
+                imageFile: imageConfig.fileName,
+                imageOverrides: imageConfig.localeImages.isEmpty
+                    ? nil
+                    : imageConfig.localeImages.compactMapValues { $0.fileName ?? ($0.svgContent != nil ? "svg" : nil) }
+            )
         }
     }
 }

@@ -354,7 +354,7 @@ nonisolated struct LocaleState: Codable, Equatable {
     /// Plain language name for a code (no flag), for use in prose like alert messages.
     func languageLabel(for code: String) -> String { locales.first { $0.code == code }?.label ?? code }
 
-    var activeLocaleHasOverrides: Bool {
+    var activeLocaleHasShapeOverrides: Bool {
         guard !isBaseLocale else { return false }
         return !(overrides[activeLocaleCode]?.isEmpty ?? true)
     }

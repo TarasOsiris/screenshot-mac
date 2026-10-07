@@ -80,9 +80,9 @@ final class GooglePlayUploadService {
 
         do {
             for (target, row) in work {
-                // Backgrounds are locale-independent, so the (blur-only) precomposed row strip is
-                // built once and shared across every language — same as `ExportService.exportAll`.
-                var context: RowRenderContext?
+                // The (blur-only) precomposed row strip is shared across every language whose
+                // background images resolve the same — same as `ExportService.exportAll`.
+                var contexts: [RowRenderContext] = []
 
                 for language in target.languages {
                     try Task.checkCancellation()
@@ -92,9 +92,8 @@ final class GooglePlayUploadService {
                         from: source,
                         label: "play upload row",
                         cache: &imageCache,
-                        reusing: context
+                        reusing: &contexts
                     )
-                    context = rowContext
                     // App Store Connect already refuses this; Play used to publish the screenshot
                     // with the missing image rendered as a hole.
                     if !rowContext.unrenderableImageFileNames.isEmpty {

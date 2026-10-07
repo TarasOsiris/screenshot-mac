@@ -227,7 +227,7 @@ extension EditorRowView {
         let facts = selectionFacts(in: resolvedShapes)
         ZStack(alignment: .topLeading) {
             EditorRasterizedBackgroundView(
-                row: row,
+                row: row.localizingBackgroundImages(to: state.localeState.activeLocaleCode),
                 screenshotImages: state.screenshotImages,
                 displayScale: ds
             )

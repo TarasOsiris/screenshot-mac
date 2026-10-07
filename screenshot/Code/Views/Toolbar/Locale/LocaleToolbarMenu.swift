@@ -191,7 +191,7 @@ struct LocaleBar: View {
                 Button("Revert to Base Language…", systemImage: "arrow.uturn.backward", role: .destructive) {
                     showResetToBaseConfirmation = true
                 }
-                .disabled(isQuickTranslating || !state.localeState.activeLocaleHasOverrides)
+                .disabled(isQuickTranslating || !state.activeLocaleHasAnyOverrides)
 
                 Divider()
             }

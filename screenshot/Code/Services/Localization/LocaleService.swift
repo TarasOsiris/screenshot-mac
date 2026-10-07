@@ -77,12 +77,12 @@ enum LocaleService {
         return text?.hasTranslatedTextField == true
     }
 
-    /// True when `localeCode` resolves every shape in the row unchanged, so a neutral row
-    /// renders pixel-identical to the base locale and export can reuse one render for all
-    /// such locales. Backgrounds are not locale-overridable, so shapes are the only inputs
-    /// that matter.
+    /// True when `localeCode` resolves every shape and background image in the row unchanged, so
+    /// a neutral row renders pixel-identical to the base locale and export can reuse one render
+    /// for all such locales.
     static func rowIsLocaleNeutral(row: ScreenshotRow, localeCode: String, localeState: LocaleState) -> Bool {
         guard localeCode != localeState.baseLocaleCode else { return true }
+        guard !row.hasBackgroundImageOverride(forLocale: localeCode) else { return false }
         return !row.activeShapes.contains { shape in
             let (style, text) = shapeOverrides(for: shape, localeCode: localeCode, localeState: localeState)
             return style != nil || text != nil
@@ -230,6 +230,11 @@ enum LocaleService {
                 }
                 rows[r].shapes[s] = newBaseShape
             }
+        }
+
+        let localeCodes = state.locales.map(\.code)
+        for r in rows.indices {
+            rows[r].rebaseBackgroundImages(to: newBaseCode, localeCodes: localeCodes)
         }
 
         if let idx = state.locales.firstIndex(where: { $0.code == newBaseCode }) {

@@ -13,9 +13,29 @@ nonisolated enum ImageFillMode: String, Codable, CaseIterable {
     case tile
 }
 
+/// One language's replacement for a background's image. Only the source is per-language: fill
+/// mode, opacity and tiling stay shared with the base.
+nonisolated struct BackgroundImageSource: Codable, Equatable {
+    var fileName: String?
+    var svgContent: String?
+
+    var hasImage: Bool { fileName != nil || svgContent != nil }
+
+    enum CodingKeys: String, CodingKey {
+        case fileName = "f", svgContent = "sc"
+    }
+
+    init(fileName: String? = nil, svgContent: String? = nil) {
+        self.fileName = fileName
+        self.svgContent = svgContent
+    }
+}
+
 nonisolated struct BackgroundImageConfig: Codable, Equatable {
     var fileName: String?
     var svgContent: String?
+    /// Per-language image sources, keyed by locale code. Never holds the base locale.
+    var localeImages: [String: BackgroundImageSource] = [:]
     var fillMode: ImageFillMode
     var opacity: Double
     var tileSpacingX: Double // 0-1 relative to image width
@@ -26,7 +46,7 @@ nonisolated struct BackgroundImageConfig: Codable, Equatable {
     var tileScaleY: Double   // 0.1-3.0 scale factor for tile image height
 
     /// Whether this config has any image source (raster file or SVG content).
-    var hasImage: Bool { fileName != nil || svgContent != nil }
+    var hasImage: Bool { source.hasImage }
 
     enum CodingKeys: String, CodingKey {
         case fileName = "f", svgContent = "sc", fillMode = "fm", opacity = "a"
@@ -34,6 +54,7 @@ nonisolated struct BackgroundImageConfig: Codable, Equatable {
         case tileSpacingX = "tsx", tileSpacingY = "tsy"
         case tileOffsetX = "tox", tileOffsetY = "toy"
         case tileScaleX = "tscx", tileScaleY = "tscy"
+        case localeImages = "li"
     }
 
     init(fileName: String? = nil, svgContent: String? = nil, fillMode: ImageFillMode = .fill,
@@ -67,6 +88,7 @@ nonisolated struct BackgroundImageConfig: Codable, Equatable {
         tileOffsetY = try c.decodeIfPresent(Double.self, forKey: .tileOffsetY) ?? legacyTileOffset
         tileScaleX = try c.decodeIfPresent(Double.self, forKey: .tileScaleX) ?? legacyTileScale
         tileScaleY = try c.decodeIfPresent(Double.self, forKey: .tileScaleY) ?? legacyTileScale
+        localeImages = try c.decodeIfPresent([String: BackgroundImageSource].self, forKey: .localeImages) ?? [:]
     }
 
     func encode(to encoder: Encoder) throws {
@@ -81,6 +103,57 @@ nonisolated struct BackgroundImageConfig: Codable, Equatable {
         if tileOffsetY != 0 { try c.encode(tileOffsetY, forKey: .tileOffsetY) }
         if tileScaleX != 1.0 { try c.encode(tileScaleX, forKey: .tileScaleX) }
         if tileScaleY != 1.0 { try c.encode(tileScaleY, forKey: .tileScaleY) }
+        if !localeImages.isEmpty { try c.encode(localeImages, forKey: .localeImages) }
+    }
+}
+
+nonisolated extension BackgroundImageConfig {
+    var source: BackgroundImageSource {
+        get { BackgroundImageSource(fileName: fileName, svgContent: svgContent) }
+        set {
+            fileName = newValue.fileName
+            svgContent = newValue.svgContent
+        }
+    }
+
+    /// This config as `localeCode` draws it. The table is always emptied, so a resolved config
+    /// names exactly the files that draw — reference walks and render keys need no locale.
+    func localized(to localeCode: String?) -> BackgroundImageConfig {
+        guard !localeImages.isEmpty else { return self }
+        var resolved = self
+        if let localeCode, let override = localeImages[localeCode] {
+            resolved.source = override
+        }
+        resolved.localeImages = [:]
+        return resolved
+    }
+
+    /// The source `localeCode` draws, without copying the config.
+    func source(forLocale localeCode: String?) -> BackgroundImageSource {
+        localeCode.flatMap { localeImages[$0] } ?? source
+    }
+
+    func references(_ fileName: String) -> Bool {
+        self.fileName == fileName || localeImages.values.contains { $0.fileName == fileName }
+    }
+
+    func drawsOwnImage(forLocale localeCode: String) -> Bool {
+        localeImages[localeCode].map { $0 != source } ?? false
+    }
+
+    /// The base file plus every language's — what retention must keep.
+    var allImageFileNames: [String] {
+        [fileName].compactMap { $0 } + localeImages.keys.sorted().compactMap { localeImages[$0]?.fileName }
+    }
+
+    /// Makes `newBase`'s image the base and re-anchors every other language in `localeCodes` so
+    /// each still draws what it drew before — except one that drew nothing, which inherits, as an
+    /// imageless shape does.
+    mutating func rebaseLocaleImages(to newBase: String, localeCodes: [String]) {
+        guard let promoted = localeImages[newBase] else { return }
+        let drawn = Dictionary(localeCodes.map { ($0, localeImages[$0] ?? source) }, uniquingKeysWith: { first, _ in first })
+        source = promoted
+        localeImages = drawn.filter { $0.key != newBase && $0.value != promoted && $0.value.hasImage }
     }
 }
 
