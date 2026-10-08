@@ -67,6 +67,8 @@ Custom Claude Code skills live in `.claude/skills/`:
 - `update-app-store-descriptions` — translate and apply App Store descriptions across locales via MCP.
 - `swiftui-patterns` / `swiftui-pro` — macOS SwiftUI reference + review.
 
+**Auto-pull:** a `UserPromptSubmit` hook (`.claude/hooks/git-pull.sh`) fetches and fast-forwards the current branch to its upstream before every prompt. It never blocks: if the branch has diverged, or an incoming change would overwrite an uncommitted edit, it leaves the tree alone and says so in the agent's context.
+
 **Post-feature review gate:** a `Stop` hook (`.claude/hooks/review-gate.sh`) blocks the end of any turn whose uncommitted Swift diff (≥20 lines, under `screenshot/`/`screenshotTests/`) hasn't been reviewed, and sends the agent through `/code-review high --fix` → `/simplify` → rebuild → `.claude/hooks/review-gate.sh --mark`. The mark stores a hash of the diff in the gitignored `.claude/state/`, so any later edit re-arms it. Say "skip review" to opt out for a turn.
 
 Reviewer/build agents in `.claude/agents/`: `export-parity-reviewer` (visual/export parity, coordinate space, Codable persistence, enum switch coverage), `xcode-build-validator` (runs xcodebuild, reports result). `/gwip` (stage+commit WIP+push) is a global command.
