@@ -272,13 +272,21 @@ final class CustomFontLibrary {
         everReferencedFontFamilies = families
     }
 
-    /// Registers a font file with the process and returns every face it exposes. Downloads first:
-    /// registration mmaps the file, which stalls on an iCloud file whose bytes haven't materialized.
+    /// Registers a font file with the process and returns every face it exposes, or nothing when
+    /// an iCloud file can't be materialized — the next load retries it.
     nonisolated static func register(at url: URL) -> [CustomFont] {
-        try? FileManager.default.startDownloadingUbiquitousItem(at: url)
+        // Registration mmaps the file while holding CoreText's process-wide registry lock, so a
+        // dataless iCloud file downloads under that lock and every main-thread font lookup waits
+        // on it (SCREENSHOT-BRO-2A). Materialize it first, outside the lock.
+        guard isMaterialized(url) || ICloudSyncService.shared.coordinatedRead(from: url) != nil else { return [] }
         // May fail if already registered — that's OK
         _ = CTFontManagerRegisterFontsForURL(url as CFURL, .process, nil)
         return CustomFont.allInstances(at: url)
+    }
+
+    private nonisolated static func isMaterialized(_ url: URL) -> Bool {
+        let status = try? url.resourceValues(forKeys: [.ubiquitousItemDownloadingStatusKey]).ubiquitousItemDownloadingStatus
+        return status == nil || status == .current
     }
 }
 
