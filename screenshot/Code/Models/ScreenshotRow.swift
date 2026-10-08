@@ -373,21 +373,23 @@ struct ScreenshotRow: Identifiable, Codable, Equatable, BackgroundFillable {
         a.minX <= b.maxX && b.minX <= a.maxX && a.minY <= b.maxY && b.minY <= a.maxY
     }
 
-    /// Fraction of a shape's width that must lie outside its owning column before the shape
+    /// Fraction of a shape's width that must lie on neighboring columns before the shape
     /// counts as deliberately spanning templates (rather than a tilted device or full-bleed
     /// image merely bleeding past the column edge).
     static let templateSpanThreshold: CGFloat = 1.0 / 3.0
 
-    /// True when a meaningful share of the shape's horizontal extent lies outside its owning
-    /// template — i.e. it deliberately straddles columns. Uses the unrotated extent
-    /// (rotation-invariant, like `owningTemplateIndex`) so a tilted device whose AABB
-    /// merely bleeds past the column edge still belongs to its column.
+    /// True when the shape deliberately straddles columns. Uses the unrotated extent, like
+    /// `owningTemplateIndex`, so a tilted device whose AABB crosses the edge stays in its column.
     func spansMultipleTemplates(_ shape: CanvasShapeModel) -> Bool {
         if shape.clipToTemplate == true { return false }
         guard shape.width > 0 else { return false }
         let tLeft = templateOriginX(for: shape)
-        let outside = max(0, tLeft - shape.x) + max(0, shape.x + shape.width - (tLeft + templateWidth))
-        return outside / shape.width > Self.templateSpanThreshold
+        let tRight = tLeft + templateWidth
+        // Bleed off either end of the row covers no template, so it can't make a shape straddle.
+        let rowRight = templateOriginX(at: templates.count)
+        let onLeftNeighbors = max(0, tLeft - max(shape.x, 0))
+        let onRightNeighbors = max(0, min(shape.x + shape.width, rowRight) - tRight)
+        return (onLeftNeighbors + onRightNeighbors) / shape.width > Self.templateSpanThreshold
     }
 
     /// Inverse of `visibleShapes(forTemplateAt:)`: shapes that belong to this template's column.

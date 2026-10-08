@@ -178,6 +178,35 @@ extension AppStateTests {
         #expect(after.x == straddler.x, "Shapes meaningfully spanning columns should stay in place")
     }
 
+    @Test func moveTemplateMovesLastColumnImageBleedingOffRowEnd() throws {
+        let (state, tempDir) = makeState()
+        defer { cleanup(tempDir) }
+        let rowId = state.rows.first!.id
+        state.selectRow(rowId)
+        let tw = state.rows.first!.templateWidth
+        // 0.6 tw of it hangs off the row's right end, over no template.
+        let image = CanvasShapeModel(type: .image, x: 2 * tw, y: 0, width: 1.6 * tw, height: 100)
+        state.addShape(image)
+        let movedTemplateId = state.rows.first!.templates[2].id
+        state.moveTemplateLeft(movedTemplateId, in: rowId)
+        let moved = try #require(state.rows.first!.shapes.first { $0.id == image.id })
+        #expect(moved.x == image.x - tw, "Bleed off the row end must not detach the image from its column")
+    }
+
+    @Test func moveTemplateMovesFirstColumnImageBleedingOffRowStart() throws {
+        let (state, tempDir) = makeState()
+        defer { cleanup(tempDir) }
+        let rowId = state.rows.first!.id
+        state.selectRow(rowId)
+        let tw = state.rows.first!.templateWidth
+        let image = CanvasShapeModel(type: .image, x: -0.6 * tw, y: 0, width: 1.6 * tw, height: 100)
+        state.addShape(image)
+        let movedTemplateId = state.rows.first!.templates[0].id
+        state.moveTemplateRight(movedTemplateId, in: rowId)
+        let moved = try #require(state.rows.first!.shapes.first { $0.id == image.id })
+        #expect(moved.x == image.x + tw, "Bleed off the row start must not detach the image from its column")
+    }
+
     @Test func rapidMoveRightOnDisplacedNeighborKeepsMovingSameTemplate() throws {
         let (state, tempDir) = makeState()
         defer { cleanup(tempDir) }
