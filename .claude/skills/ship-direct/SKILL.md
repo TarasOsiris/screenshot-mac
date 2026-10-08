@@ -99,6 +99,22 @@ icon positions) by scripting Finder, so it needs a GUI session and Automation ac
 terminal; it ejects any mounted "Screenshot Bro" volume first. Open the result once and check the window
 before signing.
 
+### 4b. Send the DMG to Telegram
+As soon as the stapled DMG exists, send it to the user's Telegram chat, if the helper is set up on
+this Mac:
+```bash
+TG_DOC="$HOME/.claude/hooks/tg_document.py"
+DMG_SENT=no
+if [ -x "$TG_DOC" ]; then
+  "$TG_DOC" "build/direct/$DMG" "<b>Screenshot Bro $V ($B)</b> — direct-download DMG (notarized, not yet published)" \
+    && DMG_SENT=yes
+fi
+```
+- The helper prints `sent`, or exits **2** with `too large` because the Bot API caps uploads at
+  50 MB, which the DMG is usually just over. In that case step 7c sends the download link instead.
+- Any other failure (no helper, no credentials, network) is a warning, never a stop. Telegram is a
+  convenience, not part of the release.
+
 ## 5. Update the appcast
 ```bash
 mkdir -p build/appcast && cp "$SITE/public/appcast.xml" build/appcast/ 2>/dev/null; cp "build/direct/$DMG" build/appcast/
@@ -157,6 +173,15 @@ curl -sSI "$DL_URL/ScreenshotBro.dmg"   # HTTP 200, content-type: application/x-
 ```
 All three hashes must match, and the HEAD request must return HTTP 200 with
 `content-type: application/x-apple-diskimage`. On any mismatch, **stop and don't push the appcast**.
+
+If step 4b couldn't attach the DMG (`DMG_SENT=no`), send the verified link now. Skip this if the
+helper isn't set up on this Mac:
+```bash
+[ "$DMG_SENT" = yes ] || [ ! -x "$HOME/.claude/hooks/tg_message.py" ] || "$HOME/.claude/hooks/tg_message.py" <<MSG
+<b>Screenshot Bro $V ($B)</b> — direct-download DMG ($(du -h "build/direct/$DMG" | cut -f1 | tr -d ' '), too big to attach)
+$DL_URL/$DMG
+MSG
+```
 
 ### 7d. Only then, publish the appcast
 ```bash
