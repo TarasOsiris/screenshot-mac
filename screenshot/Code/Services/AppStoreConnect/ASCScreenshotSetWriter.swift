@@ -31,14 +31,33 @@ struct ASCScreenshotSetWriter {
                 try await api.uploadChunk(operation: operation, from: data)
             }
             try await api.commitScreenshot(id: reserved.id, md5Checksum: checksum)
+        } catch {
+            discardReservation(reserved.id)
+            throw error
+        }
+        do {
             let delivery = try await waitForDelivery(screenshotId: reserved.id, expectedChecksum: checksum)
             return (reserved.id, delivery)
         } catch {
-            // An unstructured Task doesn't inherit cancellation, so this cleanup still runs when
-            // the failure *is* cancellation — otherwise the reservation is orphaned in the set.
-            let reservedId = reserved.id
-            Task { await deleteReservation(reservedId) }
+            // A committed upload Apple is merely slow to process is kept: the next sync matches it
+            // by checksum instead of uploading it again. Only a verdict or a cancel removes it.
+            if Self.discardsCommittedUpload(after: error) { discardReservation(reserved.id) }
             throw error
+        }
+    }
+
+    /// An unstructured Task doesn't inherit cancellation, so this cleanup still runs when the
+    /// failure *is* cancellation — otherwise the reservation is orphaned in the set.
+    private func discardReservation(_ id: String) {
+        Task { await deleteReservation(id) }
+    }
+
+    private static func discardsCommittedUpload(after error: Error) -> Bool {
+        // A cancel mid-poll can surface as the transport's URLError rather than CancellationError.
+        if error is CancellationError || Task.isCancelled { return true }
+        switch error as? ASCScreenshotSyncError {
+        case .deliveryStillProcessing?, nil: return false
+        case .some: return true
         }
     }
 
@@ -224,13 +243,11 @@ struct ASCScreenshotSetWriter {
             try await Task.sleep(for: deliveryPollDelay(attempt: attempt, failedPolls: failedPolls))
         }
         if let lastError { throw lastError }
-        throw ASCScreenshotSyncError.invalidPlan(
-            String(localized: "App Store Connect did not finish processing the uploaded screenshot in time.")
-        )
+        throw ASCScreenshotSyncError.deliveryStillProcessing
     }
 
     /// Apple routinely holds a committed screenshot in `UPLOAD_COMPLETE` for well over 30 s when
-    /// it is busy, and giving up then deletes a healthy upload and aborts the sync. ~3.5 min:
+    /// it is busy, and giving up aborts the sync (the upload is kept for the next one). ~3.5 min:
     /// ten polls at the base interval, then one every 4×.
     private static let deliveryPollLimit = 60
     private static let deliveryFastPolls = 10

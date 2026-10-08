@@ -35,6 +35,10 @@ private final class FakeScreenshotSyncAPI: ASCScreenshotSyncAPI {
     /// does not blindly post a second set when it cannot tell whether the first one landed.
     var refuseAdoptLookup = false
     private var failListSetsTimes = 0
+    /// `assetDeliveryState` per screenshot id; anything absent reports COMPLETE.
+    var deliveryStates: [String: String] = [:]
+    /// State every newly reserved screenshot starts in, to model Apple being slow to process.
+    var reservedDeliveryState: String?
 
     /// Preview downloads, which only the review screen needs. Asserted to be zero on the direct
     /// upload path.
@@ -151,8 +155,11 @@ private final class FakeScreenshotSyncAPI: ASCScreenshotSyncAPI {
         let id = "shot-\(nextShotId)"
         members[setId, default: []].append(id)
         order[setId, default: []].append(id)
+        if let reservedDeliveryState { deliveryStates[id] = reservedDeliveryState }
         return try shot(id)
     }
+
+    func screenshotIds(inSet setId: String) -> [String] { members[setId] ?? [] }
 
     func uploadChunk(operation: ASCUploadOperation, from fileData: Data) async throws {}
 
@@ -168,7 +175,7 @@ private final class FakeScreenshotSyncAPI: ASCScreenshotSyncAPI {
     private func shot(_ id: String) throws -> ASCAppScreenshot {
         let checksum = checksums[id].map { "\"sourceFileChecksum\":\"\($0)\"," } ?? ""
         return try Self.decode(
-            #"{"id":"\#(id)","attributes":{\#(checksum)"fileName":"\#(id).png","assetDeliveryState":{"state":"COMPLETE"}}}"#
+            #"{"id":"\#(id)","attributes":{\#(checksum)"fileName":"\#(id).png","assetDeliveryState":{"state":"\#(deliveryStates[id] ?? "COMPLETE")"}}}"#
         )
     }
 
@@ -538,6 +545,89 @@ struct ASCScreenshotSyncIdempotencyTests {
 
         #expect(result.succeeded)
         #expect(api.deliveryPollFailures == 2)
+    }
+
+    /// Apple can sit on a committed screenshot for minutes. Deleting it when the wait ran out threw
+    /// away an upload that was about to land and forced a second upload of the same bytes.
+    @Test func aSlowDeliveryKeepsTheUploadForTheNextSyncToAdopt() async throws {
+        let api = FakeScreenshotSyncAPI()
+        let service = AppStoreConnectScreenshotSyncService(
+            api: api, isDemoMode: { false }, pollInterval: .milliseconds(1)
+        )
+        let (plan, stamp) = try await build(service, needsPreviews: false)
+        let setId = try #require(plan.sets.first?.id)
+        api.reservedDeliveryState = "UPLOAD_COMPLETE"
+
+        let result = try await service.apply(planId: plan.id, setIds: [setId], document: stamp)
+
+        #expect(!result.succeeded)
+        #expect(result.sets.first?.failure?.kind == .processingTimeout)
+        for _ in 0..<10 { await Task.yield() }
+        #expect(api.deleteCount == 0, "a committed upload Apple is still processing must not be deleted")
+
+        let (retry, _) = try await build(service, needsPreviews: false)
+        let retryDiff = try #require(retry.sets.first)
+        #expect(retryDiff.unchangedCount == 1)
+        #expect(retryDiff.uploadCount == 0, "the slow upload is adopted, not sent twice")
+    }
+
+    /// Keeping slow uploads must not keep rejected ones: a FAILED verdict still removes the reservation.
+    @Test func aRejectedDeliveryStillDeletesTheUpload() async throws {
+        let api = FakeScreenshotSyncAPI()
+        let service = AppStoreConnectScreenshotSyncService(
+            api: api, isDemoMode: { false }, pollInterval: .milliseconds(1)
+        )
+        let (plan, stamp) = try await build(service, needsPreviews: false)
+        let setId = try #require(plan.sets.first?.id)
+        api.reservedDeliveryState = "FAILED"
+
+        let result = try await service.apply(planId: plan.id, setIds: [setId], document: stamp)
+
+        #expect(!result.succeeded)
+        for _ in 0..<10 where api.deleteCount == 0 { await Task.yield() }
+        #expect(api.deleteCount == 1)
+    }
+
+    /// An adopted upload Apple is still processing is not reported as COMPLETE just because it was matched.
+    @Test func anAdoptedStillProcessingAssetIsReportedAsNotComplete() async throws {
+        let api = FakeScreenshotSyncAPI()
+        let service = AppStoreConnectScreenshotSyncService(api: api, isDemoMode: { false })
+        let (probe, _) = try await build(service, needsPreviews: false)
+        let checksum = try #require(probe.sets.first?.items.first?.checksum)
+        service.discardPlan(probe.id)
+
+        let seededSet = api.seedExistingSet(
+            localizationId: "loc-1", displayType: .iphone67, checksums: [checksum, "deadbeef"]
+        )
+        let adoptedId = try #require(api.screenshotIds(inSet: seededSet).first)
+        api.deliveryStates[adoptedId] = "UPLOAD_COMPLETE"
+        let (plan, stamp) = try await build(service, needsPreviews: false)
+        let diff = try #require(plan.sets.first)
+        #expect(diff.unchangedCount == 1)
+
+        let result = try await service.apply(planId: plan.id, setIds: [diff.id], document: stamp)
+
+        #expect(result.succeeded)
+        #expect(result.sets.first?.nonCompleteAssets.map(\.screenshotId) == [adoptedId])
+    }
+
+    /// The flip side of keeping slow uploads: one Apple later marks FAILED still carries the
+    /// checksum it was committed with, and must be replaced rather than preserved.
+    @Test func aFailedRemoteAssetIsReplacedNotPreserved() async throws {
+        let api = FakeScreenshotSyncAPI()
+        let service = AppStoreConnectScreenshotSyncService(api: api, isDemoMode: { false })
+        let (probe, _) = try await build(service, needsPreviews: false)
+        let checksum = try #require(probe.sets.first?.items.first?.checksum)
+        service.discardPlan(probe.id)
+
+        let seededSet = api.seedExistingSet(localizationId: "loc-1", displayType: .iphone67, checksums: [checksum])
+        for id in api.screenshotIds(inSet: seededSet) { api.deliveryStates[id] = "FAILED" }
+        let (plan, _) = try await build(service, needsPreviews: false)
+        let diff = try #require(plan.sets.first)
+
+        #expect(diff.unchangedCount == 0)
+        #expect(diff.uploadCount == 1)
+        #expect(diff.removalCount == 1)
     }
 
     /// A create failure Apple will never accept must surface immediately, not burn the budget.

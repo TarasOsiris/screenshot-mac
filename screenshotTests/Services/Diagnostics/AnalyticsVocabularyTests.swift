@@ -73,6 +73,7 @@ struct AnalyticsVocabularyTests {
             ), .unreadableImages),
             (ASCScreenshotSyncError.invalidPlan("Secret Row"), .stalePlan),
             (ASCScreenshotSyncError.planExpired, .stalePlan),
+            (ASCScreenshotSyncError.deliveryStillProcessing, .processingTimeout),
             (GooglePlayUploadError.noRowsSelected, .nothingSelected),
             (CancellationError(), .cancelled),
             (URLError(.notConnectedToInternet), .transport),

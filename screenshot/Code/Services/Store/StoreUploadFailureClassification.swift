@@ -26,6 +26,8 @@ nonisolated enum StoreUploadFailureKind: String, CaseIterable {
     case nothingSelected = "nothing_selected"
     /// The prepared plan no longer matches the project or the store (expired, stale, superseded).
     case stalePlan = "stale_plan"
+    /// The upload was committed but the store had not finished processing it when we stopped waiting.
+    case processingTimeout = "processing_timeout"
     case cancelled
     /// The store reported a failure whose shape we could not read. Should stay rare — a rising
     /// count here means a case is missing above, not that uploads are mysteriously broken.
@@ -66,6 +68,7 @@ nonisolated struct StoreUploadFailure: Equatable {
                 return StoreUploadFailure(kind: .stalePlan, errorCode: nil)
             case .noSetsSelected: return StoreUploadFailure(kind: .nothingSelected, errorCode: nil)
             case .unreadableImages: return StoreUploadFailure(kind: .unreadableImages, errorCode: nil)
+            case .deliveryStillProcessing: return StoreUploadFailure(kind: .processingTimeout, errorCode: nil)
             }
         case let error as any StoreAPIFailure:
             return apiFailure(status: error.httpStatus, isDecoding: error.isDecodingFailure)

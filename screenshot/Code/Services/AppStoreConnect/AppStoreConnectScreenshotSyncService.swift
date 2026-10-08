@@ -260,6 +260,7 @@ final class AppStoreConnectScreenshotSyncService {
 
         // Revalidate every not-yet-applied set and its cached local bytes before the first write.
         var setsByLocalization: [ASCScreenshotSetParent: [ASCAppScreenshotSet]] = [:]
+        var listedDeliveryStates: [String: String] = [:]
         for diff in remaining {
             try Task.checkCancellation()
             for local in diff.proposedAssets.compactMap(\.localAsset) {
@@ -287,6 +288,9 @@ final class AppStoreConnectScreenshotSyncService {
                         throw ASCScreenshotSyncError.partiallyAppliedSet(set: Self.label(for: diff))
                     }
                     throw ASCScreenshotSyncError.staleRemote(set: Self.label(for: diff))
+                }
+                for asset in snapshot.assets {
+                    listedDeliveryStates[asset.id] = asset.deliveryState
                 }
             }
         }
@@ -370,9 +374,13 @@ final class AppStoreConnectScreenshotSyncService {
                 for item in diff.proposedAssets {
                     guard let local = item.localAsset, let proposedIndex = item.proposedIndex else { continue }
                     if let remoteId = item.remoteId {
-                        // Already live on the store, so its state is known without another GET.
+                        // Revalidation just listed it, so its state is known without another GET.
                         finalIdsByLocalIndex[proposedIndex] = remoteId
-                        deliveries.append(.assumedComplete(remoteId))
+                        deliveries.append(ASCScreenshotDeliveryOutcome(
+                            screenshotId: remoteId,
+                            state: listedDeliveryStates[remoteId] ?? "COMPLETE",
+                            messages: []
+                        ))
                     } else {
                         progress(UploadProgress(totalSteps: total, completedSteps: completed, currentLabel: String(localized: "Uploading \(local.fileName)", comment: "Upload progress. The placeholder names the screenshot being uploaded.")))
                         let data = try Data(contentsOf: local.fileURL)
@@ -527,7 +535,8 @@ final class AppStoreConnectScreenshotSyncService {
         guard let syncError = error as? ASCScreenshotSyncError else { return false }
         switch syncError {
         case .planNotFound, .planExpired, .staleProject, .staleRemote,
-             .invalidPlan, .unreadableImages, .noSetsSelected, .partiallyAppliedSet:
+             .invalidPlan, .unreadableImages, .noSetsSelected, .partiallyAppliedSet,
+             .deliveryStillProcessing:
             return true
         case .applyInProgress:
             return false
@@ -671,8 +680,11 @@ final class AppStoreConnectScreenshotSyncService {
             // `sourceFileChecksum` is the MD5 of the file that was uploaded. Apple re-encodes
             // renditions served from the image host, so hashing a download would never match a
             // locally rendered PNG — an asset without a checksum simply can't be matched.
-            let checksum = resolved.attributes.sourceFileChecksum?.lowercased()
-            if checksum == nil { unmatchableCount += 1 }
+            if resolved.attributes.sourceFileChecksum == nil { unmatchableCount += 1 }
+            // A FAILED asset keeps the checksum it was committed with; matching it would preserve a broken upload.
+            let checksum = resolved.attributes.assetDeliveryState?.isFailed == true
+                ? nil
+                : resolved.attributes.sourceFileChecksum?.lowercased()
             var previewFileURL: URL?
             if let previewData, let previewDirectory {
                 do {
@@ -698,7 +710,8 @@ final class AppStoreConnectScreenshotSyncService {
                 height: resolved.attributes.imageAsset?.height,
                 previewData: previewData,
                 previewFileURL: previewFileURL,
-                previewError: previewError
+                previewError: previewError,
+                deliveryState: resolved.attributes.assetDeliveryState?.state
             ))
         }
         var warnings: [String] = []

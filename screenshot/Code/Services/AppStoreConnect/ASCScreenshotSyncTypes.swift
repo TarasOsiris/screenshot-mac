@@ -28,6 +28,8 @@ struct ASCScreenshotRemoteAsset: Identifiable, Sendable {
     let previewData: Data?
     let previewFileURL: URL?
     let previewError: String?
+    /// Apple's raw `assetDeliveryState`; an adopted upload can still be processing.
+    var deliveryState: String? = nil
 }
 
 struct ASCScreenshotDiffItem: Identifiable, Sendable {
@@ -185,6 +187,7 @@ enum ASCScreenshotSyncError: LocalizedError {
     case applyInProgress
     case partiallyAppliedSet(set: String)
     case invalidPlan(String)
+    case deliveryStillProcessing
     case unreadableImages(rowLabel: String, localeLabel: String, fileNames: [String])
 
     var errorDescription: String? {
@@ -205,6 +208,8 @@ enum ASCScreenshotSyncError: LocalizedError {
             String(localized: "\(set) was partially uploaded before the last sync stopped. Refresh the review to re-diff this set — the sets that finished will not be uploaded again.")
         case .invalidPlan(let message):
             message
+        case .deliveryStillProcessing:
+            String(localized: "App Store Connect is still processing an uploaded screenshot. Wait a few minutes, then upload again — screenshots that already reached App Store Connect will not be uploaded twice.")
         case .unreadableImages(let rowLabel, let localeLabel, let fileNames):
             fileNames.count == 1
                 ? String(localized: "\(rowLabel) · \(localeLabel) uses 1 image file that could not be read, so the screenshots would upload with missing content. Re-add the affected image, then try again.")

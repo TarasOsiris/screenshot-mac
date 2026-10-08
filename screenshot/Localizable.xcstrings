@@ -39782,88 +39782,6 @@
         }
       }
     },
-    "App Store Connect did not finish processing the uploaded screenshot in time." : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "App Store Connect hat die Verarbeitung des hochgeladenen Screenshots nicht rechtzeitig abgeschlossen."
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "App Store Connect no terminó de procesar a tiempo la captura subida."
-          }
-        },
-        "fa" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "App Store Connect پردازش اسکرین‌شات آپلودشده را به‌موقع تمام نکرد."
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "App Store Connect n'a pas terminé à temps le traitement de la capture d'écran envoyée."
-          }
-        },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "App Store Connect non ha terminato in tempo l'elaborazione dello screenshot caricato."
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "App Store Connect はアップロードされたスクリーンショットの処理を時間内に完了できませんでした。"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "App Store Connect가 업로드된 스크린샷 처리를 제때 완료하지 못했습니다."
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "App Store Connect não concluiu o processamento da captura de tela enviada a tempo."
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "App Store Connect не успел обработать загруженный скриншот."
-          }
-        },
-        "tr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "App Store Connect, yüklenen ekran görüntüsünü zamanında işlemeyi bitiremedi."
-          }
-        },
-        "uk" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "App Store Connect не встиг вчасно обробити вивантажений знімок екрана."
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "App Store Connect 未能及时处理完上传的截图。"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "App Store Connect 未能及時完成處理上傳的螢幕截圖。"
-          }
-        }
-      }
-    },
     "App Store Connect does not allow %@ (%@) for this app version/localization. This usually means the selected app version does not support that device family, such as uploading iPad screenshots for an iPhone-only app, or App Store Connect does not accept this display type for the selected platform." : {
       "extractionState" : "stale",
       "localizations" : {
@@ -189339,6 +189257,88 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "背景影像可以依語言區分：在該語言作用中時取代它即可。"
+          }
+        }
+      }
+    },
+    "App Store Connect is still processing an uploaded screenshot. Wait a few minutes, then upload again — screenshots that already reached App Store Connect will not be uploaded twice." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "App Store Connect verarbeitet noch einen hochgeladenen Screenshot. Warte ein paar Minuten und lade dann erneut hoch – Screenshots, die bereits in App Store Connect angekommen sind, werden nicht doppelt hochgeladen."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "App Store Connect todavía está procesando una captura de pantalla subida. Espera unos minutos y vuelve a subirla: las capturas que ya llegaron a App Store Connect no se subirán dos veces."
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "App Store Connect هنوز در حال پردازش یک اسکرین‌شات بارگذاری‌شده است. چند دقیقه صبر کنید و سپس دوباره بارگذاری کنید — اسکرین‌شات‌هایی که قبلاً به App Store Connect رسیده‌اند دوباره بارگذاری نمی‌شوند."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "App Store Connect traite encore une capture d’écran envoyée. Patientez quelques minutes, puis relancez l’envoi — les captures déjà arrivées dans App Store Connect ne seront pas envoyées deux fois."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "App Store Connect sta ancora elaborando uno screenshot caricato. Attendi qualche minuto, poi carica di nuovo: gli screenshot già arrivati su App Store Connect non verranno caricati due volte."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "App Store Connect はアップロードされたスクリーンショットをまだ処理中です。数分待ってから再度アップロードしてください。App Store Connect に届いているスクリーンショットが二重にアップロードされることはありません。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "App Store Connect에서 업로드된 스크린샷을 아직 처리하고 있습니다. 몇 분 기다린 후 다시 업로드하세요. 이미 App Store Connect에 도착한 스크린샷은 중복으로 업로드되지 않습니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O App Store Connect ainda está processando uma captura de tela enviada. Aguarde alguns minutos e envie novamente — as capturas que já chegaram ao App Store Connect não serão enviadas duas vezes."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "App Store Connect ещё обрабатывает загруженный скриншот. Подождите несколько минут и загрузите снова — скриншоты, которые уже попали в App Store Connect, повторно загружены не будут."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "App Store Connect yüklenen bir ekran görüntüsünü hâlâ işliyor. Birkaç dakika bekleyip yeniden yükleyin — App Store Connect’e zaten ulaşmış ekran görüntüleri ikinci kez yüklenmez."
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "App Store Connect ще обробляє завантажений знімок екрана. Зачекайте кілька хвилин і завантажте знову — знімки, які вже потрапили до App Store Connect, не буде завантажено вдруге."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "App Store Connect 仍在处理已上传的截图。请等待几分钟后再上传——已到达 App Store Connect 的截图不会重复上传。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "App Store Connect 仍在處理已上傳的截圖。請等待幾分鐘後再上傳——已到達 App Store Connect 的截圖不會重複上傳。"
           }
         }
       }
