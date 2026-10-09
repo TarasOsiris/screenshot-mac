@@ -35,6 +35,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
 
+import requests
 from deep_translator import GoogleTranslator
 
 import xcstrings_format
@@ -59,6 +60,13 @@ TARGET_LANGUAGES = {
     "ru": "ru",
     "tr": "tr",
     "uk": "uk",
+    "ca": "ca",
+    "da": "da",
+    "nl": "nl",
+    "fi": "fi",
+    "no": "no",
+    "sv": "sv",
+    "pt-PT": "pt",
 }
 
 KEEP_AS_IS = {
@@ -138,6 +146,11 @@ PROTECTED_TERMS = (
     "LinkedIn",
     "Xcode",
     "Quick Look",
+    "(inflect: true)",
+    "https://screenshotbro.app/privacy",
+    "https://screenshotbro.app/terms",
+    "https://screenshotbro.app",
+    "screenshotbro.app",
 )
 
 FORMAT_SPECIFIER_RE = re.compile(
@@ -201,29 +214,103 @@ def restore(translated: str, replacements: dict[str, str]) -> str:
     restored = translated
     for token, value in replacements.items():
         restored = restored.replace(token, value)
+        inner = token.strip("[]")
+        restored = re.sub(r"\[+ *" + re.escape(inner) + r" *\]*", value, restored)
     return restored
 
 
-def translate_batch(translator: GoogleTranslator, batch: list[str]) -> list[str]:
+HTTP_HEADERS = {
+    "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+}
+
+
+def adapt_european_portuguese(text: str) -> str:
+    replacements = [
+        (r"\bcapturas? de tela\b", lambda m: "captura de ecrã" if m.group(0).startswith("captura de") else "capturas de ecrã"),
+        (r"\bCapturas? de [Tt]ela\b", lambda m: "Captura de ecrã" if m.group(0).startswith("Captura de t") else "Capturas de Ecrã" if "T" in m.group(0) else "Capturas de ecrã"),
+        (r"\btela\b", "ecrã"),
+        (r"\bTela\b", "Ecrã"),
+        (r"\btelas\b", "ecrãs"),
+        (r"\bTelas\b", "Ecrãs"),
+        (r"\barquivos?\b", lambda m: "ficheiro" if m.group(0) == "arquivo" else "ficheiros"),
+        (r"\bArquivos?\b", lambda m: "Ficheiro" if m.group(0) == "Arquivo" else "Ficheiros"),
+        (r"\bsalvar\b", "guardar"),
+        (r"\bSalvar\b", "Guardar"),
+        (r"\bsalve\b", "guarde"),
+        (r"\bSalve\b", "Guarde"),
+        (r"\bsalvo\b", "guardado"),
+        (r"\bSalvo\b", "Guardado"),
+        (r"\bsalva\b", "guardada"),
+        (r"\bSalva\b", "Guardada"),
+        (r"\bsalvos\b", "guardados"),
+        (r"\bsalvas\b", "guardadas"),
+        (r"\bsalvando\b", "a guardar"),
+        (r"\busuários?\b", lambda m: "utilizador" if m.group(0) == "usuário" else "utilizadores"),
+        (r"\bUsuários?\b", lambda m: "Utilizador" if m.group(0) == "Usuário" else "Utilizadores"),
+        (r"\bmouses?\b", lambda m: "rato" if m.group(0) == "mouse" else "ratos"),
+        (r"\bMouses?\b", lambda m: "Rato" if m.group(0) == "Mouse" else "Ratos"),
+        (r"\bequipes?\b", lambda m: "equipa" if m.group(0) == "equipe" else "equipas"),
+        (r"\bEquipes?\b", lambda m: "Equipa" if m.group(0) == "Equipe" else "Equipas"),
+        (r"\bAjustes do Sistema\b", "Definições do Sistema"),
+        (r"\bAjustes\b", "Definições"),
+        (r"\bajustes\b", "definições"),
+        (r"\bcompartilhar\b", "partilhar"),
+        (r"\bCompartilhar\b", "Partilhar"),
+        (r"\bcompartilhamento\b", "partilha"),
+        (r"\bCompartilhamento\b", "Partilha"),
+        (r"\bbaixar\b", "descarregar"),
+        (r"\bBaixar\b", "Descarregar"),
+        (r"\bfazer upload\b", "carregar"),
+        (r"\bFazer upload\b", "Carregar"),
+        (r"\bgerenciador\b", "gestor"),
+        (r"\bGerenciador\b", "Gestor"),
+        (r"\bgerenciar\b", "gerir"),
+        (r"\bGerenciar\b", "Gerir"),
+        (r"\bcontatos?\b", lambda m: "contacto" if m.group(0) == "contato" else "contactos"),
+        (r"\bContatos?\b", lambda m: "Contacto" if m.group(0) == "Contato" else "Contactos"),
+        (r"\bseções\b", "secções"),
+        (r"\bseção\b", "secção"),
+        (r"\bSeções\b", "Secções"),
+        (r"\bSeção\b", "Secção"),
+    ]
+    for pattern, repl in replacements:
+        text = re.sub(pattern, repl, text)
+    return text
+
+
+def translate_batch(service_language: str, batch: list[str], fallback_translator: GoogleTranslator | None = None) -> list[str]:
     joined = SEPARATOR.join(batch)
     for attempt in range(MAX_RETRIES):
         try:
-            translated = translator.translate(joined)
-            parts = translated.split(SEPARATOR)
-            if len(parts) != len(batch):
-                raise ValueError(
-                    f"separator split mismatch: expected {len(batch)}, got {len(parts)}"
-                )
-            return parts
+            url = f"https://clients5.google.com/translate_a/t?client=dict-chrome-ex&sl=en&tl={service_language}"
+            resp = requests.post(url, headers=HTTP_HEADERS, data={"q": joined}, timeout=15)
+            if resp.status_code == 200:
+                data = resp.json()
+                if isinstance(data, list) and len(data) > 0:
+                    translated = data[0]
+                    parts = translated.split(SEPARATOR)
+                    if len(parts) == len(batch):
+                        return parts
+            if fallback_translator:
+                translated = fallback_translator.translate(joined)
+                parts = translated.split(SEPARATOR)
+                if len(parts) == len(batch):
+                    return parts
+            raise ValueError(
+                f"separator split mismatch: expected {len(batch)}"
+            )
         except Exception:
             if attempt == MAX_RETRIES - 1:
                 raise
-            time.sleep(1.5 * (attempt + 1))
+            time.sleep(1.0 * (attempt + 1))
     raise RuntimeError("unreachable")
 
 
 def translate_language(strings: dict[str, dict], xcstrings_language: str, service_language: str) -> int:
-    translator = GoogleTranslator(source="en", target=service_language)
+    try:
+        translator = GoogleTranslator(source="en", target=service_language)
+    except Exception:
+        translator = None
     pending: list[tuple[str, str, dict[str, str]]] = []
     translated_count = 0
     skipped: list[str] = []
@@ -253,7 +340,7 @@ def translate_language(strings: dict[str, dict], xcstrings_language: str, servic
         chunk = pending[start:end]
         protected_batch = [item[1] for item in chunk]
         try:
-            translated_batch = translate_batch(translator, protected_batch)
+            translated_batch = translate_batch(service_language, protected_batch, translator)
         except Exception as error:
             # One bad string must not discard a whole run's work: retry the batch
             # one item at a time and leave anything still failing untranslated, so
@@ -262,7 +349,7 @@ def translate_language(strings: dict[str, dict], xcstrings_language: str, servic
             translated_batch = []
             for protected in protected_batch:
                 try:
-                    translated_batch.append(translate_batch(translator, [protected])[0])
+                    translated_batch.append(translate_batch(service_language, [protected], translator)[0])
                 except Exception:
                     translated_batch.append(None)
 
@@ -270,10 +357,13 @@ def translate_language(strings: dict[str, dict], xcstrings_language: str, servic
             if translated is None:
                 skipped.append(key)
                 continue
+            final_val = restore(translated, replacements)
+            if xcstrings_language == "pt-PT":
+                final_val = adapt_european_portuguese(final_val)
             strings[key]["localizations"][xcstrings_language] = {
                 "stringUnit": {
                     "state": "translated",
-                    "value": restore(translated, replacements),
+                    "value": final_val,
                 }
             }
             translated_count += 1

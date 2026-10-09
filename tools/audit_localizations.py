@@ -21,7 +21,9 @@ import xcstrings_format
 
 
 CATALOG = Path(__file__).parent.parent / "screenshot" / "Localizable.xcstrings"
-TARGET_LANGUAGES = ("de", "es", "fa", "fr", "it", "ja", "ko", "pt-BR", "ru", "tr", "uk", "zh-Hans", "zh-Hant")
+TARGET_LANGUAGES = (
+    "ca", "da", "de", "es", "fa", "fi", "fr", "it", "ja", "ko", "nl", "no", "pt-BR", "pt-PT", "ru", "sv", "tr", "uk", "zh-Hans", "zh-Hant"
+)
 
 FORMAT_SPECIFIER_RE = re.compile(
     r"%(?:(?P<position>\d+)\$)?(?P<type>@|lld|ld|d|[0-9]*(?:\.[0-9]+)?[fF]|%)"
@@ -123,6 +125,7 @@ VERBATIM_ALLOWED = {
     "iPhone",
     "iPhone 17 Pro",
     "iPhone 17 Pro Max",
+    "Abstract Pixel 9",
     "Issuer ID",
     "JPEG",
     "Key ID",
@@ -154,17 +157,24 @@ VERBATIM_ALLOWED = {
 
 # English loanwords that are the correct translation in one language but would be a miss in others.
 LANGUAGE_VERBATIM_ALLOWED = {
-    "de": {"Editorial", "Experiment", "Export", "Indigo", "Layout", "Original", "Rose", "Showcase", "Story", "Treatments", "Website"},
+    "ca": {"Aurora", "Editorial", "Indigo", "Original", "Rectangles", "Social", "Variant", "Variants"},
+    "da": {"Aurora", "Editorial", "Export", "Indigo", "Layout", "Marketing URL", "Original", "Platform", "Preflight", "Server URL", "Showcase", "Social", "Standard", "Story", "Support URL", "Type", "Variant"},
+    "de": {"Editorial", "Experiment", "Export", "Indigo", "Layout", "Original", "Rose", "Showcase", "Standard", "Story", "Treatments", "Updates", "Website"},
     "es": {"Aurora", "Editorial", "Original", "Social"},
     "fa": {"Delete"},
-    "fr": {"Actions", "Indigo", "Original", "Rectangles", "Rose", "Story", "Type"},
+    "fi": {"Aurora", "Editorial", "Indigo", "Layout", "Original", "Social", "Story"},
+    "fr": {"Actions", "Indigo", "Original", "Rectangles", "Rose", "Standard", "Story", "Type"},
     "it": {
-        "%@ · 1 screenshot", "1 screenshot", "1 set", "Aurora", "Email: %@", "Font", "Layout", "Preset", "Social", "screenshot",
+        "%@ · 1 screenshot", "1 screenshot", "1 set", "^[%lld screenshot](inflect: true)", "Aurora", "Email: %@", "Font", "Layout", "Preset", "Social", "Standard", "screenshot",
     },
     "ja": {"Delete"},
     "ko": {"Delete"},
+    "nl": {"1 set", "1 upload", "7-inch tablet", "10-inch tablet", "Aurora", "Camera", "Editorial", "Export", "Indigo", "Layout", "Original", "Platform", "Preflight", "Project", "sets", "Showcase", "Social", "Story", "Updates", "Variant", "Website"},
+    "no": {"Aurora", "Editorial", "Export", "Indigo", "Layout", "Original", "Preflight", "Server URL", "Showcase", "Social", "Standard", "Story", "Type", "Variant"},
     "pt-BR": {"Aurora", "Editorial", "Layout", "Original", "Social", "Story"},
+    "pt-PT": {"Aurora", "Editorial", "Layout", "Original", "Social", "Story"},
     "ru": {"Delete"},
+    "sv": {"1 set", "Access Token", "Aurora", "Editorial", "Export", "Indigo", "Layout", "Original", "Preflight", "Server URL", "Showcase", "Social", "Standard", "Story", "Support URL", "Variant"},
     "tr": {"1 set", "Android Tablet", "Font", "Minimal", "Platform"},
     "uk": {"Delete"},
     "zh-Hans": {"Delete"},
