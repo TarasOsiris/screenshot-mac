@@ -67,6 +67,14 @@ TARGET_LANGUAGES = {
     "no": "no",
     "sv": "sv",
     "pt-PT": "pt",
+    "cs": "cs",
+    "hr": "hr",
+    "hu": "hu",
+    "pl": "pl",
+    "ro": "ro",
+    "sk": "sk",
+    "sl": "sl",
+    "el": "el",
 }
 
 KEEP_AS_IS = {
@@ -79,7 +87,6 @@ KEEP_AS_IS = {
     "%lld",
     "%lld / %lld",
     "%lld × %lld px",
-    "%lld of %lld",
     "%lld/%lld",
     "%lld%%",
     "%lld°",
@@ -158,7 +165,8 @@ FORMAT_SPECIFIER_RE = re.compile(
 )
 
 BATCH_SIZE = 25
-SEPARATOR = "\n[[SEP_BLOCK]]\n"
+SEPARATOR = "\n<<<987654321>>>\n"
+SEPARATOR_RE = re.compile(r"\n\s*<<<987654321\s*>>>\s*\n")
 MAX_RETRIES = 4
 
 
@@ -278,7 +286,7 @@ def adapt_european_portuguese(text: str) -> str:
     return text
 
 
-def translate_batch(service_language: str, batch: list[str], fallback_translator: GoogleTranslator | None = None) -> list[str]:
+def translate_batch(service_language: str, batch: list[str]) -> list[str]:
     joined = SEPARATOR.join(batch)
     for attempt in range(MAX_RETRIES):
         try:
@@ -288,14 +296,9 @@ def translate_batch(service_language: str, batch: list[str], fallback_translator
                 data = resp.json()
                 if isinstance(data, list) and len(data) > 0:
                     translated = data[0]
-                    parts = translated.split(SEPARATOR)
+                    parts = SEPARATOR_RE.split(translated)
                     if len(parts) == len(batch):
                         return parts
-            if fallback_translator:
-                translated = fallback_translator.translate(joined)
-                parts = translated.split(SEPARATOR)
-                if len(parts) == len(batch):
-                    return parts
             raise ValueError(
                 f"separator split mismatch: expected {len(batch)}"
             )
@@ -307,10 +310,6 @@ def translate_batch(service_language: str, batch: list[str], fallback_translator
 
 
 def translate_language(strings: dict[str, dict], xcstrings_language: str, service_language: str) -> int:
-    try:
-        translator = GoogleTranslator(source="en", target=service_language)
-    except Exception:
-        translator = None
     pending: list[tuple[str, str, dict[str, str]]] = []
     translated_count = 0
     skipped: list[str] = []
@@ -340,7 +339,7 @@ def translate_language(strings: dict[str, dict], xcstrings_language: str, servic
         chunk = pending[start:end]
         protected_batch = [item[1] for item in chunk]
         try:
-            translated_batch = translate_batch(service_language, protected_batch, translator)
+            translated_batch = translate_batch(service_language, protected_batch)
         except Exception as error:
             # One bad string must not discard a whole run's work: retry the batch
             # one item at a time and leave anything still failing untranslated, so
@@ -349,7 +348,7 @@ def translate_language(strings: dict[str, dict], xcstrings_language: str, servic
             translated_batch = []
             for protected in protected_batch:
                 try:
-                    translated_batch.append(translate_batch(service_language, [protected], translator)[0])
+                    translated_batch.append(translate_batch(service_language, [protected])[0])
                 except Exception:
                     translated_batch.append(None)
 

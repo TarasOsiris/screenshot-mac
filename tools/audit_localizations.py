@@ -22,7 +22,7 @@ import xcstrings_format
 
 CATALOG = Path(__file__).parent.parent / "screenshot" / "Localizable.xcstrings"
 TARGET_LANGUAGES = (
-    "ca", "da", "de", "es", "fa", "fi", "fr", "it", "ja", "ko", "nl", "no", "pt-BR", "pt-PT", "ru", "sv", "tr", "uk", "zh-Hans", "zh-Hant"
+    "ca", "cs", "da", "de", "el", "es", "fa", "fi", "fr", "hr", "hu", "it", "ja", "ko", "nl", "no", "pl", "pt-BR", "pt-PT", "ro", "ru", "sk", "sl", "sv", "tr", "uk", "zh-Hans", "zh-Hant"
 )
 
 FORMAT_SPECIFIER_RE = re.compile(
@@ -158,12 +158,16 @@ VERBATIM_ALLOWED = {
 # English loanwords that are the correct translation in one language but would be a miss in others.
 LANGUAGE_VERBATIM_ALLOWED = {
     "ca": {"Aurora", "Editorial", "Indigo", "Original", "Rectangles", "Social", "Variant", "Variants"},
+    "cs": {"Aurora", "Indigo"},
     "da": {"Aurora", "Editorial", "Export", "Indigo", "Layout", "Marketing URL", "Original", "Platform", "Preflight", "Server URL", "Showcase", "Social", "Standard", "Story", "Support URL", "Type", "Variant"},
     "de": {"Editorial", "Experiment", "Export", "Indigo", "Layout", "Original", "Rose", "Showcase", "Standard", "Story", "Treatments", "Updates", "Website"},
+    "el": {"Aurora"},
     "es": {"Aurora", "Editorial", "Original", "Social"},
     "fa": {"Delete"},
     "fi": {"Aurora", "Editorial", "Indigo", "Layout", "Original", "Social", "Story"},
     "fr": {"Actions", "Indigo", "Original", "Rectangles", "Rose", "Standard", "Story", "Type"},
+    "hr": {"1 set", "Aurora", "Font", "Indigo", "Instagram feed", "Marketing URL", "Ocean"},
+    "hu": {"Aurora", "Marketing URL", "Platform"},
     "it": {
         "%@ · 1 screenshot", "1 screenshot", "1 set", "^[%lld screenshot](inflect: true)", "Aurora", "Email: %@", "Font", "Layout", "Preset", "Social", "Standard", "screenshot",
     },
@@ -171,9 +175,13 @@ LANGUAGE_VERBATIM_ALLOWED = {
     "ko": {"Delete"},
     "nl": {"1 set", "1 upload", "7-inch tablet", "10-inch tablet", "Aurora", "Camera", "Editorial", "Export", "Indigo", "Layout", "Original", "Platform", "Preflight", "Project", "sets", "Showcase", "Social", "Story", "Updates", "Variant", "Website"},
     "no": {"Aurora", "Editorial", "Export", "Indigo", "Layout", "Original", "Preflight", "Server URL", "Showcase", "Social", "Standard", "Story", "Type", "Variant"},
+    "pl": {"Ocean"},
     "pt-BR": {"Aurora", "Editorial", "Layout", "Original", "Social", "Story"},
     "pt-PT": {"Aurora", "Editorial", "Layout", "Original", "Social", "Story"},
+    "ro": {"1 set", "Aurora", "Editorial", "Font", "Gradient", "Indigo", "Ocean", "Original", "Social", "Standard"},
     "ru": {"Delete"},
+    "sk": {"Aurora", "Indigo", "Variant"},
+    "sl": {"Aurora", "Indigo", "Ocean", "Original"},
     "sv": {"1 set", "Access Token", "Aurora", "Editorial", "Export", "Indigo", "Layout", "Original", "Preflight", "Server URL", "Showcase", "Social", "Standard", "Story", "Support URL", "Variant"},
     "tr": {"1 set", "Android Tablet", "Font", "Minimal", "Platform"},
     "uk": {"Delete"},
