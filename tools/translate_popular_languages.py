@@ -78,6 +78,10 @@ TARGET_LANGUAGES = {
     "ar": "ar",
     "he": "he",
     "ur": "ur",
+    "id": "id",
+    "ms": "ms",
+    "th": "th",
+    "vi": "vi",
 }
 
 KEEP_AS_IS = {

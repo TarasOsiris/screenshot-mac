@@ -22,7 +22,7 @@ import xcstrings_format
 
 CATALOG = Path(__file__).parent.parent / "screenshot" / "Localizable.xcstrings"
 TARGET_LANGUAGES = (
-    "ar", "ca", "cs", "da", "de", "el", "es", "fa", "fi", "fr", "he", "hr", "hu", "it", "ja", "ko", "nl", "no", "pl", "pt-BR", "pt-PT", "ro", "ru", "sk", "sl", "sv", "tr", "uk", "ur", "zh-Hans", "zh-Hant"
+    "ar", "ca", "cs", "da", "de", "el", "es", "fa", "fi", "fr", "he", "hr", "hu", "id", "it", "ja", "ko", "ms", "nl", "no", "pl", "pt-BR", "pt-PT", "ro", "ru", "sk", "sl", "sv", "th", "tr", "uk", "ur", "vi", "zh-Hans", "zh-Hant"
 )
 
 FORMAT_SPECIFIER_RE = re.compile(
@@ -168,11 +168,13 @@ LANGUAGE_VERBATIM_ALLOWED = {
     "fr": {"Actions", "Indigo", "Original", "Rectangles", "Rose", "Standard", "Story", "Type"},
     "hr": {"1 set", "Aurora", "Font", "Indigo", "Instagram feed", "Marketing URL", "Ocean"},
     "hu": {"Aurora", "Marketing URL", "Platform"},
+    "id": {"1 set", "Aurora", "Matte"},
     "it": {
         "%@ · 1 screenshot", "1 screenshot", "1 set", "^[%lld screenshot](inflect: true)", "Aurora", "Email: %@", "Font", "Layout", "Preset", "Social", "Standard", "screenshot",
     },
     "ja": {"Delete"},
     "ko": {"Delete"},
+    "ms": {"1 set", "Aurora", "Editorial", "Import", "Matte", "Platform", "Standard"},
     "nl": {"1 set", "1 upload", "7-inch tablet", "10-inch tablet", "Aurora", "Camera", "Editorial", "Export", "Indigo", "Layout", "Original", "Platform", "Preflight", "Project", "sets", "Showcase", "Social", "Story", "Updates", "Variant", "Website"},
     "no": {"Aurora", "Editorial", "Export", "Indigo", "Layout", "Original", "Preflight", "Server URL", "Showcase", "Social", "Standard", "Story", "Type", "Variant"},
     "pl": {"Ocean"},
