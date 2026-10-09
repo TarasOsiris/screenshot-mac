@@ -22,7 +22,7 @@ import xcstrings_format
 
 CATALOG = Path(__file__).parent.parent / "screenshot" / "Localizable.xcstrings"
 TARGET_LANGUAGES = (
-    "ar", "ca", "cs", "da", "de", "el", "es", "fa", "fi", "fr", "he", "hr", "hu", "id", "it", "ja", "ko", "ms", "nl", "no", "pl", "pt-BR", "pt-PT", "ro", "ru", "sk", "sl", "sv", "th", "tr", "uk", "ur", "vi", "zh-Hans", "zh-Hant"
+    "ar", "bn", "ca", "cs", "da", "de", "el", "es", "fa", "fi", "fr", "gu", "he", "hi", "hr", "hu", "id", "it", "ja", "kn", "ko", "ml", "mr", "ms", "nl", "no", "pl", "pt-BR", "pt-PT", "ro", "ru", "sk", "sl", "sv", "ta", "te", "th", "tr", "uk", "ur", "vi", "zh-Hans", "zh-Hant"
 )
 
 FORMAT_SPECIFIER_RE = re.compile(
