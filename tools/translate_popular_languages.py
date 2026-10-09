@@ -75,6 +75,9 @@ TARGET_LANGUAGES = {
     "sk": "sk",
     "sl": "sl",
     "el": "el",
+    "ar": "ar",
+    "he": "he",
+    "ur": "ur",
 }
 
 KEEP_AS_IS = {

@@ -8,6 +8,7 @@
     "development": "en",
     "supported": [
       "Base",
+      "ar",
       "ca",
       "cs",
       "da",
@@ -17,6 +18,7 @@
       "fa",
       "fi",
       "fr",
+      "he",
       "hr",
       "hu",
       "it",
@@ -34,6 +36,7 @@
       "sv",
       "tr",
       "uk",
+      "ur",
       "zh-Hans",
       "zh-Hant",
     ],
