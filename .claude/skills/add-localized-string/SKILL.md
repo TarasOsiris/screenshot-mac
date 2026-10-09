@@ -1,6 +1,6 @@
 ---
 name: add-localized-string
-description: Add a new user-facing string to the codebase using String(localized:) and translate it yourself into Localizable.xcstrings (merged by tools/translate_catalog.py, written through tools/xcstrings_format.py). Use when adding any UI label, button title, alert message, accessibility text, or other text the user will see, so all 20 app UI languages stay in sync.
+description: Add a new user-facing string to the codebase using String(localized:) and translate it yourself into Localizable.xcstrings (merged by tools/translate_catalog.py, written through tools/xcstrings_format.py). Use when adding any UI label, button title, alert message, accessibility text, or other text the user will see, so all 43 app UI languages stay in sync.
 disable-model-invocation: true
 ---
 
@@ -62,7 +62,7 @@ After this, `screenshot/Localizable.xcstrings` will contain the new key with `st
    python3 tools/translate_catalog.py   # merges new keys; its "Missing translations" list is your to-do list
    ```
 
-2. Translate each new key into every UI language: ca, da, de, es, fa, fi, fr, it, ja, ko, nl, no, pt-BR, pt-PT, ru, sv, tr, uk, zh-Hans, zh-Hant. Write them through `tools/xcstrings_format.py` so Xcode's serialization is preserved:
+2. Translate each new key into every UI language: ar, bn, ca, cs, da, de, el, es, fa, fi, fr, gu, he, hi, hr, hu, id, it, ja, kn, ko, ml, mr, ms, nl, no, pl, pt-BR, pt-PT, ro, ru, sk, sl, sv, ta, te, th, tr, uk, ur, vi, zh-Hans, zh-Hant. Write them through `tools/xcstrings_format.py` so Xcode's serialization is preserved:
 
    ```python
    import sys; sys.path.insert(0, "tools")
