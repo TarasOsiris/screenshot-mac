@@ -241,7 +241,8 @@ targeted, using the version and build number just uploaded — don't re-detect t
 In short, per platform: create the `<MARKETING_VERSION>` version record with
 `--release-type AFTER_APPROVAL --copy-metadata-from <previous version> --exclude-fields whatsNew`,
 write "What's New" (drafted from `git log <prev tag>..<this tag>`, same English text in every locale)
-via `asc localizations update`, `asc versions attach-build`, gate on `asc validate`, then
+via `asc localizations update`, write App Review notes that disclose **every** change since the
+last approved version, hiding nothing (`submit` Step 3b), `asc versions attach-build`, gate on `asc validate`, then
 `asc review submit … --confirm`. Read the skill for the exact commands and the failure branches.
 
 **A failure here does not fail the ship.** The binary is already on App Store Connect, and `/submit`
@@ -259,5 +260,6 @@ Print a summary:
 - Sentry dSYM upload status (per platform)
 - Sentry release + commit association status (once, not per platform)
 - App Store version record created or reused (per platform)
+- App Review notes, in full as stored (per platform)
 - Review submission id and state (per platform) — or, if Step 10 was skipped or failed, that the
   build is uploaded but **not submitted**, and that `/submit` can finish it

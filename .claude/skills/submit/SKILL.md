@@ -146,6 +146,39 @@ they all carry the same English string, so this matches existing practice. Use e
 codes — `ar-SA` not `ar`, `de-DE` not `de`, `zh-Hans` not `zh-Hans-CN`
 (`asc localizations supported-locales --version "<VID>"` if unsure).
 
+## Step 3b: Write the App Review notes — full disclosure
+
+**Every submission tells App Review about every change since the last approved version on that platform. Hide nothing.** This is a standing rule from the user. The App Review notes (App Review Information → Notes) are not What's New. What's New picks out what customers would notice. The review notes are the complete list, written for the reviewer. Never leave out, soften or vaguely reword a change to make review go more smoothly. A change you would rather not mention is exactly the kind that has to be in the notes.
+
+**Range, per platform:** use the newest `READY_FOR_SALE` version for that platform from Step 2's `asc versions list`. The two trains can differ, so the macOS and iOS notes can cover different ranges.
+
+```bash
+APPROVED=$(git tag --list 'v<lastApprovedVersion>-*' --sort=-v:refname | head -1)
+git log --format='- %s%n%b' "$APPROVED..$CUR"
+git diff --stat "$APPROVED..$CUR"
+```
+
+Read the commit bodies, then open the diff for any commit whose subject does not fully say what it changed. Including too much is fine. Leaving something out is not.
+
+**Cover, grouped by area:**
+- every user-visible feature, change, fix and **removal**
+- Pro, the paywall, pricing, free-tier caps, and anything that gates or unlocks content
+- data handling: PostHog events (`AnalyticsService.Event`), Sentry, iCloud sync, App Store Connect / Google Play upload traffic, network endpoints, and SDKs added, removed or bumped in `Package.resolved`
+- permissions and privacy: `Info.plist`, entitlements (including any change to the MCP server's `network.server`), the privacy manifest
+- the in-app MCP server (macOS): new or changed tools, auth, defaults
+- anything behind a flag, Debug-only, or dormant in the binary. Say that it is there and how it is gated.
+- integrations with other platforms, **including Google Play**. The 2.3.10 rule in Step 3 keeps non-Apple stores out of the customer-facing What's New; it does **not** apply to the reviewer notes, which must still describe those changes.
+- internal work (refactors, rendering/perf work, tests, tooling). Summarize it rather than drop it.
+- how the reviewer can reach and test anything new, using the demo mode where it applies
+
+**Keep the standing reviewer information, replace the change list.** App Store Connect copies the previous version's notes forward, including the demo-mode note:
+
+```bash
+asc review details-for-version --version-id "<VID>" --pretty
+```
+
+Keep what is still true and correct anything this release changed. **Replace** the previous change list completely. Use this layout: `Changes in <MV> (<build>) since <lastApprovedVersion>:`, then one section per area, then the standing instructions. Write it with `asc review details-create … --notes` (Step 2 shows the flags) when the version has none yet. When details already exist, update their notes. `asc review --help` lists the update subcommand; record its exact name here once confirmed. Read the notes back and confirm the full text was stored. The cap is 4000 characters: tighten the wording and group related items to fit, and never drop an item.
+
 **Don't touch descriptions here.** That is `/update-app-store-descriptions`, which writes into
 whichever `PREPARE_FOR_SUBMISSION` version exists — so running it *after* Step 2 and before Step 5 is
 how a description change rides along with this release.
@@ -197,7 +230,7 @@ asc status --app 6760177675 --platform <P> --include appstore,submission,review
 
 Print per platform: version id, whether the record was created or reused, build attached, submission
 id, and submission state (expect `WAITING_FOR_REVIEW`). Print the "What's New" text once, not per
-platform. State the release type (`AFTER_APPROVAL` — goes live automatically on approval).
+platform, and the App Review notes in full, exactly as stored, per platform. State the release type (`AFTER_APPROVAL` — goes live automatically on approval).
 
 Undo, if something went out wrong:
 
