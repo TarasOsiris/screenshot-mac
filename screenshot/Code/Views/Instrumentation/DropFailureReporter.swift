@@ -2,7 +2,7 @@ import SwiftUI
 
 /// A drag-and-drop that couldn't be completed. Built where the file is decoded — off the main
 /// actor, inside the item provider's callback — so it carries only Sendable strings.
-struct DropFailure {
+nonisolated struct DropFailure: Sendable {
     let title: String
     let message: String
 
