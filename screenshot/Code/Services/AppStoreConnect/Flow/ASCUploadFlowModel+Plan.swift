@@ -18,8 +18,11 @@ extension ASCUploadFlowModel {
                 hint: String(localized: "To test them, use Export ▸ Upload A/B Test to App Store Connect.")
             ))
         }
-        issues += destinationPlans.filter(remoteScreenshotCountsSettled).compactMap { destination in
-            ASCDuoReadiness.issue(destination: destination, remoteCounts: remoteScreenshotCounts)?.scoped(to: destination.title)
+        issues += destinationPlans.filter(remoteScreenshotCountsSettled).flatMap { destination in
+            [
+                ASCDuoReadiness.issue(destination: destination, remoteCounts: remoteScreenshotCounts),
+                ASCWatchSizeConsistency.remoteConflictIssue(destination: destination, remoteCounts: remoteScreenshotCounts),
+            ].compactMap { $0?.scoped(to: destination.title) }
         }
         if let document {
             issues += textOverflowIssues.issues(rows: rows.filter(\.uploadsToAppStoreListing), source: document)

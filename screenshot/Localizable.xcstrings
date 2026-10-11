@@ -620879,6 +620879,1841 @@
           }
         }
       }
+    },
+    "This upload mixes Apple Watch sizes (%@). App Store Connect requires one Apple Watch size across all localizations." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "يخلط هذا التحميل بين أحجام Apple Watch (%@). يتطلب App Store Connect حجمًا واحدًا لـ Apple Watch في جميع الترجمات."
+          }
+        },
+        "bn" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "এই আপলোডে বিভিন্ন Apple Watch মাপ মেশানো আছে (%@)। App Store Connect-এর জন্য সব স্থানীয়করণে একটিই Apple Watch মাপ প্রয়োজন।"
+          }
+        },
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aquesta pujada barreja mides d'Apple Watch (%@). App Store Connect requereix una sola mida d'Apple Watch a totes les localitzacions."
+          }
+        },
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Toto nahrávání kombinuje různé velikosti Apple Watch (%@). App Store Connect vyžaduje jednu velikost Apple Watch ve všech lokalizacích."
+          }
+        },
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Denne upload blander Apple Watch-størrelser (%@). App Store Connect kræver én Apple Watch-størrelse på tværs af alle lokaliseringer."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dieser Upload mischt Apple Watch-Größen (%@). App Store Connect verlangt eine einzige Apple Watch-Größe für alle Lokalisierungen."
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Αυτή η μεταφόρτωση αναμειγνύει μεγέθη Apple Watch (%@). Το App Store Connect απαιτεί ένα μόνο μέγεθος Apple Watch σε όλες τις τοπικές προσαρμογές."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Esta subida mezcla tamaños de Apple Watch (%@). App Store Connect exige un único tamaño de Apple Watch en todas las localizaciones."
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "این آپلود اندازه‌های مختلف Apple Watch را با هم ترکیب می‌کند (%@). App Store Connect در همهٔ بومی‌سازی‌ها فقط یک اندازهٔ Apple Watch را می‌پذیرد."
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tämä lähetys sekoittaa Apple Watch -kokoja (%@). App Store Connect vaatii yhden Apple Watch -koon kaikissa lokalisoinneissa."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cet envoi mélange plusieurs tailles d’Apple Watch (%@). App Store Connect exige une seule taille d’Apple Watch pour toutes les localisations."
+          }
+        },
+        "gu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "આ અપલોડમાં વિવિધ Apple Watch કદ મિશ્રિત છે (%@). App Store Connect ને બધા સ્થાનિકીકરણોમાં એક જ Apple Watch કદ જરૂરી છે."
+          }
+        },
+        "he" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "העלאה זו משלבת גדלים שונים של Apple Watch (%@). App Store Connect דורש גודל Apple Watch אחד בכל הלוקליזציות."
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "इस अपलोड में अलग-अलग Apple Watch आकार मिले हुए हैं (%@)। App Store Connect को सभी स्थानीयकरणों में एक ही Apple Watch आकार चाहिए।"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ovaj prijenos miješa veličine za Apple Watch (%@). App Store Connect zahtijeva jednu veličinu za Apple Watch u svim lokalizacijama."
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ez a feltöltés különböző Apple Watch-méreteket kever (%@). Az App Store Connect minden lokalizációban egyetlen Apple Watch-méretet követel meg."
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Unggahan ini mencampur ukuran Apple Watch (%@). App Store Connect mewajibkan satu ukuran Apple Watch di semua pelokalan."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Questo caricamento mescola dimensioni di Apple Watch diverse (%@). App Store Connect richiede un’unica dimensione di Apple Watch in tutte le localizzazioni."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "このアップロードには複数の Apple Watch サイズが混在しています（%@）。App Store Connect では、すべてのローカリゼーションで Apple Watch のサイズを 1 つに統一する必要があります。"
+          }
+        },
+        "kn" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ಈ ಅಪ್‌ಲೋಡ್ ವಿಭಿನ್ನ Apple Watch ಗಾತ್ರಗಳನ್ನು ಮಿಶ್ರಣ ಮಾಡುತ್ತದೆ (%@). ಎಲ್ಲಾ ಸ್ಥಳೀಕರಣಗಳಲ್ಲಿ ಒಂದೇ Apple Watch ಗಾತ್ರ ಇರಬೇಕೆಂದು App Store Connect ಅಗತ್ಯಪಡಿಸುತ್ತದೆ."
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "이 업로드에 서로 다른 Apple Watch 크기가 섞여 있습니다(%@). App Store Connect에서는 모든 현지화에 Apple Watch 크기를 하나만 사용해야 합니다."
+          }
+        },
+        "ml" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ഈ അപ്‌ലോഡിൽ വ്യത്യസ്ത Apple Watch വലുപ്പങ്ങൾ കലർന്നിരിക്കുന്നു (%@). എല്ലാ പ്രാദേശികവൽക്കരണങ്ങളിലും ഒരൊറ്റ Apple Watch വലുപ്പം വേണമെന്ന് App Store Connect ആവശ്യപ്പെടുന്നു."
+          }
+        },
+        "mr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "या अपलोडमध्ये वेगवेगळे Apple Watch आकार मिसळलेले आहेत (%@). App Store Connect ला सर्व स्थानिकीकरणांमध्ये एकच Apple Watch आकार आवश्यक आहे."
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Muat naik ini mencampurkan saiz Apple Watch (%@). App Store Connect memerlukan satu saiz Apple Watch merentas semua penyetempatan."
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Deze upload combineert verschillende Apple Watch-formaten (%@). App Store Connect vereist één Apple Watch-formaat voor alle lokalisaties."
+          }
+        },
+        "no" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Denne opplastingen blander Apple Watch-størrelser (%@). App Store Connect krever én Apple Watch-størrelse på tvers av alle lokaliseringer."
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "To przesyłanie łączy różne rozmiary Apple Watch (%@). App Store Connect wymaga jednego rozmiaru Apple Watch we wszystkich lokalizacjach."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Este envio mistura tamanhos de Apple Watch (%@). O App Store Connect exige um único tamanho de Apple Watch em todas as localizações."
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Este carregamento mistura tamanhos de Apple Watch (%@). O App Store Connect exige um único tamanho de Apple Watch em todas as localizações."
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Această încărcare amestecă dimensiuni Apple Watch (%@). App Store Connect cere o singură dimensiune Apple Watch în toate localizările."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "В этой загрузке смешаны размеры Apple Watch (%@). App Store Connect требует один размер Apple Watch для всех локализаций."
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Toto nahrávanie kombinuje rôzne veľkosti Apple Watch (%@). App Store Connect vyžaduje jednu veľkosť Apple Watch vo všetkých lokalizáciách."
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "To nalaganje meša velikosti za Apple Watch (%@). App Store Connect zahteva eno velikost za Apple Watch v vseh lokalizacijah."
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Den här uppladdningen blandar Apple Watch-storlekar (%@). App Store Connect kräver en enda Apple Watch-storlek i alla lokaliseringar."
+          }
+        },
+        "ta" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "இந்தப் பதிவேற்றம் வெவ்வேறு Apple Watch அளவுகளைக் கலக்கிறது (%@). அனைத்து உள்ளூர்மயமாக்கல்களிலும் ஒரே Apple Watch அளவு இருக்க வேண்டும் என App Store Connect கோருகிறது."
+          }
+        },
+        "te" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ఈ అప్‌లోడ్‌లో వేర్వేరు Apple Watch పరిమాణాలు కలిసి ఉన్నాయి (%@). అన్ని స్థానికీకరణలలో ఒకే Apple Watch పరిమాణం ఉండాలని App Store Connect కోరుతుంది."
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "การอัปโหลดนี้มีขนาด Apple Watch ปนกันหลายขนาด (%@) App Store Connect กำหนดให้ใช้ขนาด Apple Watch เพียงขนาดเดียวในทุกการแปลเป็นภาษาท้องถิ่น"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bu yükleme farklı Apple Watch boyutlarını karıştırıyor (%@). App Store Connect tüm yerelleştirmelerde tek bir Apple Watch boyutu gerektirir."
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "У цьому вивантаженні змішано розміри Apple Watch (%@). App Store Connect вимагає один розмір Apple Watch для всіх локалізацій."
+          }
+        },
+        "ur" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "اس اپ لوڈ میں مختلف Apple Watch سائز ملے ہوئے ہیں (%@)۔ App Store Connect کو تمام لوکلائزیشنز میں ایک ہی Apple Watch سائز درکار ہے۔"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lần tải lên này trộn nhiều kích thước Apple Watch (%@). App Store Connect yêu cầu một kích thước Apple Watch duy nhất cho tất cả bản địa hóa."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "此次上传混用了多种 Apple Watch 尺寸（%@）。App Store Connect 要求所有本地化版本使用同一种 Apple Watch 尺寸。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "此次上傳混用了多種 Apple Watch 尺寸（%@）。App Store Connect 要求所有在地化版本使用同一種 Apple Watch 尺寸。"
+          }
+        }
+      }
+    },
+    "Resize every Apple Watch row to the same size, or turn off the extra rows." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "غيّر حجم كل صفوف Apple Watch إلى الحجم نفسه، أو أوقف تشغيل الصفوف الإضافية."
+          }
+        },
+        "bn" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "প্রতিটি Apple Watch সারির মাপ একই করুন, অথবা অতিরিক্ত সারিগুলো বন্ধ করুন।"
+          }
+        },
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Canvieu totes les files d'Apple Watch a la mateixa mida o desactiveu les files sobrants."
+          }
+        },
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nastavte všem řádkům Apple Watch stejnou velikost, nebo nadbytečné řádky vypněte."
+          }
+        },
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Giv alle Apple Watch-rækker samme størrelse, eller slå de ekstra rækker fra."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bringe alle Apple Watch-Zeilen auf dieselbe Größe oder schalte die überzähligen Zeilen aus."
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Αλλάξτε όλες τις σειρές Apple Watch στο ίδιο μέγεθος ή απενεργοποιήστε τις επιπλέον σειρές."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cambia todas las filas de Apple Watch al mismo tamaño o desactiva las filas sobrantes."
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "همهٔ ردیف‌های Apple Watch را به یک اندازه تغییر دهید، یا ردیف‌های اضافی را خاموش کنید."
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Muuta kaikki Apple Watch -rivit samankokoisiksi tai poista ylimääräiset rivit käytöstä."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Donnez la même taille à toutes les lignes Apple Watch, ou désactivez les lignes en trop."
+          }
+        },
+        "gu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "દરેક Apple Watch પંક્તિનું કદ એકસરખું કરો, અથવા વધારાની પંક્તિઓ બંધ કરો."
+          }
+        },
+        "he" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "שנה את כל שורות ה-Apple Watch לאותו גודל, או כבה את השורות העודפות."
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "सभी Apple Watch पंक्तियों का आकार एक जैसा करें, या अतिरिक्त पंक्तियाँ बंद करें।"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Postavite sve retke za Apple Watch na istu veličinu ili isključite suvišne retke."
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Állítsa az összes Apple Watch-sort azonos méretre, vagy kapcsolja ki a fölösleges sorokat."
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ubah semua baris Apple Watch ke ukuran yang sama, atau nonaktifkan baris tambahan."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Porta tutte le righe Apple Watch alla stessa dimensione oppure disattiva le righe in eccesso."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "すべての Apple Watch 行を同じサイズにするか、余分な行をオフにしてください。"
+          }
+        },
+        "kn" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ಪ್ರತಿ Apple Watch ಸಾಲಿನ ಗಾತ್ರವನ್ನು ಒಂದೇ ಗಾತ್ರಕ್ಕೆ ಬದಲಾಯಿಸಿ, ಅಥವಾ ಹೆಚ್ಚುವರಿ ಸಾಲುಗಳನ್ನು ಆಫ್ ಮಾಡಿ."
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "모든 Apple Watch 행을 같은 크기로 조정하거나 남는 행을 끄세요."
+          }
+        },
+        "ml" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "എല്ലാ Apple Watch വരികളുടെയും വലുപ്പം ഒന്നാക്കുക, അല്ലെങ്കിൽ അധികമുള്ള വരികൾ ഓഫാക്കുക."
+          }
+        },
+        "mr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "प्रत्येक Apple Watch पंक्तीचा आकार सारखा करा, किंवा अतिरिक्त पंक्ती बंद करा."
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ubah saiz semua baris Apple Watch kepada saiz yang sama, atau matikan baris tambahan."
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Geef alle Apple Watch-rijen hetzelfde formaat, of schakel de extra rijen uit."
+          }
+        },
+        "no" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gi alle Apple Watch-radene samme størrelse, eller slå av de ekstra radene."
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ustaw wszystkim wierszom Apple Watch ten sam rozmiar albo wyłącz nadmiarowe wiersze."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Deixe todas as linhas de Apple Watch no mesmo tamanho ou desative as linhas extras."
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Coloque todas as linhas de Apple Watch no mesmo tamanho ou desative as linhas a mais."
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aduceți toate rândurile Apple Watch la aceeași dimensiune sau dezactivați rândurile în plus."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Задайте всем строкам Apple Watch одинаковый размер или выключите лишние строки."
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nastavte všetkým riadkom Apple Watch rovnakú veľkosť alebo nadbytočné riadky vypnite."
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vsem vrsticam za Apple Watch nastavite enako velikost ali izklopite odvečne vrstice."
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ge alla Apple Watch-rader samma storlek, eller stäng av de extra raderna."
+          }
+        },
+        "ta" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "எல்லா Apple Watch வரிசைகளையும் ஒரே அளவுக்கு மாற்றவும், அல்லது கூடுதல் வரிசைகளை முடக்கவும்."
+          }
+        },
+        "te" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "అన్ని Apple Watch అడ్డు వరుసలను ఒకే పరిమాణానికి మార్చండి, లేదా అదనపు అడ్డు వరుసలను ఆఫ్ చేయండి."
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ปรับขนาดแถว Apple Watch ทุกแถวให้เท่ากัน หรือปิดแถวที่เกินมา"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tüm Apple Watch satırlarını aynı boyuta getirin ya da fazla satırları kapatın."
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Задайте всім рядкам Apple Watch однаковий розмір або вимкніть зайві рядки."
+          }
+        },
+        "ur" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ہر Apple Watch قطار کا سائز ایک جیسا کریں، یا اضافی قطاریں آف کریں۔"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Đặt tất cả các hàng Apple Watch về cùng một kích thước hoặc tắt các hàng thừa."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "将所有 Apple Watch 行调整为相同尺寸，或关闭多余的行。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "將所有 Apple Watch 列調整為相同尺寸，或關閉多餘的列。"
+          }
+        }
+      }
+    },
+    "This version would have screenshots for more than one Apple Watch size (%@). App Store Connect requires one Apple Watch size across all localizations." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "سيحتوي هذا الإصدار على لقطات شاشة لأكثر من حجم واحد لـ Apple Watch (%@). يتطلب App Store Connect حجمًا واحدًا لـ Apple Watch في جميع الترجمات."
+          }
+        },
+        "bn" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "এই সংস্করণে একাধিক Apple Watch মাপের স্ক্রিনশট থাকবে (%@)। App Store Connect-এর জন্য সব স্থানীয়করণে একটিই Apple Watch মাপ প্রয়োজন।"
+          }
+        },
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aquesta versió tindria captures de pantalla de més d'una mida d'Apple Watch (%@). App Store Connect requereix una sola mida d'Apple Watch a totes les localitzacions."
+          }
+        },
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tato verze by měla snímky obrazovky pro více než jednu velikost Apple Watch (%@). App Store Connect vyžaduje jednu velikost Apple Watch ve všech lokalizacích."
+          }
+        },
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Denne version ville få skærmbilleder i mere end én Apple Watch-størrelse (%@). App Store Connect kræver én Apple Watch-størrelse på tværs af alle lokaliseringer."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Diese Version hätte Screenshots für mehr als eine Apple Watch-Größe (%@). App Store Connect verlangt eine einzige Apple Watch-Größe für alle Lokalisierungen."
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Αυτή η έκδοση θα είχε στιγμιότυπα οθόνης για περισσότερα από ένα μεγέθη Apple Watch (%@). Το App Store Connect απαιτεί ένα μόνο μέγεθος Apple Watch σε όλες τις τοπικές προσαρμογές."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Esta versión tendría capturas de más de un tamaño de Apple Watch (%@). App Store Connect exige un único tamaño de Apple Watch en todas las localizaciones."
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "این نسخه برای بیش از یک اندازهٔ Apple Watch اسکرین‌شات خواهد داشت (%@). App Store Connect در همهٔ بومی‌سازی‌ها فقط یک اندازهٔ Apple Watch را می‌پذیرد."
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tällä versiolla olisi kuvakaappauksia useammalle kuin yhdelle Apple Watch -koolle (%@). App Store Connect vaatii yhden Apple Watch -koon kaikissa lokalisoinneissa."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cette version aurait des captures pour plus d’une taille d’Apple Watch (%@). App Store Connect exige une seule taille d’Apple Watch pour toutes les localisations."
+          }
+        },
+        "gu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "આ સંસ્કરણમાં એક કરતાં વધુ Apple Watch કદ માટે સ્ક્રીનશૉટ્સ હશે (%@). App Store Connect ને બધા સ્થાનિકીકરણોમાં એક જ Apple Watch કદ જરૂરી છે."
+          }
+        },
+        "he" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "לגרסה זו יהיו צילומי מסך ביותר מגודל Apple Watch אחד (%@). App Store Connect דורש גודל Apple Watch אחד בכל הלוקליזציות."
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "इस संस्करण में एक से अधिक Apple Watch आकार के स्क्रीनशॉट होंगे (%@)। App Store Connect को सभी स्थानीयकरणों में एक ही Apple Watch आकार चाहिए।"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ova bi verzija imala snimke zaslona za više od jedne veličine za Apple Watch (%@). App Store Connect zahtijeva jednu veličinu za Apple Watch u svim lokalizacijama."
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ennek a verziónak több Apple Watch-méretben is lennének képernyőképei (%@). Az App Store Connect minden lokalizációban egyetlen Apple Watch-méretet követel meg."
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Versi ini akan memiliki tangkapan layar untuk lebih dari satu ukuran Apple Watch (%@). App Store Connect mewajibkan satu ukuran Apple Watch di semua pelokalan."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Questa versione avrebbe screenshot per più di una dimensione di Apple Watch (%@). App Store Connect richiede un’unica dimensione di Apple Watch in tutte le localizzazioni."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "このバージョンには複数の Apple Watch サイズのスクリーンショットが含まれることになります（%@）。App Store Connect では、すべてのローカリゼーションで Apple Watch のサイズを 1 つに統一する必要があります。"
+          }
+        },
+        "kn" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ಈ ಆವೃತ್ತಿಯು ಒಂದಕ್ಕಿಂತ ಹೆಚ್ಚು Apple Watch ಗಾತ್ರಗಳ ಸ್ಕ್ರೀನ್‌ಶಾಟ್‌ಗಳನ್ನು ಹೊಂದಿರುತ್ತದೆ (%@). ಎಲ್ಲಾ ಸ್ಥಳೀಕರಣಗಳಲ್ಲಿ ಒಂದೇ Apple Watch ಗಾತ್ರ ಇರಬೇಕೆಂದು App Store Connect ಅಗತ್ಯಪಡಿಸುತ್ತದೆ."
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "이 버전에 둘 이상의 Apple Watch 크기 스크린샷이 생기게 됩니다(%@). App Store Connect에서는 모든 현지화에 Apple Watch 크기를 하나만 사용해야 합니다."
+          }
+        },
+        "ml" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ഈ പതിപ്പിൽ ഒന്നിലധികം Apple Watch വലുപ്പങ്ങൾക്കുള്ള സ്ക്രീൻഷോട്ടുകൾ ഉണ്ടാകും (%@). എല്ലാ പ്രാദേശികവൽക്കരണങ്ങളിലും ഒരൊറ്റ Apple Watch വലുപ്പം വേണമെന്ന് App Store Connect ആവശ്യപ്പെടുന്നു."
+          }
+        },
+        "mr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "या आवृत्तीमध्ये एकापेक्षा जास्त Apple Watch आकारांचे स्क्रीनशॉट असतील (%@). App Store Connect ला सर्व स्थानिकीकरणांमध्ये एकच Apple Watch आकार आवश्यक आहे."
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Versi ini akan mempunyai tangkapan skrin untuk lebih daripada satu saiz Apple Watch (%@). App Store Connect memerlukan satu saiz Apple Watch merentas semua penyetempatan."
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Deze versie zou screenshots krijgen voor meer dan één Apple Watch-formaat (%@). App Store Connect vereist één Apple Watch-formaat voor alle lokalisaties."
+          }
+        },
+        "no" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Denne versjonen ville fått skjermbilder i mer enn én Apple Watch-størrelse (%@). App Store Connect krever én Apple Watch-størrelse på tvers av alle lokaliseringer."
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ta wersja miałaby zrzuty ekranu w więcej niż jednym rozmiarze Apple Watch (%@). App Store Connect wymaga jednego rozmiaru Apple Watch we wszystkich lokalizacjach."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Esta versão teria capturas de mais de um tamanho de Apple Watch (%@). O App Store Connect exige um único tamanho de Apple Watch em todas as localizações."
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Esta versão teria capturas de ecrã de mais do que um tamanho de Apple Watch (%@). O App Store Connect exige um único tamanho de Apple Watch em todas as localizações."
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Această versiune ar avea capturi de ecran pentru mai multe dimensiuni Apple Watch (%@). App Store Connect cere o singură dimensiune Apple Watch în toate localizările."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "В этой версии окажутся скриншоты нескольких размеров Apple Watch (%@). App Store Connect требует один размер Apple Watch для всех локализаций."
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Táto verzia by mala snímky obrazovky pre viac ako jednu veľkosť Apple Watch (%@). App Store Connect vyžaduje jednu veľkosť Apple Watch vo všetkých lokalizáciách."
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ta različica bi imela posnetke zaslona za več kot eno velikost za Apple Watch (%@). App Store Connect zahteva eno velikost za Apple Watch v vseh lokalizacijah."
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Den här versionen skulle få skärmdumpar i mer än en Apple Watch-storlek (%@). App Store Connect kräver en enda Apple Watch-storlek i alla lokaliseringar."
+          }
+        },
+        "ta" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "இந்தப் பதிப்பில் ஒன்றுக்கு மேற்பட்ட Apple Watch அளவுகளுக்கான ஸ்கிரீன் ஷாட்கள் இருக்கும் (%@). அனைத்து உள்ளூர்மயமாக்கல்களிலும் ஒரே Apple Watch அளவு இருக்க வேண்டும் என App Store Connect கோருகிறது."
+          }
+        },
+        "te" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ఈ వెర్షన్‌లో ఒకటి కంటే ఎక్కువ Apple Watch పరిమాణాల స్క్రీన్‌షాట్‌లు ఉంటాయి (%@). అన్ని స్థానికీకరణలలో ఒకే Apple Watch పరిమాణం ఉండాలని App Store Connect కోరుతుంది."
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "เวอร์ชันนี้จะมีภาพหน้าจอสำหรับ Apple Watch มากกว่าหนึ่งขนาด (%@) App Store Connect กำหนดให้ใช้ขนาด Apple Watch เพียงขนาดเดียวในทุกการแปลเป็นภาษาท้องถิ่น"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bu sürümde birden fazla Apple Watch boyutu için ekran görüntüsü olacak (%@). App Store Connect tüm yerelleştirmelerde tek bir Apple Watch boyutu gerektirir."
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "У цій версії опиняться знімки екрана кількох розмірів Apple Watch (%@). App Store Connect вимагає один розмір Apple Watch для всіх локалізацій."
+          }
+        },
+        "ur" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "اس ورژن میں ایک سے زیادہ Apple Watch سائز کے اسکرین شاٹس ہوں گے (%@)۔ App Store Connect کو تمام لوکلائزیشنز میں ایک ہی Apple Watch سائز درکار ہے۔"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Phiên bản này sẽ có ảnh chụp màn hình cho nhiều hơn một kích thước Apple Watch (%@). App Store Connect yêu cầu một kích thước Apple Watch duy nhất cho tất cả bản địa hóa."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "此版本将包含多种 Apple Watch 尺寸的截图（%@）。App Store Connect 要求所有本地化版本使用同一种 Apple Watch 尺寸。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "此版本將包含多種 Apple Watch 尺寸的截圖（%@）。App Store Connect 要求所有在地化版本使用同一種 Apple Watch 尺寸。"
+          }
+        }
+      }
+    },
+    "Delete the other Apple Watch size's screenshots in App Store Connect, or resize your Apple Watch rows to match them." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "احذف لقطات شاشة حجم Apple Watch الآخر في App Store Connect، أو غيّر حجم صفوف Apple Watch لديك لتطابقها."
+          }
+        },
+        "bn" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "App Store Connect-এ অন্য Apple Watch মাপের স্ক্রিনশটগুলো মুছে ফেলুন, অথবা আপনার Apple Watch সারিগুলোর মাপ সেগুলোর সঙ্গে মিলিয়ে নিন।"
+          }
+        },
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Suprimiu les captures de pantalla de l'altra mida d'Apple Watch a App Store Connect, o canvieu la mida de les vostres files d'Apple Watch perquè hi coincideixin."
+          }
+        },
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Smažte v App Store Connect snímky obrazovky pro druhou velikost Apple Watch, nebo upravte velikost svých řádků Apple Watch tak, aby jim odpovídala."
+          }
+        },
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Slet skærmbillederne i den anden Apple Watch-størrelse i App Store Connect, eller ændr størrelsen på dine Apple Watch-rækker, så de passer til dem."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lösche die Screenshots der anderen Apple Watch-Größe in App Store Connect oder passe die Größe deiner Apple Watch-Zeilen an sie an."
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Διαγράψτε τα στιγμιότυπα οθόνης του άλλου μεγέθους Apple Watch στο App Store Connect ή αλλάξτε το μέγεθος των σειρών Apple Watch ώστε να ταιριάζουν με αυτά."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Elimina las capturas del otro tamaño de Apple Watch en App Store Connect o cambia el tamaño de tus filas de Apple Watch para que coincidan."
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "اسکرین‌شات‌های اندازهٔ دیگر Apple Watch را در App Store Connect حذف کنید، یا اندازهٔ ردیف‌های Apple Watch خود را با آن‌ها هماهنگ کنید."
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Poista toisen Apple Watch -koon kuvakaappaukset palvelussa App Store Connect tai muuta Apple Watch -riviesi koko vastaamaan niitä."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Supprimez les captures de l’autre taille d’Apple Watch dans App Store Connect, ou redimensionnez vos lignes Apple Watch pour qu’elles correspondent."
+          }
+        },
+        "gu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "App Store Connect માં અન્ય Apple Watch કદના સ્ક્રીનશૉટ્સ કાઢી નાખો, અથવા તમારી Apple Watch પંક્તિઓનું કદ તેમની સાથે મેળ ખાય તે રીતે બદલો."
+          }
+        },
+        "he" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "מחק ב-App Store Connect את צילומי המסך של גודל ה-Apple Watch האחר, או שנה את גודל שורות ה-Apple Watch שלך כך שיתאים להם."
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "App Store Connect में दूसरे Apple Watch आकार के स्क्रीनशॉट हटाएँ, या अपनी Apple Watch पंक्तियों का आकार उनसे मेल खाने के लिए बदलें।"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Izbrišite snimke zaslona druge veličine za Apple Watch u servisu App Store Connect ili promijenite veličinu svojih redaka za Apple Watch kako bi im odgovarali."
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Törölje a másik Apple Watch-méret képernyőképeit az App Store Connectben, vagy méretezze át az Apple Watch-sorait, hogy egyezzenek velük."
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hapus tangkapan layar ukuran Apple Watch lainnya di App Store Connect, atau ubah ukuran baris Apple Watch Anda agar sesuai dengannya."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Elimina gli screenshot dell’altra dimensione di Apple Watch in App Store Connect oppure ridimensiona le tue righe Apple Watch in modo che corrispondano."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "App Store Connect でもう一方の Apple Watch サイズのスクリーンショットを削除するか、Apple Watch 行のサイズをそれに合わせてください。"
+          }
+        },
+        "kn" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "App Store Connect ನಲ್ಲಿ ಇನ್ನೊಂದು Apple Watch ಗಾತ್ರದ ಸ್ಕ್ರೀನ್‌ಶಾಟ್‌ಗಳನ್ನು ಅಳಿಸಿ, ಅಥವಾ ನಿಮ್ಮ Apple Watch ಸಾಲುಗಳ ಗಾತ್ರವನ್ನು ಅವುಗಳಿಗೆ ಹೊಂದುವಂತೆ ಬದಲಾಯಿಸಿ."
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "App Store Connect에서 다른 Apple Watch 크기의 스크린샷을 삭제하거나, Apple Watch 행의 크기를 그에 맞게 조정하세요."
+          }
+        },
+        "ml" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "App Store Connect-ൽ മറ്റേ Apple Watch വലുപ്പത്തിന്റെ സ്ക്രീൻഷോട്ടുകൾ ഇല്ലാതാക്കുക, അല്ലെങ്കിൽ നിങ്ങളുടെ Apple Watch വരികളുടെ വലുപ്പം അവയുമായി പൊരുത്തപ്പെടുന്ന രീതിയിൽ മാറ്റുക."
+          }
+        },
+        "mr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "App Store Connect मध्ये दुसऱ्या Apple Watch आकाराचे स्क्रीनशॉट हटवा, किंवा तुमच्या Apple Watch पंक्तींचा आकार त्यांच्याशी जुळेल असा बदला."
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Padamkan tangkapan skrin saiz Apple Watch yang lain dalam App Store Connect, atau ubah saiz baris Apple Watch anda supaya sepadan dengannya."
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Verwijder de screenshots van het andere Apple Watch-formaat in App Store Connect, of pas het formaat van je Apple Watch-rijen daaraan aan."
+          }
+        },
+        "no" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Slett skjermbildene i den andre Apple Watch-størrelsen i App Store Connect, eller endre størrelsen på Apple Watch-radene dine slik at de samsvarer."
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Usuń w App Store Connect zrzuty ekranu w drugim rozmiarze Apple Watch albo zmień rozmiar swoich wierszy Apple Watch, aby do nich pasowały."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Apague as capturas do outro tamanho de Apple Watch no App Store Connect ou redimensione suas linhas de Apple Watch para que correspondam a elas."
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Elimine as capturas de ecrã do outro tamanho de Apple Watch no App Store Connect ou redimensione as suas linhas de Apple Watch para corresponderem a elas."
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ștergeți capturile de ecran ale celeilalte dimensiuni Apple Watch din App Store Connect sau redimensionați rândurile Apple Watch ca să se potrivească cu ele."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Удалите скриншоты другого размера Apple Watch в App Store Connect или измените размер своих строк Apple Watch под них."
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Odstráňte v App Store Connect snímky obrazovky pre druhú veľkosť Apple Watch alebo upravte veľkosť svojich riadkov Apple Watch tak, aby im zodpovedala."
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "V App Store Connect izbrišite posnetke zaslona druge velikosti za Apple Watch ali spremenite velikost svojih vrstic za Apple Watch, da se bodo ujemale z njimi."
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Radera skärmdumparna i den andra Apple Watch-storleken i App Store Connect, eller ändra storleken på dina Apple Watch-rader så att de matchar."
+          }
+        },
+        "ta" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "App Store Connect இல் மற்ற Apple Watch அளவின் ஸ்கிரீன் ஷாட்களை நீக்கவும், அல்லது உங்கள் Apple Watch வரிசைகளின் அளவை அவற்றுடன் பொருந்துமாறு மாற்றவும்."
+          }
+        },
+        "te" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "App Store Connectలో ఇతర Apple Watch పరిమాణం యొక్క స్క్రీన్‌షాట్‌లను తొలగించండి, లేదా మీ Apple Watch అడ్డు వరుసల పరిమాణాన్ని వాటికి సరిపోయేలా మార్చండి."
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ลบภาพหน้าจอของ Apple Watch ขนาดอื่นใน App Store Connect หรือปรับขนาดแถว Apple Watch ของคุณให้ตรงกับขนาดนั้น"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "App Store Connect'te diğer Apple Watch boyutunun ekran görüntülerini silin ya da Apple Watch satırlarınızı onlarla eşleşecek şekilde yeniden boyutlandırın."
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Видаліть знімки екрана іншого розміру Apple Watch в App Store Connect або змініть розмір своїх рядків Apple Watch відповідно до них."
+          }
+        },
+        "ur" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "App Store Connect میں دوسرے Apple Watch سائز کے اسکرین شاٹس حذف کریں، یا اپنی Apple Watch قطاروں کا سائز ان کے مطابق بدلیں۔"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Xóa ảnh chụp màn hình của kích thước Apple Watch còn lại trong App Store Connect hoặc đổi kích thước các hàng Apple Watch của bạn cho khớp với chúng."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在 App Store Connect 中删除另一种 Apple Watch 尺寸的截图，或调整你的 Apple Watch 行的尺寸以与之匹配。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在 App Store Connect 中刪除另一種 Apple Watch 尺寸的截圖，或調整你的 Apple Watch 列尺寸以與之相符。"
+          }
+        }
+      }
+    },
+    "%@ portrait only" : {
+      "comment" : "The placeholder lists accepted pixel sizes, e.g. 422×514, 410×502",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ عمودي فقط"
+          }
+        },
+        "bn" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "শুধুমাত্র %1$@ পোর্ট্রেট"
+          }
+        },
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ només vertical"
+          }
+        },
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ pouze na výšku"
+          }
+        },
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ kun portræt"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@, nur Hochformat"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ μόνο κατακόρυφα"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ solo en vertical"
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ فقط عمودی"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ vain pysty"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ en portrait uniquement"
+          }
+        },
+        "gu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ માત્ર પોર્ટ્રેટ"
+          }
+        },
+        "he" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ לאורך בלבד"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ केवल पोर्ट्रेट"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ samo okomito"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ csak álló"
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ potret saja"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@, solo verticale"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@（縦向きのみ）"
+          }
+        },
+        "kn" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ ಪೋರ್ಟ್ರೇಟ್ ಮಾತ್ರ"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ 세로 전용"
+          }
+        },
+        "ml" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ പോർട്രെയ്റ്റ് മാത്രം"
+          }
+        },
+        "mr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "फक्त %1$@ पोर्ट्रेट"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ potret sahaja"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ alleen staand"
+          }
+        },
+        "no" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bare %1$@ portrett"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ tylko pionowo"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ somente em retrato"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ somente retrato"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ numai portret"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@, только книжная ориентация"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ iba na výšku"
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ samo pokončno"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ endast stående"
+          }
+        },
+        "ta" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ செங்குத்து மட்டும்"
+          }
+        },
+        "te" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ పోర్ట్రెయిట్ మాత్రమే"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ แนวตั้งเท่านั้น"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@, yalnızca dikey"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@, лише книжкова орієнтація"
+          }
+        },
+        "ur" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ صرف پورٹریٹ"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ chỉ theo chiều dọc"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@（仅纵向）"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@（僅限直式）"
+          }
+        }
+      }
+    },
+    "**Apple Watch** rows upload to the app's iOS version. Pick a size from the **Apple Watch** group of the row size picker and keep it in portrait: 422×514 or 410×502 for Ultra, 416×496 for Series 10 and later, or 396×484, 368×448 and 312×390 for older models. Apple requires one Apple Watch size across every localization, so the wizard flags an upload that would leave a version with two." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تُحمَّل صفوف **Apple Watch** إلى إصدار iOS من التطبيق. اختر حجمًا من مجموعة **Apple Watch** في منتقي حجم الصف واجعله عموديًا: 422×514 أو 410×502 لطراز Ultra، و416×496 لطراز Series 10 والأحدث، أو 396×484 و368×448 و312×390 للطرازات الأقدم. تتطلب Apple حجمًا واحدًا لـ Apple Watch في كل الترجمات، لذلك ينبّه المعالج إلى أي تحميل قد يترك إصدارًا بحجمين."
+          }
+        },
+        "bn" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Apple Watch** সারিগুলো অ্যাপের iOS সংস্করণে আপলোড হয়। সারির মাপ পিকারের **Apple Watch** গ্রুপ থেকে একটি মাপ বেছে নিন এবং সেটি পোর্ট্রেটে রাখুন: Ultra-র জন্য 422×514 বা 410×502, Series 10 ও পরবর্তী মডেলের জন্য 416×496, অথবা পুরোনো মডেলের জন্য 396×484, 368×448 ও 312×390। Apple প্রতিটি স্থানীয়করণে একটিই Apple Watch মাপ চায়, তাই কোনো আপলোডের ফলে একটি সংস্করণে দুটি মাপ থেকে গেলে উইজার্ড তা চিহ্নিত করে।"
+          }
+        },
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Les files d'**Apple Watch** es pengen a la versió iOS de l'app. Trieu una mida del grup **Apple Watch** del selector de mida de la fila i manteniu-la en vertical: 422×514 o 410×502 per a Ultra, 416×496 per a Series 10 i posteriors, o 396×484, 368×448 i 312×390 per als models més antics. Apple requereix una sola mida d'Apple Watch a totes les localitzacions, de manera que l'assistent avisa d'una pujada que deixaria una versió amb dues."
+          }
+        },
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Řádky **Apple Watch** se nahrávají do verze aplikace pro iOS. Vyberte velikost ze skupiny **Apple Watch** ve výběru velikosti řádku a ponechte ji na výšku: 422×514 nebo 410×502 pro Ultra, 416×496 pro Series 10 a novější, nebo 396×484, 368×448 a 312×390 pro starší modely. Apple vyžaduje jednu velikost Apple Watch ve všech lokalizacích, takže průvodce upozorní na nahrávání, po kterém by verze měla dvě."
+          }
+        },
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Apple Watch**-rækker uploades til appens iOS-version. Vælg en størrelse fra gruppen **Apple Watch** i rækkens størrelsesvælger, og behold den stående: 422×514 eller 410×502 til Ultra, 416×496 til Series 10 og nyere, eller 396×484, 368×448 og 312×390 til ældre modeller. Apple kræver én Apple Watch-størrelse på tværs af alle lokaliseringer, så guiden markerer en upload, der ville efterlade en version med to."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zeilen für **Apple Watch** werden in die iOS-Version der App hochgeladen. Wähle eine Größe aus der Gruppe **Apple Watch** in der Größenauswahl der Zeile und behalte das Hochformat bei: 422×514 oder 410×502 für Ultra, 416×496 für Series 10 und neuer oder 396×484, 368×448 und 312×390 für ältere Modelle. Apple verlangt eine einzige Apple Watch-Größe für alle Lokalisierungen, daher markiert der Assistent einen Upload, nach dem eine Version zwei hätte."
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Οι σειρές **Apple Watch** μεταφορτώνονται στην έκδοση iOS της εφαρμογής. Επιλέξτε ένα μέγεθος από την ομάδα **Apple Watch** του επιλογέα μεγέθους της σειράς και διατηρήστε τον κατακόρυφο προσανατολισμό: 422×514 ή 410×502 για το Ultra, 416×496 για το Series 10 και νεότερα, ή 396×484, 368×448 και 312×390 για παλαιότερα μοντέλα. Η Apple απαιτεί ένα μόνο μέγεθος Apple Watch σε κάθε τοπική προσαρμογή, γι' αυτό ο οδηγός επισημαίνει μια μεταφόρτωση που θα άφηνε μια έκδοση με δύο."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Las filas de **Apple Watch** se suben a la versión de iOS de la app. Elige un tamaño del grupo **Apple Watch** del selector de tamaño de la fila y mantenlo en vertical: 422×514 o 410×502 para Ultra, 416×496 para Series 10 y posteriores, o 396×484, 368×448 y 312×390 para modelos anteriores. Apple exige un único tamaño de Apple Watch en todas las localizaciones, así que el asistente señala cualquier subida que dejaría una versión con dos."
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ردیف‌های **Apple Watch** در نسخهٔ iOS برنامه آپلود می‌شوند. اندازه‌ای را از گروه **Apple Watch** در انتخابگر اندازهٔ ردیف برگزینید و آن را عمودی نگه دارید: 422×514 یا 410×502 برای Ultra، 416×496 برای Series 10 و جدیدتر، یا 396×484، 368×448 و 312×390 برای مدل‌های قدیمی‌تر. اپل در همهٔ بومی‌سازی‌ها فقط یک اندازهٔ Apple Watch را می‌پذیرد، بنابراین دستیار آپلودی را که نسخه‌ای را با دو اندازه باقی بگذارد علامت‌گذاری می‌کند."
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Apple Watch** -rivit ladataan apin iOS-versioon. Valitse koko rivin kokovalitsimen **Apple Watch** -ryhmästä ja pidä se pystysuunnassa: 422×514 tai 410×502 Ultra-malleille, 416×496 Series 10 -malleille ja uudemmille tai 396×484, 368×448 ja 312×390 vanhemmille malleille. Apple vaatii yhden Apple Watch -koon kaikissa lokalisoinneissa, joten ohjattu toiminto merkitsee lähetyksen, joka jättäisi versioon kaksi kokoa."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Les lignes **Apple Watch** sont envoyées vers la version iOS de l’app. Choisissez une taille dans le groupe **Apple Watch** du sélecteur de taille de la ligne et gardez-la en portrait : 422×514 ou 410×502 pour Ultra, 416×496 pour Series 10 et ultérieurs, ou 396×484, 368×448 et 312×390 pour les modèles plus anciens. Apple exige une seule taille d’Apple Watch pour toutes les localisations ; l’assistant signale donc un envoi qui laisserait une version avec deux tailles."
+          }
+        },
+        "gu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Apple Watch** પંક્તિઓ ઍપના iOS સંસ્કરણમાં અપલોડ થાય છે. પંક્તિના કદ પિકરના **Apple Watch** જૂથમાંથી કદ પસંદ કરો અને તેને પોર્ટ્રેટમાં રાખો: Ultra માટે 422×514 અથવા 410×502, Series 10 અને પછીના માટે 416×496, અથવા જૂના મૉડલ માટે 396×484, 368×448 અને 312×390. Apple દરેક સ્થાનિકીકરણમાં એક જ Apple Watch કદ માંગે છે, તેથી જે અપલોડથી કોઈ સંસ્કરણમાં બે કદ રહી જાય તેને વિઝાર્ડ ચિહ્નિત કરે છે."
+          }
+        },
+        "he" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "שורות **Apple Watch** מועלות לגרסת ה-iOS של האפליקציה. בחר גודל מקבוצת **Apple Watch** בבורר הגודל של השורה והשאר אותו לאורך: 422×514 או 410×502 ל-Ultra, 416×496 ל-Series 10 ואילך, או 396×484, 368×448 ו-312×390 לדגמים ישנים יותר. Apple דורשת גודל Apple Watch אחד בכל הלוקליזציות, ולכן האשף מסמן העלאה שתשאיר גרסה עם שני גדלים."
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Apple Watch** पंक्तियाँ ऐप के iOS संस्करण में अपलोड होती हैं। पंक्ति के आकार पिकर के **Apple Watch** समूह से एक आकार चुनें और उसे पोर्ट्रेट में रखें: Ultra के लिए 422×514 या 410×502, Series 10 और बाद के मॉडल के लिए 416×496, या पुराने मॉडल के लिए 396×484, 368×448 और 312×390। Apple हर स्थानीयकरण में एक ही Apple Watch आकार चाहता है, इसलिए विज़ार्ड ऐसे अपलोड को चिह्नित करता है जिससे किसी संस्करण में दो आकार रह जाएँ।"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Retci za **Apple Watch** prenose se u iOS verziju aplikacije. Odaberite veličinu iz grupe **Apple Watch** u biraču veličine retka i zadržite je u okomitom položaju: 422×514 ili 410×502 za Ultra, 416×496 za Series 10 i novije ili 396×484, 368×448 i 312×390 za starije modele. Apple zahtijeva jednu veličinu za Apple Watch u svim lokalizacijama pa čarobnjak označava prijenos nakon kojeg bi verzija imala dvije."
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Az **Apple Watch**-sorok az app iOS-verziójába töltődnek fel. Válasszon méretet a sor méretválasztójának **Apple Watch** csoportjából, és tartsa álló tájolásban: Ultra esetén 422×514 vagy 410×502, Series 10 és újabb esetén 416×496, régebbi modelleknél pedig 396×484, 368×448 és 312×390. Az Apple minden lokalizációban egyetlen Apple Watch-méretet követel meg, ezért a varázsló megjelöli azt a feltöltést, amely után egy verziónak két mérete maradna."
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Baris **Apple Watch** diunggah ke versi iOS aplikasi. Pilih ukuran dari grup **Apple Watch** di pemilih ukuran baris dan pertahankan dalam orientasi potret: 422×514 atau 410×502 untuk Ultra, 416×496 untuk Series 10 dan yang lebih baru, atau 396×484, 368×448, dan 312×390 untuk model lama. Apple mewajibkan satu ukuran Apple Watch di setiap pelokalan, sehingga wizard menandai unggahan yang akan membuat suatu versi memiliki dua ukuran."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Le righe **Apple Watch** vengono caricate nella versione iOS dell’app. Scegli una dimensione dal gruppo **Apple Watch** del selettore di dimensioni della riga e mantienila in verticale: 422×514 o 410×502 per Ultra, 416×496 per Series 10 e successivi, oppure 396×484, 368×448 e 312×390 per i modelli precedenti. Apple richiede un’unica dimensione di Apple Watch in tutte le localizzazioni, quindi la procedura segnala un caricamento che lascerebbe una versione con due dimensioni."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Apple Watch** の行は、アプリの iOS バージョンにアップロードされます。行のサイズピッカーの **Apple Watch** グループからサイズを選び、縦向きのままにしてください。Ultra は 422×514 または 410×502、Series 10 以降は 416×496、それより前のモデルは 396×484、368×448、312×390 です。Apple はすべてのローカリゼーションで Apple Watch のサイズを 1 つにすることを求めているため、バージョンに 2 つのサイズが残るアップロードはウィザードが警告します。"
+          }
+        },
+        "kn" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Apple Watch** ಸಾಲುಗಳು ಆ್ಯಪ್‌ನ iOS ಆವೃತ್ತಿಗೆ ಅಪ್‌ಲೋಡ್ ಆಗುತ್ತವೆ. ಸಾಲಿನ ಗಾತ್ರ ಪಿಕರ್‌ನ **Apple Watch** ಗುಂಪಿನಿಂದ ಗಾತ್ರವನ್ನು ಆರಿಸಿ ಮತ್ತು ಅದನ್ನು ಪೋರ್ಟ್ರೇಟ್‌ನಲ್ಲಿ ಇರಿಸಿ: Ultra ಗೆ 422×514 ಅಥವಾ 410×502, Series 10 ಮತ್ತು ನಂತರದವುಗಳಿಗೆ 416×496, ಅಥವಾ ಹಳೆಯ ಮಾದರಿಗಳಿಗೆ 396×484, 368×448 ಮತ್ತು 312×390. ಪ್ರತಿ ಸ್ಥಳೀಕರಣದಲ್ಲಿ ಒಂದೇ Apple Watch ಗಾತ್ರ ಇರಬೇಕೆಂದು Apple ಬಯಸುತ್ತದೆ, ಆದ್ದರಿಂದ ಆವೃತ್ತಿಯೊಂದರಲ್ಲಿ ಎರಡು ಗಾತ್ರಗಳು ಉಳಿಯುವಂತೆ ಮಾಡುವ ಅಪ್‌ಲೋಡ್ ಅನ್ನು ಮಾಂತ್ರಿಕ ಗುರುತಿಸುತ್ತದೆ."
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Apple Watch** 행은 앱의 iOS 버전에 업로드됩니다. 행 크기 선택기의 **Apple Watch** 그룹에서 크기를 고르고 세로 방향을 유지하세요. Ultra는 422×514 또는 410×502, Series 10 이상은 416×496, 이전 모델은 396×484, 368×448, 312×390입니다. Apple은 모든 현지화에서 Apple Watch 크기를 하나로 통일하도록 요구하므로, 버전에 크기가 두 개 남게 되는 업로드는 마법사가 표시합니다."
+          }
+        },
+        "ml" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Apple Watch** വരികൾ ആപ്പിന്റെ iOS പതിപ്പിലേക്ക് അപ്‌ലോഡ് ചെയ്യപ്പെടുന്നു. വരിയുടെ വലുപ്പ പിക്കറിലെ **Apple Watch** ഗ്രൂപ്പിൽ നിന്ന് ഒരു വലുപ്പം തിരഞ്ഞെടുത്ത് അത് പോർട്രെയ്റ്റിൽ നിലനിർത്തുക: Ultra-യ്ക്ക് 422×514 അല്ലെങ്കിൽ 410×502, Series 10-നും പുതിയവയ്ക്കും 416×496, അല്ലെങ്കിൽ പഴയ മോഡലുകൾക്ക് 396×484, 368×448, 312×390. എല്ലാ പ്രാദേശികവൽക്കരണത്തിലും ഒരൊറ്റ Apple Watch വലുപ്പം വേണമെന്ന് Apple ആവശ്യപ്പെടുന്നതിനാൽ, ഒരു പതിപ്പിൽ രണ്ട് വലുപ്പങ്ങൾ ബാക്കിയാക്കുന്ന അപ്‌ലോഡ് വിസാർഡ് അടയാളപ്പെടുത്തുന്നു."
+          }
+        },
+        "mr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Apple Watch** पंक्ती अ‍ॅपच्या iOS आवृत्तीवर अपलोड होतात. पंक्तीच्या आकार निवडकातील **Apple Watch** गटातून आकार निवडा आणि तो पोर्ट्रेटमध्ये ठेवा: Ultra साठी 422×514 किंवा 410×502, Series 10 आणि नंतरच्या मॉडेलसाठी 416×496, किंवा जुन्या मॉडेलसाठी 396×484, 368×448 आणि 312×390. Apple ला प्रत्येक स्थानिकीकरणात एकच Apple Watch आकार हवा असतो, त्यामुळे ज्या अपलोडमुळे एखाद्या आवृत्तीत दोन आकार राहतील तो विझार्ड चिन्हांकित करतो."
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Baris **Apple Watch** dimuat naik ke versi iOS apl. Pilih saiz daripada kumpulan **Apple Watch** dalam pemilih saiz baris dan kekalkannya dalam potret: 422×514 atau 410×502 untuk Ultra, 416×496 untuk Series 10 dan lebih baharu, atau 396×484, 368×448 dan 312×390 untuk model lama. Apple memerlukan satu saiz Apple Watch merentas setiap penyetempatan, jadi wizard menandakan muat naik yang akan meninggalkan versi dengan dua saiz."
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Apple Watch**-rijen worden geüpload naar de iOS-versie van de app. Kies een formaat uit de groep **Apple Watch** in de formaatkiezer van de rij en houd het staand: 422×514 of 410×502 voor Ultra, 416×496 voor Series 10 en nieuwer, of 396×484, 368×448 en 312×390 voor oudere modellen. Apple vereist één Apple Watch-formaat voor alle lokalisaties, dus de wizard markeert een upload waardoor een versie er twee zou hebben."
+          }
+        },
+        "no" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Apple Watch**-rader lastes opp til appens iOS-versjon. Velg en størrelse fra **Apple Watch**-gruppen i radens størrelsesvelger, og behold den stående: 422×514 eller 410×502 for Ultra, 416×496 for Series 10 og nyere, eller 396×484, 368×448 og 312×390 for eldre modeller. Apple krever én Apple Watch-størrelse på tvers av alle lokaliseringer, så veiviseren markerer en opplasting som ville gitt en versjon to størrelser."
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wiersze **Apple Watch** są przesyłane do wersji aplikacji na iOS. Wybierz rozmiar z grupy **Apple Watch** w selektorze rozmiaru wiersza i zachowaj orientację pionową: 422×514 lub 410×502 dla Ultra, 416×496 dla Series 10 i nowszych albo 396×484, 368×448 i 312×390 dla starszych modeli. Apple wymaga jednego rozmiaru Apple Watch we wszystkich lokalizacjach, więc kreator oznacza przesyłanie, po którym wersja miałaby dwa rozmiary."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "As linhas de **Apple Watch** são enviadas para a versão iOS do app. Escolha um tamanho no grupo **Apple Watch** do seletor de tamanho da linha e mantenha-o em retrato: 422×514 ou 410×502 para Ultra, 416×496 para Series 10 e posteriores, ou 396×484, 368×448 e 312×390 para modelos mais antigos. A Apple exige um único tamanho de Apple Watch em todas as localizações, então o assistente sinaliza um envio que deixaria uma versão com dois."
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "As linhas de **Apple Watch** são carregadas para a versão iOS da app. Escolha um tamanho do grupo **Apple Watch** do seletor de tamanho da linha e mantenha-o na vertical: 422×514 ou 410×502 para Ultra, 416×496 para Series 10 e posteriores, ou 396×484, 368×448 e 312×390 para modelos mais antigos. A Apple exige um único tamanho de Apple Watch em todas as localizações, pelo que o assistente assinala um carregamento que deixaria uma versão com dois."
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rândurile **Apple Watch** se încarcă în versiunea iOS a aplicației. Alegeți o dimensiune din grupul **Apple Watch** al selectorului de dimensiune a rândului și păstrați-o în modul portret: 422×514 sau 410×502 pentru Ultra, 416×496 pentru Series 10 și ulterioare, sau 396×484, 368×448 și 312×390 pentru modelele mai vechi. Apple cere o singură dimensiune Apple Watch în toate localizările, așa că asistentul semnalează o încărcare care ar lăsa o versiune cu două."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Строки **Apple Watch** загружаются в iOS-версию приложения. Выберите размер из группы **Apple Watch** в списке размеров строки и оставьте книжную ориентацию: 422×514 или 410×502 для Ultra, 416×496 для Series 10 и новее, либо 396×484, 368×448 и 312×390 для более старых моделей. Apple требует один размер Apple Watch для всех локализаций, поэтому мастер отмечает загрузку, после которой в версии осталось бы два размера."
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Riadky **Apple Watch** sa nahrávajú do verzie aplikácie pre iOS. Vyberte veľkosť zo skupiny **Apple Watch** vo výbere veľkosti riadka a ponechajte ju na výšku: 422×514 alebo 410×502 pre Ultra, 416×496 pre Series 10 a novšie alebo 396×484, 368×448 a 312×390 pre staršie modely. Apple vyžaduje jednu veľkosť Apple Watch vo všetkých lokalizáciách, takže sprievodca označí nahrávanie, po ktorom by verzia mala dve."
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vrstice za **Apple Watch** se naložijo v različico aplikacije za iOS. Izberite velikost iz skupine **Apple Watch** v izbirniku velikosti vrstice in jo ohranite pokončno: 422×514 ali 410×502 za Ultra, 416×496 za Series 10 in novejše ali 396×484, 368×448 in 312×390 za starejše modele. Apple zahteva eno velikost za Apple Watch v vseh lokalizacijah, zato čarovnik označi nalaganje, po katerem bi imela različica dve."
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Apple Watch**-rader laddas upp till appens iOS-version. Välj en storlek i gruppen **Apple Watch** i radens storleksväljare och behåll den stående: 422×514 eller 410×502 för Ultra, 416×496 för Series 10 och senare, eller 396×484, 368×448 och 312×390 för äldre modeller. Apple kräver en enda Apple Watch-storlek i alla lokaliseringar, så guiden flaggar en uppladdning som skulle ge en version två storlekar."
+          }
+        },
+        "ta" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Apple Watch** வரிசைகள் ஆப்ஸின் iOS பதிப்பில் பதிவேற்றப்படும். வரிசையின் அளவுத் தேர்வியில் உள்ள **Apple Watch** குழுவிலிருந்து ஓர் அளவைத் தேர்ந்தெடுத்து, அதைச் செங்குத்தாக வைத்திருக்கவும்: Ultra-க்கு 422×514 அல்லது 410×502, Series 10 மற்றும் அதற்குப் பிந்தையவற்றுக்கு 416×496, அல்லது பழைய மாடல்களுக்கு 396×484, 368×448 மற்றும் 312×390. ஒவ்வொரு உள்ளூர்மயமாக்கலிலும் ஒரே Apple Watch அளவை Apple கோருவதால், ஒரு பதிப்பில் இரண்டு அளவுகளை விட்டுவிடும் பதிவேற்றத்தை வழிகாட்டி குறிக்கிறது."
+          }
+        },
+        "te" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Apple Watch** అడ్డు వరుసలు యాప్ యొక్క iOS వెర్షన్‌కు అప్‌లోడ్ అవుతాయి. అడ్డు వరుస పరిమాణ పికర్‌లోని **Apple Watch** సమూహం నుండి ఒక పరిమాణాన్ని ఎంచుకుని, దాన్ని పోర్ట్రెయిట్‌లో ఉంచండి: Ultra కోసం 422×514 లేదా 410×502, Series 10 మరియు తదుపరి వాటి కోసం 416×496, లేదా పాత మోడల్‌ల కోసం 396×484, 368×448 మరియు 312×390. ప్రతి స్థానికీకరణలో ఒకే Apple Watch పరిమాణం ఉండాలని Apple కోరుతుంది, కాబట్టి ఒక వెర్షన్‌లో రెండు పరిమాణాలు మిగిలిపోయేలా చేసే అప్‌లోడ్‌ను విజార్డ్ గుర్తిస్తుంది."
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "แถว **Apple Watch** จะอัปโหลดไปยังเวอร์ชัน iOS ของแอป เลือกขนาดจากกลุ่ม **Apple Watch** ในตัวเลือกขนาดของแถวและคงไว้เป็นแนวตั้ง: 422×514 หรือ 410×502 สำหรับ Ultra, 416×496 สำหรับ Series 10 ขึ้นไป หรือ 396×484, 368×448 และ 312×390 สำหรับรุ่นเก่ากว่า Apple กำหนดให้ใช้ขนาด Apple Watch เพียงขนาดเดียวในทุกการแปลเป็นภาษาท้องถิ่น วิซาร์ดจึงแจ้งเตือนการอัปโหลดที่จะทำให้เวอร์ชันหนึ่งมีสองขนาด"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Apple Watch** satırları uygulamanın iOS sürümüne yüklenir. Satır boyutu seçicisindeki **Apple Watch** grubundan bir boyut seçin ve dikey tutun: Ultra için 422×514 veya 410×502, Series 10 ve sonrası için 416×496, daha eski modeller için ise 396×484, 368×448 ve 312×390. Apple her yerelleştirmede tek bir Apple Watch boyutu istediğinden, sihirbaz bir sürümü iki boyutla bırakacak bir yüklemeyi işaretler."
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Рядки **Apple Watch** вивантажуються в iOS-версію застосунку. Виберіть розмір із групи **Apple Watch** у виборі розміру рядка й залиште книжкову орієнтацію: 422×514 або 410×502 для Ultra, 416×496 для Series 10 і новіших, або 396×484, 368×448 і 312×390 для старіших моделей. Apple вимагає один розмір Apple Watch для всіх локалізацій, тому майстер позначає вивантаження, після якого у версії залишилося б два розміри."
+          }
+        },
+        "ur" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Apple Watch** قطاریں ایپ کے iOS ورژن پر اپ لوڈ ہوتی ہیں۔ قطار کے سائز پکر کے **Apple Watch** گروپ سے ایک سائز منتخب کریں اور اسے پورٹریٹ میں رکھیں: Ultra کے لیے 422×514 یا 410×502، Series 10 اور بعد کے ماڈلز کے لیے 416×496، یا پرانے ماڈلز کے لیے 396×484، 368×448 اور 312×390۔ Apple ہر لوکلائزیشن میں ایک ہی Apple Watch سائز چاہتا ہے، اس لیے وزرڈ ایسے اپ لوڈ کی نشاندہی کرتا ہے جس سے کسی ورژن میں دو سائز رہ جائیں۔"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Các hàng **Apple Watch** được tải lên phiên bản iOS của ứng dụng. Chọn một kích thước trong nhóm **Apple Watch** của bộ chọn kích thước hàng và giữ ở chiều dọc: 422×514 hoặc 410×502 cho Ultra, 416×496 cho Series 10 trở lên, hoặc 396×484, 368×448 và 312×390 cho các mẫu cũ hơn. Apple yêu cầu một kích thước Apple Watch duy nhất cho mọi bản địa hóa, vì vậy trình hướng dẫn sẽ đánh dấu lần tải lên khiến một phiên bản có hai kích thước."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Apple Watch** 行会上传到 App 的 iOS 版本。请从行尺寸选择器的 **Apple Watch** 分组中选择尺寸，并保持纵向：Ultra 为 422×514 或 410×502，Series 10 及更新机型为 416×496，更早的机型为 396×484、368×448 和 312×390。Apple 要求所有本地化版本使用同一种 Apple Watch 尺寸，因此若某次上传会让一个版本同时存在两种尺寸，向导会将其标出。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Apple Watch** 列會上傳至 App 的 iOS 版本。請從列尺寸選擇器的 **Apple Watch** 群組中選擇尺寸，並保持直式：Ultra 為 422×514 或 410×502，Series 10 及更新機型為 416×496，較舊機型為 396×484、368×448 和 312×390。Apple 要求所有在地化版本使用同一種 Apple Watch 尺寸，因此若某次上傳會讓一個版本同時有兩種尺寸，精靈會將其標示出來。"
+          }
+        }
+      }
+    },
+    "App Store Connect rejects this unless the selected app version includes an Apple Watch app." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "يرفض App Store Connect هذا ما لم يتضمن إصدار التطبيق المحدد تطبيقًا لـ Apple Watch."
+          }
+        },
+        "bn" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "নির্বাচিত অ্যাপ সংস্করণে Apple Watch অ্যাপ না থাকলে App Store Connect এটি প্রত্যাখ্যান করে।"
+          }
+        },
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "App Store Connect rebutja això tret que la versió de l'aplicació seleccionada inclogui una aplicació per a Apple Watch."
+          }
+        },
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "App Store Connect to odmítne, pokud vybraná verze aplikace neobsahuje aplikaci pro Apple Watch."
+          }
+        },
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "App Store Connect afviser dette, medmindre den valgte appversion indeholder en Apple Watch-app."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "App Store Connect lehnt das ab, wenn die ausgewählte App-Version keine Apple Watch-App enthält."
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Το App Store Connect το απορρίπτει, εκτός εάν η επιλεγμένη έκδοση εφαρμογής περιλαμβάνει εφαρμογή για Apple Watch."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "App Store Connect lo rechaza si la versión seleccionada no incluye una app para Apple Watch."
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "App Store Connect این را رد می‌کند، مگر اینکه نسخه برنامه انتخابی یک برنامه Apple Watch داشته باشد."
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "App Store Connect hylkää tämän, ellei valittu sovellusversio sisällä Apple Watch -sovellusta."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "App Store Connect refuse ce type si la version sélectionnée de l'app n'inclut pas d'app Apple Watch."
+          }
+        },
+        "gu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "પસંદ કરેલ એપ્લિકેશન સંસ્કરણમાં Apple Watch એપ્લિકેશન ન હોય તો App Store Connect આને નકારે છે."
+          }
+        },
+        "he" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "App Store Connect דוחה זאת אלא אם גרסת האפליקציה שנבחרה כוללת אפליקציה ל-Apple Watch."
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "यदि चयनित ऐप संस्करण में Apple Watch ऐप शामिल नहीं है, तो App Store Connect इसे अस्वीकार कर देता है।"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "App Store Connect to odbija ako odabrana verzija aplikacije ne uključuje aplikaciju za Apple Watch."
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Az App Store Connect elutasítja ezt, ha a kiválasztott alkalmazásverzió nem tartalmaz Apple Watch-alkalmazást."
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "App Store Connect menolak ini kecuali versi aplikasi yang dipilih menyertakan aplikasi Apple Watch."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "App Store Connect lo rifiuta se la versione dell'app selezionata non include un'app per Apple Watch."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "選択したアプリのバージョンに Apple Watch App が含まれていない場合、App Store Connect はこれを拒否します。"
+          }
+        },
+        "kn" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ಆಯ್ಕೆಮಾಡಿದ ಅಪ್ಲಿಕೇಶನ್ ಆವೃತ್ತಿಯಲ್ಲಿ Apple Watch ಅಪ್ಲಿಕೇಶನ್ ಇಲ್ಲದಿದ್ದರೆ App Store Connect ಇದನ್ನು ತಿರಸ್ಕರಿಸುತ್ತದೆ."
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "선택한 앱 버전에 Apple Watch 앱이 포함되어 있지 않으면 App Store Connect에서 거부됩니다."
+          }
+        },
+        "ml" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "തിരഞ്ഞെടുത്ത ആപ്പ് പതിപ്പിൽ Apple Watch ആപ്പ് ഇല്ലെങ്കിൽ App Store Connect ഇത് നിരസിക്കുന്നു."
+          }
+        },
+        "mr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "निवडलेल्या ॲप आवृत्तीत Apple Watch ॲप नसल्यास App Store Connect हे नाकारते."
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "App Store Connect menolak ini melainkan versi apl yang dipilih menyertakan apl Apple Watch."
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "App Store Connect wijst dit af, tenzij de geselecteerde app-versie een Apple Watch-app bevat."
+          }
+        },
+        "no" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "App Store Connect avviser dette med mindre den valgte appversjonen inneholder en Apple Watch-app."
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "App Store Connect odrzuca tę opcję, jeśli wybrana wersja aplikacji nie zawiera aplikacji na Apple Watch."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O App Store Connect rejeitará isso se a versão do aplicativo selecionada não incluir um app para Apple Watch."
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O App Store Connect rejeitará isto se a versão da app selecionada não incluir uma app para Apple Watch."
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "App Store Connect respinge acest lucru dacă versiunea aplicației selectată nu include o aplicație pentru Apple Watch."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "App Store Connect отклонит это, если выбранная версия приложения не включает приложение для Apple Watch."
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "App Store Connect to odmietne, ak vybratá verzia aplikácie neobsahuje aplikáciu pre Apple Watch."
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "App Store Connect to zavrne, če izbrana različica aplikacije ne vključuje aplikacije za Apple Watch."
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "App Store Connect avvisar detta om inte den valda appversionen innehåller en Apple Watch-app."
+          }
+        },
+        "ta" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "தேர்ந்தெடுக்கப்பட்ட பயன்பாட்டின் பதிப்பில் Apple Watch பயன்பாடு இல்லையெனில் App Store Connect இதை நிராகரிக்கும்."
+          }
+        },
+        "te" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ఎంచుకున్న యాప్ వెర్షన్‌లో Apple Watch యాప్ లేకపోతే App Store Connect దీన్ని తిరస్కరిస్తుంది."
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "App Store Connect จะปฏิเสธ เว้นแต่เวอร์ชันแอปที่เลือกจะมีแอป Apple Watch"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Seçilen uygulama sürümü bir Apple Watch uygulaması içermiyorsa App Store Connect bunu reddeder."
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "App Store Connect відхилить це, якщо вибрана версія програми не містить програми для Apple Watch."
+          }
+        },
+        "ur" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "اگر منتخب ایپ ورژن میں Apple Watch ایپ شامل نہیں ہے تو App Store Connect اسے مسترد کرتا ہے۔"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "App Store Connect từ chối điều này trừ khi phiên bản ứng dụng đã chọn có ứng dụng Apple Watch."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "除非所选 App 版本包含 Apple Watch App，否则 App Store Connect 会拒绝此项。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "除非所選的 App 版本包含 Apple Watch App，否則 App Store Connect 會拒絕此項目。"
+          }
+        }
+      }
     }
   },
   "version" : "1.0"

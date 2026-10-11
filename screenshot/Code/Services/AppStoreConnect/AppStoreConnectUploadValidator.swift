@@ -197,6 +197,10 @@ enum AppStoreConnectUploadValidator {
             }
         }
 
+        if let mixedWatchSizes = ASCWatchSizeConsistency.mixedPlanIssue(plans: enabledPlans) {
+            issues.append(mixedWatchSizes)
+        }
+
         issues.append(contentsOf: StoreUploadChecks.collisionIssues(
             claims,
             sameRow: { rowName, localeLabels, ascLocale in

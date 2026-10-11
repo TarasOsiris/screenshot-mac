@@ -45,32 +45,33 @@ struct DisplayCategory: Identifiable {
     let name: String
     let deviceCategory: DeviceCategory?
     let sizes: [ScreenshotSize]
-    let isLandscapeOnly: Bool
+    /// The listed sizes are the only valid ones — no rotated variant (Mac is landscape-only, Watch portrait-only).
+    let hasFixedOrientation: Bool
 
     /// Create a category with portrait sizes that auto-generate landscape variants.
     init(name: String, deviceCategory: DeviceCategory? = nil, portraitSizes: [(w: CGFloat, h: CGFloat, subtitle: String)]) {
         self.name = name
         self.deviceCategory = deviceCategory
-        self.isLandscapeOnly = false
+        self.hasFixedOrientation = false
         self.sizes = portraitSizes.flatMap { size in [
             ScreenshotSize(width: size.w, height: size.h, subtitle: size.subtitle),
             ScreenshotSize(width: size.h, height: size.w, subtitle: size.subtitle),
         ]}
     }
 
-    /// Create a category with landscape-only sizes (no portrait variant).
-    init(name: String, deviceCategory: DeviceCategory? = nil, landscapeSizes: [(w: CGFloat, h: CGFloat, subtitle: String)]) {
+    /// Create a category whose sizes are valid only in the orientation listed (no rotated variant).
+    init(name: String, deviceCategory: DeviceCategory? = nil, fixedOrientationSizes: [(w: CGFloat, h: CGFloat, subtitle: String)]) {
         self.name = name
         self.deviceCategory = deviceCategory
-        self.isLandscapeOnly = true
-        self.sizes = landscapeSizes.map {
+        self.hasFixedOrientation = true
+        self.sizes = fixedOrientationSizes.map {
             ScreenshotSize(width: $0.w, height: $0.h, subtitle: $0.subtitle)
         }
     }
 
-    /// Canonical sizes without orientation duplicates (portrait for phone/tablet, all for landscape-only).
+    /// Canonical sizes without orientation duplicates (portrait for phone/tablet, all for fixed-orientation).
     var canonicalSizes: [ScreenshotSize] {
-        if isLandscapeOnly { return sizes }
+        if hasFixedOrientation { return sizes }
         return sizes.filter { !$0.isLandscape }
     }
 }
@@ -113,11 +114,19 @@ let displayCategories: [DisplayCategory] = [
         (1668, 2388, "iPad Pro 11\" (3rd/4th gen)"),
         (1640, 2360, "iPad (10th gen) / iPad mini (6th gen)"),
     ]),
-    DisplayCategory(name: String(localized: "Mac Desktop", comment: "Screenshot display category for Mac App Store screenshots"), deviceCategory: .macbook, landscapeSizes: [
+    DisplayCategory(name: String(localized: "Mac Desktop", comment: "Screenshot display category for Mac App Store screenshots"), deviceCategory: .macbook, fixedOrientationSizes: [
         (2880, 1800, "Retina 16:10"),
         (2560, 1600, "Retina 16:10"),
         (1440, 900, "Standard 16:10"),
         (1280, 800, "Standard 16:10"),
+    ]),
+    DisplayCategory(name: "Apple Watch", fixedOrientationSizes: [
+        (422, 514, "Ultra 3"),
+        (410, 502, "Ultra 2 / Ultra"),
+        (416, 496, "Series 11 / 10"),
+        (396, 484, "Series 9 / 8 / 7"),
+        (368, 448, "Series 6 / 5 / 4 / SE"),
+        (312, 390, "Series 3"),
     ]),
     DisplayCategory(name: "Android Phone", deviceCategory: .androidPhone, portraitSizes: [
         (1080, 1920, "Standard 16:9"),

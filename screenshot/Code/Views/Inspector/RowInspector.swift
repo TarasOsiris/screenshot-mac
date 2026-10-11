@@ -138,7 +138,7 @@ struct RowInspector: View {
                 Section(category.name) {
                     let sizesToShow = category.canonicalSizes
                     ForEach(sizesToShow, id: \.label) { baseSize in
-                        let displaySize = category.isLandscapeOnly ? baseSize : baseSize.oriented(landscape: landscape)
+                        let displaySize = category.hasFixedOrientation ? baseSize : baseSize.oriented(landscape: landscape)
                         Text(displaySize.compactLabel)
                             .tag(sizePresetTag(for: displaySize))
                     }

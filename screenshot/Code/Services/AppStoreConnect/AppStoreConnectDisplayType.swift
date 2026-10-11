@@ -29,11 +29,14 @@ enum ASCDisplayType: String, CaseIterable, Identifiable, Sendable {
     // Mac
     case desktop = "APP_DESKTOP"                  // 2880x1800, 2560x1600, 1440x900, 1280x800
 
-    // Apple Watch / TV (not targeted by Screenshot Bro but kept for completeness)
-    case watchUltra = "APP_WATCH_ULTRA"
-    case watchSeries7 = "APP_WATCH_SERIES_7"
-    case watchSeries4 = "APP_WATCH_SERIES_4"
-    case watchSeries3 = "APP_WATCH_SERIES_3"
+    // Apple Watch — listed under the iOS version. Portrait only.
+    case watchUltra = "APP_WATCH_ULTRA"          // Ultra 3 (422x514) / Ultra 2, Ultra (410x502)
+    case watchSeries10 = "APP_WATCH_SERIES_10"   // Series 10+ (416x496)
+    case watchSeries7 = "APP_WATCH_SERIES_7"     // Series 7–9 (396x484)
+    case watchSeries4 = "APP_WATCH_SERIES_4"     // Series 4–6, SE (368x448)
+    case watchSeries3 = "APP_WATCH_SERIES_3"     // Series 3 (312x390)
+
+    // TV / Vision (not targeted by Screenshot Bro but kept for completeness)
     case appleTV = "APP_APPLE_TV"
     case visionPro = "APP_APPLE_VISION_PRO"
 
@@ -59,6 +62,7 @@ enum ASCDisplayType: String, CaseIterable, Identifiable, Sendable {
         case iphone
         case ipad
         case mac
+        case watch
         case other
     }
 
@@ -70,22 +74,18 @@ enum ASCDisplayType: String, CaseIterable, Identifiable, Sendable {
             return .ipad
         case .desktop:
             return .mac
-        default:
+        case .watchUltra, .watchSeries10, .watchSeries7, .watchSeries4, .watchSeries3:
+            return .watch
+        case .appleTV, .visionPro:
             return .other
         }
     }
 
     var allowedPlatforms: Set<ASCPlatform> {
         switch family {
-        case .iphone, .ipad: return [.ios]
+        case .iphone, .ipad, .watch: return [.ios]
         case .mac: return [.macOS]
-        case .other:
-            switch self {
-            case .appleTV: return [.tvOS]
-            case .visionPro: return [.visionOS]
-            case .watchUltra, .watchSeries7, .watchSeries4, .watchSeries3: return [.ios]
-            default: return []
-            }
+        case .other: return self == .appleTV ? [.tvOS] : [.visionOS]
         }
     }
 
@@ -114,10 +114,11 @@ enum ASCDisplayType: String, CaseIterable, Identifiable, Sendable {
         case .ipad105: return "iPad 10.5\" (1668×2224)"
         case .ipad97: return "iPad 9.7\" (1536×2048)"
         case .desktop: return String(localized: "Mac Desktop", comment: "Screenshot display category for Mac App Store screenshots")
-        case .watchUltra: return "Apple Watch Ultra"
-        case .watchSeries7: return "Apple Watch Series 7+"
-        case .watchSeries4: return "Apple Watch Series 4-6"
-        case .watchSeries3: return "Apple Watch Series 3"
+        case .watchUltra: return "Apple Watch Ultra (422×514 / 410×502)"
+        case .watchSeries10: return "Apple Watch Series 10+ (416×496)"
+        case .watchSeries7: return "Apple Watch Series 7–9 (396×484)"
+        case .watchSeries4: return "Apple Watch Series 4–6 / SE (368×448)"
+        case .watchSeries3: return "Apple Watch Series 3 (312×390)"
         case .appleTV: return "Apple TV"
         case .visionPro: return "Apple Vision Pro"
         }
@@ -144,15 +145,20 @@ enum ASCDisplayType: String, CaseIterable, Identifiable, Sendable {
         case .ipad105: return "iPad 10.5\""
         case .ipad97: return "iPad 9.7\""
         case .desktop: return "Mac"
-        case .watchUltra, .watchSeries7, .watchSeries4, .watchSeries3, .appleTV, .visionPro: return label
+        case .watchUltra: return "Apple Watch Ultra"
+        case .watchSeries10: return "Apple Watch Series 10+"
+        case .watchSeries7: return "Apple Watch Series 7–9"
+        case .watchSeries4: return "Apple Watch Series 4–6 / SE"
+        case .watchSeries3: return "Apple Watch Series 3"
+        case .appleTV, .visionPro: return label
         }
     }
 
-    /// Groups exposed in the UI picker. Hides categories not targeted by the app (watch/TV/vision)
-    /// unless the user explicitly needs them.
+    /// Groups exposed in the UI picker. Hides categories not targeted by the app (TV/vision).
     static let userSelectableCases: [ASCDisplayType] = [
         .iphone69, .iphoneDuo, .iphone67, .iphone65, .iphone63, .iphone61, .iphone58, .iphone55, .iphone47,
         .ipadPro129M4, .ipadPro3Gen129, .ipadPro11M4, .ipadPro3Gen11, .ipad105, .ipad97,
+        .watchUltra, .watchSeries10, .watchSeries7, .watchSeries4, .watchSeries3,
         .desktop
     ]
 
@@ -164,7 +170,8 @@ enum ASCDisplayType: String, CaseIterable, Identifiable, Sendable {
     }
 
     /// Portrait (short × long) pixel pairs accepted by ASC for this display type.
-    /// Desktop is landscape-only. Empty for display types the app doesn't target (watch/TV/vision).
+    /// Desktop pairs are landscape, and the only orientation accepted (see `hasFixedOrientation`).
+    /// Empty for display types the app doesn't target (TV/vision).
     var acceptedPortraitSizes: [(Int, Int)] {
         switch self {
         case .iphoneDuo: return [(1398, 2034), (2007, 2853)]
@@ -185,26 +192,48 @@ enum ASCDisplayType: String, CaseIterable, Identifiable, Sendable {
         case .ipad105: return [(1668, 2224)]
         case .ipad97: return [(1536, 2048)]
         case .desktop: return [(2880, 1800), (2560, 1600), (1440, 900), (1280, 800)]
-        default: return []
+        case .watchUltra: return [(422, 514), (410, 502)]
+        case .watchSeries10: return [(416, 496)]
+        case .watchSeries7: return [(396, 484)]
+        case .watchSeries4: return [(368, 448)]
+        case .watchSeries3: return [(312, 390)]
+        case .appleTV, .visionPro: return []
         }
     }
 
     var acceptedSizeDescription: String {
         let sizes = acceptedPortraitSizes.map { "\($0.0)×\($0.1)" }
         guard !sizes.isEmpty else { return String(localized: "No upload sizes listed for this display type.") }
-        if self == .desktop {
+        switch family {
+        case .mac:
             return String(localized: "\(sizes.joined(separator: ", ")) landscape only", comment: "The placeholder lists accepted pixel sizes, e.g. 2880×1800, 2560×1600")
+        case .watch:
+            return String(localized: "\(sizes.joined(separator: ", ")) portrait only", comment: "The placeholder lists accepted pixel sizes, e.g. 422×514, 410×502")
+        case .iphone, .ipad, .other:
+            return String(localized: "\(sizes.joined(separator: ", ")) portrait or landscape", comment: "The placeholder lists accepted pixel sizes, e.g. 1320×2868")
         }
-        return String(localized: "\(sizes.joined(separator: ", ")) portrait or landscape", comment: "The placeholder lists accepted pixel sizes, e.g. 1320×2868")
+    }
+
+    /// Mac is landscape-only and Apple Watch portrait-only; phones and tablets accept either.
+    var hasFixedOrientation: Bool {
+        family == .mac || family == .watch
+    }
+
+    /// Shown under the display type picker; App Store Connect only accepts these sets for apps shipping that device.
+    var uploadCaveat: String? {
+        switch family {
+        case .ipad: String(localized: "App Store Connect rejects this if the selected app version is iPhone-only.")
+        case .watch: String(localized: "App Store Connect rejects this unless the selected app version includes an Apple Watch app.")
+        case .iphone, .mac, .other: nil
+        }
     }
 
     /// True if the given (width, height) matches an ASC-valid size for this display type.
-    /// Phone and tablet entries accept either orientation; desktop entries are landscape-only.
     func accepts(width: CGFloat, height: CGFloat) -> Bool {
         let w = Int(width.rounded())
         let h = Int(height.rounded())
         return acceptedPortraitSizes.contains { pair in
-            if self == .desktop {
+            if hasFixedOrientation {
                 return pair.0 == w && pair.1 == h
             }
             return (pair.0 == w && pair.1 == h) || (pair.1 == w && pair.0 == h)

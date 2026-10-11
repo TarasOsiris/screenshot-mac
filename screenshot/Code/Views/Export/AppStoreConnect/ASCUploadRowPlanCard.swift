@@ -100,6 +100,7 @@ private struct ASCDisplayTypePicker: View {
             ("iPhone", availableDisplayTypes.filter { $0.family == .iphone }),
             ("iPad", availableDisplayTypes.filter { $0.family == .ipad }),
             ("Mac", availableDisplayTypes.filter { $0.family == .mac }),
+            ("Apple Watch", availableDisplayTypes.filter { $0.family == .watch }),
         ]
     }
 
@@ -233,8 +234,8 @@ private struct ASCDisplayTypeDetailsPopover: View {
                     Text(selected.acceptedSizeDescription)
                         .multilineTextAlignment(.trailing)
                 }
-                if selected.family == .ipad {
-                    Label("App Store Connect rejects this if the selected app version is iPhone-only.", systemImage: "exclamationmark.triangle.fill")
+                if let caveat = selected.uploadCaveat {
+                    Label(caveat, systemImage: "exclamationmark.triangle.fill")
                         .foregroundStyle(.orange)
                         .font(.caption)
                         .fixedSize(horizontal: false, vertical: true)

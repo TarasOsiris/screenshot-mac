@@ -375,7 +375,7 @@ nonisolated enum DeviceFrameCatalogDefinitions {
             landscapeOnly: false,
             landscapeRotationDegrees: 90,
             iconOverride: "applewatch",
-            suggestedSizePreset: "410x502"
+            suggestedSizePreset: "422x514"
         ),
         DeviceFrameCatalogEntry(
             groupId: "imac24",

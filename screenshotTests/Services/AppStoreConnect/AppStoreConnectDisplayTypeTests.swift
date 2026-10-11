@@ -46,10 +46,32 @@ struct AppStoreConnectDisplayTypeTests {
         #expect(ASCDisplayType.iphone67.accepts(platform: nil))
     }
 
+    @Test func watchSizesDetectPortraitOnly() {
+        let expected: [(Int, Int, ASCDisplayType)] = [
+            (422, 514, .watchUltra), (410, 502, .watchUltra), (416, 496, .watchSeries10),
+            (396, 484, .watchSeries7), (368, 448, .watchSeries4), (312, 390, .watchSeries3),
+        ]
+        for (width, height, type) in expected {
+            #expect(ASCDisplayType.detect(width: CGFloat(width), height: CGFloat(height)) == type)
+            #expect(ASCDisplayType.detect(width: CGFloat(height), height: CGFloat(width)) == nil)
+            #expect(type.appStoreConnectValue == type.rawValue)
+            #expect(type.accepts(platform: .ios))
+            #expect(!type.accepts(platform: .macOS))
+        }
+    }
+
+    @Test func everySizePresetDetectsAnUploadableDisplayType() {
+        let appleSizes = displayCategories.filter { $0.deviceCategory != .androidPhone && $0.deviceCategory != .androidTablet }.flatMap(\.sizes)
+        for size in appleSizes {
+            #expect(ASCDisplayType.detect(width: size.width, height: size.height) != nil, "\(size.label)")
+        }
+    }
+
     @Test func userSelectableCasesFilterByPlatform() {
         let ios = ASCDisplayType.userSelectableCases(forPlatform: .ios)
         #expect(ios.contains(.iphone67))
         #expect(ios.contains(.ipadPro129M4))
+        #expect(ios.contains(.watchUltra))
         #expect(!ios.contains(.desktop))
 
         let mac = ASCDisplayType.userSelectableCases(forPlatform: .macOS)

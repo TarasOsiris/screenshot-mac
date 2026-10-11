@@ -12,6 +12,7 @@ enum MCPScreenshotTargetPlanner {
         var targets: [ASCUploadTarget] = []
         var issues: [String] = []
         var claimedSetKeys = Set<String>()
+        var plannedWatchSize: String?
         let assigned = ASCLocaleMatcher.assign(appCodes: localeCodes, to: remoteLocalizations)
         for code in localeCodes where assigned[code, default: []].isEmpty {
             issues.append("Skipped \(version.id) · \(code): no unambiguous App Store localization mapping.")
@@ -31,6 +32,11 @@ enum MCPScreenshotTargetPlanner {
             }
             guard displayType.accepts(platform: version.attributes.ascPlatform) else {
                 issues.append("Skipped row \(row.id.uuidString) for version \(version.id): \(displayType.label) is incompatible with \(version.attributes.displayPlatform ?? "the version platform").")
+                continue
+            }
+            let watchSize = ASCWatchSizeConsistency.sizeKey(displayType, size: row.templateSize)
+            if let watchSize, let plannedWatchSize, watchSize != plannedWatchSize {
+                issues.append("Skipped row \(row.id.uuidString): App Store Connect allows one Apple Watch size per version, and \(plannedWatchSize) is already planned.")
                 continue
             }
             let candidates = localeCodes.flatMap { code in
@@ -59,6 +65,7 @@ enum MCPScreenshotTargetPlanner {
                 localizations: localizations,
                 templateCount: row.templates.count
             ))
+            plannedWatchSize = plannedWatchSize ?? watchSize
         }
         return (targets, issues)
     }
