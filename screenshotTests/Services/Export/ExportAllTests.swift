@@ -10,7 +10,7 @@ final class EmptyDiskRenderSource: RowRenderSource {
     var availableFontFamilySet: Set<String> = PlatformFonts.familyNameSet
     init(localeState: LocaleState = .default) { self.localeState = localeState }
     func referencedImageFileNames(forRow row: ScreenshotRow, localeCode: String) -> Set<String> { [] }
-    func loadFullResolutionImages(fileNames: Set<String>, cache: inout [String: NSImage]) -> [String: NSImage] { [:] }
+    func loadFullResolutionImages(fileNames: Set<String>) async -> [String: NSImage] { [:] }
 }
 
 /// Covers the locale-dedupe export path: rows untouched by a locale render once

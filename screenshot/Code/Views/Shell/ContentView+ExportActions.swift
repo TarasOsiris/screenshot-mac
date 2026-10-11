@@ -118,10 +118,7 @@ extension ContentView {
         ShowcaseExportSheet(
             candidateRows: presentation.candidateRows,
             loadImages: { row in
-                state.loadFullResolutionImages(
-                    forRow: row,
-                    localeCode: state.localeState.activeLocaleCode
-                )
+                await state.loadFullResolutionImages(forRow: row, localeCode: state.localeState.activeLocaleCode)
             },
             localeCode: state.localeState.activeLocaleCode,
             localeState: state.localeState,
@@ -209,7 +206,7 @@ extension ContentView {
             Task {
                 if let message = await ExportService.saveRowImageViaPanel(defaultName: row.label, render: {
                     var cache: [String: NSImage] = [:]
-                    let context = RowRenderContext.load(
+                    let context = await RowRenderContext.load(
                         row: row,
                         localeCode: localeCode,
                         from: state,

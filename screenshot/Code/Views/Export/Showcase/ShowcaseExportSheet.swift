@@ -19,7 +19,7 @@ enum ShowcaseExportSheetMetrics {
 
 struct ShowcaseExportSheet: View {
     let candidateRows: [ScreenshotRow]
-    let loadImages: (ScreenshotRow) -> [String: NSImage]
+    let loadImages: (ScreenshotRow) async -> [String: NSImage]
     let localeCode: String?
     let localeState: LocaleState
     let availableFontFamilies: Set<String>
@@ -39,7 +39,7 @@ struct ShowcaseExportSheet: View {
 
     init(
         candidateRows: [ScreenshotRow],
-        loadImages: @escaping (ScreenshotRow) -> [String: NSImage],
+        loadImages: @escaping (ScreenshotRow) async -> [String: NSImage],
         localeCode: String?,
         localeState: LocaleState,
         availableFontFamilies: Set<String>,

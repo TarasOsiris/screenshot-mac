@@ -34,7 +34,7 @@ struct TemplateControlBar: View {
     var onInsertBefore: () -> Void = {}
     var onInsertAfter: () -> Void = {}
     var onDelete: () -> Void
-    var onLoadFullResImages: (() -> [String: NSImage])?
+    var onLoadFullResImages: (() async -> [String: NSImage])?
     @AppStorage(AppSettingsKeys.confirmBeforeDeleting) private var confirmBeforeDeleting = AppSettingsKeys.Default.confirmBeforeDeleting
     @State private var isDeletingTemplate = false
     @State private var renderError: String?
@@ -398,7 +398,7 @@ struct TemplateControlBar: View {
     /// Renders on the main actor, encodes off it — the deflate of a full-resolution
     /// template used to block the main thread for the whole save.
     private func renderExportPNG() async -> Data? {
-        let images = onLoadFullResImages?() ?? screenshotImages
+        let images = await onLoadFullResImages?() ?? screenshotImages
         let image = RowRenderer.renderSingleTemplateImage(
             index: index, row: row, screenshotImages: images,
             localeCode: localeState.activeLocaleCode, localeState: localeState,
@@ -413,9 +413,10 @@ struct TemplateControlBar: View {
         renderError = nil
         Task {
             defer { isPreviewing = false }
+            let images = await onLoadFullResImages?() ?? screenshotImages
             let context = RowRenderContext(
                 row: row,
-                images: onLoadFullResImages?() ?? screenshotImages,
+                images: images,
                 localeCode: localeState.activeLocaleCode,
                 localeState: localeState,
                 availableFontFamilies: state.availableFontFamilySet,

@@ -4,7 +4,7 @@ struct ShowcasePreviewColumn: View {
     let rows: [ScreenshotRow]
     let config: ShowcaseExportConfig
     let transientBackgroundImages: [String: NSImage]
-    let loadImages: (ScreenshotRow) -> [String: NSImage]
+    let loadImages: (ScreenshotRow) async -> [String: NSImage]
     let localeCode: String?
     let localeState: LocaleState
     let availableFontFamilies: Set<String>
@@ -37,7 +37,7 @@ struct ShowcasePreviewColumn: View {
             config: config,
             transientBackgroundImages: transientBackgroundImages,
             containerSize: CGSize(width: contentWidth, height: contentHeight),
-            loadImages: { loadImages(row) },
+            loadImages: { await loadImages(row) },
             localeCode: localeCode,
             localeState: localeState,
             availableFontFamilies: availableFontFamilies
@@ -62,7 +62,7 @@ struct ShowcasePreviewColumn: View {
                         config: config,
                         transientBackgroundImages: transientBackgroundImages,
                         containerSize: CGSize(width: layout.columnWidth, height: .infinity),
-                        loadImages: { loadImages(row) },
+                        loadImages: { await loadImages(row) },
                         localeCode: localeCode,
                         localeState: localeState,
                         availableFontFamilies: availableFontFamilies

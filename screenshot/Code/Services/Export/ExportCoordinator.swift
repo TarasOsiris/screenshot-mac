@@ -103,7 +103,7 @@ enum ExportCoordinator {
         var unrenderable = Set<String>()
         for (index, row) in rows.enumerated() {
             try Task.checkCancellation()
-            let context = RowRenderContext.load(
+            let context = await RowRenderContext.load(
                 row: row,
                 localeCode: localeCode,
                 from: source,

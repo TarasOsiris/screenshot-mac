@@ -99,7 +99,7 @@ extension MCPToolExecutor {
         }
         let fullWidth = templateIndex == nil ? row.templateWidth * CGFloat(row.templates.count) : row.templateWidth
         var imageCache: [String: NSImage] = [:]
-        let context = RowRenderContext.load(
+        let context = await RowRenderContext.load(
             row: row,
             localeCode: localeCode,
             from: checkout,

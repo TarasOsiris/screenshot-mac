@@ -7,7 +7,8 @@ protocol RowRenderSource: AnyObject {
     var localeState: LocaleState { get }
     var availableFontFamilySet: Set<String> { get }
     func referencedImageFileNames(forRow row: ScreenshotRow, localeCode: String) -> Set<String>
-    func loadFullResolutionImages(fileNames: Set<String>, cache: inout [String: NSImage]) -> [String: NSImage]
+    /// Must read off the main actor: an iCloud resource can block `read()` for seconds.
+    func loadFullResolutionImages(fileNames: Set<String>) async -> [String: NSImage]
     /// Resolves this source's custom fonts for the duration of one **synchronous** render.
     func withResolvedFonts<R>(_ body: () -> R) -> R
 }
@@ -234,10 +235,15 @@ extension RowRenderContext {
         cache: inout [String: NSImage],
         seedImages: [String: NSImage] = [:],
         reusing candidates: inout [RowRenderContext]
-    ) -> RowRenderContext {
+    ) async -> RowRenderContext {
         let row = row.localizingBackgroundImages(to: localeCode)
         let fileNames = source.referencedImageFileNames(forRow: row, localeCode: localeCode)
-        var images = source.loadFullResolutionImages(fileNames: fileNames, cache: &cache)
+        let uncached = fileNames.subtracting(cache.keys).subtracting(seedImages.keys)
+        if !uncached.isEmpty {
+            let loaded = await source.loadFullResolutionImages(fileNames: uncached)
+            cache.merge(loaded) { cached, _ in cached }
+        }
+        var images: [String: NSImage] = fileNames.reduce(into: [:]) { images, name in images[name] = cache[name] }
         images.merge(seedImages) { _, seed in seed }
         // Both lists have to describe the *merged* dictionary: a seed that replaces an undrawable
         // disk image renders fine, and reporting it would now abort an upload rather than just
@@ -278,9 +284,9 @@ extension RowRenderContext {
         label: String,
         cache: inout [String: NSImage],
         seedImages: [String: NSImage] = [:]
-    ) -> RowRenderContext {
+    ) async -> RowRenderContext {
         var unshared: [RowRenderContext] = []
-        return load(
+        return await load(
             row: row, localeCode: localeCode, from: source, displayScale: displayScale,
             label: label, cache: &cache, seedImages: seedImages, reusing: &unshared
         )

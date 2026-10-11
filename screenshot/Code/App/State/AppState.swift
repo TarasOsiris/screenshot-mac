@@ -247,7 +247,7 @@ final class AppState {
             queue: .main
         ) { [weak self] _ in
             Task { @MainActor [weak self] in
-                self?.refreshTranslationsIfCatalogChanged()
+                await self?.refreshTranslationsIfCatalogChanged()
             }
         }
         #endif

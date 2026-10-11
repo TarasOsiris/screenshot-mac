@@ -176,7 +176,7 @@ struct ShowcaseRowPreview: View {
     let config: ShowcaseExportConfig
     let transientBackgroundImages: [String: NSImage]
     let containerSize: CGSize
-    let loadImages: () -> [String: NSImage]
+    let loadImages: () async -> [String: NSImage]
     let localeCode: String?
     let localeState: LocaleState
     let availableFontFamilies: Set<String>
@@ -255,9 +255,11 @@ struct ShowcaseRowPreview: View {
     }
 
     func renderTemplates(renderScale: CGFloat) async {
+        let images = await loadImages()
+        guard !Task.isCancelled else { return }
         let context = RowRenderContext(
             row: row,
-            images: loadImages(),
+            images: images,
             localeCode: localeCode,
             localeState: localeState,
             availableFontFamilies: availableFontFamilies ?? PlatformFonts.familyNameSet,

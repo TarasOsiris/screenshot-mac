@@ -335,14 +335,21 @@ extension AppState {
     /// (Xcode's String Catalog editor / a translation tool). Uses the same catalog-wins merge as
     /// `PersistenceService.loadProject`, so text shapes pick up translator edits on re-activation
     /// without a project switch. A no-op when the file is unchanged or the merge changes nothing.
+    /// Reads off-main: on iCloud the coordinated read can wait seconds (Sentry `SCREENSHOT-BRO-2D`).
     @MainActor
-    func refreshTranslationsIfCatalogChanged() {
-        guard let id = activeProjectId,
-              let diskModified = PersistenceService.translationCatalogModifiedDate(id),
-              diskModified > (writeStamps.catalogModified(for: id) ?? .distantPast) else { return }
-        writeStamps.recordCatalogModified(id, at: diskModified)
+    func refreshTranslationsIfCatalogChanged() async {
+        guard let id = activeProjectId else { return }
+        let known = writeStamps.catalogModified(for: id)
+        guard let changed = await TranslationCatalogService.readIfModified(
+            projectId: id, after: known ?? .distantPast
+        ) else { return }
+        // Merged over the *current* state, so an edit made during the read keeps the translator's
+        // file too; a project switch or our own save landing meanwhile supersedes what was read.
+        guard activeProjectId == id, writeStamps.catalogModified(for: id) == known else { return }
+        writeStamps.recordCatalogModified(id, at: changed.modified)
 
-        let updated = TranslationCatalogService.merging(localeState, projectId: id, rows: rows)
+        guard let catalog = changed.catalog else { return }
+        let updated = TranslationCatalogService.merging(localeState, catalog: catalog, rows: rows)
         guard updated != localeState else { return }
         localeState = updated
         scheduleSave()

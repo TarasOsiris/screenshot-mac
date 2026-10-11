@@ -242,16 +242,11 @@ extension AppState {
 
     /// Loads full-resolution images for the given filenames from the *active* project's
     /// resources. The loader itself is project-agnostic — see `ImageResourceLoader`.
-    /// Pass `cache` to avoid redundant disk reads across multiple calls (e.g. during export).
-    func loadFullResolutionImages(
-        fileNames: Set<String>,
-        cache: inout [String: NSImage]
-    ) -> [String: NSImage] {
+    func loadFullResolutionImages(fileNames: Set<String>) async -> [String: NSImage] {
         guard let activeId = activeProjectId else { return [:] }
-        return ImageResourceLoader.loadFullResolution(
+        return await ImageResourceLoader.loadFullResolution(
             fileNames: fileNames,
-            from: PersistenceService.resourcesDir(activeId),
-            cache: &cache
+            from: PersistenceService.resourcesDir(activeId)
         )
     }
 
@@ -285,9 +280,7 @@ extension AppState {
     }
 
     /// Loads full-resolution images for a single row and locale from disk.
-    func loadFullResolutionImages(forRow row: ScreenshotRow, localeCode: String) -> [String: NSImage] {
-        let fileNames = referencedImageFileNames(forRow: row, localeCode: localeCode)
-        var cache: [String: NSImage] = [:]
-        return loadFullResolutionImages(fileNames: fileNames, cache: &cache)
+    func loadFullResolutionImages(forRow row: ScreenshotRow, localeCode: String) async -> [String: NSImage] {
+        await loadFullResolutionImages(fileNames: referencedImageFileNames(forRow: row, localeCode: localeCode))
     }
 }

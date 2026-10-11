@@ -60,7 +60,7 @@ extension EditorRowView {
                             },
                             onLoadFullResImages: { [weak state] in
                                 guard let state else { return [:] }
-                                return state.loadFullResolutionImages(forRow: row, localeCode: state.localeState.activeLocaleCode)
+                                return await state.loadFullResolutionImages(forRow: row, localeCode: state.localeState.activeLocaleCode)
                             }
                         )
                     }

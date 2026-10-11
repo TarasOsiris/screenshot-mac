@@ -189,7 +189,7 @@ private final class StubRenderSource: RowRenderSource {
     var localeState: LocaleState = .default
     var availableFontFamilySet: Set<String> = []
     func referencedImageFileNames(forRow row: ScreenshotRow, localeCode: String) -> Set<String> { [] }
-    func loadFullResolutionImages(fileNames: Set<String>, cache: inout [String: NSImage]) -> [String: NSImage] { [:] }
+    func loadFullResolutionImages(fileNames: Set<String>) async -> [String: NSImage] { [:] }
 }
 
 @Suite(.serialized)

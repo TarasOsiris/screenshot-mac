@@ -194,7 +194,7 @@ extension EditorRowView {
 
             do {
                 var cache: [String: NSImage] = [:]
-                let context = RowRenderContext.load(
+                let context = await RowRenderContext.load(
                     row: row,
                     localeCode: state.localeState.activeLocaleCode,
                     from: state,
@@ -236,12 +236,10 @@ extension EditorRowView {
         let localeCode = state.localeState.activeLocaleCode
         Task {
             if let message = await ExportService.saveRowImageViaPanel(defaultName: row.label, render: {
-                let images = state.loadFullResolutionImages(forRow: row, localeCode: localeCode)
-                return await RowRenderContext(
-                    row: row, images: images,
-                    localeCode: localeCode, localeState: state.localeState,
-                    availableFontFamilies: state.availableFontFamilySet,
-                    label: "row image export"
+                var cache: [String: NSImage] = [:]
+                return await RowRenderContext.load(
+                    row: row, localeCode: localeCode, from: state,
+                    label: "row image export", cache: &cache
                 ).stitchedRowImage()
             }) {
                 activeAlert = .exportFailed(String(localized: "Could not export row image: \(message)"))

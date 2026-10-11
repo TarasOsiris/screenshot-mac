@@ -158,7 +158,7 @@ struct ExportService {
                     let renderCode = group[0].code
                     // `load` carries the precomposed background forward for later locales via
                     // `reusing:`, so the first group still pays for it once.
-                    let rowContext = RowRenderContext.load(
+                    let rowContext = await RowRenderContext.load(
                         row: row,
                         localeCode: renderCode,
                         from: source,

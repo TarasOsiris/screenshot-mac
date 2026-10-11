@@ -10,7 +10,7 @@ private final class EmptyRenderSource: RowRenderSource {
     var localeState: LocaleState = .default
     var availableFontFamilySet: Set<String> = []
     func referencedImageFileNames(forRow row: ScreenshotRow, localeCode: String) -> Set<String> { [] }
-    func loadFullResolutionImages(fileNames: Set<String>, cache: inout [String: NSImage]) -> [String: NSImage] { [:] }
+    func loadFullResolutionImages(fileNames: Set<String>) async -> [String: NSImage] { [:] }
 }
 
 @MainActor
@@ -20,12 +20,12 @@ struct ExportCoordinatorTests {
 
     /// The showcase sheet's transient background exists only in memory — the loader can never
     /// produce it from referenced file names, so the seed must reach the context's images.
-    @Test func seedImagesReachTheRenderContext() {
+    @Test func seedImagesReachTheRenderContext() async {
         let row = ScreenshotRow(templates: [ScreenshotTemplate()], templateWidth: 100, templateHeight: 100)
         var cache: [String: NSImage] = [:]
         let seeded = NSImage(size: NSSize(width: 2, height: 2))
 
-        let context = RowRenderContext.load(
+        let context = await RowRenderContext.load(
             row: row,
             localeCode: "en",
             from: EmptyRenderSource(),

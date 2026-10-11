@@ -130,7 +130,7 @@ final class AppStoreConnectScreenshotSyncService {
                     }
                     let label = "\(target.rowLabel) · \(localization.label)"
                     progress(.init(stage: .rendering, completedRenders: completedRenders, totalRenders: totalRenders, label: label))
-                    let rowContext = RowRenderContext.load(
+                    let rowContext = await RowRenderContext.load(
                         row: row,
                         localeCode: localization.localeCode,
                         from: source,

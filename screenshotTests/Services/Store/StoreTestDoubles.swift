@@ -84,7 +84,7 @@ final class StubGPDocument: GPUploadDocument {
 
     func referencedImageFileNames(forRow row: ScreenshotRow, localeCode: String) -> Set<String> { referencedFileNames }
 
-    func loadFullResolutionImages(fileNames: Set<String>, cache: inout [String: NSImage]) -> [String: NSImage] { [:] }
+    func loadFullResolutionImages(fileNames: Set<String>) async -> [String: NSImage] { [:] }
 }
 
 /// A scriptable stand-in for `GooglePlayUploadService`.
@@ -176,7 +176,7 @@ final class StubASCDocument: ASCUploadDocument {
 
     func referencedImageFileNames(forRow row: ScreenshotRow, localeCode: String) -> Set<String> { [] }
 
-    func loadFullResolutionImages(fileNames: Set<String>, cache: inout [String: NSImage]) -> [String: NSImage] { [:] }
+    func loadFullResolutionImages(fileNames: Set<String>) async -> [String: NSImage] { [:] }
 }
 
 /// The scripted `ASCUploadAPI` the protocol's doc comment promised and nobody had written. Every

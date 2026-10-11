@@ -22,9 +22,24 @@ nonisolated enum TranslationCatalogService {
     /// run). The single source of truth for both project load and on-activation refresh.
     static func merging(_ localeState: LocaleState, projectId: UUID, rows: [ScreenshotRow]) -> LocaleState {
         guard let catalog = read(projectId: projectId) else { return localeState }
+        return merging(localeState, catalog: catalog, rows: rows)
+    }
+
+    static func merging(_ localeState: LocaleState, catalog: TranslationCatalog, rows: [ScreenshotRow]) -> LocaleState {
         var merged = localeState
         catalog.apply(to: &merged, validKeys: TranslationCatalog.representedKeys(rows: rows))
         return merged
+    }
+
+    /// Nil when the catalog is absent or not newer than `date`; `catalog` is nil when it won't decode.
+    /// `@concurrent` is load-bearing — see the concurrency note in CLAUDE.md.
+    @concurrent static func readIfModified(
+        projectId: UUID,
+        after date: Date
+    ) async -> (modified: Date, catalog: TranslationCatalog?)? {
+        guard let modified = PersistenceService.translationCatalogModifiedDate(projectId),
+              modified > date else { return nil }
+        return (modified, read(projectId: projectId))
     }
 
     static func exists(projectId: UUID) -> Bool {

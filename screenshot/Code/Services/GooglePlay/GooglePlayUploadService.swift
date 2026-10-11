@@ -86,7 +86,7 @@ final class GooglePlayUploadService {
 
                 for language in target.languages {
                     try Task.checkCancellation()
-                    let rowContext = RowRenderContext.load(
+                    let rowContext = await RowRenderContext.load(
                         row: row,
                         localeCode: language.projectCode,
                         from: source,

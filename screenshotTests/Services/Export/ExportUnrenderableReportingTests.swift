@@ -15,7 +15,7 @@ private final class ScriptedRenderSource: RowRenderSource {
 
     func referencedImageFileNames(forRow row: ScreenshotRow, localeCode: String) -> Set<String> { referenced }
 
-    func loadFullResolutionImages(fileNames: Set<String>, cache: inout [String: NSImage]) -> [String: NSImage] {
+    func loadFullResolutionImages(fileNames: Set<String>) async -> [String: NSImage] {
         images.filter { fileNames.contains($0.key) }
     }
 }
@@ -78,12 +78,12 @@ struct ExportUnrenderableReportingTests {
 
     /// And the context has to fold both kinds into the set the upload paths refuse on, or widening
     /// the guard to `unrenderableImageFileNames` would silently drop the missing ones.
-    @Test func contextFoldsMissingAndUnusableIntoOneReport() {
+    @Test func contextFoldsMissingAndUnusableIntoOneReport() async {
         let source = ScriptedRenderSource()
         source.referenced = ["ghost.png", "broken.png"]
         source.images = ["broken.png": NSImage(size: NSSize(width: 4, height: 4))]
         var cache: [String: NSImage] = [:]
-        let context = RowRenderContext.load(
+        let context = await RowRenderContext.load(
             row: deviceRow(screenshot: "ghost.png"),
             localeCode: "en", from: source, label: "test", cache: &cache
         )
@@ -96,12 +96,12 @@ struct ExportUnrenderableReportingTests {
     /// before the merge, an undrawable file that a seed supersedes was still reported — and the
     /// upload services now *throw* on that, so it would abort an upload over something that
     /// renders correctly.
-    @Test func aSeedThatReplacesAnUndrawableFileIsNotReported() {
+    @Test func aSeedThatReplacesAnUndrawableFileIsNotReported() async {
         let source = ScriptedRenderSource()
         source.referenced = ["cover.png"]
         source.images = ["cover.png": NSImage(size: NSSize(width: 4, height: 4))]   // undrawable on disk
         var cache: [String: NSImage] = [:]
-        let context = RowRenderContext.load(
+        let context = await RowRenderContext.load(
             row: deviceRow(screenshot: "cover.png"),
             localeCode: "en", from: source, label: "test", cache: &cache,
             seedImages: ["cover.png": makeTestImage(width: 40, height: 80)]

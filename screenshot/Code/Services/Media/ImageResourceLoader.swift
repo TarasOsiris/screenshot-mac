@@ -13,18 +13,13 @@ import UIKit
 /// has to stop making.
 nonisolated enum ImageResourceLoader {
 
-    /// Pass `cache` to avoid redundant disk reads across calls (e.g. during an export).
-    static func loadFullResolution(
+    /// `@concurrent` because an iCloud resource can block `read()` for seconds (Sentry `SCREENSHOT-BRO-2C`).
+    @concurrent static func loadFullResolution(
         fileNames: Set<String>,
-        from resourcesURL: URL,
-        cache: inout [String: NSImage]
-    ) -> [String: NSImage] {
+        from resourcesURL: URL
+    ) async -> [String: NSImage] {
         var images: [String: NSImage] = [:]
         for fileName in fileNames {
-            if let cached = cache[fileName] {
-                images[fileName] = cached
-                continue
-            }
             autoreleasepool {
                 let url = resourcesURL.appendingPathComponent(fileName)
                 guard let image = NSImage(contentsOf: url) else {
@@ -40,15 +35,12 @@ nonisolated enum ImageResourceLoader {
                     let normalized = NSImage(size: NSSize(width: rep.pixelsWide, height: rep.pixelsHigh))
                     normalized.addRepresentation(rep)
                     images[fileName] = normalized
-                    cache[fileName] = normalized
                 } else {
                     images[fileName] = image
-                    cache[fileName] = image
                 }
                 #else
                 // UIImage already loads at native pixel resolution.
                 images[fileName] = image
-                cache[fileName] = image
                 #endif
             }
         }

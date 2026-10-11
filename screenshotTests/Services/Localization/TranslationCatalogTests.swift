@@ -312,7 +312,7 @@ struct TranslationCatalogTests {
     // MARK: - AppState re-activation refresh
 
     @MainActor
-    @Test func refreshAppliesExternalCatalogEditToLocaleState() throws {
+    @Test func refreshAppliesExternalCatalogEditToLocaleState() async throws {
         let (appState, tempDir) = makeTestState()
         defer { appState.saveTask?.cancel(); cleanupTestState(tempDir) }
 
@@ -331,13 +331,13 @@ struct TranslationCatalogTests {
         try TranslationCatalogService.write(catalog, projectId: id)
         appState.writeStamps.recordCatalogModified(id, at: .distantPast)
 
-        appState.refreshTranslationsIfCatalogChanged()
+        await appState.refreshTranslationsIfCatalogChanged()
 
         #expect(appState.localeState.override(forCode: "fr", shapeId: shape.id)?.text == "Salut")
     }
 
     @MainActor
-    @Test func refreshIsNoOpWhenCatalogUnchanged() throws {
+    @Test func refreshIsNoOpWhenCatalogUnchanged() async throws {
         let (appState, tempDir) = makeTestState()
         defer { appState.saveTask?.cancel(); cleanupTestState(tempDir) }
 
@@ -350,7 +350,7 @@ struct TranslationCatalogTests {
         appState.saveAll()
 
         let before = appState.localeState
-        appState.refreshTranslationsIfCatalogChanged()
+        await appState.refreshTranslationsIfCatalogChanged()
 
         #expect(appState.localeState == before)
     }

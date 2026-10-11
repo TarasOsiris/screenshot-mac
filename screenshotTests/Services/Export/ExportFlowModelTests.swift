@@ -30,7 +30,7 @@ private final class StubDocument: ExportDocument {
         unreadableResourceNames
     }
 
-    func loadFullResolutionImages(fileNames: Set<String>, cache: inout [String: NSImage]) -> [String: NSImage] { [:] }
+    func loadFullResolutionImages(fileNames: Set<String>) async -> [String: NSImage] { [:] }
 }
 
 @MainActor

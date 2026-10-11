@@ -19,7 +19,7 @@ private final class InMemoryRenderSource: RowRenderSource {
         ProjectDocument(rows: [row], localeState: localeState).referencedImageFileNames(forRow: row, localeCode: localeCode)
     }
 
-    func loadFullResolutionImages(fileNames: Set<String>, cache: inout [String: NSImage]) -> [String: NSImage] {
+    func loadFullResolutionImages(fileNames: Set<String>) async -> [String: NSImage] {
         images.filter { fileNames.contains($0.key) }
     }
 }
@@ -194,8 +194,8 @@ struct LocaleBackgroundImageTests {
         var cache: [String: NSImage] = [:]
 
         var contexts: [RowRenderContext] = []
-        let en = RowRenderContext.load(row: row, localeCode: "en", from: source, label: "en", cache: &cache, reusing: &contexts)
-        let de = RowRenderContext.load(row: row, localeCode: "de", from: source, label: "de", cache: &cache, reusing: &contexts)
+        let en = await RowRenderContext.load(row: row, localeCode: "en", from: source, label: "en", cache: &cache, reusing: &contexts)
+        let de = await RowRenderContext.load(row: row, localeCode: "de", from: source, label: "de", cache: &cache, reusing: &contexts)
         #expect(contexts.count == 2, "Different background images get their own context")
 
         expectRed(try centerPixel(try #require(en.templateData(at: 1, format: .png))), "en")

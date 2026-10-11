@@ -184,8 +184,8 @@ final class ProjectCheckout: RowRenderSource {
         document.referencedImageFileNames(forRow: row, localeCode: localeCode)
     }
 
-    func loadFullResolutionImages(fileNames: Set<String>, cache: inout [String: NSImage]) -> [String: NSImage] {
-        ImageResourceLoader.loadFullResolution(fileNames: fileNames, from: resourcesURL, cache: &cache)
+    func loadFullResolutionImages(fileNames: Set<String>) async -> [String: NSImage] {
+        await ImageResourceLoader.loadFullResolution(fileNames: fileNames, from: resourcesURL)
     }
 
     func withResolvedFonts<R>(_ body: () -> R) -> R {
