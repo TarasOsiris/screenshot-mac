@@ -222,13 +222,25 @@ curl -fsS https://screenshotbro.app/appcast.xml | grep -c "ScreenshotBro-$V-$B.d
 ```
 **Never copy DMGs into `$SITE/public/releases` again**, and never commit a DMG to any git repo.
 
-### 7e. Prune old DMGs (optional)
-Keep the current and the previous release on the server. List what's there:
+### 7e. Prune old DMGs
+Run this on every release, after 7d. The server keeps the current release plus at most **3 older**
+versioned DMGs, so the Rollback below always has a few targets:
 ```bash
-ssh -p "$DL_PORT" "$DL_HOST" "ls -la '$DL_DIR'"
+ssh -p "$DL_PORT" "$DL_HOST" "set -e; cd '$DL_DIR'
+  current=\$(readlink ScreenshotBro.dmg)
+  test \"\$current\" = '$DMG' || { echo \"ScreenshotBro.dmg -> \$current, not $DMG; refusing to prune\"; exit 1; }
+  ls ScreenshotBro-*-*.dmg | sort -V | head -n -4 | while read -r f; do
+    [ \"\$f\" = \"\$current\" ] || rm -v -- \"\$f\"
+  done
+  ls -la"
 ```
-Delete older versioned files one at a time (`ssh -p "$DL_PORT" "$DL_HOST" "rm '$DL_DIR/ScreenshotBro-<old V>-<old B>.dmg'"`).
-Never delete the target of `ScreenshotBro.dmg`, and never delete `healthcheck.txt`.
+- `sort -V` orders by version and build, and `head -n -4` (GNU, which the server has) leaves the
+  newest four. The glob needs a `-` between version and build, so it never matches the
+  `ScreenshotBro.dmg` symlink, `healthcheck.txt` or an in-flight `*.new` file.
+- It refuses to run unless the permanent link already points at this release, so a failed 7b can't
+  delete the file it should have published.
+- A pruned version's appcast item, if `generate_appcast` kept one, only goes stale. Sparkle offers
+  just the newest item and deltas are off, so nothing downloads the deleted file.
 
 ## Rollback
 Point the permanent link back at the previous release:
@@ -239,6 +251,6 @@ Sparkle can't downgrade, so that only fixes new downloads. To stop an update fro
 installed copies, revert the appcast commit in the site repo and push.
 
 ## 8. Report
-Give the version, the notarization ids, the DMG size and SHA-256, and the appcast item. Remind the
+Give the version, the notarization ids, the DMG size and SHA-256, the appcast item, and the DMGs 7e pruned. Remind the
 user to smoke-test: download https://downloads.screenshotbro.app/ScreenshotBro.dmg on a clean
 account, open it (Gatekeeper must accept it), then run **Check for Updates…** from the previous version.
