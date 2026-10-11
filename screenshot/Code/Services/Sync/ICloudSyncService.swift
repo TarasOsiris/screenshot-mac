@@ -107,6 +107,39 @@ nonisolated final class ICloudSyncService: @unchecked Sendable {
         // local. Callers run this off the main thread, so blocking until bytes arrive is fine.
         try? FileManager.default.startDownloadingUbiquitousItem(at: url)
 
+        var result = attemptCoordinatedRead(from: url)
+        // Another writer's atomic replace gives the path a new file-provider item; the read
+        // resolved the old one. Once more reads the item the path names now.
+        if case .failure(let failure) = result, Self.isReplacedItem(failure.error) {
+            result = attemptCoordinatedRead(from: url)
+        }
+
+        switch result {
+        case .success(let data):
+            return data
+        case .failure(let failure):
+            // Unlike the write/delete siblings this can't throw, so callers read a failure as
+            // "no such project" — report it here or it's invisible all the way to a blank document.
+            if Self.isReplacedItem(failure.error) {
+                CrashReportingService.breadcrumb(.sync, "Coordinated read raced a replace", data: [
+                    "file": url.lastPathComponent,
+                ], level: .warning)
+            } else if FileManager.default.fileExists(atPath: url.path) {
+                CrashReportingService.report(.iCloudCoordinatedReadFailed, error: failure.error, extra: [
+                    "file": url.lastPathComponent,
+                    "coordination": failure.duringCoordination,
+                ])
+            }
+            return nil
+        }
+    }
+
+    private struct CoordinatedReadFailure: Error {
+        let error: Error
+        let duringCoordination: Bool
+    }
+
+    private func attemptCoordinatedRead(from url: URL) -> Result<Data, CoordinatedReadFailure> {
         var coordinatedData: Data?
         var coordinatorError: NSError?
         var readError: Error?
@@ -120,17 +153,15 @@ nonisolated final class ICloudSyncService: @unchecked Sendable {
             }
         }
 
-        // Unlike the write/delete siblings this can't throw, so callers read a failure as
-        // "no such project" — report it here or it's invisible all the way to a blank document.
-        if coordinatedData == nil, let error = coordinatorError ?? readError,
-           FileManager.default.fileExists(atPath: url.path) {
-            CrashReportingService.report(.iCloudCoordinatedReadFailed, error: error, extra: [
-                "file": url.lastPathComponent,
-                "coordination": coordinatorError != nil,
-            ])
-        }
+        if let coordinatedData { return .success(coordinatedData) }
+        let error: Error = coordinatorError ?? readError ?? CocoaError(.fileReadUnknown)
+        return .failure(CoordinatedReadFailure(error: error, duringCoordination: coordinatorError != nil))
+    }
 
-        return coordinatedData
+    /// `NSFileProviderError.noSuchItem`, spelled out so Foundation-only code needn't import FileProvider.
+    static func isReplacedItem(_ error: Error) -> Bool {
+        let error = error as NSError
+        return error.domain == "NSFileProviderErrorDomain" && error.code == -1005
     }
 
     /// Write data using NSFileCoordinator.
