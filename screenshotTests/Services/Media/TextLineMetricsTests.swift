@@ -1,7 +1,7 @@
 import CoreText
 import Foundation
-import SwiftUI
 @testable import Screenshot_Bro
+import SwiftUI
 import Testing
 
 /// DM Sans has no Cyrillic, so Cyrillic text in it falls back per glyph while spaces stay in DM Sans.
