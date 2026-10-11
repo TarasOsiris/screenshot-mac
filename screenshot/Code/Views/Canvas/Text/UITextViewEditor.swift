@@ -36,7 +36,7 @@ struct UITextViewEditor: UIViewRepresentable {
         textView.textContainer.lineFragmentPadding = 0
         textView.textContainer.widthTracksTextView = true
         textView.textContainer.lineBreakMode = .byWordWrapping
-        textView.layoutManager.delegate = context.coordinator.compactDelegate
+        context.coordinator.lineMetricsDelegate.install(on: textView.layoutManager, storage: textView.textStorage)
         textView.delegate = context.coordinator
         textView.isScrollEnabled = false
         textView.allowsEditingTextAttributes = true
@@ -111,7 +111,7 @@ struct UITextViewEditor: UIViewRepresentable {
     }
 
     private func applyVerticalLayout(to textView: VerticalAlignTextView, context: Context) {
-        context.coordinator.compactDelegate.lineHeightMultiple = lineHeightMultiple ?? TextLayoutStyle.defaultLineHeightMultiple
+        context.coordinator.lineMetricsDelegate.lineHeightMultiple = lineHeightMultiple ?? TextLayoutStyle.defaultLineHeightMultiple
         textView.verticalAlignment = verticalAlignment
         textView.glyphPadding = TextLayoutStyle.verticalGlyphPadding(
             lineHeightMultiple: lineHeightMultiple,
@@ -129,7 +129,7 @@ struct UITextViewEditor: UIViewRepresentable {
 
     final class Coordinator: NSObject, UITextViewDelegate {
         var parent: UITextViewEditor
-        let compactDelegate = CompactLineLayoutDelegate()
+        let lineMetricsDelegate = LineMetricsLayoutDelegate()
         var lastRenderScale: CGFloat = 1
         init(_ parent: UITextViewEditor) { self.parent = parent }
 

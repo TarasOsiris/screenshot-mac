@@ -21,6 +21,7 @@ enum RichTextUtils {
     /// `nonisolated` because it's pure data work (no main-actor state) and runs off the main actor
     /// during the background catalog build/merge in `PersistenceService`.
     nonisolated static func encode(_ attributedString: NSAttributedString) -> String? {
+        let attributedString = LineMetricsLayoutDelegate.restoringDeclaredFonts(attributedString)
         let range = NSRange(location: 0, length: attributedString.length)
         do {
             let rtfData = try attributedString.data(

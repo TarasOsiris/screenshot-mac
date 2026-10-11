@@ -5,13 +5,95 @@ import UIKit
 #endif
 import Foundation
 
-/// Layout manager delegate that compresses line spacing for lineHeightMultiple < 1.0
-/// without clipping glyphs. Instead of setting paragraphStyle.lineHeightMultiple (which
-/// shrinks line fragment rects and clips ascenders), this delegate keeps full-height
-/// fragments and repositions them at the desired compressed y-positions.
-final class CompactLineLayoutDelegate: NSObject, NSLayoutManagerDelegate {
+/// Keeps fallback-glyph lines (Cyrillic in a Latin-only font) at declared-font height, and compresses
+/// lineHeightMultiple < 1 by moving full-height fragments so ascenders aren't clipped. Attach with `install`.
+final class LineMetricsLayoutDelegate: NSObject, NSLayoutManagerDelegate, NSTextStorageDelegate {
+    nonisolated static let declaredFontKey = NSAttributedString.Key("xyz.tleskiv.screenshot.declaredFont")
+    private static let metricsCacheLimit = 512
+    /// Shared: every raster and fit step builds a fresh stack, so a per-instance cache never warms.
+    private static var metricsCache: [NSFont: LineMetrics] = [:]
+
     var lineHeightMultiple: CGFloat = 1.0
     private var nextCompressedY: CGFloat = 0
+
+    private struct LineMetrics {
+        var ascent: CGFloat = 0
+        var descent: CGFloat = 0
+
+        mutating func formMax(_ other: LineMetrics) {
+            ascent = max(ascent, other.ascent)
+            descent = max(descent, other.descent)
+        }
+    }
+
+    /// The storage delegate is required too: font fixing overwrites `.font` with the fallback, so the
+    /// declared font has to be recorded before it runs.
+    func install(on layoutManager: NSLayoutManager, storage: NSTextStorage) {
+        layoutManager.delegate = self
+        storage.delegate = self
+    }
+
+    func textStorage(
+        _ textStorage: NSTextStorage,
+        willProcessEditing editedMask: NSTextStorageEditActions,
+        range editedRange: NSRange,
+        changeInLength delta: Int
+    ) {
+        let string = textStorage.string as NSString
+        textStorage.enumerateAttribute(.font, in: editedRange) { value, fontRange, _ in
+            guard let font = value as? NSFont else { return }
+            textStorage.enumerateAttribute(Self.declaredFontKey, in: fontRange) { declared, range, _ in
+                let text = string.substring(with: range)
+                // An attribute-only edit or a resize hands back the substituted font; keep what it replaced.
+                if let declared = declared as? NSFont {
+                    let sized = Self.resized(declared, to: font.pointSize)
+                    if Self.isFallback(font, of: sized, for: text) {
+                        if sized != declared { textStorage.addAttribute(Self.declaredFontKey, value: sized, range: range) }
+                        return
+                    }
+                }
+                // Tag only text the fixer will substitute, so storage equality checks stay unaffected.
+                if Self.covers(font, text) {
+                    if declared != nil { textStorage.removeAttribute(Self.declaredFontKey, range: range) }
+                } else {
+                    textStorage.addAttribute(Self.declaredFontKey, value: font, range: range)
+                }
+            }
+        }
+    }
+
+    private static func covers(_ font: NSFont, _ text: String) -> Bool {
+        var characters = Array(text.utf16)
+        var glyphs = [CGGlyph](repeating: 0, count: characters.count)
+        return CTFontGetGlyphsForCharacters(font as CTFont, &characters, &glyphs, characters.count)
+    }
+
+    /// Puts substituted runs back in their declared font, so a fallback is never persisted as a choice.
+    nonisolated static func restoringDeclaredFonts(_ attributed: NSAttributedString) -> NSAttributedString {
+        let fullRange = NSRange(location: 0, length: attributed.length)
+        var result: NSMutableAttributedString?
+        attributed.enumerateAttribute(declaredFontKey, in: fullRange) { value, range, _ in
+            guard let declared = value as? NSFont else { return }
+            let restored = result ?? NSMutableAttributedString(attributedString: attributed)
+            result = restored
+            let size = (attributed.attribute(.font, at: range.location, effectiveRange: nil) as? NSFont)?.pointSize ?? declared.pointSize
+            restored.addAttribute(.font, value: resized(declared, to: size), range: range)
+            restored.removeAttribute(declaredFontKey, range: range)
+        }
+        return result ?? attributed
+    }
+
+    private nonisolated static func resized(_ font: NSFont, to size: CGFloat) -> NSFont {
+        font.pointSize == size ? font : font.withSize(size)
+    }
+
+    /// Mirrors TextKit's own fallback pick (`CTFontCreateForString`), so this is what would drift if Apple changes it.
+    private static func isFallback(_ font: NSFont, of declared: NSFont, for text: String) -> Bool {
+        guard font != declared, !text.isEmpty else { return false }
+        let fallback = CTFontCreateForString(declared as CTFont, text as CFString, CFRange(location: 0, length: (text as NSString).length))
+        return CTFontCopyPostScriptName(fallback) as String == font.fontName
+            && CTFontGetSize(fallback) == font.pointSize
+    }
 
     func layoutManager(
         _ layoutManager: NSLayoutManager,
@@ -21,10 +103,17 @@ final class CompactLineLayoutDelegate: NSObject, NSLayoutManagerDelegate {
         in textContainer: NSTextContainer,
         forGlyphRange glyphRange: NSRange
     ) -> Bool {
-        guard lineHeightMultiple < 1.0 else { return false }
+        let raised = raiseToDeclaredMetrics(
+            layoutManager,
+            lineFragmentRect: lineFragmentRect,
+            lineFragmentUsedRect: lineFragmentUsedRect,
+            baselineOffset: baselineOffset,
+            glyphRange: glyphRange
+        )
+        guard lineHeightMultiple < 1.0 else { return raised }
 
         let naturalHeight = lineFragmentRect.pointee.height
-        guard naturalHeight > 0 else { return false }
+        guard naturalHeight > 0 else { return raised }
 
         if lineFragmentRect.pointee.origin.y == 0 {
             nextCompressedY = 0
@@ -39,6 +128,77 @@ final class CompactLineLayoutDelegate: NSObject, NSLayoutManagerDelegate {
         nextCompressedY += desiredSpacing
 
         return true
+    }
+
+    private func raiseToDeclaredMetrics(
+        _ layoutManager: NSLayoutManager,
+        lineFragmentRect: UnsafeMutablePointer<NSRect>,
+        lineFragmentUsedRect: UnsafeMutablePointer<NSRect>,
+        baselineOffset: UnsafeMutablePointer<CGFloat>,
+        glyphRange: NSRange
+    ) -> Bool {
+        guard let storage = layoutManager.textStorage, lineFragmentRect.pointee.height > 0 else { return false }
+        let characterRange = layoutManager.characterRange(forGlyphRange: glyphRange, actualGlyphRange: nil)
+        guard characterRange.length > 0, NSMaxRange(characterRange) <= storage.length else { return false }
+
+        var hasSubstitution = false
+        storage.enumerateAttribute(Self.declaredFontKey, in: characterRange) { value, _, stop in
+            if value != nil { hasSubstitution = true; stop.pointee = true }
+        }
+        guard hasSubstitution else { return false }
+
+        var present = LineMetrics()
+        var declared = LineMetrics()
+        var measurable = true
+        storage.enumerateAttributes(in: characterRange) { attributes, _, stop in
+            guard let font = attributes[.font] as? NSFont else { return }
+            guard let fontMetrics = Self.metrics(for: font) else { measurable = false; stop.pointee = true; return }
+            present.formMax(fontMetrics)
+            if let declaredFont = attributes[Self.declaredFontKey] as? NSFont, let declaredMetrics = Self.metrics(for: declaredFont) {
+                declared.formMax(declaredMetrics)
+            } else {
+                declared.formMax(fontMetrics)
+            }
+        }
+        // Raise by the font difference, not to a target height: TextKit already folded paragraph
+        // spacing and `.baselineOffset` into the fragment.
+        guard measurable else { return false }
+        let ascentRaise = max(0, declared.ascent - present.ascent)
+        let descentRaise = max(0, declared.descent - present.descent)
+        guard ascentRaise + descentRaise > 0.01 else { return false }
+
+        // TextKit scales the natural line by the paragraph's multiple and puts the extra above the baseline.
+        let style = storage.attribute(.paragraphStyle, at: characterRange.location, effectiveRange: nil) as? NSParagraphStyle
+        let styledMultiple = style?.lineHeightMultiple ?? 0
+        let multiple = styledMultiple > 0 ? styledMultiple : 1
+        let heightRaise = (ascentRaise + descentRaise) * multiple
+
+        lineFragmentRect.pointee.size.height += heightRaise
+        lineFragmentUsedRect.pointee.size.height += heightRaise
+        baselineOffset.pointee += heightRaise - descentRaise
+        return true
+    }
+
+    /// Measured by TextKit itself: its line rounding doesn't follow from ascender/descender alone.
+    private static func metrics(for font: NSFont) -> LineMetrics? {
+        if let cached = metricsCache[font] { return cached }
+        guard let probe = [" ", "x", "H", "0"].first(where: { covers(font, $0) }) else { return nil }
+
+        let storage = NSTextStorage(string: probe, attributes: [.font: font])
+        let layoutManager = NSLayoutManager()
+        let container = NSTextContainer(size: CGSize(width: CGFloat.greatestFiniteMagnitude, height: CGFloat.greatestFiniteMagnitude))
+        container.lineFragmentPadding = 0
+        layoutManager.addTextContainer(container)
+        storage.addLayoutManager(layoutManager)
+        layoutManager.ensureLayout(for: container)
+        guard layoutManager.numberOfGlyphs > 0 else { return nil }
+
+        let rect = layoutManager.lineFragmentRect(forGlyphAt: 0, effectiveRange: nil)
+        let baseline = layoutManager.location(forGlyphAt: 0).y
+        let metrics = LineMetrics(ascent: baseline, descent: rect.height - baseline)
+        if metricsCache.count >= metricsCacheLimit { metricsCache.removeAll(keepingCapacity: true) }
+        metricsCache[font] = metrics
+        return metrics
     }
 }
 
@@ -63,19 +223,19 @@ final class TextLayoutStack {
     let layoutManager = NSLayoutManager()
     let container: NSTextContainer
     /// Held here: `NSLayoutManager.delegate` is weak.
-    private let compactDelegate = CompactLineLayoutDelegate()
+    private let lineMetricsDelegate = LineMetricsLayoutDelegate()
 
     var lineHeightMultiple: CGFloat {
-        get { compactDelegate.lineHeightMultiple }
-        set { compactDelegate.lineHeightMultiple = newValue }
+        get { lineMetricsDelegate.lineHeightMultiple }
+        set { lineMetricsDelegate.lineHeightMultiple = newValue }
     }
 
     init(containerSize: CGSize = .zero, lineHeightMultiple: CGFloat? = nil) {
         container = NSTextContainer(size: containerSize)
         container.lineFragmentPadding = 0
         container.lineBreakMode = .byWordWrapping
-        compactDelegate.lineHeightMultiple = lineHeightMultiple ?? 1.0
-        layoutManager.delegate = compactDelegate
+        lineMetricsDelegate.lineHeightMultiple = lineHeightMultiple ?? 1.0
+        lineMetricsDelegate.install(on: layoutManager, storage: storage)
         layoutManager.addTextContainer(container)
         storage.addLayoutManager(layoutManager)
     }
@@ -159,7 +319,7 @@ enum TextLayoutStyle {
 
         let effectiveLineHeight: CGFloat
         if let lineHeightMultiple {
-            // For < 1.0, CompactLineLayoutDelegate keeps full-height line fragments,
+            // For < 1.0, LineMetricsLayoutDelegate keeps full-height line fragments,
             // so no glyph padding is needed.
             guard lineHeightMultiple >= 1.0 else { return 0 }
             effectiveLineHeight = defaultLineHeight * clampLineHeightMultiple(lineHeightMultiple)
@@ -225,7 +385,7 @@ enum TextLayoutStyle {
         style.alignment = alignment
         if let lineHeightMultiple {
             // For < 1.0, don't set lineHeightMultiple on the paragraph style — it shrinks
-            // line fragment rects and causes glyph clipping. CompactLineLayoutDelegate
+            // line fragment rects and causes glyph clipping. LineMetricsLayoutDelegate
             // handles the compressed positioning instead.
             if lineHeightMultiple >= 1.0 {
                 style.lineHeightMultiple = lineHeightMultiple

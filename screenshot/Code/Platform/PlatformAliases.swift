@@ -11,4 +11,5 @@ typealias NSFont = UIFont
 typealias NSSize = CGSize
 typealias NSRect = CGRect
 typealias NSPoint = CGPoint
+typealias NSTextStorageEditActions = NSTextStorage.EditActions
 #endif

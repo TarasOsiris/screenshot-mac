@@ -46,7 +46,9 @@ struct InlineTextEditor: NSViewRepresentable {
         textView.isVerticallyResizable = true
         textView.isHorizontallyResizable = false
         textView.textContainer?.widthTracksTextView = true
-        textView.layoutManager?.delegate = context.coordinator.compactDelegate
+        if let layoutManager = textView.layoutManager, let storage = textView.textStorage {
+            context.coordinator.lineMetricsDelegate.install(on: layoutManager, storage: storage)
+        }
         applyTextStyle(to: textView, preserveSelection: false)
         if let tc = textView.textContainer { textView.layoutManager?.ensureLayout(for: tc) }
 
@@ -107,7 +109,7 @@ struct InlineTextEditor: NSViewRepresentable {
         // (marked text present) — doing so collapses the composition and the
         // insertion point.
         if shouldPreserveRichTextStorage || textView.hasMarkedText() {
-            if let delegate = textView.layoutManager?.delegate as? CompactLineLayoutDelegate {
+            if let delegate = textView.layoutManager?.delegate as? LineMetricsLayoutDelegate {
                 delegate.lineHeightMultiple = lineHeightMultiple ?? TextLayoutStyle.defaultLineHeightMultiple
             }
             let glyphPadding = TextLayoutStyle.editorVerticalPadding(
@@ -126,7 +128,7 @@ struct InlineTextEditor: NSViewRepresentable {
     }
 
     private func applyTextStyle(to textView: NSTextView, preserveSelection: Bool = true) {
-        if let delegate = textView.layoutManager?.delegate as? CompactLineLayoutDelegate {
+        if let delegate = textView.layoutManager?.delegate as? LineMetricsLayoutDelegate {
             delegate.lineHeightMultiple = lineHeightMultiple ?? TextLayoutStyle.defaultLineHeightMultiple
         }
         let selectedRanges = textView.selectedRanges
@@ -179,7 +181,7 @@ struct InlineTextEditor: NSViewRepresentable {
 
     class Coordinator: NSObject, NSTextViewDelegate {
         var parent: InlineTextEditor
-        let compactDelegate = CompactLineLayoutDelegate()
+        let lineMetricsDelegate = LineMetricsLayoutDelegate()
         var hasReceivedTextChange = false
         var lastEmittedRichTextData: String?
 
