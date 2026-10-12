@@ -135,12 +135,21 @@ final class GooglePlayUploadService {
             // Abandon the half-finished edit so it doesn't linger in the Play Console.
             do {
                 try await api.deleteEdit(packageName: packageName, editId: edit.id)
+            } catch let abandonError where Self.isEditAlreadyDiscarded(abandonError) {
+                CrashReportingService.breadcrumb(.upload, "Play edit already discarded")
             } catch let abandonError {
                 // The abandon failed, so a dangling edit is now stuck in the user's real console.
                 CrashReportingService.report(.googlePlayEditAbandonFailed, error: abandonError)
             }
             throw error
         }
+    }
+
+    /// Play answers 400 to an edit superseded by a change made elsewhere (Play Console, another
+    /// tool) and 404 to one it already expired; either way nothing is left dangling.
+    nonisolated static func isEditAlreadyDiscarded(_ error: Error) -> Bool {
+        guard let status = (error as? any StoreAPIFailure)?.httpStatus else { return false }
+        return status == 400 || status == 404
     }
 
     private func renderScreenshots(

@@ -346,6 +346,31 @@ struct GooglePlayUploadServiceTests {
         #expect(h.server.calls.map(\.route) == [openEdit, abandonEdit])
     }
 
+    /// SCREENSHOT-BRO-2E: Play rejects the abandon of an edit a change elsewhere superseded.
+    @Test func abandonOfAnEditPlayAlreadyDiscardedStillSurfacesTheOriginalFailure() async throws {
+        let h = try Harness { call, _ in
+            if call.path.hasPrefix("/upload/") { return (400, #"{"error":{"message":"bad image"}}"#) }
+            if call.method == "DELETE" && call.path.hasSuffix("/edits/edit-1") {
+                return (400, #"{"error":{"message":"A change was made to the application outside of this Edit, please create a new edit."}}"#)
+            }
+            return nil
+        }
+
+        let error = await #expect(throws: (any Error).self) { try await upload(h, row: makeRow(templates: 1), languages: [english]) }
+
+        let context = try #require(failureContext(error))
+        #expect(context.operation == .uploadScreenshot(number: 1))
+        #expect(h.server.calls.map(\.route).last == abandonEdit)
+    }
+
+    @Test func onlyASupersededOrExpiredEditCountsAsAlreadyDiscarded() {
+        #expect(GooglePlayUploadService.isEditAlreadyDiscarded(GooglePlayAPIError.httpError(status: 400, message: "")))
+        #expect(GooglePlayUploadService.isEditAlreadyDiscarded(GooglePlayAPIError.httpError(status: 404, message: "")))
+        #expect(!GooglePlayUploadService.isEditAlreadyDiscarded(GooglePlayAPIError.httpError(status: 500, message: "")))
+        #expect(!GooglePlayUploadService.isEditAlreadyDiscarded(GooglePlayAPIError.transport(URLError(.notConnectedToInternet))))
+        #expect(!GooglePlayUploadService.isEditAlreadyDiscarded(CancellationError()))
+    }
+
     // MARK: - Retry
 
     /// A retry redoes the whole language from its clear, and progress rewinds to the language start.
