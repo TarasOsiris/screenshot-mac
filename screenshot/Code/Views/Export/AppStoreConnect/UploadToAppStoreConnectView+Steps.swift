@@ -394,8 +394,7 @@ extension UploadToAppStoreConnectView {
             }
             if multiline {
                 #if os(macOS)
-                TextEditor(text: text)
-                    .font(.body)
+                PlainTextEditor(text: text, font: .preferredFont(forTextStyle: .body))
                     .frame(minHeight: minHeight)
                     .padding(4)
                     .background(Color.platformTextBackground, in: .rect(cornerRadius: 6))

@@ -45,9 +45,13 @@ struct SvgPasteDialog: View {
             )
 
             ZStack(alignment: .topLeading) {
-                TextEditor(text: $svgText)
-                    .font(.system(size: 11, design: .monospaced))
+                PlainTextEditor(
+                    text: $svgText,
+                    font: .monospacedSystemFont(ofSize: 11, weight: .regular),
+                    substitutesText: false
+                )
                     .frame(minHeight: 120)
+                    .background(Color.platformTextBackground)
                     .border(Color.secondary.opacity(0.3))
                     .onChange(of: svgText) {
                         if suppressTextChangeReset {

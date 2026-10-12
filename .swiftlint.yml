@@ -39,6 +39,13 @@ custom_rules:
     regex: '^[ \t]*(?:@discardableResult\s+)?(?:public |internal |private |fileprivate )?nonisolated\s+(?:static\s+)?func\s+\w+[^{]*?\)\s*async\b'
     message: "A bare `nonisolated async func` inherits the caller's executor and does not offload. Use @concurrent to offload, or nonisolated(nonsending) if inheriting is intended."
     severity: error
+  # SwiftUI's TextEditor records typing on the window's shared undo stack, which outlives it, so ⌘Z
+  # in a later text field replayed a step on the freed text view (Sentry SCREENSHOT-BRO-2F).
+  swiftui_text_editor:
+    name: "SwiftUI TextEditor"
+    regex: '(?<![\w.])(?:SwiftUI\.)?TextEditor\('
+    message: "Use PlainTextEditor: SwiftUI's TextEditor leaves its undo steps on the window's stack after it is freed."
+    severity: error
 
 included:
   - screenshot/Code

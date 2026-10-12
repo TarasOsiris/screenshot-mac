@@ -125,7 +125,7 @@ func reuseTranslationMenuContent(
 }
 
 #if os(macOS)
-/// Multiline editor that uses `TextEditor` so Return inserts a newline (a
+/// Multiline editor backed by `PlainTextEditor` so Return inserts a newline (a
 /// vertical-axis `TextField` treats Return as a submit gesture on macOS).
 struct MultilineCellEditor: View {
     let placeholder: String
@@ -134,11 +134,11 @@ struct MultilineCellEditor: View {
     var autofocus: Bool = false
     var onEditingEnded: (() -> Void)?
 
-    // Local buffer: binding TextEditor straight to AppState-backed state recomputes
+    // Local buffer: binding the editor straight to AppState-backed state recomputes
     // the body on every keystroke and re-feeds the value, resetting the caret to the
     // end. The buffer survives recomputes; we sync to/from `text` only on real changes.
     @State private var localText: String
-    @FocusState private var isFocused: Bool
+    @State private var isFocused = false
 
     init(
         placeholder: String,
@@ -166,17 +166,17 @@ struct MultilineCellEditor: View {
                     .allowsHitTesting(false)
             }
 
-            TextEditor(text: $localText)
-                .font(.system(size: CellEditorStyle.fontSize))
-                .scrollContentBackground(.hidden)
-                .focused($isFocused)
+            PlainTextEditor(
+                text: $localText,
+                font: .systemFont(ofSize: CellEditorStyle.fontSize),
+                isFocused: $isFocused
+            )
         }
         .cellEditorHeight(measuring: localText.isEmpty ? placeholder : localText)
         .debouncedFieldCommit(buffer: $localText, into: $text, isFocused: isFocused)
         .cellEditorChrome()
         .modifier(OptionalHelp(help: help))
-        // Defer one tick: setting focus before the view is in a window can be dropped.
-        .onAppear { if autofocus { Task { @MainActor in isFocused = true } } }
+        .onAppear { if autofocus { isFocused = true } }
         .onChange(of: isFocused) { _, focused in if !focused { onEditingEnded?() } }
     }
 }
@@ -185,7 +185,7 @@ struct MultilineCellEditor: View {
 /// so swapping one for the other never shifts a cell's size or chrome.
 enum CellEditorStyle {
     static let fontSize: CGFloat = 12
-    // Match the TextEditor's intrinsic text origin so the placeholder/mirror align.
+    // Match the editor's intrinsic text origin so the placeholder/mirror align.
     static let insetH: CGFloat = 5
     static let insetV: CGFloat = 5
     static let minHeight: CGFloat = 40   // ~2 lines
@@ -240,7 +240,7 @@ private struct CellEditorHeight: ViewModifier {
 }
 
 /// Cheap, read-only stand-in for `MultilineCellEditor`, shown while a cell isn't being
-/// edited so a large translation matrix doesn't mount one live `TextEditor` per cell.
+/// edited so a large translation matrix doesn't mount one live text view per cell.
 /// Matches the editor's font, insets, height clamp, and chrome.
 struct MatrixCellPreview: View {
     let text: String

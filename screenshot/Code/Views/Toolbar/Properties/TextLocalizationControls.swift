@@ -122,7 +122,7 @@ struct TextLocalizationControls: View, ShapeEditing {
                     .scaledFont(UIMetrics.FontSize.hint)
                     .foregroundStyle(.secondary)
             } else {
-                // TextEditor-backed so Return inserts a newline (a vertical-axis TextField submits).
+                // Multi-line editor so Return inserts a newline (a vertical-axis TextField submits).
                 MultilineCellEditor(
                     placeholder: String(localized: "Same as base language"),
                     text: localeTranslationBinding(state, shape: baseShape, localeCode: locale.code)
