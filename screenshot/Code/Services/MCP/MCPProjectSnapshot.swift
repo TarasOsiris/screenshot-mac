@@ -41,6 +41,25 @@ struct MCPBackgroundSnapshot: Encodable {
     let imageFile: String?
     /// Per-language image files that replace `imageFile`, keyed by locale code; nil when none.
     var imageOverrides: [String: String]?
+    var imageFillMode: String?
+    var imageOpacity: Double?
+}
+
+struct MCPShadowSnapshot: Encodable {
+    let color: String
+    let opacity: Double
+    let radius: Double
+    let offsetX: Double
+    let offsetY: Double
+}
+
+struct MCPTextBackgroundSnapshot: Encodable {
+    let color: String
+    let opacity: Double?
+    let radius: Double?
+    let padding: Double?
+    let outlineColor: String?
+    let outlineWidth: Double?
 }
 
 struct MCPShapeSnapshot: Encodable {
@@ -75,6 +94,19 @@ struct MCPShapeSnapshot: Encodable {
     let locked: Bool?
     let clipToTemplate: Bool?
     let shrinkToFit: Bool?
+    /// Position in the row's stacking order, 0 = bottom.
+    let zIndex: Int
+    let italic: Bool?
+    let uppercase: Bool?
+    let verticalAlign: String?
+    let letterSpacing: Double?
+    let lineHeight: Double?
+    let outlineColor: String?
+    let outlineWidth: Double?
+    let fillStyle: String?
+    let fillGradient: MCPGradientSnapshot?
+    let shadow: MCPShadowSnapshot?
+    let textBackground: MCPTextBackgroundSnapshot?
     /// Locales whose text loses lines in this box — what an agent should fix after translating.
     let textOverflowLocales: [String]?
 }
@@ -97,6 +129,8 @@ struct MCPRowSnapshot: Encodable {
     let defaultDeviceCategory: String?
     let defaultDeviceFrameId: String?
     let variantId: String?
+    let backgroundBlur: Double?
+    let excludeFromUpload: Bool?
     let background: MCPBackgroundSnapshot
     let templates: [MCPTemplateSnapshot]
     let shapes: [MCPShapeSnapshot]
@@ -176,6 +210,8 @@ enum MCPSnapshotBuilder {
             defaultDeviceCategory: row.defaultDeviceCategory?.rawValue,
             defaultDeviceFrameId: row.defaultDeviceFrameId,
             variantId: row.variantId?.uuidString,
+            backgroundBlur: row.backgroundBlur > 0 ? row.backgroundBlur : nil,
+            excludeFromUpload: row.excludeFromAppStoreConnect ? true : nil,
             background: background(
                 style: row.backgroundStyle,
                 color: row.backgroundColorData,
@@ -267,7 +303,49 @@ enum MCPSnapshotBuilder {
             locked: shape.isLocked,
             clipToTemplate: shape.clipToTemplate,
             shrinkToFit: shape.shrinkToFit,
+            zIndex: row.shapes.firstIndex { $0.id == shape.id } ?? 0,
+            italic: shape.italic,
+            uppercase: shape.uppercase,
+            verticalAlign: shape.textVerticalAlign?.rawValue,
+            letterSpacing: shape.letterSpacing.map { Double($0) },
+            lineHeight: shape.lineHeightMultiple.map { Double($0) },
+            outlineColor: shape.outlineColorData?.color.hexString,
+            outlineWidth: shape.outlineWidth.map { Double($0) },
+            fillStyle: shape.fillStyle?.rawValue,
+            fillGradient: shape.fillStyle == .gradient ? shape.fillGradientConfig.map(gradientSnapshot) : nil,
+            shadow: shape.shadow.flatMap { shadow in
+                guard shadow.isActive else { return nil }
+                return MCPShadowSnapshot(
+                    color: shadow.resolvedColor.hexString,
+                    opacity: shadow.opacity ?? ShadowConfig.defaultOpacity,
+                    radius: Double(shadow.radius ?? ShadowConfig.defaultRadius),
+                    offsetX: Double(shadow.offsetX ?? ShadowConfig.defaultOffsetX),
+                    offsetY: Double(shadow.offsetY ?? ShadowConfig.defaultOffsetY)
+                )
+            },
+            textBackground: shape.textBackgroundColorData.map { color in
+                MCPTextBackgroundSnapshot(
+                    color: color.color.hexString,
+                    opacity: shape.textBackgroundOpacity,
+                    radius: shape.textBackgroundCornerRadius.map { Double($0) },
+                    padding: shape.textBackgroundPadding.map { Double($0) },
+                    outlineColor: shape.textBackgroundOutlineColorData?.color.hexString,
+                    outlineWidth: shape.textBackgroundOutlineWidth.map { Double($0) }
+                )
+            },
             textOverflowLocales: overflowLocales.isEmpty ? nil : overflowLocales
+        )
+    }
+
+    static func gradientSnapshot(_ gradient: GradientConfig) -> MCPGradientSnapshot {
+        MCPGradientSnapshot(
+            type: gradient.gradientType.rawValue,
+            angle: gradient.angle,
+            stops: gradient.stops.map {
+                MCPGradientStopSnapshot(color: $0.colorData.color.hexString, location: $0.location)
+            },
+            centerX: gradient.centerX,
+            centerY: gradient.centerY
         )
     }
 
@@ -284,15 +362,7 @@ enum MCPSnapshotBuilder {
             MCPBackgroundSnapshot(
                 style: "gradient",
                 color: nil,
-                gradient: MCPGradientSnapshot(
-                    type: gradient.gradientType.rawValue,
-                    angle: gradient.angle,
-                    stops: gradient.stops.map {
-                        MCPGradientStopSnapshot(color: $0.colorData.color.hexString, location: $0.location)
-                    },
-                    centerX: gradient.centerX,
-                    centerY: gradient.centerY
-                ),
+                gradient: gradientSnapshot(gradient),
                 imageFile: nil
             )
         case .image:
@@ -303,7 +373,9 @@ enum MCPSnapshotBuilder {
                 imageFile: imageConfig.fileName,
                 imageOverrides: imageConfig.localeImages.isEmpty
                     ? nil
-                    : imageConfig.localeImages.compactMapValues { $0.fileName ?? ($0.svgContent != nil ? "svg" : nil) }
+                    : imageConfig.localeImages.compactMapValues { $0.fileName ?? ($0.svgContent != nil ? "svg" : nil) },
+                imageFillMode: imageConfig.fillMode.rawValue,
+                imageOpacity: imageConfig.opacity
             )
         }
     }

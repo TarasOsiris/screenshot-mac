@@ -40,6 +40,16 @@ enum MCPToolName: String, CaseIterable {
     case listCatalog = "list_catalog"
     case undo = "undo"
     case redo = "redo"
+    case updateTemplate = "update_template"
+    case duplicateShape = "duplicate_shape"
+    case duplicateRow = "duplicate_row"
+    case duplicateTemplate = "duplicate_template"
+    case moveTemplate = "move_template"
+    case replaceImage = "replace_image"
+    case setAllDevices = "set_all_devices"
+    case arrangeShapes = "arrange_shapes"
+    case setBaseLocale = "set_base_locale"
+    case setLocaleLayout = "set_locale_layout"
 
     nonisolated static var available: [MCPToolName] { allCases.filter(\.isAvailable) }
 
@@ -63,14 +73,16 @@ enum MCPToolName: String, CaseIterable {
             Tool.Annotations(readOnlyHint: false, destructiveHint: true, idempotentHint: true, openWorldHint: true)
         case .cancelSyncJob:
             Tool.Annotations(readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: true)
-        case .updateRow, .updateShape, .setTranslation, .setTranslations, .renameProject, .setRowVariant:
+        case .updateRow, .updateShape, .setTranslation, .setTranslations, .renameProject, .setRowVariant,
+             .updateTemplate, .setAllDevices, .arrangeShapes, .setLocaleLayout, .setBaseLocale:
             Tool.Annotations(readOnlyHint: false, destructiveHint: true, idempotentHint: true, openWorldHint: false)
         case .deleteProject, .deleteRow, .deleteShape, .removeTemplate, .removeLocale, .deleteVariant,
-             .importScreenshots, .moveRow, .batch, .undo, .redo:
+             .importScreenshots, .moveRow, .batch, .undo, .redo, .replaceImage, .moveTemplate:
             Tool.Annotations(readOnlyHint: false, destructiveHint: true, idempotentHint: false, openWorldHint: false)
         case .switchProject:
             Tool.Annotations(readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false)
-        case .createProject, .addRow, .addTemplate, .addShape, .addLocale, .createVariant, .exportProject:
+        case .createProject, .addRow, .addTemplate, .addShape, .addLocale, .createVariant, .exportProject,
+             .duplicateShape, .duplicateRow, .duplicateTemplate:
             Tool.Annotations(readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false)
         }
     }
@@ -120,6 +132,71 @@ nonisolated enum MCPToolCatalog {
         ], required: ["text"]),
         "Formatted text as styled spans, concatenated in order; replaces the text and all per-range formatting. Read the current spans from get_project's text_runs and send them back edited (e.g. change one word's color). Mutually exclusive with text."
     )
+
+    private static let shadowSchema = MCPSchema.object([
+        "color": MCPSchema.string("Shadow color as #RRGGBB (default black)"),
+        "opacity": MCPSchema.number("0-1 (default 0.3)"),
+        "radius": MCPSchema.number("Blur radius in model pixels, 0-150 (default 40)"),
+        "offset_x": MCPSchema.number("Horizontal offset, -100-100 (default 0)"),
+        "offset_y": MCPSchema.number("Vertical offset, -100-100 (default 30)"),
+    ], description: "Drop shadow; null removes it")
+
+    private static let textBackgroundSchema = MCPSchema.object([
+        "color": MCPSchema.string("Plate color as #RRGGBB or #RRGGBBAA (default black)"),
+        "opacity": MCPSchema.number("0-1"),
+        "radius": MCPSchema.number("Corner radius"),
+        "padding": MCPSchema.number("Padding around the text"),
+        "outline_color": MCPSchema.string("Plate outline color"),
+        "outline_width": MCPSchema.number("Plate outline width (0 removes it)"),
+    ], description: "Rounded plate behind text; null removes it")
+
+    /// Background fields update_row and update_template both accept.
+    private static let backgroundProperties: [String: Value] = [
+        "background_color": MCPSchema.string("Solid background color as #RRGGBB; switches the background to color"),
+        "background_gradient": gradientSchema,
+        "background_image_path": MCPSchema.string("Absolute path of a background image; switches the background to image. \(screenshotStagingHint)"),
+        "background_image_locale": MCPSchema.string("Locale the background image is for (default: the base, which every language without its own falls back to)"),
+        "background_fill_mode": MCPSchema.string("How the background image fills the area", oneOf: ImageFillMode.allCases.map(\.rawValue)),
+        "background_image_opacity": MCPSchema.number("Background image opacity 0-1"),
+        "background_blur": MCPSchema.number("Background blur radius in model pixels (0 = none)"),
+    ]
+
+    /// Fields add_shape and update_shape both accept.
+    private static let shapeProperties: [String: Value] = [
+        "x": MCPSchema.number("Left edge in model pixels"),
+        "y": MCPSchema.number("Top edge in model pixels"),
+        "width": MCPSchema.number("Width in model pixels"),
+        "height": MCPSchema.number("Height in model pixels"),
+        "rotation": MCPSchema.number("Rotation in degrees"),
+        "opacity": MCPSchema.number("Opacity 0-1"),
+        "border_radius": MCPSchema.number("Corner radius (rectangles, invisible device frames)"),
+        "color": MCPSchema.string("Fill/text color as #RRGGBB or #RRGGBBAA"),
+        "text": MCPSchema.string("Text content (base locale)"),
+        "text_runs": textRunsSchema,
+        "clear_text_formatting": MCPSchema.boolean("Drop per-range formatting, in the base text and every translation, so the whole text uses the shape's own style"),
+        "font_size": MCPSchema.number("Font size"),
+        "font_name": MCPSchema.string("Font family name — list_catalog kind fonts"),
+        "font_weight": MCPSchema.integer("Font weight 100-900"),
+        "italic": MCPSchema.boolean("Italic text"),
+        "uppercase": MCPSchema.boolean("Render the text in capitals"),
+        "text_align": MCPSchema.string("Horizontal text alignment", oneOf: ["left", "center", "right"]),
+        "vertical_align": MCPSchema.string("Vertical text alignment in the box", oneOf: ["top", "center", "bottom"]),
+        "letter_spacing": MCPSchema.number("Letter spacing"),
+        "line_height": MCPSchema.number("Line height as a multiple of the font's natural line height, 0.5-2.0 (1 = default)"),
+        "line_spacing": MCPSchema.number("Legacy: extra points between lines, converted to line_height. Prefer line_height"),
+        "outline_color": MCPSchema.string("Outline color as #RRGGBB"),
+        "outline_width": MCPSchema.number("Outline width (0 removes the outline)"),
+        "shadow": shadowSchema,
+        "text_background": textBackgroundSchema,
+        "device_category": MCPSchema.string("Device category (device shapes)", oneOf: deviceCategories),
+        "device_frame_id": MCPSchema.string("Device frame id (device shapes) — list_catalog kind device_frames; also sets the matching category and aspect ratio"),
+        "star_points": MCPSchema.integer("Number of points (star shapes)"),
+        "clip_to_template": MCPSchema.boolean("Clip the shape to its template column"),
+        "fill_style": MCPSchema.string("Fill style for rectangles, circles, stars and text", oneOf: ["color", "gradient"]),
+        "fill_gradient": gradientSchema,
+        "shrink_to_fit": MCPSchema.boolean("Shrink text so every line fits the box in every locale (text shapes)"),
+        "locked": MCPSchema.boolean("Lock the shape against canvas interaction"),
+    ]
 
     private static let translationProperties: [String: Value] = [
         "shape_id": MCPSchema.string("Text shape UUID"),
@@ -219,20 +296,19 @@ nonisolated enum MCPToolCatalog {
         ),
         Tool(
             name: MCPToolName.updateRow.rawValue,
-            description: "Patch row properties: label, size, background (solid color or gradient), spanning, device visibility, default device. Only provided fields change.",
-            inputSchema: MCPSchema.object([
+            description: "Patch row properties: label, size, background (color, gradient or image, per language if needed), blur, spanning, device visibility, default device, upload exclusion. Only provided fields change. Per-column backgrounds: update_template.",
+            inputSchema: MCPSchema.object(backgroundProperties.merging([
                 "project_id": projectIdSchema,
                 "row_id": MCPSchema.string("Row UUID"),
                 "label": MCPSchema.string("Row label"),
                 "width": MCPSchema.number("Template width in pixels"),
                 "height": MCPSchema.number("Template height in pixels"),
-                "background_color": MCPSchema.string("Solid background color as #RRGGBB; switches background style to color"),
-                "background_gradient": gradientSchema,
                 "span_background": MCPSchema.boolean("Render the background once across all columns instead of per column"),
                 "show_device": MCPSchema.boolean("Show or hide device frames in this row"),
                 "device_category": MCPSchema.string("Default device category for the row", oneOf: deviceCategories),
                 "device_frame_id": MCPSchema.string("Default device frame id for the row"),
-            ], required: ["row_id"])
+                "exclude_from_upload": MCPSchema.boolean("Leave this row out of App Store Connect uploads"),
+            ]) { $1 }, required: ["row_id"])
         ),
         Tool(
             name: MCPToolName.moveRow.rawValue,
@@ -272,63 +348,24 @@ nonisolated enum MCPToolCatalog {
         ),
         Tool(
             name: MCPToolName.addShape.rawValue,
-            description: "Add a shape to a row. Position defaults to the center of the given template column. Types: rectangle, circle, star, text, device (phone/tablet frame), svg (bundled preset), image (from file path).",
-            inputSchema: MCPSchema.object([
+            description: "Add a shape to a row, styled in the same call: it accepts every update_shape field. Position defaults to the center of the given template column. Types: rectangle, circle, star, text, device (phone/tablet frame), svg (bundled preset, see list_catalog), image (from file path).",
+            inputSchema: MCPSchema.object(shapeProperties.merging([
                 "project_id": projectIdSchema,
                 "row_id": MCPSchema.string("Row UUID"),
                 "type": MCPSchema.string("Shape type", oneOf: ["rectangle", "circle", "star", "text", "device", "svg", "image"]),
                 "template_index": MCPSchema.integer("Column index to center the shape in (default 0)"),
-                "x": MCPSchema.number("Left edge in model pixels (overrides template_index centering)"),
-                "y": MCPSchema.number("Top edge in model pixels"),
-                "width": MCPSchema.number("Width in model pixels"),
-                "height": MCPSchema.number("Height in model pixels"),
-                "text": MCPSchema.string("Text content (text shapes)"),
-                "font_size": MCPSchema.number("Font size (text shapes)"),
-                "font_name": MCPSchema.string("Font family name (text shapes)"),
-                "font_weight": MCPSchema.integer("Font weight 100-900 (text shapes)"),
-                "color": MCPSchema.string("Fill/text color as #RRGGBB or #RRGGBBAA"),
-                "device_category": MCPSchema.string("Device category (device shapes)", oneOf: deviceCategories),
-                "device_frame_id": MCPSchema.string("Device frame id (device shapes)"),
-                "svg_preset": MCPSchema.string("Bundled SVG preset name (svg shapes)"),
-                "image_path": MCPSchema.string("Absolute file path of an image (image shapes)"),
-            ], required: ["row_id", "type"])
+                "svg_preset": MCPSchema.string("Bundled SVG preset name (svg shapes) — list_catalog kind svg_presets"),
+                "image_path": MCPSchema.string("Absolute file path of an image (image shapes). \(screenshotStagingHint)"),
+            ]) { $1 }, required: ["row_id", "type"])
         ),
         Tool(
             name: MCPToolName.updateShape.rawValue,
-            description: "Patch shape properties; only provided fields change. Text edits apply to the base locale (use set_translation for other locales). Text with per-range formatting (a highlighted word) reports it in get_project as text_runs; replacing `text` alone keeps only the first span's style, so edit formatted text through text_runs. Shape-level color/font/alignment/spacing fields restyle every span, translations included.",
-            inputSchema: MCPSchema.object([
+            description: "Patch shape properties; only provided fields change. Text edits apply to the base locale (use set_translation for other locales, set_locale_layout for per-locale position and size). Text with per-range formatting (a highlighted word) reports it in get_project as text_runs; replacing `text` alone keeps only the first span's style, so edit formatted text through text_runs. Shape-level color/font/alignment/spacing fields restyle every span, translations included.",
+            inputSchema: MCPSchema.object(shapeProperties.merging([
                 "project_id": projectIdSchema,
                 "shape_id": MCPSchema.string("Shape UUID"),
-                "x": MCPSchema.number("Left edge in model pixels"),
-                "y": MCPSchema.number("Top edge in model pixels"),
-                "width": MCPSchema.number("Width in model pixels"),
-                "height": MCPSchema.number("Height in model pixels"),
-                "rotation": MCPSchema.number("Rotation in degrees"),
-                "opacity": MCPSchema.number("Opacity 0-1"),
-                "border_radius": MCPSchema.number("Corner radius (rectangles)"),
-                "color": MCPSchema.string("Fill/text color as #RRGGBB or #RRGGBBAA"),
-                "text": MCPSchema.string("Text content (base locale)"),
-                "text_runs": textRunsSchema,
-                "clear_text_formatting": MCPSchema.boolean("Drop per-range formatting, in the base text and every translation, so the whole text uses the shape's own style"),
-                "font_size": MCPSchema.number("Font size"),
-                "font_name": MCPSchema.string("Font family name"),
-                "font_weight": MCPSchema.integer("Font weight 100-900"),
-                "text_align": MCPSchema.string("Horizontal text alignment", oneOf: ["left", "center", "right"]),
-                "letter_spacing": MCPSchema.number("Letter spacing"),
-                "line_height": MCPSchema.number("Line height as a multiple of the font's natural line height, 0.5-2.0 (1 = default)"),
-                "line_spacing": MCPSchema.number("Legacy: extra points between lines, converted to line_height. Prefer line_height"),
-                "outline_color": MCPSchema.string("Outline color as #RRGGBB"),
-                "outline_width": MCPSchema.number("Outline width (0 removes the outline)"),
-                "device_category": MCPSchema.string("Device category (device shapes)", oneOf: deviceCategories),
-                "device_frame_id": MCPSchema.string("Device frame id (device shapes); also sets the matching category and aspect ratio"),
-                "star_points": MCPSchema.integer("Number of points (star shapes)"),
-                "clip_to_template": MCPSchema.boolean("Clip the shape to its template column"),
-                "fill_style": MCPSchema.string("Fill style for rectangles, circles, stars and text", oneOf: ["color", "gradient"]),
-                "fill_gradient": gradientSchema,
-                "shrink_to_fit": MCPSchema.boolean("Shrink text so every line fits the box in every locale (text shapes)"),
-                "locked": MCPSchema.boolean("Lock the shape against canvas interaction"),
                 "z_order": MCPSchema.string("Move within the stacking order", oneOf: ["front", "back"]),
-            ], required: ["shape_id"])
+            ]) { $1 }, required: ["shape_id"])
         ),
         Tool(
             name: MCPToolName.deleteShape.rawValue,
@@ -537,6 +574,114 @@ nonisolated enum MCPToolCatalog {
             inputSchema: MCPSchema.object([
                 "project_id": MCPSchema.string("Must be the open project"),
             ])
+        ),
+        Tool(
+            name: MCPToolName.updateTemplate.rawValue,
+            description: "Give one screenshot column its own background instead of the row's: set override_background true plus any background fields, or false to follow the row again.",
+            inputSchema: MCPSchema.object(backgroundProperties.merging([
+                "project_id": projectIdSchema,
+                "row_id": MCPSchema.string("Row UUID"),
+                "template_id": MCPSchema.string("Template (column) UUID"),
+                "override_background": MCPSchema.boolean("Use this column's own background (default: true when any background field is given)"),
+            ]) { $1 }, required: ["row_id", "template_id"])
+        ),
+        Tool(
+            name: MCPToolName.duplicateShape.rawValue,
+            description: "Copy a shape with its translations and images. With to_columns, places a copy at the same spot in every other column (or only those left/right of it), like a headline repeated on each screenshot; otherwise one copy at an offset. Returns the new shape (single copy) or the row.",
+            inputSchema: MCPSchema.object([
+                "project_id": projectIdSchema,
+                "shape_id": MCPSchema.string("Shape UUID"),
+                "to_columns": MCPSchema.string("Copy into other columns", oneOf: ["all", "left", "right"]),
+                "offset_x": MCPSchema.number("Single copy: horizontal offset (default 50)"),
+                "offset_y": MCPSchema.number("Single copy: vertical offset (default 50)"),
+            ], required: ["shape_id"])
+        ),
+        Tool(
+            name: MCPToolName.duplicateRow.rawValue,
+            description: "Copy a row (shapes, translations, images) right below it. Variant rows can't be copied in place — use create_variant.",
+            inputSchema: MCPSchema.object([
+                "project_id": projectIdSchema,
+                "row_id": MCPSchema.string("Row UUID"),
+                "label": MCPSchema.string("Label for the copy (default: \"<label> copy\")"),
+            ], required: ["row_id"])
+        ),
+        Tool(
+            name: MCPToolName.duplicateTemplate.rawValue,
+            description: "Copy a screenshot column and the shapes on it, inserted right after it.",
+            inputSchema: MCPSchema.object([
+                "project_id": projectIdSchema,
+                "row_id": MCPSchema.string("Row UUID"),
+                "template_id": MCPSchema.string("Template (column) UUID"),
+            ], required: ["row_id", "template_id"])
+        ),
+        Tool(
+            name: MCPToolName.moveTemplate.rawValue,
+            description: "Move a screenshot column to another position; the shapes on it move with it.",
+            inputSchema: MCPSchema.object([
+                "project_id": projectIdSchema,
+                "row_id": MCPSchema.string("Row UUID"),
+                "template_id": MCPSchema.string("Template (column) UUID"),
+                "to_index": MCPSchema.integer("New 0-based column position"),
+            ], required: ["row_id", "template_id", "to_index"])
+        ),
+        Tool(
+            name: MCPToolName.replaceImage.rawValue,
+            description: "Put an image into one device frame or image shape — one column, unlike import_screenshots which refills the whole row. Pass locale for a language's own screenshot. \(screenshotStagingHint)",
+            inputSchema: MCPSchema.object([
+                "project_id": projectIdSchema,
+                "shape_id": MCPSchema.string("Device or image shape UUID"),
+                "image_path": MCPSchema.string("Absolute file path of the image"),
+                "locale": MCPSchema.string("Locale the image is for (default: the base image every language falls back to)"),
+            ], required: ["shape_id", "image_path"])
+        ),
+        Tool(
+            name: MCPToolName.setAllDevices.rawValue,
+            description: "Switch every unlocked device frame in a row (or the whole project) to one frame or category, keeping the screenshots — e.g. to restyle a project from iPhone 17 to iPhone 17 Pro.",
+            inputSchema: MCPSchema.object([
+                "project_id": projectIdSchema,
+                "row_id": MCPSchema.string("Row UUID (default: every row)"),
+                "device_frame_id": MCPSchema.string("Device frame id — list_catalog kind device_frames"),
+                "device_category": MCPSchema.string("Abstract device category, when no specific frame is wanted", oneOf: deviceCategories),
+            ])
+        ),
+        Tool(
+            name: MCPToolName.arrangeShapes.rawValue,
+            description: "Align or distribute shapes of one row (locked shapes are skipped), or center them in their own screenshot column.",
+            inputSchema: MCPSchema.object([
+                "project_id": projectIdSchema,
+                "shape_ids": MCPSchema.array(of: MCPSchema.string("Shape UUID"), "Shapes in one row; align needs 2+, distribute 3+, center 1+"),
+                "action": MCPSchema.string("What to do", oneOf: [
+                    "align_left", "align_center", "align_right", "align_top", "align_middle", "align_bottom",
+                    "distribute_horizontally", "distribute_vertically",
+                    "center_in_column", "center_in_column_horizontally", "center_in_column_vertically",
+                ]),
+            ], required: ["shape_ids", "action"])
+        ),
+        Tool(
+            name: MCPToolName.setBaseLocale.rawValue,
+            description: "Make another locale the base: its translations become every shape's base text, and the old base becomes a translation.",
+            inputSchema: MCPSchema.object([
+                "project_id": projectIdSchema,
+                "code": MCPSchema.string("Locale code already in the project"),
+            ], required: ["code"])
+        ),
+        Tool(
+            name: MCPToolName.setLocaleLayout.rawValue,
+            description: "Give a shape its own position, size or font in one locale (e.g. a wider headline box for German), leaving the base layout alone. reset drops that locale's layout and font overrides; its text stays.",
+            inputSchema: MCPSchema.object([
+                "project_id": projectIdSchema,
+                "shape_id": MCPSchema.string("Shape UUID"),
+                "locale_code": MCPSchema.string("A non-base locale"),
+                "x": MCPSchema.number("Left edge in this locale"),
+                "y": MCPSchema.number("Top edge in this locale"),
+                "width": MCPSchema.number("Width in this locale"),
+                "height": MCPSchema.number("Height in this locale"),
+                "font_size": MCPSchema.number("Font size in this locale"),
+                "font_name": MCPSchema.string("Font family in this locale"),
+                "font_weight": MCPSchema.integer("Font weight in this locale"),
+                "text_align": MCPSchema.string("Text alignment in this locale", oneOf: ["left", "center", "right"]),
+                "reset": MCPSchema.boolean("Drop this locale's position, size and font overrides first"),
+            ], required: ["shape_id", "locale_code"])
         ),
     ]
 }

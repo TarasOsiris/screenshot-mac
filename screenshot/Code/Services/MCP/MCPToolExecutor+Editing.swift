@@ -5,6 +5,7 @@ import MCP
 /// What an editing tool may use and leave behind inside `ProjectCheckout.mutate`, where nothing can be awaited.
 @MainActor
 struct MCPEditContext {
+    let projectId: UUID
     let availableFontFamilies: Set<String>
     let resources: ImageResourceCopying
     var staged: [StagedImageWrite] = []
@@ -18,6 +19,7 @@ enum MCPEditResult {
     case shape(UUID)
     case locales
     case variants
+    case project
     case deletedRow(UUID)
     case deletedShape(UUID, rowId: UUID)
     case translation(shapeId: UUID, fits: [UUID: TextAutoFitResult])
@@ -47,6 +49,16 @@ extension MCPToolName {
         case .createVariant: "Create Variant"
         case .setRowVariant: "Move to Variant"
         case .deleteVariant: "Delete Variant"
+        case .updateTemplate: "Edit Screenshot Background"
+        case .duplicateShape: "Duplicate Shape"
+        case .duplicateRow: "Duplicate Row"
+        case .duplicateTemplate: "Duplicate Screenshot"
+        case .moveTemplate: "Move Screenshot"
+        case .replaceImage: "Assign Screenshot"
+        case .setAllDevices: "Change All Devices"
+        case .arrangeShapes: "Arrange Shapes"
+        case .setBaseLocale: "Set Base Language"
+        case .setLocaleLayout: "Edit Language Layout"
         default: nil
         }
     }
@@ -71,7 +83,7 @@ extension MCPToolExecutor {
     func runEdit(_ tool: MCPToolName, _ args: MCPArguments) async throws -> CallTool.Result {
         let checkout = try await editCheckout(args)
         defer { checkout.dispose() }
-        var context = MCPEditContext(availableFontFamilies: checkout.availableFontFamilySet, resources: checkout)
+        var context = MCPEditContext(projectId: checkout.projectId, availableFontFamilies: checkout.availableFontFamilySet, resources: checkout)
         let result = try checkout.mutate(tool.editActionName ?? "") { document in
             try applyEdit(tool, args, to: &document, context: &context)
         }
@@ -98,7 +110,7 @@ extension MCPToolExecutor {
     ) throws -> MCPEditResult {
         switch tool {
         case .addRow: try addRow(args, &document)
-        case .updateRow: try updateRow(args, &document)
+        case .updateRow: try updateRow(args, &document, &context)
         case .moveRow: try moveRow(args, &document)
         case .deleteRow: try deleteRow(args, &document)
         case .addTemplate: try addTemplate(args, &document)
@@ -113,6 +125,16 @@ extension MCPToolExecutor {
         case .createVariant: try createVariant(args, &document, &context)
         case .setRowVariant: try setRowVariant(args, &document)
         case .deleteVariant: try deleteVariant(args, &document)
+        case .updateTemplate: try updateTemplate(args, &document, &context)
+        case .duplicateShape: try duplicateShape(args, &document, &context)
+        case .duplicateRow: try duplicateRow(args, &document, &context)
+        case .duplicateTemplate: try duplicateTemplate(args, &document, &context)
+        case .moveTemplate: try moveTemplate(args, &document)
+        case .replaceImage: try replaceImage(args, &document, &context)
+        case .setAllDevices: try setAllDevices(args, &document)
+        case .arrangeShapes: try arrangeShapes(args, &document)
+        case .setBaseLocale: try setBaseLocale(args, &document, &context)
+        case .setLocaleLayout: try setLocaleLayout(args, &document, &context)
         default: throw MCPToolError.unknownTool(tool.rawValue)
         }
     }
@@ -149,6 +171,13 @@ extension MCPToolExecutor {
             return ["locales": MCPSnapshotBuilder.locales(document.localeState)]
         case .variants:
             return Self.variantList(document)
+        case .project:
+            return checkout.withResolvedFonts {
+                MCPSnapshotBuilder.project(
+                    id: checkout.projectId, name: checkout.projectName, rows: document.rows,
+                    localeState: document.localeState, availableFontFamilies: fonts, includeTranslations: false
+                )
+            }
         case .deletedRow(let id):
             return DeleteRowResult(deletedRowId: id.uuidString, remainingRows: document.rows.count)
         case .deletedShape(let id, let rowId):

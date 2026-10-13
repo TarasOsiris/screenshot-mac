@@ -209,23 +209,12 @@ extension AppState {
         let noun = onlyDevices ? "Device" : "Element"
         withRowUndo(indices.count == 1 ? "Center \(noun)" : "Center \(noun)s", rowId: rowId) {
             for i in indices {
-                centerShape(at: i, in: idx, axis: axis)
+                DocumentEditing.center(shapeAt: i, in: &rows[idx], axis: axis)
             }
         }
     }
 
-    private func centerShape(at shapeIndex: Int, in rowIndex: Int, axis: CenterAxis) {
-        let row = rows[rowIndex]
-        let shape = row.shapes[shapeIndex]
-        if axis != .vertically {
-            let templateIndex = row.owningTemplateIndex(for: shape)
-            let templateLeft = CGFloat(templateIndex) * row.templateWidth
-            rows[rowIndex].shapes[shapeIndex].x = templateLeft + (row.templateWidth - shape.width) / 2
-        }
-        if axis != .horizontally {
-            rows[rowIndex].shapes[shapeIndex].y = (row.templateHeight - shape.height) / 2
-        }
-    }
+
 
     func changeAllDevices(in rowId: UUID, toCategory category: DeviceCategory) {
         changeAllDevices(in: rowId) {
@@ -241,14 +230,10 @@ extension AppState {
     }
 
     private func changeAllDevices(in rowId: UUID, mutate: (inout CanvasShapeModel) -> Void) {
-        guard let idx = rowIndex(for: rowId) else { return }
-        let shapes = rows[idx].shapes
-        let deviceIndices = shapes.indices.filter { shapes[$0].type == .device && !shapes[$0].resolvedIsLocked }
-        guard !deviceIndices.isEmpty else { return }
+        guard let idx = rowIndex(for: rowId),
+              rows[idx].shapes.contains(where: { $0.type == .device && !$0.resolvedIsLocked }) else { return }
         withRowUndo("Change All Row Devices", rowId: rowId) {
-            for i in deviceIndices {
-                mutate(&rows[idx].shapes[i])
-            }
+            DocumentEditing.changeAllDevices(in: &rows[idx], mutate)
         }
     }
 
@@ -297,10 +282,9 @@ extension AppState {
         withRowUndo("Duplicate Shapes", rowId: rows[rowIdx].id) {
             var newIds: Set<UUID> = []
             for shape in shapes {
-                var copy = shape.duplicated(offsetX: 50, offsetY: 50)
-                LocaleService.copyShapeOverrides(&localeState, fromId: shape.id, toId: copy.id)
-                copyImageFiles(for: &copy, originalId: shape.id)
-                rows[rowIdx].shapes.append(copy)
+                let copy = DocumentEditing.duplicateShape(
+                    shape, offsetX: 50, offsetY: 50, in: &rows[rowIdx], localeState: &localeState, resources: self
+                )
                 newIds.insert(copy.id)
             }
             selectedShapeIds = newIds
@@ -311,14 +295,16 @@ extension AppState {
     func insertDuplicate(of shapeId: UUID, offsetX: CGFloat = 0, offsetY: CGFloat = 0, undoName: String) -> UUID? {
         guard let rowIdx = selectedRowIndex,
               let shapeIdx = rows[rowIdx].shapes.firstIndex(where: { $0.id == shapeId }) else { return nil }
-        var copy = rows[rowIdx].shapes[shapeIdx].duplicated(offsetX: offsetX, offsetY: offsetY)
+        let shape = rows[rowIdx].shapes[shapeIdx]
+        var copyId: UUID?
         withRowUndo(undoName, rowId: rows[rowIdx].id) {
-            LocaleService.copyShapeOverrides(&localeState, fromId: shapeId, toId: copy.id)
-            copyImageFiles(for: &copy, originalId: shapeId)
-            rows[rowIdx].shapes.append(copy)
+            let copy = DocumentEditing.duplicateShape(
+                shape, offsetX: offsetX, offsetY: offsetY, in: &rows[rowIdx], localeState: &localeState, resources: self
+            )
             selectShape(copy.id, in: rows[rowIdx].id)
+            copyId = copy.id
         }
-        return copy.id
+        return copyId
     }
 
     func duplicateShapesToTemplates(_ shapeIds: Set<UUID>, direction: DuplicateDirection = .all) {

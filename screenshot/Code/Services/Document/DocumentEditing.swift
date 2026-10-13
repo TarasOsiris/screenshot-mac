@@ -142,6 +142,22 @@ enum DocumentEditing {
             ?? "\(Int(row.templateWidth))x\(Int(row.templateHeight))"
     }
 
+    /// Copies an Original row in place, right after it; nil for a variant row, whose size slot is taken.
+    static func copyRow(
+        at index: Int,
+        label: String,
+        rows: inout [ScreenshotRow],
+        localeState: inout LocaleState,
+        resources: ImageResourceCopying
+    ) -> ScreenshotRow? {
+        let source = rows[index]
+        guard source.isOriginal else { return nil }
+        return insertDuplicate(
+            of: source, at: index + 1, label: label, variantId: source.activeVariantId,
+            rows: &rows, localeState: &localeState, resources: resources
+        )
+    }
+
     /// A default row for `variantId`, or for the Original when the variant already holds that size.
     static func newRow(inVariant variantId: UUID?, rows: [ScreenshotRow], defaults: NewRowDefaults) -> ScreenshotRow {
         var row = ScreenshotRow.makeDefault(defaults: defaults)
@@ -405,6 +421,23 @@ enum DocumentEditing {
 
     // MARK: - Shapes
 
+    /// Appends a copy of `shape` (its translations and images too) at an offset, and returns it.
+    @discardableResult
+    static func duplicateShape(
+        _ shape: CanvasShapeModel,
+        offsetX: CGFloat,
+        offsetY: CGFloat,
+        in row: inout ScreenshotRow,
+        localeState: inout LocaleState,
+        resources: ImageResourceCopying
+    ) -> CanvasShapeModel {
+        var copy = shape.duplicated(offsetX: offsetX, offsetY: offsetY)
+        LocaleService.copyShapeOverrides(&localeState, fromId: shape.id, toId: copy.id)
+        copyImageFiles(for: &copy, originalId: shape.id, localeState: &localeState, resources: resources)
+        row.shapes.append(copy)
+        return copy
+    }
+
     /// Copies of `shapes` centered in each other template of `row`, or only those to one side.
     static func duplicateShapesToTemplates(
         _ shapes: [CanvasShapeModel],
@@ -487,6 +520,89 @@ enum DocumentEditing {
         } else {
             rows[location.rowIndex].shapes.insert(shape, at: 0)
         }
+    }
+
+    /// Lines up (or evenly spaces) the shapes at `indices` within one row.
+    static func align(_ alignment: ShapeAlignment, shapesAt indices: [Int], in row: inout ScreenshotRow) {
+        let shapes = indices.map { row.shapes[$0] }
+        switch alignment {
+        case .left:
+            guard let target = shapes.map(\.x).min() else { return }
+            for i in indices { row.shapes[i].x = target }
+        case .centerH:
+            let target = shapes.map { $0.x + $0.width / 2 }.reduce(0, +) / CGFloat(max(shapes.count, 1))
+            for i in indices { row.shapes[i].x = target - row.shapes[i].width / 2 }
+        case .right:
+            guard let target = shapes.map({ $0.x + $0.width }).max() else { return }
+            for i in indices { row.shapes[i].x = target - row.shapes[i].width }
+        case .top:
+            guard let target = shapes.map(\.y).min() else { return }
+            for i in indices { row.shapes[i].y = target }
+        case .centerV:
+            let target = shapes.map { $0.y + $0.height / 2 }.reduce(0, +) / CGFloat(max(shapes.count, 1))
+            for i in indices { row.shapes[i].y = target - row.shapes[i].height / 2 }
+        case .bottom:
+            guard let target = shapes.map({ $0.y + $0.height }).max() else { return }
+            for i in indices { row.shapes[i].y = target - row.shapes[i].height }
+        case .distributeH:
+            distribute(indices, in: &row, position: \.x, size: \.width)
+        case .distributeV:
+            distribute(indices, in: &row, position: \.y, size: \.height)
+        }
+    }
+
+    private static func distribute(
+        _ indices: [Int],
+        in row: inout ScreenshotRow,
+        position: WritableKeyPath<CanvasShapeModel, CGFloat>,
+        size: KeyPath<CanvasShapeModel, CGFloat>
+    ) {
+        let sorted = indices.sorted { row.shapes[$0][keyPath: position] < row.shapes[$1][keyPath: position] }
+        guard let firstIdx = sorted.first, let lastIdx = sorted.last, sorted.count > 1 else { return }
+        let first = row.shapes[firstIdx]
+        let last = row.shapes[lastIdx]
+        let totalSpan = (last[keyPath: position] + last[keyPath: size]) - first[keyPath: position]
+        let totalSize = sorted.map { row.shapes[$0][keyPath: size] }.reduce(0, +)
+        let gap = (totalSpan - totalSize) / CGFloat(sorted.count - 1)
+        var current = first[keyPath: position]
+        for idx in sorted {
+            row.shapes[idx][keyPath: position] = current
+            current += row.shapes[idx][keyPath: size] + gap
+        }
+    }
+
+    /// Centers a shape in the screenshot column it belongs to.
+    static func center(shapeAt index: Int, in row: inout ScreenshotRow, axis: CenterAxis) {
+        let shape = row.shapes[index]
+        if axis != .vertically {
+            let templateLeft = CGFloat(row.owningTemplateIndex(for: shape)) * row.templateWidth
+            row.shapes[index].x = templateLeft + (row.templateWidth - shape.width) / 2
+        }
+        if axis != .horizontally {
+            row.shapes[index].y = (row.templateHeight - shape.height) / 2
+        }
+    }
+
+    /// Applies `mutate` to every unlocked device in the row; false when there is none.
+    @discardableResult
+    static func changeAllDevices(in row: inout ScreenshotRow, _ mutate: (inout CanvasShapeModel) -> Void) -> Bool {
+        let indices = row.shapes.indices.filter { row.shapes[$0].type == .device && !row.shapes[$0].resolvedIsLocked }
+        for i in indices { mutate(&row.shapes[i]) }
+        return !indices.isEmpty
+    }
+
+    // MARK: - Backgrounds
+
+    /// A language's first image also seeds the base, as a shape's first localized screenshot does.
+    /// Returns the file it replaced.
+    static func setBackgroundImage(_ source: BackgroundImageSource, on config: inout BackgroundImageConfig, localeCode: String?) -> String? {
+        if let localeCode, source.hasImage {
+            if !config.hasImage { config.source = source }
+            return config.localeImages.updateValue(source, forKey: localeCode)?.fileName
+        }
+        let freed = config.fileName
+        config.source = source
+        return freed
     }
 
     /// Every image file `shapes` reference, base and per-locale.

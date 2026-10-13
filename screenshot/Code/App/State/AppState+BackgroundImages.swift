@@ -147,18 +147,12 @@ extension AppState {
 
     /// A language's first image also seeds the base, as a shape's first localized screenshot does.
     private func setBackgroundImage(fileName: String?, svgContent: String?, rowIndex: Int, templateIndex: Int?) {
-        let source = BackgroundImageSource(fileName: fileName, svgContent: svgContent)
-        let localeCode = localeState.isBaseLocale || !source.hasImage ? nil : localeState.activeLocaleCode
         guard let path = backgroundImageConfigPath(rowIndex: rowIndex, templateIndex: templateIndex) else { return }
-        let freed: String?
-        if let localeCode {
-            if !self[keyPath: path].hasImage { self[keyPath: path].source = source }
-            freed = self[keyPath: path].localeImages.updateValue(source, forKey: localeCode)?.fileName
-        } else {
-            freed = self[keyPath: path].fileName
-            self[keyPath: path].source = source
-        }
-        cleanupUnreferencedImage(freed)
+        cleanupUnreferencedImage(DocumentEditing.setBackgroundImage(
+            BackgroundImageSource(fileName: fileName, svgContent: svgContent),
+            on: &self[keyPath: path],
+            localeCode: localeState.isBaseLocale ? nil : localeState.activeLocaleCode
+        ))
     }
 
     private func backgroundImageConfigPath(rowIndex: Int, templateIndex: Int?) -> ReferenceWritableKeyPath<AppState, BackgroundImageConfig>? {

@@ -58,11 +58,7 @@ extension MCPToolExecutor {
             shape = made
         }
 
-        var restyled: [RichTextUtils.ShapeStyleProperty] = []
-        try applyCommonPatch(&shape, args: args, restyled: &restyled)
-        if let text = args.string("text") {
-            shape.text = text
-        }
+        _ = try applyPatch(&shape, args: args, fonts: context.availableFontFamilies)
         document.rows[rowIndex].shapes.append(shape)
         return .shape(shape.id)
     }
@@ -70,33 +66,11 @@ extension MCPToolExecutor {
     func updateShape(_ args: MCPArguments, _ document: inout ProjectDocument, _ context: inout MCPEditContext) throws -> MCPEditResult {
         let location = try requireShapeLocation(args, in: document)
         try validateShapeArgs(args, fonts: context.availableFontFamilies)
-        let textRuns = try args.strictObjectArray("text_runs")
-        let clearsFormatting = args.bool("clear_text_formatting") == true
         // The shapes array holds the base-locale model; patch and commit against the base
         // explicitly so agent edits never land in whichever locale the UI happens to view.
         let base = document.rows[location.rowIndex].shapes[location.shapeIndex]
-        if textRuns != nil || clearsFormatting {
-            try validateTextFormattingArgs(args, shape: base, fonts: context.availableFontFamilies)
-        }
-
         var patch = base
-        var restyled: [RichTextUtils.ShapeStyleProperty] = []
-        try applyCommonPatch(&patch, args: args, restyled: &restyled)
-        try applyShapePatch(&patch, args: args, restyled: &restyled)
-        if let text = args.string("text") {
-            patch.text = text
-        }
-        // Encoded against the patched shape, so runs inherit shape-level style set in the same call.
-        if let textRuns {
-            let encoded = try MCPRichText.encode(textRuns, onto: patch, availableFontFamilies: context.availableFontFamilies)
-            patch.text = encoded.text
-            patch.richText = encoded.richText
-        } else if clearsFormatting {
-            patch.richText = nil
-        }
-        if patch.text?.isEmpty != false {
-            patch.richText = nil
-        }
+        let (restyled, clearsFormatting) = try applyPatch(&patch, args: args, fonts: context.availableFontFamilies)
 
         if patch != base {
             document.rows[location.rowIndex].shapes[location.shapeIndex] = LocaleService.splitUpdate(
@@ -198,13 +172,46 @@ extension MCPToolExecutor {
         return .deletedShape(location.shapeId, rowId: rowId)
     }
 
-    /// Fields shared by add_shape and update_shape. `restyled` collects the text-style properties
-    /// that changed, which the shape's rich text has already been synced to.
-    private func applyCommonPatch(_ shape: inout CanvasShapeModel, args: MCPArguments, restyled: inout [RichTextUtils.ShapeStyleProperty]) throws {
+    /// Every shape field `args` names, for add_shape and update_shape alike. Returns the text-style
+    /// properties that changed (the shape's rich text is already synced to them) and whether formatting was cleared.
+    private func applyPatch(
+        _ shape: inout CanvasShapeModel,
+        args: MCPArguments,
+        fonts: Set<String>
+    ) throws -> (restyled: [RichTextUtils.ShapeStyleProperty], clearsFormatting: Bool) {
+        let textRuns = try args.strictObjectArray("text_runs")
+        let clearsFormatting = args.bool("clear_text_formatting") == true
+        if textRuns != nil || clearsFormatting {
+            try validateTextFormattingArgs(args, shape: shape, fonts: fonts)
+        }
+        var restyled: [RichTextUtils.ShapeStyleProperty] = []
+        try applyGeometryAndStyle(&shape, args: args, restyled: &restyled)
+        try applyEffects(&shape, args: args)
+        if let text = args.string("text") {
+            shape.text = text
+        }
+        // Encoded against the patched shape, so runs inherit shape-level style set in the same call.
+        if let textRuns {
+            let encoded = try MCPRichText.encode(textRuns, onto: shape, availableFontFamilies: fonts)
+            shape.text = encoded.text
+            shape.richText = encoded.richText
+        } else if clearsFormatting {
+            shape.richText = nil
+        }
+        if shape.text?.isEmpty != false {
+            shape.richText = nil
+        }
+        return (restyled, clearsFormatting)
+    }
+
+    private func applyGeometryAndStyle(_ shape: inout CanvasShapeModel, args: MCPArguments, restyled: inout [RichTextUtils.ShapeStyleProperty]) throws {
         if let x = args.double("x") { shape.x = x }
         if let y = args.double("y") { shape.y = y }
         if let width = args.double("width") { shape.width = width }
         if let height = args.double("height") { shape.height = height }
+        if let rotation = args.double("rotation") { shape.rotation = rotation }
+        if let opacity = args.double("opacity") { shape.opacity = opacity }
+        if let radius = args.double("border_radius") { shape.borderRadius = radius }
         if let color = try args.color("color"), color != shape.colorData {
             RichTextUtils.applyColorUpdate(to: &shape, color: color)
             restyled.append(.color)
@@ -223,18 +230,17 @@ extension MCPToolExecutor {
             RichTextUtils.applyFontWeightUpdate(to: &shape, weight: fontWeight)
             restyled.append(.fontWeight)
         }
-    }
-
-    /// Fields only meaningful on update_shape.
-    private func applyShapePatch(_ shape: inout CanvasShapeModel, args: MCPArguments, restyled: inout [RichTextUtils.ShapeStyleProperty]) throws {
-        if let rotation = args.double("rotation") { shape.rotation = rotation }
-        if let opacity = args.double("opacity") { shape.opacity = opacity }
-        if let radius = args.double("border_radius") { shape.borderRadius = radius }
+        if let italic = args.bool("italic"), italic != (shape.italic ?? false) {
+            RichTextUtils.applyItalicUpdate(to: &shape, italic: italic)
+            restyled.append(.italic)
+        }
+        if let uppercase = args.bool("uppercase") { shape.uppercase = uppercase }
         if let align = try args.enumValue("text_align", TextAlign.self), align != shape.textAlign {
             shape.textAlign = align
             RichTextUtils.syncShapeStyleIfNeeded(in: &shape, property: .alignment)
             restyled.append(.alignment)
         }
+        if let align = try args.enumValue("vertical_align", TextVerticalAlign.self) { shape.textVerticalAlign = align }
         if let spacing = args.double("letter_spacing").map({ CGFloat($0) }), spacing != shape.letterSpacing {
             shape.letterSpacing = spacing
             RichTextUtils.syncShapeStyleIfNeeded(in: &shape, property: .letterSpacing)
@@ -247,22 +253,27 @@ extension MCPToolExecutor {
             RichTextUtils.syncShapeStyleIfNeeded(in: &shape, property: .lineHeight)
             restyled.append(.lineHeight)
         }
-        if let color = try args.color("outline_color") { shape.outlineColorData = color }
-        if let width = args.double("outline_width") {
-            shape.outlineWidth = width
-            if width <= 0 {
-                shape.outlineWidth = nil
-                shape.outlineColorData = nil
-            }
-        }
-        if let category = try args.enumValue("device_category", DeviceCategory.self) {
-            shape.deviceCategory = category
-            shape.deviceFrameId = nil
+        if let category = try args.enumValue("device_category", DeviceCategory.self), category != shape.deviceCategory {
+            shape.selectAbstractDevice(category)
         }
         if let frame = try deviceFrame(args) { shape.selectRealFrame(frame) }
         if let points = args.int("star_points") { shape.starPointCount = points }
         if let clip = args.bool("clip_to_template") { shape.clipToTemplate = clip }
         if let shrink = args.bool("shrink_to_fit") { shape.shrinkToFit = shrink }
+        if let locked = args.bool("locked") { shape.isLocked = locked }
+    }
+
+    private func clamp(_ value: Double, _ range: ClosedRange<Double>) -> Double {
+        min(max(value, range.lowerBound), range.upperBound)
+    }
+
+    /// Outline, fill, shadow and the text plate.
+    private func applyEffects(_ shape: inout CanvasShapeModel, args: MCPArguments) throws {
+        if let color = try args.color("outline_color") { shape.outlineColorData = color }
+        if let width = args.double("outline_width") {
+            shape.outlineWidth = width > 0 ? width : nil
+            if width <= 0 { shape.outlineColorData = nil }
+        }
         if let gradient = try args.object("fill_gradient").map(Self.parseGradient) {
             shape.fillGradientConfig = gradient
             shape.fillStyle = .gradient
@@ -271,7 +282,32 @@ extension MCPToolExecutor {
             shape.fillStyle = style == "gradient" ? .gradient : nil
             if style == "gradient" && shape.fillGradientConfig == nil { shape.fillGradientConfig = GradientConfig() }
         }
-        if let locked = args.bool("locked") { shape.isLocked = locked }
+        if args.isNull("shadow") {
+            shape.shadow = nil
+        } else if let shadow = args.object("shadow") {
+            var config = shape.shadow ?? ShadowConfig()
+            config.enabled = true
+            if let color = try shadow.color("color") { config.colorData = color }
+            if let opacity = shadow.double("opacity") { config.opacity = clamp(opacity, ShadowConfig.opacityRange) }
+            if let radius = shadow.double("radius") { config.radius = CGFloat(clamp(radius, ShadowConfig.radiusRange)) }
+            if let x = shadow.double("offset_x") { config.offsetX = CGFloat(clamp(x, ShadowConfig.offsetRange)) }
+            if let y = shadow.double("offset_y") { config.offsetY = CGFloat(clamp(y, ShadowConfig.offsetRange)) }
+            shape.shadow = config
+        }
+        if args.isNull("text_background") {
+            shape.textBackgroundPayload = CanvasShapeModel.TextBackgroundPayload()
+        } else if let plate = args.object("text_background") {
+            shape.textBackgroundColorData = try plate.color("color") ?? shape.textBackgroundColorData
+                ?? CodableColor(CanvasShapeModel.defaultTextBackgroundColor)
+            if let opacity = plate.double("opacity") { shape.textBackgroundOpacity = min(max(opacity, 0), 1) }
+            if let radius = plate.double("radius") { shape.textBackgroundCornerRadius = radius }
+            if let padding = plate.double("padding") { shape.textBackgroundPadding = padding }
+            if let color = try plate.color("outline_color") { shape.textBackgroundOutlineColorData = color }
+            if let width = plate.double("outline_width") {
+                shape.textBackgroundOutlineWidth = width > 0 ? width : nil
+                if width <= 0 { shape.textBackgroundOutlineColorData = nil }
+            }
+        }
     }
 }
 #endif

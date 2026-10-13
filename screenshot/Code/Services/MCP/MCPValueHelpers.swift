@@ -149,6 +149,11 @@ struct MCPArguments {
 
     var rawValues: [String: Value] { raw }
 
+    /// An explicit `null`, which some fields take to mean "remove".
+    func isNull(_ key: String) -> Bool {
+        raw[key] == .null
+    }
+
     func has(_ key: String) -> Bool {
         raw[key] != nil && raw[key] != .null
     }
@@ -235,11 +240,14 @@ nonisolated enum MCPArgumentValidator {
 
 /// JSON-Schema builders for tool input schemas.
 nonisolated enum MCPSchema {
-    static func object(_ properties: [String: Value], required: [String] = []) -> Value {
+    static func object(_ properties: [String: Value], required: [String] = [], description: String? = nil) -> Value {
         var schema: [String: Value] = [
             "type": "object",
             "properties": .object(properties),
         ]
+        if let description {
+            schema["description"] = .string(description)
+        }
         if !required.isEmpty {
             schema["required"] = .array(required.map(Value.string))
         }

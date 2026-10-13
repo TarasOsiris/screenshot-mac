@@ -30,7 +30,7 @@ extension MCPToolExecutor {
         return .row(row.id)
     }
 
-    func updateRow(_ args: MCPArguments, _ document: inout ProjectDocument) throws -> MCPEditResult {
+    func updateRow(_ args: MCPArguments, _ document: inout ProjectDocument, _ context: inout MCPEditContext) throws -> MCPEditResult {
         let rowIndex = try requireRowIndex(args, in: document)
         let row = document.rows[rowIndex]
 
@@ -59,13 +59,10 @@ extension MCPToolExecutor {
             document.rows[rowIndex].defaultDeviceCategory = category
             document.rows[rowIndex].defaultDeviceFrameId = nil
         }
-        if let color = try args.color("background_color") {
-            document.rows[rowIndex].backgroundStyle = .color
-            document.rows[rowIndex].backgroundColorData = color
-        }
-        if let gradient = try args.object("background_gradient").map(Self.parseGradient) {
-            document.rows[rowIndex].backgroundStyle = .gradient
-            document.rows[rowIndex].gradientConfig = gradient
+        let localeState = document.localeState
+        try applyBackground(args, to: &document.rows[rowIndex], localeState: localeState, context: &context)
+        if let exclude = args.bool("exclude_from_upload") {
+            document.rows[rowIndex].excludeFromAppStoreConnect = exclude
         }
         if let span = args.bool("span_background") {
             document.rows[rowIndex].spanBackgroundAcrossRow = span

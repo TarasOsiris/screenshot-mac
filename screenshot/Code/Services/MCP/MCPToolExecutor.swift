@@ -68,7 +68,8 @@ final class MCPToolExecutor {
         switch tool {
         case .addRow, .updateRow, .moveRow, .deleteRow, .addTemplate, .removeTemplate, .addShape, .updateShape,
              .deleteShape, .importScreenshots, .addLocale, .removeLocale, .setTranslation, .createVariant,
-             .setRowVariant, .deleteVariant:
+             .setRowVariant, .deleteVariant, .updateTemplate, .duplicateShape, .duplicateRow, .duplicateTemplate,
+             .moveTemplate, .replaceImage, .setAllDevices, .arrangeShapes, .setBaseLocale, .setLocaleLayout:
             return try await runEdit(tool, args)
         case .listTemplates: return try await listTemplates()
         case .listProjects: return try listProjects()

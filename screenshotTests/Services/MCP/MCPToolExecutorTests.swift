@@ -1218,6 +1218,178 @@ struct MCPToolExecutorTests {
         #expect(!json.contains("Hallo"))
     }
 
+    // MARK: - Design tools
+
+    private func writeTestImage(_ tempDir: URL, name: String = "shot.png", width: CGFloat = 1290, height: CGFloat = 2796) throws -> URL {
+        let url = tempDir.appendingPathComponent(name)
+        let image = NSImage(size: NSSize(width: width, height: height), flipped: false) { rect in
+            NSColor.systemTeal.setFill()
+            rect.fill()
+            return true
+        }
+        try #require(ExportService.pngData(from: image)).write(to: url)
+        return url
+    }
+
+    @Test func addShapeTakesEveryStyleFieldAndShadowNullRemoves() async throws {
+        let (executor, state, tempDir) = makeExecutor()
+        defer { cleanupTestState(tempDir) }
+        expectSuccess(await executor.call(name: "add_shape", arguments: [
+            "row_id": .string(state.rows[0].id.uuidString),
+            "type": "text",
+            "text": "Styled",
+            "rotation": 12,
+            "italic": true,
+            "uppercase": true,
+            "vertical_align": "bottom",
+            "shadow": ["color": "#112233", "radius": 20, "offset_y": 8],
+            "text_background": ["color": "#FFFFFF", "padding": 24, "radius": 16],
+        ]))
+        let shape = state.rows[0].shapes.last!
+        #expect(shape.rotation == 12)
+        #expect(shape.italic == true)
+        #expect(shape.uppercase == true)
+        #expect(shape.textVerticalAlign == .bottom)
+        #expect(shape.shadow?.isActive == true)
+        #expect(shape.shadow?.radius == 20)
+        #expect(shape.textBackgroundPadding == 24)
+
+        let snapshot = try decodeEnvelope(await executor.call(name: "update_shape", arguments: [
+            "shape_id": .string(shape.id.uuidString), "shadow": .null, "text_background": .null,
+        ]))
+        #expect(snapshot["shadow"] == nil)
+        #expect(state.rows[0].shapes.last!.shadow == nil)
+        #expect(state.rows[0].shapes.last!.textBackgroundColorData == nil)
+    }
+
+    @Test func backgroundImagesPerRowColumnAndLocale() async throws {
+        let (executor, state, tempDir) = makeExecutor()
+        defer { cleanupTestState(tempDir) }
+        let projectId = try #require(state.activeProject?.id)
+        _ = await executor.call(name: "add_locale", arguments: ["code": "de-DE"])
+        let base = try writeTestImage(tempDir, name: "bg.png", width: 400, height: 800)
+        let german = try writeTestImage(tempDir, name: "bg-de.png", width: 400, height: 800)
+        let rowId = Value.string(state.rows[0].id.uuidString)
+
+        expectSuccess(await executor.call(name: "update_row", arguments: [
+            "row_id": rowId, "background_image_path": .string(base.path), "background_fill_mode": "fit", "background_blur": 6,
+        ]))
+        expectSuccess(await executor.call(name: "update_row", arguments: [
+            "row_id": rowId, "background_image_path": .string(german.path), "background_image_locale": "de-DE",
+        ]))
+        let config = state.rows[0].backgroundImageConfig
+        #expect(state.rows[0].backgroundStyle == .image)
+        #expect(state.rows[0].backgroundBlur == 6)
+        #expect(config.fillMode == .fit)
+        let baseFile = try #require(config.fileName)
+        let germanFile = try #require(config.localeImages["de-DE"]?.fileName)
+        #expect(baseFile != germanFile)
+        for file in [baseFile, germanFile] {
+            #expect(FileManager.default.fileExists(atPath: PersistenceService.resourcesDir(projectId).appendingPathComponent(file).path))
+        }
+
+        let templateId = Value.string(state.rows[0].templates[1].id.uuidString)
+        expectSuccess(await executor.call(name: "update_template", arguments: ["row_id": rowId, "template_id": templateId, "background_color": "#FF0000"]))
+        #expect(state.rows[0].templates[1].overrideBackground)
+        #expect(state.rows[0].templates[1].backgroundStyle == .color)
+    }
+
+    @Test func duplicateAndReorderTools() async throws {
+        let (executor, state, tempDir) = makeExecutor()
+        defer { cleanupTestState(tempDir) }
+        let rowId = Value.string(state.rows[0].id.uuidString)
+        let columns = state.rows[0].templates.count
+        _ = await executor.call(name: "add_shape", arguments: ["row_id": rowId, "type": "text", "text": "Headline"])
+        let headline = state.rows[0].shapes.last!
+        let shapeCount = state.rows[0].shapes.count
+
+        expectSuccess(await executor.call(name: "duplicate_shape", arguments: ["shape_id": .string(headline.id.uuidString), "to_columns": "all"]))
+        #expect(state.rows[0].shapes.count == shapeCount + columns - 1)
+        expectSuccess(await executor.call(name: "duplicate_shape", arguments: ["shape_id": .string(headline.id.uuidString), "offset_x": 0, "offset_y": 100]))
+        #expect(state.rows[0].shapes.last!.y == headline.y + 100)
+
+        let rowCount = state.rows.count
+        expectSuccess(await executor.call(name: "duplicate_row", arguments: ["row_id": rowId]))
+        #expect(state.rows.count == rowCount + 1)
+        #expect(state.rows[1].shapes.count == state.rows[0].shapes.count)
+
+        let firstTemplate = state.rows[0].templates[0].id
+        expectSuccess(await executor.call(name: "duplicate_template", arguments: ["row_id": rowId, "template_id": .string(firstTemplate.uuidString)]))
+        #expect(state.rows[0].templates.count == columns + 1)
+        expectSuccess(await executor.call(name: "move_template", arguments: ["row_id": rowId, "template_id": .string(firstTemplate.uuidString), "to_index": 2]))
+        #expect(state.rows[0].templates[2].id == firstTemplate)
+        let badIndex = await executor.call(name: "move_template", arguments: ["row_id": rowId, "template_id": .string(firstTemplate.uuidString), "to_index": 99])
+        #expect(badIndex.isError == true)
+    }
+
+    @Test func replaceImageTargetsOneDeviceAndLocale() async throws {
+        let (executor, state, tempDir) = makeExecutor()
+        defer { cleanupTestState(tempDir) }
+        _ = await executor.call(name: "add_locale", arguments: ["code": "fr-FR"])
+        _ = await executor.call(name: "add_shape", arguments: ["row_id": .string(state.rows[0].id.uuidString), "type": "device", "device_category": "iphone"])
+        let device = state.rows[0].shapes.last!
+        let image = try writeTestImage(tempDir)
+
+        expectSuccess(await executor.call(name: "replace_image", arguments: [
+            "shape_id": .string(device.id.uuidString), "image_path": .string(image.path), "locale": "fr-FR",
+        ]))
+        let updated = state.rows[0].shapes.last!
+        #expect(updated.displayImageFileName != nil, "the first localized image seeds the base")
+        #expect(state.localeState.override(forCode: "fr-FR", shapeId: device.id)?.overrideImageFileName != nil)
+
+        _ = await executor.call(name: "add_shape", arguments: ["row_id": .string(state.rows[0].id.uuidString), "type": "star"])
+        let notImage = await executor.call(name: "replace_image", arguments: [
+            "shape_id": .string(state.rows[0].shapes.last!.id.uuidString), "image_path": .string(image.path),
+        ])
+        #expect(notImage.isError == true)
+    }
+
+    @Test func setAllDevicesAndArrange() async throws {
+        let (executor, state, tempDir) = makeExecutor()
+        defer { cleanupTestState(tempDir) }
+        let rowId = Value.string(state.rows[0].id.uuidString)
+        _ = await executor.call(name: "add_shape", arguments: ["row_id": rowId, "type": "device", "template_index": 0])
+        _ = await executor.call(name: "add_shape", arguments: ["row_id": rowId, "type": "device", "template_index": 1])
+        let frame = try #require(DeviceFrameCatalog.allFrames.first { $0.fallbackCategory == .iphone && !$0.isLandscape && !$0.isModelBacked })
+
+        expectSuccess(await executor.call(name: "set_all_devices", arguments: ["row_id": rowId, "device_frame_id": .string(frame.id)]))
+        let devices = state.rows[0].shapes.filter { $0.type == .device }
+        #expect(!devices.isEmpty)
+        #expect(devices.allSatisfy { $0.deviceFrameId == frame.id })
+
+        _ = await executor.call(name: "add_shape", arguments: ["row_id": rowId, "type": "rectangle", "x": 100, "y": 300])
+        _ = await executor.call(name: "add_shape", arguments: ["row_id": rowId, "type": "circle", "x": 400, "y": 900])
+        let pair = state.rows[0].shapes.suffix(2).map { Value.string($0.id.uuidString) }
+        expectSuccess(await executor.call(name: "arrange_shapes", arguments: ["shape_ids": .array(pair), "action": "align_left"]))
+        #expect(state.rows[0].shapes.suffix(2).allSatisfy { $0.x == 100 })
+        let tooFew = await executor.call(name: "arrange_shapes", arguments: ["shape_ids": .array(pair), "action": "distribute_horizontally"])
+        #expect(tooFew.isError == true)
+    }
+
+    @Test func localeLayoutAndBaseLocale() async throws {
+        let (executor, state, tempDir) = makeExecutor()
+        defer { cleanupTestState(tempDir) }
+        _ = await executor.call(name: "add_locale", arguments: ["code": "de-DE"])
+        _ = await executor.call(name: "add_shape", arguments: ["row_id": .string(state.rows[0].id.uuidString), "type": "text", "text": "Hello", "width": 400])
+        let shape = state.rows[0].shapes.last!
+        let shapeId = Value.string(shape.id.uuidString)
+        _ = await executor.call(name: "set_translation", arguments: ["shape_id": shapeId, "locale_code": "de-DE", "text": "Hallo", "auto_fit": false])
+
+        expectSuccess(await executor.call(name: "set_locale_layout", arguments: ["shape_id": shapeId, "locale_code": "de-DE", "width": 600]))
+        #expect(state.rows[0].shapes.last!.width == 400, "the base layout is untouched")
+        let german = LocaleService.resolveShape(state.rows[0].shapes.last!, localeCode: "de-DE", localeState: state.localeState)
+        #expect(german.width == 600)
+
+        expectSuccess(await executor.call(name: "set_locale_layout", arguments: ["shape_id": shapeId, "locale_code": "de-DE", "reset": true]))
+        let reset = LocaleService.resolveShape(state.rows[0].shapes.last!, localeCode: "de-DE", localeState: state.localeState)
+        #expect(reset.width == 400)
+        #expect(reset.text == "Hallo", "reset keeps the translation")
+
+        expectSuccess(await executor.call(name: "set_base_locale", arguments: ["code": "de-DE"]))
+        #expect(state.localeState.baseLocaleCode == "de-DE")
+        #expect(state.rows[0].shapes.last!.text == "Hallo")
+    }
+
     // MARK: - Project binding
     //
     // In this suite rather than their own: they share `SCREENSHOT_DATA_DIR` and the demo-mode

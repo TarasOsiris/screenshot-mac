@@ -92,13 +92,11 @@ extension AppState {
     func duplicateRow(_ id: UUID) {
         guard let idx = rows.firstIndex(where: { $0.id == id }), rows[idx].isOriginal else { return }
         withUndo("Duplicate Row") {
-            let source = rows[idx]
-            insertDuplicate(
-                of: source,
-                at: idx + 1,
-                label: String(localized: "\(source.label) copy"),
-                variantId: source.activeVariantId
+            let copy = DocumentEditing.copyRow(
+                at: idx, label: String(localized: "\(rows[idx].label) copy"),
+                rows: &rows, localeState: &localeState, resources: self
             )
+            if let copy { selectRow(copy.id) }
         }
     }
 

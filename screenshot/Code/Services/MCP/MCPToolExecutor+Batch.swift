@@ -27,7 +27,7 @@ extension MCPEditResult {
         case .row(let id), .shape(let id): id
         case .translation(let shapeId, _): shapeId
         case .imported(let rowId, _, _, _): rowId
-        case .locales, .variants, .deletedRow, .deletedShape: nil
+        case .locales, .variants, .project, .deletedRow, .deletedShape: nil
         }
     }
 }
@@ -78,7 +78,7 @@ extension MCPToolExecutor {
     ) async throws -> CallTool.Result {
         let checkout = try await editCheckout(args)
         defer { checkout.dispose() }
-        var context = MCPEditContext(availableFontFamilies: checkout.availableFontFamilySet, resources: checkout)
+        var context = MCPEditContext(projectId: checkout.projectId, availableFontFamilies: checkout.availableFontFamilySet, resources: checkout)
         let results = try checkout.mutate(actionName) { document in
             var results: [MCPEditResult] = []
             var producedIds: [UUID?] = []
@@ -112,6 +112,8 @@ extension MCPToolExecutor {
             return try MCPResultEncoding.value(MCPBatchTranslationRecord(shapeId: shapeId.uuidString, autoFit: fits[shapeId].map { MCPAutoFitSnapshot($0) }))
         case .imported(let rowId, let count, let locale, let failures):
             return try MCPResultEncoding.value(MCPBatchImportRecord(rowId: rowId.uuidString, imported: count, locale: locale, failures: failures))
+        case .project:
+            return ["applied": true]
         case .locales, .variants:
             return try MCPResultEncoding.value(render(result, in: checkout, writeFailures: []))
         }
