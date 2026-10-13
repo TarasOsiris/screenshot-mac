@@ -5,6 +5,7 @@ import MCP
 nonisolated enum MCPJobKind: String, Sendable, CaseIterable {
     case preview = "preview_app_store_screenshot_sync"
     case apply = "apply_app_store_screenshot_sync"
+    case playUpload = "upload_play_screenshots"
 }
 
 nonisolated enum MCPJobPhase: String, Sendable {

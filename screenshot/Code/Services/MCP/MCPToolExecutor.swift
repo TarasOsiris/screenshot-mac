@@ -92,10 +92,24 @@ final class MCPToolExecutor {
         case .listCatalog: return try await listCatalog(args)
         case .undo: return try undo(args, redo: false)
         case .redo: return try undo(args, redo: true)
+        case .updateAppStoreMetadata: return try await updateAppStoreMetadata(args)
+        case .listAppStoreApps: return try await listAppStoreApps()
+        case .linkProjectStores: return try linkProjectStores(args)
+        case .previewPlayUpload: return try await previewPlayUpload(args)
+        case .uploadPlayScreenshots: return try await uploadPlayScreenshots(args)
         }
     }
 
     // MARK: - Shared lookups
+
+    /// `row_ids`, when given, every one a row of `rows`.
+    func requireRowIds(_ args: MCPArguments, among rows: [ScreenshotRow]) throws -> Set<UUID>? {
+        guard let ids = try args.uuidArray("row_ids").map(Set.init) else { return nil }
+        if let missing = ids.subtracting(rows.map(\.id)).first {
+            throw MCPToolError.notFound("Row \(missing.uuidString)")
+        }
+        return ids
+    }
 
     func requireProject(_ args: MCPArguments, key: String = "project_id") throws -> Project {
         let id = try args.uuid(key)

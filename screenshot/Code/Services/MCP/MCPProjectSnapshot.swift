@@ -7,6 +7,9 @@ struct MCPProjectListItem: Encodable {
     let isActive: Bool
     let isStarred: Bool
     let modifiedAt: String
+    /// The store links `link_project_stores` sets; absent when unlinked.
+    let ascAppId: String?
+    let googlePlayPackageName: String?
 }
 
 struct MCPTemplateListItem: Encodable {
@@ -153,7 +156,9 @@ enum MCPSnapshotBuilder {
                 name: project.name,
                 isActive: project.id == activeProjectId,
                 isStarred: project.isStarred,
-                modifiedAt: dateFormatter.string(from: project.modifiedAt)
+                modifiedAt: dateFormatter.string(from: project.modifiedAt),
+                ascAppId: project.ascAppId,
+                googlePlayPackageName: project.googlePlayPackageName
             )
         }
     }

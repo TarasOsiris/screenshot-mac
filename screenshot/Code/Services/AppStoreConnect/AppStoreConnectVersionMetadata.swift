@@ -3,6 +3,17 @@ import Foundation
 /// Write policies for version-localization metadata that aren't the API client's business —
 /// they encode what App Store Connect will accept, not how to talk to it.
 enum AppStoreConnectVersionMetadata {
+    /// One PATCH per changed localization, and a many-locale app has 70 of them — unbounded, that is
+    /// 70 simultaneous writes against an account with an hourly request budget.
+    static let writeConcurrency = 4
+
+    /// The app info whose localizations hold name, subtitle and privacy URL: the editable one when there is one.
+    static func editableAppInfoLocalizations(_ api: some ASCUploadAPI, appId: String) async throws -> [ASCAppInfoLocalization] {
+        let infos = try await api.listAppInfos(appId: appId)
+        guard let info = infos.first(where: \.isEditable) ?? infos.first else { return [] }
+        return try await api.listAppInfoLocalizations(appInfoId: info.id)
+    }
+
     /// Patch a version localization, gracefully dropping "What's New" when App Store Connect
     /// rejects it. The first version of a brand-new app has no release notes, so a `whatsNew`
     /// edit returns 409 ("Attribute 'whatsNew' cannot be edited at this time"); retry without it

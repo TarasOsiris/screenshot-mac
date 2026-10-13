@@ -1720,4 +1720,78 @@ struct MCPToolExecutorTests {
         #expect(Set(versionResult.updated) == ["en-US", "fr-FR"])
         #expect(versionResult.skipped.map(\.locale) == ["zz-ZZ"])
     }
+
+    // MARK: - Store metadata, Play, export options
+
+    @Test func appStoreMetadataFieldsInDemoMode() async throws {
+        let (executor, state, tempDir) = makeExecutor()
+        defer { cleanupTestState(tempDir) }
+        let credentials = AppStoreConnectCredentialsStore.shared
+        let originalDemoMode = credentials.isDemoMode
+        credentials.isDemoMode = true
+        defer { credentials.isDemoMode = originalDemoMode }
+        AppStoreConnectDemoData.shared.updateContext(localeCodes: ["fr-FR"], rowSizes: [])
+        let projectId = Value.string(try #require(state.activeProject?.id).uuidString)
+
+        let apps = try decodeEnvelope(await executor.call(name: "list_app_store_apps", arguments: [:]))
+        let appId = try #require((apps["apps"] as? [[String: Any]])?.first?["id"] as? String)
+        expectSuccess(await executor.call(name: "link_project_stores", arguments: [
+            "project_id": projectId, "app_id": .string(appId), "play_package_name": "com.example.shots",
+        ]))
+        #expect(state.activeProject?.ascAppId == appId)
+        #expect(state.activeProject?.googlePlayPackageName == "com.example.shots")
+        let badPackage = await executor.call(name: "link_project_stores", arguments: ["project_id": projectId, "play_package_name": "not a package"])
+        #expect(badPackage.isError == true)
+
+        let tooLong = await executor.call(name: "update_app_store_metadata", arguments: [
+            "project_id": projectId,
+            "locales": [["locale": "en-US", "keywords": .string(String(repeating: "k", count: 101))]],
+        ])
+        #expect(tooLong.isError == true)
+        #expect("\(tooLong.content)".contains("100"))
+
+        let updated = try decodeEnvelope(await executor.call(name: "update_app_store_metadata", arguments: [
+            "project_id": projectId,
+            "locales": [["locale": "en-US", "keywords": "screenshots,mockups", "promotional_text": "Now with MCP"]],
+        ]))
+        let version = try #require((updated["versions"] as? [[String: Any]])?.first)
+        #expect(version["updated"] as? [String] == ["en-US"])
+    }
+
+    @Test func playUploadPlansAndRequiresConfirmation() async throws {
+        let (executor, state, tempDir) = makeExecutor()
+        defer { cleanupTestState(tempDir) }
+        let play = GooglePlayCredentialsStore.shared
+        let originalDemoMode = play.isDemoMode
+        play.isDemoMode = true
+        defer { play.isDemoMode = originalDemoMode }
+        let projectId = Value.string(try #require(state.activeProject?.id).uuidString)
+
+        let plan = try decodeEnvelope(await executor.call(name: "preview_play_upload", arguments: [
+            "project_id": projectId, "package_name": "com.example.shots", "image_type": "phoneScreenshots",
+        ]))
+        let rows = try #require(plan["rows"] as? [[String: Any]])
+        #expect(rows.count == state.rows.count)
+        #expect(rows.allSatisfy { $0["image_type"] as? String == "phoneScreenshots" })
+
+        let unconfirmed = await executor.call(name: "upload_play_screenshots", arguments: ["project_id": projectId, "confirm": false])
+        #expect(unconfirmed.isError == true)
+    }
+
+    @Test func exportContinuousRowsForChosenRows() async throws {
+        let (executor, state, tempDir) = makeExecutor()
+        defer { cleanupTestState(tempDir) }
+        _ = await executor.call(name: "add_row", arguments: [:])
+        let projectId = Value.string(try #require(state.activeProject?.id).uuidString)
+
+        let result = try decodeEnvelope(await executor.call(name: "export_project", arguments: [
+            "project_id": projectId,
+            "row_ids": [.string(state.rows[0].id.uuidString)],
+            "layout": "continuous",
+        ]))
+        let files = try #require(result["files"] as? [String])
+        #expect(files.count == 1)
+        let image = try #require(NSImage(contentsOfFile: files[0]))
+        #expect(image.size.width > image.size.height, "a stitched row is wider than tall")
+    }
 }

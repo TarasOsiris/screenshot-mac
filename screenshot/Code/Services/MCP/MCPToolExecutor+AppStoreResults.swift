@@ -62,6 +62,15 @@ extension MCPToolExecutor {
     struct ASCMetadataResult: Encodable {
         let appId: String
         let versions: [VersionMeta]
+        /// Name, subtitle and privacy URL: per app rather than per version.
+        let appInfo: [AppInfoMeta]?
+
+        struct AppInfoMeta: Encodable {
+            let locale: String
+            let name: String?
+            let subtitle: String?
+            let privacyPolicyUrl: String?
+        }
 
         struct VersionMeta: Encodable {
             let versionId: String
@@ -75,6 +84,11 @@ extension MCPToolExecutor {
         struct LocaleDescription: Encodable {
             let locale: String
             let description: String?
+            let keywords: String?
+            let promotionalText: String?
+            let whatsNew: String?
+            let marketingUrl: String?
+            let supportUrl: String?
         }
     }
 

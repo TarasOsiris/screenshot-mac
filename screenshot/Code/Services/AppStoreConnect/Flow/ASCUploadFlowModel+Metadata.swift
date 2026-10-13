@@ -8,17 +8,9 @@ extension ASCUploadFlowModel {
         errorMessage = nil
         defer { isBusy = false }
         do {
-            async let appInfosTask = api.listAppInfos(appId: app.id)
+            async let appInfoLocalizationsTask = AppStoreConnectVersionMetadata.editableAppInfoLocalizations(api, appId: app.id)
             try await loadSelectedVersionLocalizations()
-            let fetchedAppInfos = try await appInfosTask
-
-            let editableInfo = fetchedAppInfos.first(where: { $0.isEditable }) ?? fetchedAppInfos.first
-            let fetchedAppInfoLocalizations: [ASCAppInfoLocalization]
-            if let editableInfo {
-                fetchedAppInfoLocalizations = try await api.listAppInfoLocalizations(appInfoId: editableInfo.id)
-            } else {
-                fetchedAppInfoLocalizations = []
-            }
+            let fetchedAppInfoLocalizations = try await appInfoLocalizationsTask
 
             if !selectedVersions.contains(where: { $0.id == metadataVersionId }) {
                 metadataVersionId = selectedVersions.first?.id
@@ -126,10 +118,6 @@ extension ASCUploadFlowModel {
         }
     }
 
-    /// One PATCH per changed draft, and a many-locale app has 70 of them — unbounded, that is 70
-    /// simultaneous writes against an account with an hourly request budget.
-    private static let metadataWriteConcurrency = 4
-
     /// Patches every changed draft (copyright, version localizations, app-info localizations) a
     /// few at a time, then re-baselines the drafts so the change dots clear. Returns what was
     /// written.
@@ -168,7 +156,7 @@ extension ASCUploadFlowModel {
 
         try await withThrowingTaskGroup(of: Void.self) { group in
             var pending = writes.makeIterator()
-            for _ in 0..<Self.metadataWriteConcurrency {
+            for _ in 0..<AppStoreConnectVersionMetadata.writeConcurrency {
                 guard let write = pending.next() else { break }
                 group.addTask { try await write() }
             }

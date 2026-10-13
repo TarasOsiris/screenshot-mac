@@ -65,6 +65,9 @@ extension MCPToolExecutor {
     static let syncApplyStepLimit = 12
     static let syncApplySetLimit = 2
     static let hardApplyStepLimit = 200
+    /// Each Play screenshot is a render plus an upload, so a render-only cap would hold the request too long.
+    static let syncPlayUploadLimit = 12
+    static let hardPlayUploadLimit = 200
 
     static func previewRenderCount(_ targets: [ASCUploadTarget]) -> Int {
         targets.reduce(0) { $0 + $1.templateCount * $1.localizations.count }

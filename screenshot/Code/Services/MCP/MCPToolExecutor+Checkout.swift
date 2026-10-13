@@ -57,7 +57,7 @@ extension MCPToolExecutor {
             throw MCPToolError.notFound("Project \(id.uuidString)")
         }
         guard let linked = project.ascAppId, !linked.isEmpty else {
-            throw MCPToolError.expected("\(project.name) is not linked to an App Store Connect app — pass app_id, or link it via the App Store Connect upload wizard.")
+            throw MCPToolError.expected("\(project.name) is not linked to an App Store Connect app — pass app_id, or link it with link_project_stores (list_app_store_apps shows the ids).")
         }
         return linked
     }

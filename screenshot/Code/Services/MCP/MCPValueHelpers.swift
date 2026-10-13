@@ -149,6 +149,11 @@ struct MCPArguments {
 
     var rawValues: [String: Value] { raw }
 
+    /// Given at all, a value or an explicit `null`.
+    func isPresent(_ key: String) -> Bool {
+        raw[key] != nil
+    }
+
     /// An explicit `null`, which some fields take to mean "remove".
     func isNull(_ key: String) -> Bool {
         raw[key] == .null

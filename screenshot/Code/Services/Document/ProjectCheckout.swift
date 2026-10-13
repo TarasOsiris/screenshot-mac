@@ -174,6 +174,7 @@ final class ProjectCheckout: RowRenderSource, ImageResourceCopying {
     let projectId: UUID
     let projectName: String
     let ascAppId: String?
+    let googlePlayPackageName: String?
     private let host: ProjectMutationHost
     private let resourcesURL: URL
     private let fontScope: ProjectFontScope?
@@ -182,12 +183,14 @@ final class ProjectCheckout: RowRenderSource, ImageResourceCopying {
         projectId: UUID,
         projectName: String,
         ascAppId: String?,
+        googlePlayPackageName: String?,
         host: ProjectMutationHost,
         fontScope: ProjectFontScope?
     ) {
         self.projectId = projectId
         self.projectName = projectName
         self.ascAppId = ascAppId
+        self.googlePlayPackageName = googlePlayPackageName
         self.host = host
         self.resourcesURL = PersistenceService.resourcesDir(projectId)
         self.fontScope = fontScope
@@ -258,6 +261,7 @@ final class ProjectCheckout: RowRenderSource, ImageResourceCopying {
                 projectId: projectId,
                 projectName: project.name,
                 ascAppId: project.ascAppId,
+                googlePlayPackageName: project.googlePlayPackageName,
                 host: OpenProjectHost(state: state),
                 fontScope: nil
             )
@@ -279,6 +283,7 @@ final class ProjectCheckout: RowRenderSource, ImageResourceCopying {
             projectId: projectId,
             projectName: project.name,
             ascAppId: project.ascAppId,
+            googlePlayPackageName: project.googlePlayPackageName,
             host: DetachedProjectHost(projectId: projectId, state: state, data: data, fontScope: fontScope),
             fontScope: fontScope
         )

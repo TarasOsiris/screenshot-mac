@@ -222,8 +222,13 @@ final class GPUploadFlowModel {
     }
 
     func buildRowPlans(preserving existingPlans: [GPRowPlan] = []) -> [GPRowPlan] {
+        Self.rowPlans(rows: listingRows, localeState: localeState, preserving: existingPlans)
+    }
+
+    /// The plan the wizard starts from; the MCP upload plans the same way.
+    static func rowPlans(rows: [ScreenshotRow], localeState: LocaleState, preserving existingPlans: [GPRowPlan] = []) -> [GPRowPlan] {
         let defaultCodes = GooglePlayLanguageMatcher.defaultUploadCodes(among: localeState.locales.map(\.code))
-        return listingRows.map { row in
+        return rows.map { row in
             let detected = GPImageType.detect(width: row.templateWidth, height: row.templateHeight)
             let existingPlan = existingPlans.first(where: { $0.id == row.id })
             let targets = localeState.locales.map { locale -> GPLocaleTarget in
@@ -262,7 +267,11 @@ final class GPUploadFlowModel {
     }
 
     func buildUploadTargets() -> [GPUploadTarget] {
-        rowPlans.compactMap { plan -> GPUploadTarget? in
+        Self.uploadTargets(from: rowPlans)
+    }
+
+    static func uploadTargets(from plans: [GPRowPlan]) -> [GPUploadTarget] {
+        plans.compactMap { plan -> GPUploadTarget? in
             let languages = Self.uploadLanguages(for: plan)
             guard !languages.isEmpty else { return nil }
             return GPUploadTarget(

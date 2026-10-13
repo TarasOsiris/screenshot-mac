@@ -50,6 +50,11 @@ enum MCPToolName: String, CaseIterable {
     case arrangeShapes = "arrange_shapes"
     case setBaseLocale = "set_base_locale"
     case setLocaleLayout = "set_locale_layout"
+    case updateAppStoreMetadata = "update_app_store_metadata"
+    case listAppStoreApps = "list_app_store_apps"
+    case linkProjectStores = "link_project_stores"
+    case previewPlayUpload = "preview_play_upload"
+    case uploadPlayScreenshots = "upload_play_screenshots"
 
     nonisolated static var available: [MCPToolName] { allCases.filter(\.isAvailable) }
 
@@ -67,9 +72,9 @@ enum MCPToolName: String, CaseIterable {
         switch self {
         case .listTemplates, .listProjects, .getProject, .renderPreview, .getSyncJobStatus, .listVariants, .listCatalog:
             Tool.Annotations(readOnlyHint: true, openWorldHint: false)
-        case .getAppStoreMetadata, .previewAppStoreScreenshotSync:
+        case .getAppStoreMetadata, .previewAppStoreScreenshotSync, .listAppStoreApps, .previewPlayUpload:
             Tool.Annotations(readOnlyHint: true, openWorldHint: true)
-        case .applyAppStoreScreenshotSync, .updateAppStoreDescription:
+        case .applyAppStoreScreenshotSync, .updateAppStoreDescription, .updateAppStoreMetadata, .uploadPlayScreenshots:
             Tool.Annotations(readOnlyHint: false, destructiveHint: true, idempotentHint: true, openWorldHint: true)
         case .cancelSyncJob:
             Tool.Annotations(readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: true)
@@ -79,7 +84,7 @@ enum MCPToolName: String, CaseIterable {
         case .deleteProject, .deleteRow, .deleteShape, .removeTemplate, .removeLocale, .deleteVariant,
              .importScreenshots, .moveRow, .batch, .undo, .redo, .replaceImage, .moveTemplate:
             Tool.Annotations(readOnlyHint: false, destructiveHint: true, idempotentHint: false, openWorldHint: false)
-        case .switchProject:
+        case .switchProject, .linkProjectStores:
             Tool.Annotations(readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false)
         case .createProject, .addRow, .addTemplate, .addShape, .addLocale, .createVariant, .exportProject,
              .duplicateShape, .duplicateRow, .duplicateTemplate:
@@ -149,6 +154,14 @@ nonisolated enum MCPToolCatalog {
         "outline_color": MCPSchema.string("Plate outline color"),
         "outline_width": MCPSchema.number("Plate outline width (0 removes it)"),
     ], description: "Rounded plate behind text; null removes it")
+
+    private static let playUploadProperties: [String: Value] = [
+        "project_id": MCPSchema.string("Project UUID — from list_projects"),
+        "package_name": MCPSchema.string("Google Play application id (default: the package linked to the project)"),
+        "row_ids": MCPSchema.array(of: MCPSchema.string("Row UUID"), "Original rows to upload (default: every row that isn't App Store-only)"),
+        "locale_codes": MCPSchema.array(of: MCPSchema.string("Project locale code"), "Project locales to upload (default: those Play lists)"),
+        "image_type": MCPSchema.string("Play image type for every included row (default: detected from each row's size)", oneOf: GPImageType.allCases.map(\.rawValue)),
+    ]
 
     /// Background fields update_row and update_template both accept.
     private static let backgroundProperties: [String: Value] = [
@@ -420,6 +433,9 @@ nonisolated enum MCPToolCatalog {
                 "format": MCPSchema.string("Image format (default png)", oneOf: ["png", "jpeg"]),
                 "locale": MCPSchema.string("Export only this locale code (default: all locales)"),
                 "naming": MCPSchema.string("File layout: standard (default) or fastlane — deliver-style <App Store locale>/<NN>_<row>.png", oneOf: ["standard", "fastlane"]),
+                "row_ids": MCPSchema.array(of: MCPSchema.string("Row UUID"), "Export only these rows (default: all)"),
+                "file_suffix": MCPSchema.string("Appended to every file name, e.g. \"_v2\""),
+                "layout": MCPSchema.string("screenshots (default): one image per column; continuous: one stitched image per row and locale (not with fastlane naming)", oneOf: ["screenshots", "continuous"]),
             ], required: ["project_id"])
         ),
         Tool(
@@ -444,7 +460,7 @@ nonisolated enum MCPToolCatalog {
         ),
         Tool(
             name: MCPToolName.updateAppStoreDescription.rawValue,
-            description: "Update the App Store 'description' text for one or more locales on App Store Connect. Supply already-translated descriptions per locale — this tool does not translate, it only applies what you give it. By default it updates every editable App Store version (all platforms); only locales that already exist on a version are updated, the rest are reported as skipped. Discover valid locale codes with get_app_store_metadata first.",
+            description: "Update only the App Store 'description' text (update_app_store_metadata covers every field) for one or more locales on App Store Connect. Supply already-translated descriptions per locale — this tool does not translate, it only applies what you give it. By default it updates every editable App Store version (all platforms); only locales that already exist on a version are updated, the rest are reported as skipped. Discover valid locale codes with get_app_store_metadata first.",
             inputSchema: MCPSchema.object([
                 "project_id": MCPSchema.string("Project UUID whose linked app to use; pass this or app_id"),
                 "descriptions": MCPSchema.array(
@@ -682,6 +698,58 @@ nonisolated enum MCPToolCatalog {
                 "text_align": MCPSchema.string("Text alignment in this locale", oneOf: ["left", "center", "right"]),
                 "reset": MCPSchema.boolean("Drop this locale's position, size and font overrides first"),
             ], required: ["shape_id", "locale_code"])
+        ),
+        Tool(
+            name: MCPToolName.updateAppStoreMetadata.rawValue,
+            description: "Update App Store listing text per locale: description, keywords, promotional_text, whats_new, marketing_url and support_url on every editable version (or version_id), and name, subtitle and privacy_policy_url on the app. Only the fields you pass change. Lengths are checked against App Store Connect's limits (name and subtitle 30, keywords 100, promotional text 170, description and What's New 4000) before anything is written. Read the current text and exact locale codes with get_app_store_metadata first; this tool does not translate.",
+            inputSchema: MCPSchema.object([
+                "project_id": MCPSchema.string("Project UUID whose linked app to use; pass this or app_id"),
+                "app_id": MCPSchema.string("App Store Connect app id (default: the app linked to project_id)"),
+                "version_id": MCPSchema.string("Update only this App Store version id (default: every editable version)"),
+                "locales": MCPSchema.array(
+                    of: MCPSchema.object([
+                        "locale": MCPSchema.string("App Store locale code, e.g. en-US, de-DE"),
+                        "description": MCPSchema.string("Description (≤4000)"),
+                        "keywords": MCPSchema.string("Comma-separated keywords (≤100)"),
+                        "promotional_text": MCPSchema.string("Promotional text (≤170)"),
+                        "whats_new": MCPSchema.string("What's New (≤4000)"),
+                        "marketing_url": MCPSchema.string("Marketing URL"),
+                        "support_url": MCPSchema.string("Support URL"),
+                        "name": MCPSchema.string("App name (≤30)"),
+                        "subtitle": MCPSchema.string("Subtitle (≤30)"),
+                        "privacy_policy_url": MCPSchema.string("Privacy policy URL"),
+                    ], required: ["locale"]),
+                    "Per-locale changes"
+                ),
+            ], required: ["locales"])
+        ),
+        Tool(
+            name: MCPToolName.listAppStoreApps.rawValue,
+            description: "List the App Store Connect apps the configured API key can see, with the projects linked to each.",
+            inputSchema: MCPSchema.object([:])
+        ),
+        Tool(
+            name: MCPToolName.linkProjectStores.rawValue,
+            description: "Link a project to its App Store Connect app and/or Google Play package, so store tools can find them from project_id. Pass null to unlink.",
+            inputSchema: MCPSchema.object([
+                "project_id": MCPSchema.string("Project UUID"),
+                "app_id": MCPSchema.string("App Store Connect app id — list_app_store_apps"),
+                "play_package_name": MCPSchema.string("Google Play application id, e.g. com.example.app"),
+            ], required: ["project_id"])
+        ),
+        Tool(
+            name: MCPToolName.previewPlayUpload.rawValue,
+            description: "Plan a Google Play screenshot upload without touching Play: which Original rows go up as which image type (phone, 7-inch, 10-inch tablet), in which Play languages, how many screenshots, and any preflight issues. Same options as upload_play_screenshots.",
+            inputSchema: MCPSchema.object(playUploadProperties, required: ["project_id"])
+        ),
+        Tool(
+            name: MCPToolName.uploadPlayScreenshots.rawValue,
+            description: "Render and upload a project's screenshots to its Google Play listing, replacing the existing screenshots of each planned image type and language. Saved as a draft edit unless send_for_review is true. Runs as a job like the App Store sync: poll get_sync_job_status. Preview with preview_play_upload first.",
+            inputSchema: MCPSchema.object(playUploadProperties.merging([
+                "confirm": MCPSchema.boolean("Must be true to write to Google Play"),
+                "send_for_review": MCPSchema.boolean("Send the change for review instead of leaving it as a draft (default false)"),
+                "mode": MCPSchema.string("\"auto\" (default), \"sync\" or \"async\" — see preview_app_store_screenshot_sync", oneOf: MCPJobMode.allCases.map(\.rawValue)),
+            ]) { $1 }, required: ["project_id", "confirm"])
         ),
     ]
 }
