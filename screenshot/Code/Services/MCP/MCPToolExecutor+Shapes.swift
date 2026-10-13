@@ -45,8 +45,8 @@ extension MCPToolExecutor {
             } else {
                 shape = CanvasShapeModel.defaultDeviceFromRow(row, centerX: centerX, centerY: centerY)
             }
-            if let frameId = args.string("device_frame_id") {
-                shape.deviceFrameId = frameId
+            if let frame = try deviceFrame(args) {
+                shape.selectRealFrame(frame)
             }
             state.addShape(shape)
 
@@ -149,6 +149,7 @@ extension MCPToolExecutor {
         _ = try args.color("outline_color")
         _ = try args.enumValue("text_align", TextAlign.self)
         _ = try args.enumValue("device_category", DeviceCategory.self)
+        _ = try deviceFrame(args)
         try validateFontName(args)
     }
 
@@ -162,6 +163,28 @@ extension MCPToolExecutor {
         if let runs = try args.strictObjectArray("text_runs") {
             try MCPRichText.validate(runs, availableFontFamilies: state.availableFontFamilySet)
         }
+    }
+
+    /// Mirrors the properties bar: the legacy point spacing is folded into a multiple, because the
+    /// renderer ignores `lineSpacing` once `lineHeightMultiple` is set.
+    private func lineHeightMultiple(_ args: MCPArguments, shape: CanvasShapeModel) -> CGFloat? {
+        if let multiple = args.double("line_height") {
+            return TextLayoutStyle.clampLineHeightMultiple(CGFloat(multiple))
+        }
+        guard let spacing = args.double("line_spacing") else { return nil }
+        let font = NSFont.systemFont(
+            ofSize: shape.fontSize ?? CanvasShapeModel.defaultFontSize,
+            weight: CSSFontWeight(css: shape.fontWeight ?? 400).platform
+        )
+        return TextLayoutStyle.effectiveLineHeightMultiple(lineHeightMultiple: nil, legacyLineSpacing: CGFloat(spacing), font: font)
+    }
+
+    private func deviceFrame(_ args: MCPArguments) throws -> DeviceFrame? {
+        guard let id = args.string("device_frame_id") else { return nil }
+        guard let frame = DeviceFrameCatalog.frame(for: id) else {
+            throw MCPToolError.invalidArgument("device_frame_id", "unknown device frame \(id)")
+        }
+        return frame
     }
 
     private func validateFontName(_ args: MCPArguments) throws {
@@ -229,8 +252,10 @@ extension MCPToolExecutor {
             RichTextUtils.syncShapeStyleIfNeeded(in: &shape, property: .letterSpacing)
             restyled.append(.letterSpacing)
         }
-        if let spacing = args.double("line_spacing").map({ CGFloat($0) }), spacing != shape.lineSpacing {
-            shape.lineSpacing = spacing
+        if let multiple = lineHeightMultiple(args, shape: shape),
+           multiple != shape.lineHeightMultiple || shape.lineSpacing != nil {
+            shape.lineHeightMultiple = multiple
+            shape.lineSpacing = nil
             RichTextUtils.syncShapeStyleIfNeeded(in: &shape, property: .lineHeight)
             restyled.append(.lineHeight)
         }
@@ -246,7 +271,7 @@ extension MCPToolExecutor {
             shape.deviceCategory = category
             shape.deviceFrameId = nil
         }
-        if let frameId = args.string("device_frame_id") { shape.deviceFrameId = frameId }
+        if let frame = try deviceFrame(args) { shape.selectRealFrame(frame) }
         if let points = args.int("star_points") { shape.starPointCount = points }
         if let clip = args.bool("clip_to_template") { shape.clipToTemplate = clip }
         if let shrink = args.bool("shrink_to_fit") { shape.shrinkToFit = shrink }

@@ -38,6 +38,9 @@ final class MCPToolExecutor {
             guard let tool else {
                 throw MCPToolError.unknownTool(name)
             }
+            if let schema = MCPToolCatalog.inputSchema(for: tool) {
+                try MCPArgumentValidator.validate(arguments, against: schema)
+            }
             let args = MCPArguments(arguments)
             let result = try await dispatch(tool, args)
             AnalyticsService.capture(.mcpToolCalled, [.tool: tool.rawValue, .ok: true, .mcpSessionId: sessionId])

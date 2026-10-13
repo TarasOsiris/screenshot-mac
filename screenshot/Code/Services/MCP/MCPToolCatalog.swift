@@ -90,6 +90,14 @@ nonisolated enum MCPToolCatalog {
         allTools.filter { MCPToolName(rawValue: $0.name)?.isAvailable ?? false }
     }
 
+    private static let schemasByName: [String: Value] = Dictionary(
+        uniqueKeysWithValues: allTools.map { ($0.name, $0.inputSchema) }
+    )
+
+    static func inputSchema(for tool: MCPToolName) -> Value? {
+        schemasByName[tool.rawValue]
+    }
+
     private static let allTools: [Tool] = [
         Tool(
             name: MCPToolName.listTemplates.rawValue,
@@ -136,7 +144,7 @@ nonisolated enum MCPToolCatalog {
         ),
         Tool(
             name: MCPToolName.deleteProject.rawValue,
-            description: "Delete a project (moves it to trash; restorable for 30 days).",
+            description: "Permanently delete a project and its files. This cannot be undone.",
             inputSchema: MCPSchema.object([
                 "project_id": MCPSchema.string("Project UUID"),
             ], required: ["project_id"])
@@ -249,11 +257,12 @@ nonisolated enum MCPToolCatalog {
                 "font_weight": MCPSchema.integer("Font weight 100-900"),
                 "text_align": MCPSchema.string("Horizontal text alignment", oneOf: ["left", "center", "right"]),
                 "letter_spacing": MCPSchema.number("Letter spacing"),
-                "line_spacing": MCPSchema.number("Line spacing"),
+                "line_height": MCPSchema.number("Line height as a multiple of the font's natural line height, 0.5-2.0 (1 = default)"),
+                "line_spacing": MCPSchema.number("Legacy: extra points between lines, converted to line_height. Prefer line_height"),
                 "outline_color": MCPSchema.string("Outline color as #RRGGBB"),
                 "outline_width": MCPSchema.number("Outline width (0 removes the outline)"),
                 "device_category": MCPSchema.string("Device category (device shapes)", oneOf: deviceCategories),
-                "device_frame_id": MCPSchema.string("Device frame id (device shapes)"),
+                "device_frame_id": MCPSchema.string("Device frame id (device shapes); also sets the matching category and aspect ratio"),
                 "star_points": MCPSchema.integer("Number of points (star shapes)"),
                 "clip_to_template": MCPSchema.boolean("Clip the shape to its template column"),
                 "fill_style": MCPSchema.string("Fill style for rectangles, circles, stars and text", oneOf: ["color", "gradient"]),
@@ -355,7 +364,7 @@ nonisolated enum MCPToolCatalog {
         ),
         Tool(
             name: MCPToolName.previewAppStoreScreenshotSync.rawValue,
-            description: "Render the active Screenshot Bro project, compare exact checksums and order with App Store Connect, and return a cached 15-minute screenshot sync plan plus a contact sheet. Ambiguous or incompatible rows/locales are reported and skipped. Above ~40 renders (rows x columns x locales) this returns immediately with a job_id and phase \"queued\" — poll get_sync_job_status. Below that it blocks and returns the same envelope with phase \"succeeded\" and the plan in `result`.",
+            description: "Render a Screenshot Bro project, compare exact checksums and order with App Store Connect, and return a cached 15-minute screenshot sync plan plus a contact sheet. Ambiguous or incompatible rows/locales are reported and skipped. Above ~40 renders (rows x columns x locales) this returns immediately with a job_id and phase \"queued\" — poll get_sync_job_status. Below that it blocks and returns the same envelope with phase \"succeeded\" and the plan in `result`.",
             inputSchema: MCPSchema.object([
                 "project_id": MCPSchema.string("Project UUID to render — from list_projects. Required: the app window's open project is never used as a default."),
                 "app_id": MCPSchema.string("App Store Connect app id (default: the app linked to project_id)"),

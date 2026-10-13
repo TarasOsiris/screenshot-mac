@@ -145,6 +145,69 @@ struct MCPArguments {
     }
 }
 
+/// Checks a call's arguments against the tool's own input schema before any handler runs, so a
+/// misspelled key or a wrong-typed value is an error rather than a silently skipped edit.
+/// `null` always passes: handlers treat it as "not provided" (`MCPArguments.has`).
+nonisolated enum MCPArgumentValidator {
+    static func validate(_ arguments: [String: Value]?, against schema: Value) throws {
+        try validateObject(arguments ?? [:], schema: schema, path: "")
+    }
+
+    private static func validateObject(_ object: [String: Value], schema: Value, path: String) throws {
+        guard let properties = schema.objectValue?["properties"]?.objectValue else { return }
+        for key in object.keys.sorted() {
+            let keyPath = path.isEmpty ? key : "\(path).\(key)"
+            guard let property = properties[key] else {
+                let accepted = properties.keys.sorted().joined(separator: ", ")
+                throw MCPToolError.invalidArgument(keyPath, "unknown argument; accepted: \(accepted)")
+            }
+            if let value = object[key] {
+                try validateValue(value, schema: property, path: keyPath)
+            }
+        }
+    }
+
+    private static func validateValue(_ value: Value, schema: Value, path: String) throws {
+        guard value != .null, let spec = schema.objectValue, let type = spec["type"]?.stringValue else { return }
+        switch type {
+        case "string":
+            guard let string = value.stringValue else { throw mismatch(path, "a string") }
+            if let allowed = spec["enum"]?.arrayValue?.compactMap(\.stringValue), !allowed.contains(string) {
+                throw MCPToolError.invalidArgument(path, "must be one of \(allowed.joined(separator: ", ")), got \(string)")
+            }
+        case "number":
+            switch value {
+            case .int, .double: break
+            default: throw mismatch(path, "a number")
+            }
+        case "integer":
+            switch value {
+            case .int: break
+            case .double(let double) where Int(exactly: double) != nil: break
+            default: throw mismatch(path, "an integer")
+            }
+        case "boolean":
+            guard value.boolValue != nil else { throw mismatch(path, "a boolean") }
+        case "array":
+            guard let elements = value.arrayValue else { throw mismatch(path, "an array") }
+            if let items = spec["items"] {
+                for (index, element) in elements.enumerated() {
+                    try validateValue(element, schema: items, path: "\(path)[\(index)]")
+                }
+            }
+        case "object":
+            guard let object = value.objectValue else { throw mismatch(path, "an object") }
+            try validateObject(object, schema: schema, path: path)
+        default:
+            break
+        }
+    }
+
+    private static func mismatch(_ path: String, _ expected: String) -> MCPToolError {
+        .invalidArgument(path, "expected \(expected)")
+    }
+}
+
 /// JSON-Schema builders for tool input schemas.
 nonisolated enum MCPSchema {
     static func object(_ properties: [String: Value], required: [String] = []) -> Value {

@@ -995,6 +995,103 @@ struct MCPToolExecutorTests {
         }
     }
 
+    // MARK: - Argument validation
+
+    @Test func rejectsUnknownArgumentWithoutApplying() async {
+        let (executor, state, tempDir) = makeExecutor()
+        defer { cleanupTestState(tempDir) }
+        let shapeCount = state.rows[0].shapes.count
+
+        let result = await executor.call(name: "add_shape", arguments: [
+            "row_id": .string(state.rows[0].id.uuidString),
+            "type": "text",
+            "colour": "#112233",
+        ])
+        #expect(result.isError == true)
+        #expect("\(result.content)".contains("colour"))
+        #expect(state.rows[0].shapes.count == shapeCount)
+    }
+
+    @Test func rejectsWrongTypesAndEnumValues() async {
+        let (executor, state, tempDir) = makeExecutor()
+        defer { cleanupTestState(tempDir) }
+        let rowId = Value.string(state.rows[0].id.uuidString)
+
+        let stringForNumber = await executor.call(name: "update_row", arguments: ["row_id": rowId, "width": "1242"])
+        #expect(stringForNumber.isError == true)
+        let fractionalInteger = await executor.call(name: "add_shape", arguments: ["row_id": rowId, "type": "text", "font_weight": 450.5])
+        #expect(fractionalInteger.isError == true)
+        let badEnum = await executor.call(name: "move_row", arguments: ["row_id": rowId, "direction": "sideways"])
+        #expect(badEnum.isError == true)
+        let nestedUnknown = await executor.call(name: "update_row", arguments: [
+            "row_id": rowId,
+            "background_gradient": ["stops": [], "angel": 90],
+        ])
+        #expect(nestedUnknown.isError == true)
+        #expect("\(nestedUnknown.content)".contains("background_gradient.angel"))
+
+        let integralDouble = await executor.call(name: "add_shape", arguments: ["row_id": rowId, "type": "text", "font_weight": 700.0])
+        expectSuccess(integralDouble)
+        let explicitNull = await executor.call(name: "add_shape", arguments: ["row_id": rowId, "type": "text", "color": .null])
+        expectSuccess(explicitNull)
+    }
+
+    @Test func lineHeightSetsTheMultipleTheRendererReads() async {
+        let (executor, state, tempDir) = makeExecutor()
+        defer { cleanupTestState(tempDir) }
+        _ = await executor.call(name: "add_shape", arguments: [
+            "row_id": .string(state.rows[0].id.uuidString),
+            "type": "text",
+            "text": "Two\nlines",
+        ])
+        let shapeId = Value.string(state.rows[0].shapes.last!.id.uuidString)
+
+        expectSuccess(await executor.call(name: "update_shape", arguments: ["shape_id": shapeId, "line_height": 1.4]))
+        #expect(state.rows[0].shapes.last!.lineHeightMultiple == 1.4)
+        #expect(state.rows[0].shapes.last!.lineSpacing == nil)
+
+        expectSuccess(await executor.call(name: "update_shape", arguments: ["shape_id": shapeId, "line_height": 9]))
+        #expect(state.rows[0].shapes.last!.lineHeightMultiple == TextLayoutStyle.lineHeightRange.upperBound)
+
+        expectSuccess(await executor.call(name: "update_shape", arguments: ["shape_id": shapeId, "line_spacing": 20]))
+        let converted = state.rows[0].shapes.last!
+        #expect(converted.lineSpacing == nil)
+        #expect((converted.lineHeightMultiple ?? 0) > 1)
+    }
+
+    @Test func deviceFrameIdIsValidatedAndSyncsCategoryAndAspect() async throws {
+        let (executor, state, tempDir) = makeExecutor()
+        defer { cleanupTestState(tempDir) }
+        _ = await executor.call(name: "add_shape", arguments: [
+            "row_id": .string(state.rows[0].id.uuidString),
+            "type": "device",
+            "device_category": "iphone",
+        ])
+        let shapeId = Value.string(state.rows[0].shapes.last!.id.uuidString)
+
+        let unknown = await executor.call(name: "update_shape", arguments: ["shape_id": shapeId, "device_frame_id": "no-such-frame"])
+        #expect(unknown.isError == true)
+
+        let ipad = try #require(DeviceFrameCatalog.allFrames.first { $0.fallbackCategory == .ipadPro13 })
+        expectSuccess(await executor.call(name: "update_shape", arguments: ["shape_id": shapeId, "device_frame_id": .string(ipad.id)]))
+        let shape = state.rows[0].shapes.last!
+        #expect(shape.deviceFrameId == ipad.id)
+        #expect(shape.deviceCategory == .ipadPro13)
+        let expected = shape.resolvedBaseDimensions
+        #expect(abs(shape.width / shape.height - expected.width / expected.height) < 0.01)
+    }
+
+    @Test func variantListIsAnObjectEnvelope() throws {
+        let (executor, _, tempDir) = makeExecutor()
+        defer { cleanupTestState(tempDir) }
+        let result = try executor.listVariants()
+        guard case .object(let structured)? = result.structuredContent else {
+            Issue.record("structuredContent must be an object, got \(String(describing: result.structuredContent))")
+            return
+        }
+        #expect(structured["variants"]?.arrayValue?.first?.objectValue?["name"] == "Original")
+    }
+
     // MARK: - Project binding
     //
     // In this suite rather than their own: they share `SCREENSHOT_DATA_DIR` and the demo-mode

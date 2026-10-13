@@ -8,6 +8,10 @@ struct MCPVariantSnapshot: Encodable {
     let rowIds: [String]
 }
 
+struct MCPVariantList: Encodable {
+    let variants: [MCPVariantSnapshot]
+}
+
 extension MCPToolExecutor {
 
     func listVariants() throws -> CallTool.Result {
@@ -16,7 +20,7 @@ extension MCPToolExecutor {
         let variants = state.variants.map { variant in
             MCPVariantSnapshot(id: variant.id.uuidString, name: variant.name, rowIds: rowIds[variant.id] ?? [])
         }
-        return try MCPResultEncoding.result([original] + variants)
+        return try MCPResultEncoding.result(MCPVariantList(variants: [original] + variants))
     }
 
     func createVariant(_ args: MCPArguments) throws -> CallTool.Result {

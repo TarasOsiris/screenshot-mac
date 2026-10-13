@@ -4,7 +4,7 @@ import MCP
 import Observation
 import OSLog
 
-/// Hosts the in-app MCP server (Debug builds only): SDK `Server` + stateless HTTP transport
+/// Hosts the in-app MCP server: SDK `Server` + stateless HTTP transport
 /// behind a loopback NWListener, so agents like Claude Code can drive the app at
 /// http://127.0.0.1:8722/mcp while it runs.
 @MainActor
