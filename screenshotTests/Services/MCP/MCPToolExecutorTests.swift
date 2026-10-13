@@ -57,7 +57,7 @@ struct MCPToolExecutorTests {
             return
         }
         #expect(json.contains(state.rows[0].id.uuidString))
-        #expect(json.contains("\"width\" : 1242"))
+        #expect(json.contains("\"width\":1242"))
     }
 
     /// The default that used to exist here is the bug: a snapshot silently describing whichever
@@ -682,9 +682,9 @@ struct MCPToolExecutorTests {
         expectSuccess(fitted)
         guard case .text(let json, _, _) = fitted.content.first else { Issue.record("expected text"); return }
         #expect(json.contains("\"auto_fit\""))
-        #expect(json.contains("\"still_overflows\" : false"))
+        #expect(json.contains("\"still_overflows\":false"))
         #expect(!json.contains("\"text_overflow_locales\""))
-        #expect(json.contains("\"id\" : \"\(shape.id.uuidString)\""))
+        #expect(json.contains("\"id\":\"\(shape.id.uuidString)\""))
         let base = try #require(state.rows[0].shapes.first)
         #expect(base.y == shape.y && base.height == shape.height)
     }
@@ -1082,14 +1082,140 @@ struct MCPToolExecutorTests {
     }
 
     @Test func variantListIsAnObjectEnvelope() throws {
-        let (executor, _, tempDir) = makeExecutor()
+        let (_, state, tempDir) = makeExecutor()
         defer { cleanupTestState(tempDir) }
-        let result = try executor.listVariants()
+        let result = try MCPResultEncoding.result(MCPToolExecutor.variantList(state.document))
         guard case .object(let structured)? = result.structuredContent else {
             Issue.record("structuredContent must be an object, got \(String(describing: result.structuredContent))")
             return
         }
         #expect(structured["variants"]?.arrayValue?.first?.objectValue?["name"] == "Original")
+    }
+
+    // MARK: - Batch, catalog, undo
+
+    @Test func batchAppliesInOrderWithReferencesAsOneUndoStep() async throws {
+        let (executor, state, tempDir) = makeExecutor()
+        defer { cleanupTestState(tempDir) }
+        let rowCount = state.rows.count
+
+        let result = await executor.call(name: "batch", arguments: [
+            "operations": [
+                ["tool": "add_row", "arguments": ["label": "Batch row"]],
+                ["tool": "add_shape", "arguments": ["row_id": "$0", "type": "text", "text": "$5 off"]],
+                ["tool": "update_shape", "arguments": ["shape_id": "$1", "font_size": 120]],
+            ],
+        ])
+        expectSuccess(result)
+        #expect(state.rows.count == rowCount + 1)
+        let row = try #require(state.rows.first { $0.label == "Batch row" })
+        let text = try #require(row.shapes.first { $0.type == .text })
+        #expect(text.text == "$5 off", "only id arguments are references")
+        #expect(text.fontSize == 120)
+
+        state.undoManager?.undo()
+        #expect(state.rows.count == rowCount)
+    }
+
+    @Test func batchFailureAppliesNothing() async throws {
+        let (executor, state, tempDir) = makeExecutor()
+        defer { cleanupTestState(tempDir) }
+        let before = state.document
+
+        let result = await executor.call(name: "batch", arguments: [
+            "operations": [
+                ["tool": "add_row", "arguments": [:]],
+                ["tool": "update_shape", "arguments": ["shape_id": .string(UUID().uuidString), "x": 1]],
+            ],
+        ])
+        #expect(result.isError == true)
+        #expect("\(result.content)".contains("operations[1]"))
+        #expect(state.document == before)
+
+        let notEditing = await executor.call(name: "batch", arguments: ["operations": [["tool": "delete_project"]]])
+        #expect(notEditing.isError == true)
+    }
+
+    @Test func setTranslationsAppliesEveryEntry() async throws {
+        let (executor, state, tempDir) = makeExecutor()
+        defer { cleanupTestState(tempDir) }
+        _ = await executor.call(name: "add_locale", arguments: ["code": "de-DE"])
+        _ = await executor.call(name: "add_locale", arguments: ["code": "fr-FR"])
+        _ = await executor.call(name: "add_shape", arguments: ["row_id": .string(state.rows[0].id.uuidString), "type": "text", "text": "Hello"])
+        let shapeId = Value.string(state.rows[0].shapes.last!.id.uuidString)
+
+        expectSuccess(await executor.call(name: "set_translations", arguments: [
+            "entries": [
+                ["shape_id": shapeId, "locale_code": "de-DE", "text": "Hallo"],
+                ["shape_id": shapeId, "locale_code": "fr-FR", "text": "Bonjour"],
+            ],
+        ]))
+        let key = state.rows[0].shapes.last!.textTranslationKey
+        #expect(state.localeState.overrides["de-DE"]?[key]?.text == "Hallo")
+        #expect(state.localeState.overrides["fr-FR"]?[key]?.text == "Bonjour")
+    }
+
+    @Test func listCatalogReportsAcceptedValues() async throws {
+        let (executor, _, tempDir) = makeExecutor()
+        defer { cleanupTestState(tempDir) }
+
+        let frames = try decodeEnvelope(await executor.call(name: "list_catalog", arguments: ["kind": "device_frames", "category": "iphone"]))
+        let frameIds = try #require((frames["device_frames"] as? [[String: Any]])?.compactMap { $0["id"] as? String })
+        #expect(!frameIds.isEmpty)
+        #expect(frameIds.allSatisfy { DeviceFrameCatalog.frame(for: $0)?.fallbackCategory == .iphone })
+
+        let sizes = try decodeEnvelope(await executor.call(name: "list_catalog", arguments: ["kind": "screenshot_sizes"]))
+        #expect((sizes["screenshot_sizes"] as? [[String: Any]])?.contains { $0["size"] as? String == "1242x2688" } == true)
+
+        let fonts = try decodeEnvelope(await executor.call(name: "list_catalog", arguments: ["kind": "fonts"]))
+        #expect((fonts["system"] as? [String])?.contains("Helvetica") == true)
+    }
+
+    @Test func undoAndRedoToolsDriveTheEditorStack() async throws {
+        let (executor, state, tempDir) = makeExecutor()
+        defer { cleanupTestState(tempDir) }
+        let shapeCount = state.rows[0].shapes.count
+        _ = await executor.call(name: "add_shape", arguments: ["row_id": .string(state.rows[0].id.uuidString), "type": "star"])
+
+        let undone = try decodeEnvelope(await executor.call(name: "undo", arguments: [:]))
+        #expect(undone["undone"] as? String == "Add Shape")
+        #expect(state.rows[0].shapes.count == shapeCount)
+        expectSuccess(await executor.call(name: "redo", arguments: [:]))
+        #expect(state.rows[0].shapes.count == shapeCount + 1)
+
+        let wrongProject = await executor.call(name: "undo", arguments: ["project_id": .string(UUID().uuidString)])
+        #expect(wrongProject.isError == true)
+    }
+
+    @Test func everyToolCarriesAnnotations() {
+        for tool in MCPToolCatalog.tools {
+            #expect(tool.annotations.readOnlyHint != nil, "\(tool.name) has no annotations")
+        }
+        let readOnly = Set(MCPToolCatalog.tools.filter { $0.annotations.readOnlyHint == true }.map(\.name))
+        #expect(readOnly.contains("get_project"))
+        #expect(!readOnly.contains("update_shape"))
+    }
+
+    @Test func getProjectFiltersRowsAndTranslations() async throws {
+        let (executor, state, tempDir) = makeExecutor()
+        defer { cleanupTestState(tempDir) }
+        let projectId = Value.string(try #require(state.activeProject?.id).uuidString)
+        _ = await executor.call(name: "add_row", arguments: [:])
+        _ = await executor.call(name: "add_locale", arguments: ["code": "de-DE"])
+        _ = await executor.call(name: "add_shape", arguments: ["row_id": .string(state.rows[0].id.uuidString), "type": "text", "text": "Hi"])
+        _ = await executor.call(name: "set_translation", arguments: [
+            "shape_id": .string(state.rows[0].shapes.last!.id.uuidString), "locale_code": "de-DE", "text": "Hallo",
+        ])
+
+        let filtered = try decodeEnvelope(await executor.call(name: "get_project", arguments: [
+            "project_id": projectId,
+            "row_ids": [.string(state.rows[0].id.uuidString)],
+            "include_translations": false,
+        ]))
+        let rows = try #require(filtered["rows"] as? [[String: Any]])
+        #expect(rows.count == 1)
+        let json = String(decoding: try JSONSerialization.data(withJSONObject: filtered), as: UTF8.self)
+        #expect(!json.contains("Hallo"))
     }
 
     // MARK: - Project binding
@@ -1102,6 +1228,130 @@ struct MCPToolExecutorTests {
             throw MCPToolError.failed("expected text content")
         }
         return try #require(try JSONSerialization.jsonObject(with: Data(json.utf8)) as? [String: Any])
+    }
+
+    /// Leaves the editor on the first project and returns the id of a second, closed one.
+    private func makeClosedProject(_ state: AppState) async throws -> (open: UUID, closed: UUID) {
+        let openProjectId = try #require(state.activeProject?.id)
+        state.createProject(name: "Closed App")
+        let closedId = try #require(state.activeProject?.id)
+        state.selectProject(openProjectId)
+        await state.projectOpenTask?.value
+        #expect(state.activeProjectId == openProjectId)
+        return (openProjectId, closedId)
+    }
+
+    private func readProject(_ id: UUID) async throws -> ProjectDocument {
+        ProjectDocument(try #require(await AppState.readProjectAfterQueuedWrites(id)?.data))
+    }
+
+    @Test func editsAClosedProjectOnDiskWithoutTouchingTheOpenOne() async throws {
+        let (executor, state, tempDir) = makeExecutor()
+        defer { cleanupTestState(tempDir) }
+        let (_, closedId) = try await makeClosedProject(state)
+        let openRows = state.rows
+        let canUndoBefore = state.undoManager?.canUndo ?? false
+        let closedRowId = try await readProject(closedId).rows[0].id
+        let projectId = Value.string(closedId.uuidString)
+
+        let added = await executor.call(name: "add_shape", arguments: [
+            "project_id": projectId,
+            "row_id": .string(closedRowId.uuidString),
+            "type": "text",
+            "text": "Closed edit",
+        ])
+        expectSuccess(added)
+        let shapeId = try #require(try await readProject(closedId).rows[0].shapes.first { $0.text == "Closed edit" }?.id)
+
+        expectSuccess(await executor.call(name: "add_locale", arguments: ["project_id": projectId, "code": "de-DE"]))
+        expectSuccess(await executor.call(name: "set_translation", arguments: [
+            "project_id": projectId,
+            "shape_id": .string(shapeId.uuidString),
+            "locale_code": "de-DE",
+            "text": "Geschlossen",
+        ]))
+
+        let saved = try await readProject(closedId)
+        #expect(saved.localeState.hasLocale("de-DE"))
+        #expect(saved.localeState.overrides["de-DE"]?[shapeId.uuidString]?.text == "Geschlossen")
+        #expect(state.rows == openRows, "the open project must not change")
+        #expect((state.undoManager?.canUndo ?? false) == canUndoBefore, "a closed project's edit is not an editor undo step")
+
+        // Ids from one project don't resolve in another.
+        let wrongProject = await executor.call(name: "update_shape", arguments: ["shape_id": .string(shapeId.uuidString), "x": 10])
+        #expect(wrongProject.isError == true)
+    }
+
+    @Test func addShapeIsOneUndoStep() async throws {
+        let (executor, state, tempDir) = makeExecutor()
+        defer { cleanupTestState(tempDir) }
+        let shapeCount = state.rows[0].shapes.count
+        expectSuccess(await executor.call(name: "add_shape", arguments: [
+            "row_id": .string(state.rows[0].id.uuidString),
+            "type": "text",
+            "text": "One step",
+            "font_size": 80,
+            "color": "#FF0000",
+        ]))
+        #expect(state.rows[0].shapes.count == shapeCount + 1)
+        state.undoManager?.undo()
+        #expect(state.rows[0].shapes.count == shapeCount)
+    }
+
+    @Test func zOrderWorksOutsideTheSelectedRow() async throws {
+        let (executor, state, tempDir) = makeExecutor()
+        defer { cleanupTestState(tempDir) }
+        let rowId = Value.string(state.rows[0].id.uuidString)
+        _ = await executor.call(name: "add_row", arguments: [:])
+        state.selectRow(state.rows[1].id)
+        expectSuccess(await executor.call(name: "add_shape", arguments: ["row_id": rowId, "type": "rectangle"]))
+        expectSuccess(await executor.call(name: "add_shape", arguments: ["row_id": rowId, "type": "circle"]))
+        let rectangle = try #require(state.rows[0].shapes.last { $0.type == .rectangle })
+
+        expectSuccess(await executor.call(name: "update_shape", arguments: ["shape_id": .string(rectangle.id.uuidString), "z_order": "front"]))
+        #expect(state.rows[0].shapes.last?.id == rectangle.id)
+        expectSuccess(await executor.call(name: "update_shape", arguments: ["shape_id": .string(rectangle.id.uuidString), "z_order": "back"]))
+        #expect(state.rows[0].shapes.first?.id == rectangle.id)
+    }
+
+    @Test func deletingALockedShapeIsAnError() async throws {
+        let (executor, state, tempDir) = makeExecutor()
+        defer { cleanupTestState(tempDir) }
+        _ = await executor.call(name: "add_shape", arguments: ["row_id": .string(state.rows[0].id.uuidString), "type": "rectangle"])
+        let shapeId = Value.string(state.rows[0].shapes.last!.id.uuidString)
+        expectSuccess(await executor.call(name: "update_shape", arguments: ["shape_id": shapeId, "locked": true]))
+        let count = state.rows[0].shapes.count
+
+        let refused = await executor.call(name: "delete_shape", arguments: ["shape_id": shapeId])
+        #expect(refused.isError == true)
+        #expect(state.rows[0].shapes.count == count)
+    }
+
+    @Test func importsScreenshotsIntoAClosedProject() async throws {
+        let (executor, state, tempDir) = makeExecutor()
+        defer { cleanupTestState(tempDir) }
+        let (_, closedId) = try await makeClosedProject(state)
+        let closedRowId = try await readProject(closedId).rows[0].id
+
+        let imageURL = tempDir.appendingPathComponent("shot.png")
+        let image = NSImage(size: NSSize(width: 1290, height: 2796), flipped: false) { rect in
+            NSColor.systemTeal.setFill()
+            rect.fill()
+            return true
+        }
+        try #require(ExportService.pngData(from: image)).write(to: imageURL)
+
+        let result = await executor.call(name: "import_screenshots", arguments: [
+            "project_id": .string(closedId.uuidString),
+            "row_id": .string(closedRowId.uuidString),
+            "paths": [.string(imageURL.path)],
+        ])
+        expectSuccess(result)
+
+        let saved = try await readProject(closedId)
+        let fileName = try #require(saved.rows[0].shapes.compactMap(\.displayImageFileName).first)
+        let written = PersistenceService.resourcesDir(closedId).appendingPathComponent(fileName)
+        #expect(FileManager.default.fileExists(atPath: written.path))
     }
 
     @Test func previewRendersTheNamedProjectNotTheOpenOne() async throws {

@@ -22,13 +22,19 @@ extension MCPToolExecutor {
     func getProject(_ args: MCPArguments) async throws -> CallTool.Result {
         let checkout = try await requireCheckout(args)
         defer { checkout.dispose() }
+        let rowIds = try args.uuidArray("row_ids").map(Set.init)
+        if let missing = rowIds?.subtracting(checkout.rows.map(\.id)).first {
+            throw MCPToolError.notFound("Row \(missing.uuidString)")
+        }
         let snapshot = checkout.withResolvedFonts {
             MCPSnapshotBuilder.project(
                 id: checkout.projectId,
                 name: checkout.projectName,
                 rows: checkout.rows,
                 localeState: checkout.localeState,
-                availableFontFamilies: checkout.availableFontFamilySet
+                availableFontFamilies: checkout.availableFontFamilySet,
+                rowIds: rowIds,
+                includeTranslations: args.bool("include_translations") ?? true
             )
         }
         return try MCPResultEncoding.result(snapshot)

@@ -72,7 +72,7 @@ extension AppState {
         )
     }
 
-    private static func storedNewRowDefaults(_ store: UserDefaults = .standard) -> NewRowDefaults {
+    static func storedNewRowDefaults(_ store: UserDefaults = .standard) -> NewRowDefaults {
         let size = store.string(forKey: AppSettingsKeys.defaultScreenshotSize) ?? AppSettingsKeys.Default.defaultScreenshotSize
         let storedTemplateCount = store.integer(forKey: AppSettingsKeys.defaultTemplateCount)
         let category = store.string(forKey: AppSettingsKeys.defaultDeviceCategory) ?? AppSettingsKeys.Default.defaultDeviceCategory
@@ -85,9 +85,7 @@ extension AppState {
     }
 
     private func newRow(inVariant variantId: UUID?) -> ScreenshotRow {
-        var row = makeDefaultRow(variantId: variantId)
-        if rowOccupyingSlot(of: row, in: variantId) != nil { row.variantId = nil }
-        return row
+        DocumentEditing.newRow(inVariant: variantId, rows: rows, defaults: Self.storedNewRowDefaults())
     }
 
     /// Original rows only: a copy of a variant row would be a second row of its size in that variant.
@@ -113,41 +111,11 @@ extension AppState {
         variantId: UUID?,
         originRowId: UUID? = nil
     ) {
-        var newShapes = source.shapes.map { $0.duplicated() }
-        for i in newShapes.indices {
-            let originalId = source.shapes[i].id
-            LocaleService.copyShapeOverrides(&localeState, fromId: originalId, toId: newShapes[i].id)
-            copyImageFiles(for: &newShapes[i], originalId: originalId)
-            // A variant's copy must be editable on its own: left in a Reuse Translation group, its
-            // edits would rewrite the Original's text — the control — and the product page with it.
-            if variantId != nil, let sharedKey = newShapes[i].translationKey {
-                LocaleService.copyTextOverrides(&localeState, fromKey: sharedKey, toKey: newShapes[i].id.uuidString)
-                newShapes[i].translationKey = nil
-            }
-        }
-        let copy = ScreenshotRow(
-            label: label,
-            templates: source.templates.map { $0.duplicated() },
-            templateWidth: source.templateWidth,
-            templateHeight: source.templateHeight,
-            bgColor: source.bgColor,
-            defaultDeviceBodyColor: source.defaultDeviceBodyColor,
-            defaultDeviceCategory: source.defaultDeviceCategory,
-            backgroundStyle: source.backgroundStyle,
-            gradientConfig: source.gradientConfig,
-            spanBackgroundAcrossRow: source.spanBackgroundAcrossRow,
-            backgroundImageConfig: source.backgroundImageConfig,
-            backgroundBlur: source.backgroundBlur,
-            defaultDeviceFrameId: source.defaultDeviceFrameId,
-            hiddenShapeTypes: source.hiddenShapeTypes,
-            showBorders: source.showBorders,
-            shapes: newShapes,
-            isLabelManuallySet: isLabelManuallySet,
-            excludeFromAppStoreConnect: source.excludeFromAppStoreConnect,
-            variantId: variantId,
-            originRowId: originRowId
+        let copy = DocumentEditing.insertDuplicate(
+            of: source, at: index, label: label, isLabelManuallySet: isLabelManuallySet,
+            variantId: variantId, originRowId: originRowId,
+            rows: &rows, localeState: &localeState, resources: self
         )
-        rows.insert(copy, at: index)
         selectRow(copy.id)
     }
 
@@ -160,19 +128,9 @@ extension AppState {
         guard let firstIdx = rows.firstIndex(where: { ids.contains($0.id) }),
               rows.contains(where: { !ids.contains($0.id) }) else { return }
         withUndo(actionName) {
-            var imageCandidates: [String?] = []
-            for row in rows where ids.contains(row.id) {
-                imageCandidates += imageFileNames(for: row.shapes)
-                imageCandidates += row.allBackgroundImageFileNames
-                for shape in row.shapes {
-                    LocaleService.removeShapeOverrides(&localeState, shapeId: shape.id)
-                }
-                viewMode.exitPreview(for: row.id)
-            }
-
+            for id in ids { viewMode.exitPreview(for: id) }
             let wasSelectedRow = selectedRowId.map(ids.contains) ?? false
-            rows.removeAll { ids.contains($0.id) }
-            cleanupOrphanedTranslationOverrides()
+            let imageCandidates = DocumentEditing.deleteRows(ids, rows: &rows, localeState: &localeState) ?? []
             if wasSelectedRow {
                 // Pick a visible row directly: selecting a hidden one would widen the filter to All.
                 let fallback = min(firstIdx, rows.count - 1)
@@ -227,18 +185,7 @@ extension AppState {
             guard detaching, text.trimmingCharacters(in: .whitespaces) != rows[ri].label else { return }
         }
         withUndo("Edit Row Label") {
-            defer { propagateLabel(from: rowId) }
-            // Named by hand, a copy no longer follows the row it came from.
-            rows[ri].originRowId = nil
-            let trimmed = text.trimmingCharacters(in: .whitespaces)
-            if trimmed.isEmpty {
-                let row = rows[ri]
-                rows[ri].label = presetLabel(forWidth: row.templateWidth, height: row.templateHeight)
-                rows[ri].isLabelManuallySet = false
-            } else {
-                rows[ri].label = String(trimmed.prefix(50))
-                rows[ri].isLabelManuallySet = true
-            }
+            DocumentEditing.setLabel(text, ofRowAt: ri, in: &rows)
         }
     }
 
@@ -327,40 +274,7 @@ extension AppState {
 
     func resizeRow(at rowIndex: Int, newWidth: CGFloat, newHeight: CGFloat) {
         var row = rows[rowIndex]
-        guard row.templateWidth != newWidth || row.templateHeight != newHeight else { return }
-
-        let scaleX = newWidth / row.templateWidth
-        let scaleY = newHeight / row.templateHeight
-        // Devices keep aspect ratio using geometric mean — round-trip stable
-        // unlike min(scaleX, scaleY) which shrinks on every aspect-ratio change
-        let uniformScale = sqrt(scaleX * scaleY)
-
-        for i in row.shapes.indices {
-            let shape = row.shapes[i]
-            let templateIndex = row.owningTemplateIndex(for: shape)
-            let oldOriginX = CGFloat(templateIndex) * row.templateWidth
-            let newOriginX = CGFloat(templateIndex) * newWidth
-            let sx = shape.type == .device ? uniformScale : scaleX
-            let sy = shape.type == .device ? uniformScale : scaleY
-
-            let scaledW = shape.width * sx
-            let scaledH = shape.height * sy
-            let clampDevice = shape.type == .device && (scaledW < CanvasShapeModel.deviceMinSize || scaledH < CanvasShapeModel.deviceMinSize)
-            if !clampDevice {
-                row.shapes[i].width = scaledW
-                row.shapes[i].height = scaledH
-            }
-
-            let relX = shape.x - oldOriginX
-            row.shapes[i].x = newOriginX + relX * scaleX
-            row.shapes[i].y = shape.y * scaleY
-        }
-
-        row.templateWidth = newWidth
-        row.templateHeight = newHeight
-        if !row.isLabelManuallySet {
-            row.label = presetLabel(forWidth: newWidth, height: newHeight)
-        }
+        guard DocumentEditing.resize(&row, width: newWidth, height: newHeight) else { return }
         withUndo("Resize Row") { rows[rowIndex] = row }
     }
 

@@ -124,13 +124,25 @@ enum MCPSnapshotBuilder {
         }
     }
 
-    static func project(id: UUID, name: String, rows: [ScreenshotRow], localeState: LocaleState, availableFontFamilies: Set<String>) -> MCPProjectSnapshot {
+    static func project(
+        id: UUID,
+        name: String,
+        rows: [ScreenshotRow],
+        localeState: LocaleState,
+        availableFontFamilies: Set<String>,
+        rowIds: Set<UUID>? = nil,
+        includeTranslations: Bool = true
+    ) -> MCPProjectSnapshot {
         MCPProjectSnapshot(
             id: id.uuidString,
             name: name,
             locales: locales(localeState),
-            rows: rows.enumerated().map { index, row in
-                rowSnapshot(row, index: index, localeState: localeState, availableFontFamilies: availableFontFamilies)
+            rows: rows.enumerated().compactMap { index, row in
+                guard rowIds?.contains(row.id) ?? true else { return nil }
+                return rowSnapshot(
+                    row, index: index, localeState: localeState,
+                    availableFontFamilies: availableFontFamilies, includeTranslations: includeTranslations
+                )
             }
         )
     }
@@ -146,7 +158,13 @@ enum MCPSnapshotBuilder {
         }
     }
 
-    static func rowSnapshot(_ row: ScreenshotRow, index: Int, localeState: LocaleState, availableFontFamilies: Set<String>) -> MCPRowSnapshot {
+    static func rowSnapshot(
+        _ row: ScreenshotRow,
+        index: Int,
+        localeState: LocaleState,
+        availableFontFamilies: Set<String>,
+        includeTranslations: Bool = true
+    ) -> MCPRowSnapshot {
         MCPRowSnapshot(
             id: row.id.uuidString,
             index: index,
@@ -180,28 +198,39 @@ enum MCPSnapshotBuilder {
                 )
             },
             shapes: row.shapes.map { shape in
-                shapeSnapshot(shape, row: row, localeState: localeState, availableFontFamilies: availableFontFamilies)
+                shapeSnapshot(
+                    shape, row: row, localeState: localeState,
+                    availableFontFamilies: availableFontFamilies, includeTranslations: includeTranslations
+                )
             }
         )
     }
 
-    static func shapeSnapshot(_ shape: CanvasShapeModel, row: ScreenshotRow, localeState: LocaleState, availableFontFamilies: Set<String>) -> MCPShapeSnapshot {
+    static func shapeSnapshot(
+        _ shape: CanvasShapeModel,
+        row: ScreenshotRow,
+        localeState: LocaleState,
+        availableFontFamilies: Set<String>,
+        includeTranslations: Bool = true
+    ) -> MCPShapeSnapshot {
         var translations: [String: String] = [:]
         var translationRuns: [String: [MCPTextRun]] = [:]
         var imageOverrides: [String: String] = [:]
-        for (localeCode, overrides) in localeState.overrides {
-            if let override = overrides[shape.textTranslationKey] {
-                if let text = override.text {
-                    translations[localeCode] = text
+        if includeTranslations {
+            for (localeCode, overrides) in localeState.overrides {
+                if let override = overrides[shape.textTranslationKey] {
+                    if let text = override.text {
+                        translations[localeCode] = text
+                    }
+                    if override.richText != nil {
+                        translationRuns[localeCode] = MCPRichText.runs(
+                            of: LocaleService.resolveShape(shape, localeCode: localeCode, localeState: localeState)
+                        )
+                    }
                 }
-                if override.richText != nil {
-                    translationRuns[localeCode] = MCPRichText.runs(
-                        of: LocaleService.resolveShape(shape, localeCode: localeCode, localeState: localeState)
-                    )
+                if let file = overrides[shape.id.uuidString]?.overrideImageFileName {
+                    imageOverrides[localeCode] = file
                 }
-            }
-            if let file = overrides[shape.id.uuidString]?.overrideImageFileName {
-                imageOverrides[localeCode] = file
             }
         }
 

@@ -36,11 +36,7 @@ extension AppState {
 
     /// A variant holds one App Store row per screenshot size; this is the one already in `row`'s slot.
     func rowOccupyingSlot(of row: ScreenshotRow, in variantId: UUID?) -> ScreenshotRow? {
-        guard let variantId, !row.excludeFromAppStoreConnect else { return nil }
-        let slot = Self.screenshotSlot(of: row)
-        return rows.first {
-            $0.id != row.id && $0.uploadsToAppStore(from: variantId) && Self.screenshotSlot(of: $0) == slot
-        }
+        DocumentEditing.rowOccupyingSlot(of: row, in: variantId, rows: rows)
     }
 
     /// Per row: the variants whose slot for its size is taken, by which row's label; plus clashing variant rows.
@@ -48,7 +44,7 @@ extension AppState {
         var holders: [String: [ScreenshotRow]] = [:]
         var slots: [UUID: String] = [:]
         for row in rows where !row.excludeFromAppStoreConnect {
-            let slot = Self.screenshotSlot(of: row)
+            let slot = DocumentEditing.screenshotSlot(of: row)
             slots[row.id] = slot
             if let variantId = row.variantId { holders["\(variantId)|\(slot)", default: []].append(row) }
         }
@@ -65,33 +61,17 @@ extension AppState {
         return (occupants, clashing)
     }
 
-    private static func screenshotSlot(of row: ScreenshotRow) -> String {
-        ASCDisplayType.detect(width: row.templateWidth, height: row.templateHeight)?.appStoreConnectValue
-            ?? "\(Int(row.templateWidth))x\(Int(row.templateHeight))"
-    }
-
     // MARK: - Labels
 
     /// The row a variant copy takes its name from: its source, while that row exists and is named by
     /// hand. An automatic size label describes one row's size, so it is never shared.
     func labelSource(of row: ScreenshotRow) -> ScreenshotRow? {
-        guard FeatureFlags.abTesting, row.variantId != nil, let originId = row.originRowId, originId != row.id,
-              let idx = rowIndex(for: originId), rows[idx].isLabelManuallySet else { return nil }
-        return rows[idx]
+        DocumentEditing.labelSource(of: row, in: rows)
     }
 
     /// Call inside an undo transaction, after renaming `rowId`.
     func propagateLabel(from rowId: UUID) {
-        guard FeatureFlags.abTesting, let idx = rowIndex(for: rowId) else { return }
-        let source = rows[idx]
-        for i in rows.indices where rows[i].originRowId == rowId && rows[i].variantId != nil {
-            if source.isLabelManuallySet {
-                rows[i].label = source.label
-            } else {
-                rows[i].label = presetLabel(forWidth: rows[i].templateWidth, height: rows[i].templateHeight)
-            }
-            rows[i].isLabelManuallySet = source.isLabelManuallySet
-        }
+        DocumentEditing.propagateLabel(from: rowId, in: &rows)
     }
 
     // MARK: - Verbs
@@ -99,35 +79,26 @@ extension AppState {
     /// Starts a new variant seeded with a copy of `rowId`, inserted right after it.
     @discardableResult
     func createVariant(fromRow rowId: UUID, name: String? = nil) -> UUID? {
-        guard rowIndex(for: rowId) != nil else { return nil }
+        guard let idx = rowIndex(for: rowId) else { return nil }
         return withUndo("Create Variant") {
-            let variant = ScreenshotVariant(
-                name: variants.uniqueName(variants.nextDefaultName()),
-                colorIndex: variants.nextColorIndex(among: ScreenshotVariant.colorSlots)
+            let created = DocumentEditing.createVariant(
+                fromRowAt: idx, name: name, variants: &variants, rows: &rows,
+                localeState: &localeState, resources: self
             )
-            variants.append(variant)
-            if let name { renameVariant(variant.id, to: name) }
-            duplicateRow(rowId, into: variant.id)
-            return variant.id
+            if let copy = created.copy { selectRow(copy.id) }
+            return created.variantId
         }
     }
 
     /// Copies `rowId` into `variantId` (nil copies it into the Original), right after the source.
     func duplicateRow(_ rowId: UUID, into variantId: UUID?) {
-        guard let idx = rowIndex(for: rowId),
-              variantId == nil || variants.variant(withId: variantId) != nil,
-              rowOccupyingSlot(of: rows[idx], in: variantId) == nil else { return }
+        guard let idx = rowIndex(for: rowId) else { return }
         withUndo("Duplicate into Variant") {
-            let source = rows[idx]
-            insertDuplicate(
-                of: source,
-                at: idx + 1,
-                label: source.label,
-                isLabelManuallySet: source.isLabelManuallySet,
-                variantId: variantId,
-                // A copy of a copy follows the same row, so a rename reaches the whole family.
-                originRowId: variantId == nil ? nil : (source.originRowId.flatMap { rowIndex(for: $0) != nil ? $0 : nil } ?? source.id)
+            let copy = DocumentEditing.duplicateRow(
+                at: idx, into: variantId, variants: variants, rows: &rows,
+                localeState: &localeState, resources: self
             )
+            if let copy { selectRow(copy.id) }
         }
     }
 
@@ -136,18 +107,16 @@ extension AppState {
               variantId == nil || variants.variant(withId: variantId) != nil,
               rowOccupyingSlot(of: rows[idx], in: variantId) == nil else { return }
         withRowUndo("Move to Variant", rowId: rowId) {
-            rows[idx].variantId = variantId
-            if variantId == nil { rows[idx].originRowId = nil }
+            DocumentEditing.setVariant(variantId, ofRowAt: idx, rows: &rows)
         }
         keepSelectionVisible()
     }
 
     /// Unique ignoring case and never "Original": export folders and experiment treatments match by name.
     func renameVariant(_ id: UUID, to name: String) {
-        let trimmed = String(name.trimmingCharacters(in: .whitespacesAndNewlines).prefix(ScreenshotVariant.maxNameLength))
-        guard !trimmed.isEmpty, let idx = variants.firstIndex(where: { $0.id == id }) else { return }
-        let unique = variants.uniqueName(trimmed, excluding: id)
-        guard variants[idx].name != unique else { return }
+        guard let idx = variants.firstIndex(where: { $0.id == id }),
+              let unique = DocumentEditing.variantName(name, among: variants, excluding: id),
+              variants[idx].name != unique else { return }
         withUndo("Rename Variant") {
             variants[idx].name = unique
         }
@@ -157,17 +126,11 @@ extension AppState {
     func deleteVariant(_ id: UUID) {
         guard variants.contains(where: { $0.id == id }) else { return }
         withUndo("Delete Variant") {
-            let variantRowIds = Set(rows.inVariant(id).map(\.id))
-            // Removed first, so a filter on this variant has already widened when the selection moves.
-            variants.removeAll { $0.id == id }
-            if variantRowIds.count < rows.count {
-                deleteRows(variantRowIds)
-            } else {
-                for i in rows.indices {
-                    rows[i].variantId = nil
-                    rows[i].originRowId = nil
-                }
-            }
+            let deleted = DocumentEditing.deleteVariant(id, variants: &variants, rows: &rows, localeState: &localeState)
+            for rowId in deleted.deletedRowIds { viewMode.exitPreview(for: rowId) }
+            normalizeSelection()
+            keepSelectionVisible()
+            cleanupUnreferencedImages(deleted.imageCandidates)
         }
     }
 }

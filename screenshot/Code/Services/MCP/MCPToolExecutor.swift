@@ -66,38 +66,31 @@ final class MCPToolExecutor {
 
     private func dispatch(_ tool: MCPToolName, _ args: MCPArguments) async throws -> CallTool.Result {
         switch tool {
-        case .listTemplates: try await listTemplates()
-        case .listProjects: try listProjects()
-        case .getProject: try await getProject(args)
-        case .createProject: try await createProject(args)
-        case .renameProject: try renameProject(args)
-        case .deleteProject: try deleteProject(args)
-        case .switchProject: try await switchProject(args)
-        case .addRow: try addRow(args)
-        case .updateRow: try updateRow(args)
-        case .moveRow: try moveRow(args)
-        case .deleteRow: try deleteRow(args)
-        case .addTemplate: try addTemplate(args)
-        case .removeTemplate: try removeTemplate(args)
-        case .addShape: try addShape(args)
-        case .updateShape: try updateShape(args)
-        case .deleteShape: try deleteShape(args)
-        case .importScreenshots: try await importScreenshots(args)
-        case .addLocale: try addLocale(args)
-        case .removeLocale: try removeLocale(args)
-        case .setTranslation: try setTranslation(args)
-        case .exportProject: try await exportProject(args)
-        case .renderPreview: try await renderPreview(args)
-        case .getAppStoreMetadata: try await getAppStoreMetadata(args)
-        case .updateAppStoreDescription: try await updateAppStoreDescription(args)
-        case .previewAppStoreScreenshotSync: try await previewAppStoreScreenshotSync(args)
-        case .applyAppStoreScreenshotSync: try await applyAppStoreScreenshotSync(args)
-        case .getSyncJobStatus: try getSyncJobStatus(args)
-        case .cancelSyncJob: try cancelSyncJob(args)
-        case .listVariants: try listVariants()
-        case .createVariant: try createVariant(args)
-        case .setRowVariant: try setRowVariant(args)
-        case .deleteVariant: try deleteVariant(args)
+        case .addRow, .updateRow, .moveRow, .deleteRow, .addTemplate, .removeTemplate, .addShape, .updateShape,
+             .deleteShape, .importScreenshots, .addLocale, .removeLocale, .setTranslation, .createVariant,
+             .setRowVariant, .deleteVariant:
+            return try await runEdit(tool, args)
+        case .listTemplates: return try await listTemplates()
+        case .listProjects: return try listProjects()
+        case .getProject: return try await getProject(args)
+        case .createProject: return try await createProject(args)
+        case .renameProject: return try renameProject(args)
+        case .deleteProject: return try deleteProject(args)
+        case .switchProject: return try await switchProject(args)
+        case .exportProject: return try await exportProject(args)
+        case .renderPreview: return try await renderPreview(args)
+        case .getAppStoreMetadata: return try await getAppStoreMetadata(args)
+        case .updateAppStoreDescription: return try await updateAppStoreDescription(args)
+        case .previewAppStoreScreenshotSync: return try await previewAppStoreScreenshotSync(args)
+        case .applyAppStoreScreenshotSync: return try await applyAppStoreScreenshotSync(args)
+        case .getSyncJobStatus: return try getSyncJobStatus(args)
+        case .cancelSyncJob: return try cancelSyncJob(args)
+        case .listVariants: return try await listVariants(args)
+        case .batch: return try await batch(args)
+        case .setTranslations: return try await setTranslations(args)
+        case .listCatalog: return try await listCatalog(args)
+        case .undo: return try undo(args, redo: false)
+        case .redo: return try undo(args, redo: true)
         }
     }
 
@@ -109,41 +102,6 @@ final class MCPToolExecutor {
             throw MCPToolError.notFound("Project \(id.uuidString)")
         }
         return project
-    }
-
-    func requireRowIndex(_ args: MCPArguments, key: String = "row_id") throws -> Int {
-        let id = try args.uuid(key)
-        guard let index = state.rowIndex(for: id) else {
-            throw MCPToolError.notFound("Row \(id.uuidString)")
-        }
-        return index
-    }
-
-    func requireShapeLocation(_ args: MCPArguments, key: String = "shape_id") throws -> (rowIndex: Int, shapeIndex: Int, shapeId: UUID) {
-        let id = try args.uuid(key)
-        guard let location = state.shapeLocation(for: id) else {
-            throw MCPToolError.notFound("Shape \(id.uuidString)")
-        }
-        return (location.rowIndex, location.shapeIndex, id)
-    }
-
-    func rowResult(_ rowIndex: Int) throws -> CallTool.Result {
-        let row = state.rows[rowIndex]
-        return try MCPResultEncoding.result(
-            MCPSnapshotBuilder.rowSnapshot(row, index: rowIndex, localeState: state.localeState, availableFontFamilies: state.availableFontFamilySet)
-        )
-    }
-
-    func shapeResult(rowIndex: Int, shapeId: UUID) throws -> CallTool.Result {
-        try MCPResultEncoding.result(shapeSnapshot(rowIndex: rowIndex, shapeId: shapeId))
-    }
-
-    func shapeSnapshot(rowIndex: Int, shapeId: UUID) throws -> MCPShapeSnapshot {
-        let row = state.rows[rowIndex]
-        guard let shape = row.shapes.first(where: { $0.id == shapeId }) else {
-            throw MCPToolError.notFound("Shape \(shapeId.uuidString)")
-        }
-        return MCPSnapshotBuilder.shapeSnapshot(shape, row: row, localeState: state.localeState, availableFontFamilies: state.availableFontFamilySet)
     }
 
     func activeProjectSnapshotResult() throws -> CallTool.Result {

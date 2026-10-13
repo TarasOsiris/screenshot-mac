@@ -30,15 +30,18 @@ enum ProjectCheckoutError: Error, LocalizedError {
 /// Where a project's edits are committed. Two implementations, chosen per call by whoever already
 /// holds the project — never two blind writers for one project.
 @MainActor
-protocol ProjectMutationHost: AnyObject {
+protocol ProjectMutationHost: AnyObject, ImageResourceCopying {
     var document: ProjectDocument { get }
     var modifiedAt: Date? { get }
     var availableFontFamilySet: Set<String> { get }
-    func mutate(_ actionName: String, _ body: (inout ProjectDocument) -> Void)
+    /// Applies `body` as one edit. A throw leaves the document untouched.
+    func mutate<R>(_ actionName: String, _ body: (inout ProjectDocument) throws -> R) rethrows -> R
     func commit() throws
     /// Lands the user's in-progress typing or composing drag before a read. Only the open document
     /// has any; a detached one is already whatever the file says.
     func commitPendingEdits()
+    /// Hands the editor a freshly written image. Only the open document has an editor to show it.
+    func publishThumbnail(_ thumbnail: NSImage, named fileName: String)
 }
 
 /// The editor already has this project open, so it is the authoritative in-memory copy.
@@ -56,14 +59,22 @@ final class OpenProjectHost: ProjectMutationHost {
     var modifiedAt: Date? { state.documentStamp?.modifiedAt }
     var availableFontFamilySet: Set<String> { state.availableFontFamilySet }
 
-    func mutate(_ actionName: String, _ body: (inout ProjectDocument) -> Void) {
-        state.withDocument(actionName, body)
+    func mutate<R>(_ actionName: String, _ body: (inout ProjectDocument) throws -> R) rethrows -> R {
+        try state.withDocument(actionName, body)
     }
 
     /// `withDocument` already scheduled the debounced save.
     func commit() throws {}
 
     func commitPendingEdits() { state.commitAllPendingEdits() }
+
+    func copyImageResource(_ fileName: String, to newFileName: String) -> Bool {
+        state.copyImageResource(fileName, to: newFileName)
+    }
+
+    func publishThumbnail(_ thumbnail: NSImage, named fileName: String) {
+        state.screenshotImages[fileName] = thumbnail
+    }
 }
 
 /// The editor does not have this project open, so the checkout owns it outright.
@@ -88,12 +99,23 @@ final class DetachedProjectHost: ProjectMutationHost {
     /// rather than silently rendering with whichever project the editor happens to have open.
     var availableFontFamilySet: Set<String> { fontScope.availableFamilySet }
 
-    func mutate(_ actionName: String, _ body: (inout ProjectDocument) -> Void) {
-        body(&document)
-        isDirty = true
+    func mutate<R>(_ actionName: String, _ body: (inout ProjectDocument) throws -> R) rethrows -> R {
+        var updated = document
+        let result = try body(&updated)
+        if updated != document {
+            document = updated
+            isDirty = true
+        }
+        return result
     }
 
     func commitPendingEdits() {}
+
+    func copyImageResource(_ fileName: String, to newFileName: String) -> Bool {
+        PersistenceService.copyImageResource(fileName, to: newFileName, inProject: projectId)
+    }
+
+    func publishThumbnail(_ thumbnail: NSImage, named fileName: String) {}
 
     func commit() throws {
         guard isDirty else { return }
@@ -148,7 +170,7 @@ final class DetachedProjectHost: ProjectMutationHost {
 /// *what* to act on — only to decide who commits. The tool contract is therefore identical either
 /// way: same arguments, same result, same resulting document.
 @MainActor
-final class ProjectCheckout: RowRenderSource {
+final class ProjectCheckout: RowRenderSource, ImageResourceCopying {
     let projectId: UUID
     let projectName: String
     let ascAppId: String?
@@ -194,16 +216,30 @@ final class ProjectCheckout: RowRenderSource {
 
     // MARK: - Editing
 
-    func mutate(_ actionName: String, _ body: (inout ProjectDocument) -> Void) {
-        host.mutate(actionName, body)
+    func mutate<R>(_ actionName: String, _ body: (inout ProjectDocument) throws -> R) rethrows -> R {
+        try host.mutate(actionName, body)
     }
 
     func commit() throws { try host.commit() }
+
+    func copyImageResource(_ fileName: String, to newFileName: String) -> Bool {
+        host.copyImageResource(fileName, to: newFileName)
+    }
 
     /// Call before rendering: the open document's undebounced typing lives only in memory.
     func commitPendingEdits() { host.commitPendingEdits() }
 
     func dispose() { fontScope?.dispose() }
+
+    // MARK: - Image resources
+
+    /// Writes staged images into this project's resources folder. The open project also gets each
+    /// editor thumbnail, so the canvas shows it without a reload. Returns one message per failed write.
+    func flush(_ staged: [StagedImageWrite]) async -> [String] {
+        await DocumentEditing.flush(staged, to: resourcesURL) { [host] fileName, thumbnail in
+            host.publishThumbnail(thumbnail, named: fileName)
+        }
+    }
 
     // MARK: - Opening
 

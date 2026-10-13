@@ -88,11 +88,7 @@ extension MCPToolExecutor {
             candidateVersions = found.filter(\.isScreenshotUploadable)
         }
 
-        let requestedRowStrings = args.stringArray("row_ids") ?? []
-        let requestedRowIds = try Set(requestedRowStrings.map { value -> UUID in
-            guard let id = UUID(uuidString: value) else { throw MCPToolError.invalidArgument("row_ids", "not a UUID: \(value)") }
-            return id
-        })
+        let requestedRowIds = Set(try args.uuidArray("row_ids") ?? [])
         let requestedLocaleCodes = Set(args.stringArray("locale_codes") ?? [])
         let projectLocaleCodes = Set(checkout.localeState.locales.map(\.code))
         let unknownLocales = requestedLocaleCodes.subtracting(projectLocaleCodes)

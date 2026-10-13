@@ -2,13 +2,6 @@ import ImageIO
 import SwiftUI
 import UniformTypeIdentifiers
 
-/// A resource the batch import has already pointed the document at but not yet written to disk.
-/// The write happens after the undo step commits, off the main actor — a 20-image import used to
-/// block the main thread for 1.5-3.1 s and trip the app-hang watchdog (SCREENSHOT-BRO-W).
-private struct StagedImageWrite {
-    let fileName: String
-    let source: StagedImageSource
-}
 
 extension AppState {
 
@@ -145,7 +138,7 @@ extension AppState {
         // Every caller of this synchronous path is an editor action, so it writes wherever the
         // locale switcher is pointing — same as before the locale became explicit.
         let localeCode = resolveImportLocale(.active)
-        let fileName = screenshotImageFileName(for: shapeId, localeCode: localeCode)
+        let fileName = DocumentEditing.screenshotImageFileName(for: shapeId, localeCode: localeCode)
         guard let thumbnail = persistImageResource(
             image,
             named: fileName,
@@ -155,75 +148,11 @@ extension AppState {
             return false
         }
         screenshotImages[fileName] = thumbnail
-        cleanupUnreferencedImage(pointShape(at: location, shapeId: shapeId, at: fileName,
-                                            imageSize: image.size, localeCode: localeCode))
+        cleanupUnreferencedImage(DocumentEditing.pointShape(
+            &rows[location.rowIndex].shapes[location.shapeIndex], at: fileName,
+            imageSize: image.size, localeCode: localeCode, localeState: &localeState
+        ))
         return true
-    }
-
-    /// Batch sibling of `performSaveImage`: points the document at the new file now and returns the
-    /// bytes still owed to disk, so the whole undo step commits without touching the filesystem.
-    private func stageSaveImage(_ source: ImageImportSource, for shapeId: UUID,
-                                location: (rowIndex: Int, shapeIndex: Int),
-                                localeCode: String?) -> (StagedImageWrite, replaced: String?) {
-        let fileName = screenshotImageFileName(for: shapeId, localeCode: localeCode)
-        let replaced = pointShape(at: location, shapeId: shapeId, at: fileName,
-                                  imageSize: source.image.size, localeCode: localeCode)
-        let staged = StagedImageWrite(
-            fileName: fileName,
-            source: source.sourceURL.map { .file($0) } ?? .image(source.image)
-        )
-        return (staged, replaced)
-    }
-
-    /// Repoints one shape (or one locale's override) at `fileName`, returning the file it replaced.
-    /// The half `performSaveImage` and `stageSaveImage` share.
-    ///
-    /// `localeCode` is the locale to write, `nil` for the base image. It is passed in rather than
-    /// read from `localeState` so a caller can target a locale that is not the one on screen.
-    private func pointShape(at location: (rowIndex: Int, shapeIndex: Int), shapeId: UUID,
-                            at fileName: String, imageSize: CGSize, localeCode: String?) -> String? {
-        guard let localeCode else {
-            let previous = setBaseImage(at: location, fileName: fileName, imageSize: imageSize)
-            return previous == fileName ? nil : previous
-        }
-
-        // A shape with no base image renders an empty frame in every locale that has no override
-        // of its own — and in the export — so the first image to arrive becomes the fallback too.
-        // Otherwise a locale-targeted import into a fresh row reports success and ships blanks.
-        if rows[location.rowIndex].shapes[location.shapeIndex].displayImageFileName == nil {
-            _ = setBaseImage(at: location, fileName: fileName, imageSize: imageSize)
-        }
-        let shape = rows[location.rowIndex].shapes[location.shapeIndex]
-        var override = localeState.override(forCode: localeCode, shapeId: shapeId) ?? ShapeLocaleOverride()
-        let previous = override.overrideImageFileName
-        override.overrideImageFileName = fileName
-        if shape.flexesToImageAspect {
-            // An abstract frame takes its aspect from the image, and this locale's image need not
-            // match the base one — so the resize has to be an override, not a base edit.
-            var flexed = shape
-            flexed.adaptToImageAspectRatio(imageSize)
-            override.offsetX = flexed.x == shape.x ? nil : flexed.x - shape.x
-            override.offsetWidth = flexed.width == shape.width ? nil : flexed.width - shape.width
-        }
-        LocaleService.setShapeOverride(&localeState, localeCode: localeCode, shapeId: shape.id, override: override)
-        return previous == fileName ? nil : previous
-    }
-
-    private func setBaseImage(at location: (rowIndex: Int, shapeIndex: Int),
-                              fileName: String, imageSize: CGSize) -> String? {
-        var shape = rows[location.rowIndex].shapes[location.shapeIndex]
-        let previous = shape.displayImageFileName
-        shape.displayImageFileName = fileName
-        if shape.flexesToImageAspect {
-            shape.adaptToImageAspectRatio(imageSize)
-        }
-        rows[location.rowIndex].shapes[location.shapeIndex] = shape
-        return previous
-    }
-
-    private func screenshotImageFileName(for shapeId: UUID, localeCode: String?) -> String {
-        let localePart = localeCode.map { "-\($0)" } ?? ""
-        return "\(shapeId.uuidString)\(localePart)-\(UUID().uuidString).png"
     }
 
     /// The locale a write should land in, given what the caller asked for. `nil` means the base
@@ -266,7 +195,7 @@ extension AppState {
 
     /// The one place that shapes the `screenshots_imported` payload, so the three import verbs
     /// cannot drift on it.
-    private func captureImport(count: Int, source: ImageImportOrigin, device: DeviceCategory?) {
+    func captureImport(count: Int, source: ImageImportOrigin, device: DeviceCategory?) {
         AnalyticsService.capture(.screenshotsImported, [
             .count: count,
             .source: source.rawValue,
@@ -276,47 +205,7 @@ extension AppState {
 
     /// Creates an image or device shape sized for the given row, without side effects.
     func makeImageShape(image: NSImage, row: ScreenshotRow, centerX: CGFloat, centerY: CGFloat) -> CanvasShapeModel {
-        if let rawCategory = ScreenshotDeviceDetector.detectScreenshotDevice(image) {
-            // Phone/tablet pixel sizes overlap between Apple and Android, so when the row's
-            // default is an Android category we honor it instead of the Apple-leaning fallback.
-            let detectedCategory: DeviceCategory
-            switch (row.defaultDeviceCategory, rawCategory) {
-            case (.androidPhone, .iphone):
-                detectedCategory = .androidPhone
-            case (.androidTablet, .ipadPro11), (.androidTablet, .ipadPro13):
-                detectedCategory = .androidTablet
-            default:
-                detectedCategory = rawCategory
-            }
-            var shape = CanvasShapeModel.defaultDeviceFromRow(
-                row,
-                centerX: centerX,
-                centerY: centerY,
-                detectedCategory: detectedCategory
-            )
-            if let preferredFrame = ScreenshotDeviceDetector.preferredImportFrame(for: image, in: row, detectedCategory: detectedCategory) {
-                shape.selectRealFrame(preferredFrame)
-                shape.adjustToDeviceAspectRatio(centerX: centerX)
-                // A landscape flip preserves the long side, which overflows a portrait template.
-                shape.scaleToFitWidth(row.templateWidth * 0.9)
-            }
-            return shape
-        }
-        let imgW = image.size.width
-        let imgH = image.size.height
-        let maxW = row.templateWidth * 0.8
-        let maxH = row.templateHeight * 0.8
-        let scale = min(maxW / imgW, maxH / imgH, 1.0)
-        let w = imgW * scale
-        let h = imgH * scale
-        return CanvasShapeModel(
-            type: .image,
-            x: centerX - w / 2,
-            y: centerY - h / 2,
-            width: w,
-            height: h,
-            color: .clear
-        )
+        DocumentEditing.makeImageShape(image: image, row: row, centerX: centerX, centerY: centerY)
     }
 
     /// Import multiple images into a row. If the row already has device shapes, fills those
@@ -384,11 +273,11 @@ extension AppState {
     func screenshotsReplaced(by plan: LocaleFolderImportPlan, inRow rowId: UUID) -> Int {
         guard let idx = rowIndex(for: rowId) else { return 0 }
         let row = rows[idx]
-        let targets = templatesContainingDevices(inRowAt: idx)
+        let targets = DocumentEditing.templatesContainingDevices(in: rows[idx])
         return plan.batches.reduce(0) { total, batch in
             let localeCode = resolveImportLocale(.locale(batch.localeCode))
             let replaced = targets.prefix(batch.files.count).filter { templateIndex in
-                guard let shapeIndex = existingDeviceShapeIndex(in: row, templateIndex: templateIndex) else { return false }
+                guard let shapeIndex = DocumentEditing.existingDeviceShapeIndex(in: row, templateIndex: templateIndex) else { return false }
                 let shape = row.shapes[shapeIndex]
                 guard let localeCode else { return shape.displayImageFileName != nil }
                 return localeState.override(forCode: localeCode, shapeId: shape.id)?.overrideImageFileName != nil
@@ -416,157 +305,22 @@ extension AppState {
         localeCode: String?,
         maxTemplatesPerRow: Int?
     ) -> StagedImport {
-        let templatesWithDevices = templatesContainingDevices(inRowAt: idx)
-        // Templates an image can fill without creating a new one.
-        let reusableCount = templatesWithDevices.isEmpty ? rows[idx].templates.count : templatesWithDevices.count
-        var sources = sources
-        if let cap = maxTemplatesPerRow {
-            let maxImages = reusableCount + max(0, cap - rows[idx].templates.count)
-            if sources.count > maxImages {
-                sources = Array(sources.prefix(maxImages))
-            }
-        }
-        guard !sources.isEmpty else { return StagedImport() }
-
-        var staged: [StagedImageWrite] = []
-        var replacedFiles: [String?] = []
         withUndo("Import Screenshots") {
-            selectRow(rowId)
-
-            var targetTemplateIndices: [Int]
-            if templatesWithDevices.isEmpty {
-                while rows[idx].templates.count < sources.count {
-                    appendTemplate(to: idx)
-                }
-                targetTemplateIndices = Array(0..<sources.count)
-            } else {
-                targetTemplateIndices = Array(templatesWithDevices.prefix(sources.count))
-                while targetTemplateIndices.count < sources.count {
-                    appendTemplate(to: idx)
-                    targetTemplateIndices.append(rows[idx].templates.count - 1)
-                }
-            }
-
-            for (source, templateIndex) in zip(sources, targetTemplateIndices) {
-                guard let (write, replaced) = importImage(source, intoTemplateAt: templateIndex,
-                                                          rowIndex: idx, localeCode: localeCode) else { continue }
-                staged.append(write)
-                replacedFiles.append(replaced)
-            }
+            let batch = DocumentEditing.stageImport(
+                sources, into: &rows[idx], localeCode: localeCode,
+                maxTemplatesPerRow: maxTemplatesPerRow, localeState: &localeState
+            )
+            if batch.imported > 0 { selectRow(rowId) }
+            return batch
         }
-        return StagedImport(staged: staged, replaced: replacedFiles, imported: sources.count)
     }
 
     /// Writes every staged resource, publishing each editor thumbnail as it lands so the row fills
-    /// in progressively. Every step that costs real time — the source read or copy, the PNG encode,
-    /// the disk write, the thumbnail decode — happens inside a `@concurrent` call, so this loop
-    /// suspends at least once per image and the main actor keeps drawing throughout.
+    /// in progressively.
     private func flushStagedImageWrites(_ staged: [StagedImageWrite], activeId: UUID) async {
-        let resourcesDir = PersistenceService.resourcesDir(activeId)
-        for write in staged {
-            let destination = resourcesDir.appendingPathComponent(write.fileName)
-            do {
-                switch write.source {
-                case .file(let url):
-                    try await StagedImageWriter.persist(copying: url, to: destination)
-                case .image(let image):
-                    // Pulled here, one at a time: `NSImage` can't cross actors, and decoding all of
-                    // them up front would hold every full-resolution bitmap for the whole flush.
-                    guard let cgImage = image.cgImage(forProposedRect: nil, context: nil, hints: nil) else {
-                        throw StagedImageWriteError.noImageData
-                    }
-                    try await StagedImageWriter.persist(encoding: cgImage, to: destination)
-                }
-            } catch StagedImageWriteError.writeFailed(let reason) {
-                // The model already references this name. Leaving the reference is the least
-                // destructive outcome: a missing resource loads as an empty device, whereas
-                // retracting it would edit the document after the undo step has closed.
-                saveError = ImageResourceSaveAction.saveScreenshot.writeFailedMessage(reason)
-                continue
-            } catch {
-                saveError = ImageResourceSaveAction.saveScreenshot.encodeFailedMessage
-                continue
-            }
-
-            if let thumbnail = await ImageDownsampler.downsampledCGImageOffMain(
-                at: destination,
-                maxDimension: ImageDownsampler.editorImageMaxDimension
-            ) {
-                screenshotImages[write.fileName] = NSImage(
-                    cgImage: thumbnail,
-                    size: NSSize(width: thumbnail.width, height: thumbnail.height)
-                )
-            }
+        let failures = await DocumentEditing.flush(staged, to: PersistenceService.resourcesDir(activeId)) { fileName, thumbnail in
+            screenshotImages[fileName] = thumbnail
         }
-    }
-
-    private func templatesContainingDevices(inRowAt rowIndex: Int) -> [Int] {
-        let row = rows[rowIndex]
-        return (0..<row.templates.count).filter { templateIndex in
-            existingDeviceShapeIndex(in: row, templateIndex: templateIndex) != nil
-        }
-    }
-
-    private func importImage(_ source: ImageImportSource, intoTemplateAt templateIndex: Int,
-                             rowIndex: Int, localeCode: String?) -> (StagedImageWrite, replaced: String?)? {
-        let row = rows[rowIndex]
-        if let shapeIndex = existingDeviceShapeIndex(in: row, templateIndex: templateIndex) {
-            return stageSaveImage(source, for: row.shapes[shapeIndex].id,
-                                  location: (rowIndex: rowIndex, shapeIndex: shapeIndex),
-                                  localeCode: localeCode)
-        }
-
-        let centerX = row.templateCenterX(at: templateIndex)
-        let centerY = row.templateHeight / 2
-        let shape = makeImageShape(image: source.image, row: row, centerX: centerX, centerY: centerY)
-        let shapeIndex = rows[rowIndex].shapes.count
-        rows[rowIndex].shapes.append(shape)
-        return stageSaveImage(source, for: shape.id, location: (rowIndex: rowIndex, shapeIndex: shapeIndex),
-                              localeCode: localeCode)
-    }
-
-    private func existingDeviceShapeIndex(in row: ScreenshotRow, templateIndex: Int) -> Int? {
-        let templateCenterX = row.templateCenterX(at: templateIndex)
-        let templateCenterY = row.templateHeight / 2
-
-        var best: (index: Int, hasRealFrame: Bool, distance: CGFloat)?
-
-        for (index, shape) in row.shapes.enumerated() {
-            guard shape.type == .device,
-                  row.owningTemplateIndex(for: shape) == templateIndex else { continue }
-
-            let hasRealFrame = shape.deviceFrameId != nil
-            let shapeCenterX = shape.x + shape.width / 2
-            let shapeCenterY = shape.y + shape.height / 2
-            let distance = abs(shapeCenterX - templateCenterX) + abs(shapeCenterY - templateCenterY)
-
-            guard let current = best else {
-                best = (index, hasRealFrame, distance)
-                continue
-            }
-
-            if hasRealFrame != current.hasRealFrame {
-                if hasRealFrame { best = (index, hasRealFrame, distance) }
-            } else if distance < current.distance {
-                best = (index, hasRealFrame, distance)
-            } else if distance == current.distance && index < current.index {
-                best = (index, hasRealFrame, distance)
-            }
-        }
-
-        return best?.index
-    }
-}
-
-/// The document half of an import, waiting for its files to be written.
-fileprivate struct StagedImport {
-    var staged: [StagedImageWrite] = []
-    var replaced: [String?] = []
-    var imported = 0
-
-    static func += (lhs: inout StagedImport, rhs: StagedImport) {
-        lhs.staged += rhs.staged
-        lhs.replaced += rhs.replaced
-        lhs.imported += rhs.imported
+        if let failure = failures.last { saveError = failure }
     }
 }

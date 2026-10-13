@@ -35,6 +35,11 @@ enum MCPToolName: String, CaseIterable {
     case createVariant = "create_variant"
     case setRowVariant = "set_row_variant"
     case deleteVariant = "delete_variant"
+    case batch = "batch"
+    case setTranslations = "set_translations"
+    case listCatalog = "list_catalog"
+    case undo = "undo"
+    case redo = "redo"
 
     nonisolated static var available: [MCPToolName] { allCases.filter(\.isAvailable) }
 
@@ -43,6 +48,30 @@ enum MCPToolName: String, CaseIterable {
         switch self {
         case .listVariants, .createVariant, .setRowVariant, .deleteVariant: FeatureFlags.abTesting
         default: true
+        }
+    }
+
+    /// Hints for clients deciding what to confirm. Anything that overwrites or removes is
+    /// destructive; only App Store Connect reaches outside the app.
+    nonisolated var annotations: Tool.Annotations {
+        switch self {
+        case .listTemplates, .listProjects, .getProject, .renderPreview, .getSyncJobStatus, .listVariants, .listCatalog:
+            Tool.Annotations(readOnlyHint: true, openWorldHint: false)
+        case .getAppStoreMetadata, .previewAppStoreScreenshotSync:
+            Tool.Annotations(readOnlyHint: true, openWorldHint: true)
+        case .applyAppStoreScreenshotSync, .updateAppStoreDescription:
+            Tool.Annotations(readOnlyHint: false, destructiveHint: true, idempotentHint: true, openWorldHint: true)
+        case .cancelSyncJob:
+            Tool.Annotations(readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: true)
+        case .updateRow, .updateShape, .setTranslation, .setTranslations, .renameProject, .setRowVariant:
+            Tool.Annotations(readOnlyHint: false, destructiveHint: true, idempotentHint: true, openWorldHint: false)
+        case .deleteProject, .deleteRow, .deleteShape, .removeTemplate, .removeLocale, .deleteVariant,
+             .importScreenshots, .moveRow, .batch, .undo, .redo:
+            Tool.Annotations(readOnlyHint: false, destructiveHint: true, idempotentHint: false, openWorldHint: false)
+        case .switchProject:
+            Tool.Annotations(readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false)
+        case .createProject, .addRow, .addTemplate, .addShape, .addLocale, .createVariant, .exportProject:
+            Tool.Annotations(readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false)
         }
     }
 }
@@ -57,6 +86,12 @@ nonisolated enum MCPToolCatalog {
         + "user-granted folders, but not arbitrary paths (system /tmp and agent scratch dirs "
         + "included). If a load fails, copy the images into the app's own temp folder "
         + "\(FileManager.default.temporaryDirectory.path) and retry with those paths."
+
+    /// Editing tools act on the project the app has open unless told otherwise; naming it makes a
+    /// script independent of the window, and lets it edit a project that isn't open at all.
+    private static let projectIdSchema = MCPSchema.string(
+        "Project UUID to edit — from list_projects. Recommended; defaults to the project open in the app. A project that isn't open is edited and saved directly (not undoable in the app)"
+    )
 
     private static let gradientSchema = MCPSchema.object([
         "type": MCPSchema.string("Gradient type", oneOf: ["linear", "radial", "angular"]),
@@ -86,8 +121,21 @@ nonisolated enum MCPToolCatalog {
         "Formatted text as styled spans, concatenated in order; replaces the text and all per-range formatting. Read the current spans from get_project's text_runs and send them back edited (e.g. change one word's color). Mutually exclusive with text."
     )
 
+    private static let translationProperties: [String: Value] = [
+        "shape_id": MCPSchema.string("Text shape UUID"),
+        "locale_code": MCPSchema.string("Target locale code (must exist in the project)"),
+        "text": MCPSchema.string("Translated text"),
+        "text_runs": textRunsSchema,
+        "auto_fit": MCPSchema.boolean("Fit overflowing text automatically (default true); false leaves the box and font untouched"),
+    ]
+
     static var tools: [Tool] {
-        allTools.filter { MCPToolName(rawValue: $0.name)?.isAvailable ?? false }
+        allTools.compactMap { tool in
+            guard let name = MCPToolName(rawValue: tool.name), name.isAvailable else { return nil }
+            var annotated = tool
+            annotated.annotations = name.annotations
+            return annotated
+        }
     }
 
     private static let schemasByName: [String: Value] = Dictionary(
@@ -114,6 +162,8 @@ nonisolated enum MCPToolCatalog {
             description: "Full structured snapshot of a project: rows, template columns, shapes, locales — including every id needed by other tools. All coordinates/sizes are in model space (pixels of the target screenshot). Works on any project, open in the app window or not.",
             inputSchema: MCPSchema.object([
                 "project_id": MCPSchema.string("Project UUID — from list_projects"),
+                "row_ids": MCPSchema.array(of: MCPSchema.string("Row UUID"), "Only these rows (default: all)"),
+                "include_translations": MCPSchema.boolean("Include per-locale text, text runs and image overrides (default true); false keeps large multilingual projects small"),
             ], required: ["project_id"])
         ),
         Tool(
@@ -158,8 +208,9 @@ nonisolated enum MCPToolCatalog {
         ),
         Tool(
             name: MCPToolName.addRow.rawValue,
-            description: "Add a screenshot row to the active project (appended at the end unless an anchor row is given).",
+            description: "Add a screenshot row (appended at the end unless an anchor row is given).",
             inputSchema: MCPSchema.object([
+                "project_id": projectIdSchema,
                 "before_row_id": MCPSchema.string("Insert above this row UUID"),
                 "after_row_id": MCPSchema.string("Insert below this row UUID"),
                 "label": MCPSchema.string("Row label"),
@@ -170,6 +221,7 @@ nonisolated enum MCPToolCatalog {
             name: MCPToolName.updateRow.rawValue,
             description: "Patch row properties: label, size, background (solid color or gradient), spanning, device visibility, default device. Only provided fields change.",
             inputSchema: MCPSchema.object([
+                "project_id": projectIdSchema,
                 "row_id": MCPSchema.string("Row UUID"),
                 "label": MCPSchema.string("Row label"),
                 "width": MCPSchema.number("Template width in pixels"),
@@ -186,6 +238,7 @@ nonisolated enum MCPToolCatalog {
             name: MCPToolName.moveRow.rawValue,
             description: "Move a row up or down.",
             inputSchema: MCPSchema.object([
+                "project_id": projectIdSchema,
                 "row_id": MCPSchema.string("Row UUID"),
                 "direction": MCPSchema.string("Direction", oneOf: ["up", "down"]),
             ], required: ["row_id", "direction"])
@@ -194,6 +247,7 @@ nonisolated enum MCPToolCatalog {
             name: MCPToolName.deleteRow.rawValue,
             description: "Delete a row and its shapes.",
             inputSchema: MCPSchema.object([
+                "project_id": projectIdSchema,
                 "row_id": MCPSchema.string("Row UUID"),
             ], required: ["row_id"])
         ),
@@ -201,6 +255,7 @@ nonisolated enum MCPToolCatalog {
             name: MCPToolName.addTemplate.rawValue,
             description: "Add a screenshot column to a row (appended at the end unless an anchor is given).",
             inputSchema: MCPSchema.object([
+                "project_id": projectIdSchema,
                 "row_id": MCPSchema.string("Row UUID"),
                 "before_template_id": MCPSchema.string("Insert before this template UUID"),
                 "after_template_id": MCPSchema.string("Insert after this template UUID"),
@@ -210,6 +265,7 @@ nonisolated enum MCPToolCatalog {
             name: MCPToolName.removeTemplate.rawValue,
             description: "Remove a screenshot column from a row.",
             inputSchema: MCPSchema.object([
+                "project_id": projectIdSchema,
                 "row_id": MCPSchema.string("Row UUID"),
                 "template_id": MCPSchema.string("Template UUID"),
             ], required: ["row_id", "template_id"])
@@ -218,6 +274,7 @@ nonisolated enum MCPToolCatalog {
             name: MCPToolName.addShape.rawValue,
             description: "Add a shape to a row. Position defaults to the center of the given template column. Types: rectangle, circle, star, text, device (phone/tablet frame), svg (bundled preset), image (from file path).",
             inputSchema: MCPSchema.object([
+                "project_id": projectIdSchema,
                 "row_id": MCPSchema.string("Row UUID"),
                 "type": MCPSchema.string("Shape type", oneOf: ["rectangle", "circle", "star", "text", "device", "svg", "image"]),
                 "template_index": MCPSchema.integer("Column index to center the shape in (default 0)"),
@@ -240,6 +297,7 @@ nonisolated enum MCPToolCatalog {
             name: MCPToolName.updateShape.rawValue,
             description: "Patch shape properties; only provided fields change. Text edits apply to the base locale (use set_translation for other locales). Text with per-range formatting (a highlighted word) reports it in get_project as text_runs; replacing `text` alone keeps only the first span's style, so edit formatted text through text_runs. Shape-level color/font/alignment/spacing fields restyle every span, translations included.",
             inputSchema: MCPSchema.object([
+                "project_id": projectIdSchema,
                 "shape_id": MCPSchema.string("Shape UUID"),
                 "x": MCPSchema.number("Left edge in model pixels"),
                 "y": MCPSchema.number("Top edge in model pixels"),
@@ -276,44 +334,45 @@ nonisolated enum MCPToolCatalog {
             name: MCPToolName.deleteShape.rawValue,
             description: "Delete a shape.",
             inputSchema: MCPSchema.object([
+                "project_id": projectIdSchema,
                 "shape_id": MCPSchema.string("Shape UUID"),
             ], required: ["shape_id"])
         ),
         Tool(
             name: MCPToolName.importScreenshots.rawValue,
-            description: "Import screenshot images from file paths into a row's device frames. Images fill device-holding columns in order starting from the first, replacing any existing screenshots; extra images append new columns. A single column cannot be targeted — re-import the whole row's images in order. Pass `locale` to say which locale's images these are; without it the images land in whichever locale the app window is currently showing, which a script cannot see. The response echoes the locale actually written. \(screenshotStagingHint)",
+            description: "Import screenshot images from file paths into a row's device frames. Images fill device-holding columns in order starting from the first, replacing any existing screenshots; extra images append new columns. A single column cannot be targeted — re-import the whole row's images in order. Pass `locale` to say which locale's images these are; without it they land in the project's active locale (the one the app shows), which a script cannot see. The response echoes the locale actually written. \(screenshotStagingHint)",
             inputSchema: MCPSchema.object([
+                "project_id": projectIdSchema,
                 "row_id": MCPSchema.string("Row UUID"),
                 "paths": MCPSchema.array(of: MCPSchema.string("Absolute file path"), "Image file paths in desired order"),
-                "locale": MCPSchema.string("Locale these images belong to, e.g. \"de-DE\". Use the base locale code for the images every other locale falls back to. Defaults to the locale the app is currently showing."),
+                "locale": MCPSchema.string("Locale these images belong to, e.g. \"de-DE\". Use the base locale code for the images every other locale falls back to. Defaults to the project's active locale."),
                 "max_templates_per_row": MCPSchema.integer("Cap on columns to create (optional)"),
             ], required: ["row_id", "paths"])
         ),
         Tool(
             name: MCPToolName.addLocale.rawValue,
-            description: "Add a locale to the active project (e.g. \"de-DE\", \"fr-FR\", \"ja\").",
+            description: "Add a locale to a project (e.g. \"de-DE\", \"fr-FR\", \"ja\").",
             inputSchema: MCPSchema.object([
+                "project_id": projectIdSchema,
                 "code": MCPSchema.string("Locale code"),
                 "label": MCPSchema.string("Display label; defaults to the preset label for known codes"),
             ], required: ["code"])
         ),
         Tool(
             name: MCPToolName.removeLocale.rawValue,
-            description: "Remove a locale and all its translations from the active project.",
+            description: "Remove a locale and all its translations from a project.",
             inputSchema: MCPSchema.object([
+                "project_id": projectIdSchema,
                 "code": MCPSchema.string("Locale code"),
             ], required: ["code"])
         ),
         Tool(
             name: MCPToolName.setTranslation.rawValue,
             description: "Set a text shape's translated text for a locale. Plain `text` renders in the shape's own style; pass `text_runs` instead to keep per-range formatting (get_project reports existing ones as translation_text_runs). A translation that overflows its box is fitted automatically, in this locale only: first a mild font shrink (≥80%), then a taller box into free space, and only then a deeper shrink; a later, shorter translation gives the space back. The result's `auto_fit` says what was done (`also_fitted` lists other boxes sharing the translation); when `still_overflows` is true, or `font_scale` is well below 1, shorten the translation.",
-            inputSchema: MCPSchema.object([
-                "shape_id": MCPSchema.string("Text shape UUID"),
-                "locale_code": MCPSchema.string("Target locale code (must exist in the project)"),
-                "text": MCPSchema.string("Translated text"),
-                "text_runs": textRunsSchema,
-                "auto_fit": MCPSchema.boolean("Fit overflowing text automatically (default true); false leaves the box and font untouched"),
-            ], required: ["shape_id", "locale_code"])
+            inputSchema: MCPSchema.object(
+                translationProperties.merging(["project_id": projectIdSchema]) { $1 },
+                required: ["shape_id", "locale_code"]
+            )
         ),
         Tool(
             name: MCPToolName.exportProject.rawValue,
@@ -402,13 +461,14 @@ nonisolated enum MCPToolCatalog {
         ),
         Tool(
             name: MCPToolName.listVariants.rawValue,
-            description: "List the active project's A/B variants and which rows belong to each. Rows with no variant are the Original — the control an App Store product page experiment compares against.",
-            inputSchema: MCPSchema.object([:])
+            description: "List a project's A/B variants and which rows belong to each. Rows with no variant are the Original — the control an App Store product page experiment compares against.",
+            inputSchema: MCPSchema.object(["project_id": projectIdSchema])
         ),
         Tool(
             name: MCPToolName.createVariant.rawValue,
-            description: "Start a new A/B variant in the active project by copying a row (shapes, translations and images) into it. The copy is inserted after the source row; edit it to make the alternative.",
+            description: "Start a new A/B variant by copying a row (shapes, translations and images) into it. The copy is inserted after the source row; edit it to make the alternative.",
             inputSchema: MCPSchema.object([
+                "project_id": projectIdSchema,
                 "from_row_id": MCPSchema.string("Row UUID to copy into the new variant"),
                 "name": MCPSchema.string("Variant name (default \"Variant B\", \"Variant C\", …)"),
             ], required: ["from_row_id"])
@@ -417,6 +477,7 @@ nonisolated enum MCPToolCatalog {
             name: MCPToolName.setRowVariant.rawValue,
             description: "Move a row into a variant, or back to the Original.",
             inputSchema: MCPSchema.object([
+                "project_id": projectIdSchema,
                 "row_id": MCPSchema.string("Row UUID"),
                 "variant_id": MCPSchema.string("Variant UUID from list_variants; omit to move the row to the Original"),
             ], required: ["row_id"])
@@ -425,8 +486,57 @@ nonisolated enum MCPToolCatalog {
             name: MCPToolName.deleteVariant.rawValue,
             description: "Delete a variant and its rows (undoable in the app). If its rows are all the project has, they move to the Original instead.",
             inputSchema: MCPSchema.object([
+                "project_id": projectIdSchema,
                 "variant_id": MCPSchema.string("Variant UUID from list_variants"),
             ], required: ["variant_id"])
+        ),
+        Tool(
+            name: MCPToolName.batch.rawValue,
+            description: "Apply several editing operations to one project in a single call: one undo step in the app, and all-or-nothing — if any operation fails, none is applied and the error names its index. Each operation is {tool, arguments} for one of the editing tools (add_row, update_row, move_row, delete_row, add_template, remove_template, add_shape, update_shape, delete_shape, import_screenshots, add_locale, remove_locale, set_translation, and the variant tools when enabled); leave project_id out of the operations. An id argument (row_id, shape_id, before_row_id, …) of exactly \"$N\" is replaced by the id that operation N produced (the new row's or shape's id), so later operations can edit what earlier ones created. Returns a compact record per operation, in order (ids, auto-fit, import counts); call get_project with row_ids for full snapshots.",
+            inputSchema: MCPSchema.object([
+                "project_id": projectIdSchema,
+                "operations": MCPSchema.array(
+                    of: MCPSchema.object([
+                        "tool": MCPSchema.string("Editing tool name, e.g. \"add_shape\""),
+                        "arguments": .object(["type": "object", "description": "That tool's arguments, without project_id"]),
+                    ], required: ["tool"]),
+                    "Operations, applied in order"
+                ),
+            ], required: ["operations"])
+        ),
+        Tool(
+            name: MCPToolName.setTranslations.rawValue,
+            description: "Set many translations in one call — one undo step, all-or-nothing. Each entry behaves like set_translation (including auto-fit) and the results come back in order.",
+            inputSchema: MCPSchema.object([
+                "project_id": projectIdSchema,
+                "entries": MCPSchema.array(
+                    of: MCPSchema.object(translationProperties, required: ["shape_id", "locale_code"]),
+                    "Translations to set"
+                ),
+            ], required: ["entries"])
+        ),
+        Tool(
+            name: MCPToolName.listCatalog.rawValue,
+            description: "List the values other tools accept: device_frames (ids for device_frame_id, with category, color and orientation), svg_presets (names for svg_preset), fonts (families usable as font_name in a project, including its imported fonts), locale_presets (locale codes and labels for add_locale), screenshot_sizes (App Store / Play sizes for add_row's size).",
+            inputSchema: MCPSchema.object([
+                "kind": MCPSchema.string("What to list", oneOf: ["device_frames", "svg_presets", "fonts", "locale_presets", "screenshot_sizes"]),
+                "project_id": MCPSchema.string("For fonts: the project whose imported fonts to include (default: the open project)"),
+                "category": MCPSchema.string("For device_frames: only this device category", oneOf: deviceCategories),
+            ], required: ["kind"])
+        ),
+        Tool(
+            name: MCPToolName.undo.rawValue,
+            description: "Undo the most recent edit in the project open in the app — the user's or an agent's, exactly like ⌘Z. Edits to a project that isn't open are saved directly and cannot be undone. Returns the name of the step undone.",
+            inputSchema: MCPSchema.object([
+                "project_id": MCPSchema.string("Must be the open project; guards against undoing in the wrong one"),
+            ])
+        ),
+        Tool(
+            name: MCPToolName.redo.rawValue,
+            description: "Redo the most recently undone edit in the project open in the app, exactly like ⇧⌘Z.",
+            inputSchema: MCPSchema.object([
+                "project_id": MCPSchema.string("Must be the open project"),
+            ])
         ),
     ]
 }

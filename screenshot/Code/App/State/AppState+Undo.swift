@@ -26,18 +26,22 @@ extension AppState {
         return result
     }
 
-    /// The MCP seam: applies a whole-document mutation as one undo step.
-    ///
-    /// `withUndo` already commits pending edits first, which is the load-bearing part — the user's
-    /// composing drag and undebounced typing live only in memory, so a writer that snapshotted the
-    /// file instead would silently revert what they just typed. Not for the editor's own verbs:
-    /// they mutate `rows` in place and skip this whole-document copy.
-    func withDocument(_ actionName: String, _ body: (inout ProjectDocument) -> Void) {
+    /// The MCP seam: one undo step, nothing applied if `body` throws, then the image and selection upkeep
+    /// the editor's verbs do by hand. Pending edits commit first, or the copy would revert the user's typing.
+    func withDocument<R>(_ actionName: String, _ body: (inout ProjectDocument) throws -> R) rethrows -> R {
+        commitAllPendingEdits()
+        var updated = document
+        let result = try body(&updated)
+        guard updated != document else { return result }
         withUndo(actionName) {
-            var updated = document
-            body(&updated)
+            let referencedBefore = allReferencedImageFileNames()
             document = updated
+            cleanupUnreferencedImages(Array(referencedBefore.subtracting(allReferencedImageFileNames())))
+            viewMode.reconcilePreviewingRows(against: Set(rows.map(\.id)))
+            normalizeSelection()
+            keepSelectionVisible()
         }
+        return result
     }
 
     /// Row-scoped `withUndo` for mutations confined to one row (plus `localeState` and

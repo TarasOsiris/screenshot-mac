@@ -7,7 +7,7 @@ extension AppState {
 
     /// Collects all image filenames (base + locale overrides) for a set of shapes.
     func imageFileNames(for shapes: [CanvasShapeModel]) -> [String] {
-        shapes.flatMap { $0.allImageFileNames } + shapes.flatMap { localeOverrideImageFileNames(for: $0.id) }
+        DocumentEditing.imageFileNames(for: shapes, localeState: localeState)
     }
 
     // MARK: - Image Cleanup
@@ -162,61 +162,10 @@ extension AppState {
         }
     }
 
-    /// A failed copy leaves the duplicated shape pointing at a file that was never written, so
-    /// it renders as a hole rather than an error.
-    private func copyImageResource(from src: URL, to dst: URL, kind: String) {
-        do {
-            try FileManager.default.copyItem(at: src, to: dst)
-        } catch {
-            CrashReportingService.report(.imageResourceCopyFailed, error: error, extra: ["kind": kind])
-        }
-    }
-
     /// Copy image files for a duplicated shape so it has its own independent files.
     /// Updates the shape's image references in-place and copies locale override image files.
     func copyImageFiles(for newShape: inout CanvasShapeModel, originalId: UUID) {
-        guard let activeId = activeProjectId else { return }
-        let resourcesURL = PersistenceService.resourcesDir(activeId)
-        let fm = FileManager.default
-
-        // Copy base image file (imageFileName or screenshotFileName)
-        if let originalFile = newShape.displayImageFileName {
-            let srcURL = resourcesURL.appendingPathComponent(originalFile)
-            let newFile = "\(newShape.id.uuidString).png"
-            let dstURL = resourcesURL.appendingPathComponent(newFile)
-            if fm.fileExists(atPath: srcURL.path) {
-                copyImageResource(from: srcURL, to: dstURL, kind: "display")
-                newShape.displayImageFileName = newFile
-                screenshotImages[newFile] = screenshotImages[originalFile]
-            }
-        }
-
-        if let originalFillFile = newShape.fillImageConfig?.fileName {
-            let srcURL = resourcesURL.appendingPathComponent(originalFillFile)
-            let newFillFile = "fill-\(newShape.id.uuidString).png"
-            let dstURL = resourcesURL.appendingPathComponent(newFillFile)
-            if fm.fileExists(atPath: srcURL.path) {
-                copyImageResource(from: srcURL, to: dstURL, kind: "fill")
-                newShape.fillImageConfig?.fileName = newFillFile
-                screenshotImages[newFillFile] = screenshotImages[originalFillFile]
-            }
-        }
-
-        let originalKey = originalId.uuidString
-        let newKey = newShape.id.uuidString
-        for localeCode in localeState.overrides.keys {
-            guard var override = localeState.overrides[localeCode]?[originalKey],
-                  let originalFile = override.overrideImageFileName else { continue }
-            let srcURL = resourcesURL.appendingPathComponent(originalFile)
-            let newFile = "\(newShape.id.uuidString)-\(localeCode).png"
-            let dstURL = resourcesURL.appendingPathComponent(newFile)
-            if fm.fileExists(atPath: srcURL.path) {
-                copyImageResource(from: srcURL, to: dstURL, kind: "localeOverride")
-                override.overrideImageFileName = newFile
-                localeState.overrides[localeCode]?[newKey] = override
-                screenshotImages[newFile] = screenshotImages[originalFile]
-            }
-        }
+        DocumentEditing.copyImageFiles(for: &newShape, originalId: originalId, localeState: &localeState, resources: self)
     }
 
     /// Collect all screenshot filenames from locale overrides for a shape.
@@ -282,5 +231,14 @@ extension AppState {
     /// Loads full-resolution images for a single row and locale from disk.
     func loadFullResolutionImages(forRow row: ScreenshotRow, localeCode: String) async -> [String: NSImage] {
         await loadFullResolutionImages(fileNames: referencedImageFileNames(forRow: row, localeCode: localeCode))
+    }
+}
+
+extension AppState: ImageResourceCopying {
+    func copyImageResource(_ fileName: String, to newFileName: String) -> Bool {
+        guard let activeId = activeProjectId,
+              PersistenceService.copyImageResource(fileName, to: newFileName, inProject: activeId) else { return false }
+        screenshotImages[newFileName] = screenshotImages[fileName]
+        return true
     }
 }

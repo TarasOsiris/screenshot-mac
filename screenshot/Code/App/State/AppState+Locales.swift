@@ -316,22 +316,7 @@ extension AppState {
     /// Drop any override entry whose key is no longer a live shape id or a live text shape's
     /// translation key — e.g. after deleting every member of a reused string.
     func cleanupOrphanedTranslationOverrides() {
-        var live = Set<String>()
-        for row in rows {
-            for shape in row.shapes {
-                live.insert(shape.id.uuidString)
-                if shape.type == .text { live.insert(shape.textTranslationKey) }
-            }
-        }
-        for code in Array(localeState.overrides.keys) {
-            guard let keys = localeState.overrides[code]?.keys else { continue }
-            for key in Array(keys) where !live.contains(key) {
-                localeState.overrides[code]?.removeValue(forKey: key)
-            }
-            if localeState.overrides[code]?.isEmpty == true {
-                localeState.overrides.removeValue(forKey: code)
-            }
-        }
+        DocumentEditing.cleanupOrphanedTranslationOverrides(rows: rows, localeState: &localeState)
     }
 
     func resetActiveLocaleToBase() {
@@ -341,7 +326,7 @@ extension AppState {
         withUndo("Reset Language to Base") {
             var overrideImages = localeState.overrides[code]?.values.compactMap(\.overrideImageFileName) ?? []
             localeState.overrides.removeValue(forKey: code)
-            overrideImages += removeBackgroundImageOverrides(forLocale: code)
+            overrideImages += DocumentEditing.removeBackgroundImageOverrides(forLocale: code, in: &rows)
             cleanupUnreferencedImages(overrideImages)
         }
     }
@@ -351,14 +336,6 @@ extension AppState {
         guard !localeState.isBaseLocale else { return false }
         let code = localeState.activeLocaleCode
         return localeState.activeLocaleHasShapeOverrides || rows.contains { $0.hasBackgroundImageEntry(forLocale: code) }
-    }
-
-    private func removeBackgroundImageOverrides(forLocale code: String) -> [String] {
-        var freed: [String] = []
-        for index in rows.indices where rows[index].hasBackgroundImageEntry(forLocale: code) {
-            freed += rows[index].removeBackgroundImageOverrides(forLocale: code)
-        }
-        return freed
     }
 
     func addLocale(_ locale: LocaleDefinition) {
@@ -375,10 +352,7 @@ extension AppState {
         guard code != localeState.baseLocaleCode else { return }
         guard localeState.hasLocale(code) else { return }
         withUndo("Remove Language") {
-            var overrideImages = localeState.overrides[code]?.values.compactMap(\.overrideImageFileName) ?? []
-            LocaleService.removeLocale(&localeState, code: code)
-            overrideImages += removeBackgroundImageOverrides(forLocale: code)
-            cleanupUnreferencedImages(overrideImages)
+            cleanupUnreferencedImages(DocumentEditing.removeLocale(code, rows: &rows, localeState: &localeState))
         }
     }
 

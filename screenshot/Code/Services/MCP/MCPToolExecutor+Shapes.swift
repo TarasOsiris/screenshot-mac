@@ -5,28 +5,31 @@ import MCP
 
 extension MCPToolExecutor {
 
-    func addShape(_ args: MCPArguments) throws -> CallTool.Result {
-        let rowIndex = try requireRowIndex(args)
-        let row = state.rows[rowIndex]
+    func addShape(_ args: MCPArguments, _ document: inout ProjectDocument, _ context: inout MCPEditContext) throws -> MCPEditResult {
+        let rowIndex = try requireRowIndex(args, in: document)
+        let row = document.rows[rowIndex]
         guard let type = try args.enumValue("type", ShapeType.self) else {
             throw MCPToolError.missingArgument("type")
         }
-        try validateShapeArgs(args)
+        try validateShapeArgs(args, fonts: context.availableFontFamilies)
 
         let templateIndex = min(max(args.int("template_index") ?? 0, 0), max(row.templates.count - 1, 0))
         let centerX = row.templateCenterX(at: templateIndex)
         let centerY = row.templateHeight / 2
 
-        state.selectRow(row.id)
-        let existingIds = Set(row.shapes.map(\.id))
-
+        var shape: CanvasShapeModel
         switch type {
         case .image:
             let path = try args.requiredString("image_path")
             guard let image = NSImage(contentsOfFile: path) else {
-                throw MCPToolError.invalidArgument("image_path", "could not load an image from \(path)")
+                throw MCPToolError.invalidArgument("image_path", "could not load an image from \(path). \(MCPToolCatalog.screenshotStagingHint)")
             }
-            state.addImageShape(image: image, centerX: centerX, centerY: centerY, source: .mcp)
+            shape = DocumentEditing.makeImageShape(image: image, row: row, centerX: centerX, centerY: centerY)
+            let fileName = DocumentEditing.screenshotImageFileName(for: shape.id, localeCode: nil)
+            _ = DocumentEditing.pointShape(&shape, at: fileName, imageSize: image.size, localeCode: nil, localeState: &document.localeState)
+            context.staged.append(StagedImageWrite(fileName: fileName, source: .file(URL(fileURLWithPath: path))))
+            let device = shape.deviceCategory
+            context.afterCommit.append { [state] in state.captureImport(count: 1, source: .mcp, device: device) }
 
         case .svg:
             let presetName = try args.requiredString("svg_preset")
@@ -36,10 +39,9 @@ extension MCPToolExecutor {
             }
             let intrinsic = SvgHelper.parseViewBoxSize(preset.sanitizedContent) ?? CGSize(width: 400, height: 400)
             let size = SvgHelper.scaledSize(intrinsic, maxDim: row.svgMaxDimension)
-            state.addShape(CanvasShapeModel.defaultSvg(centerX: centerX, centerY: centerY, svgContent: preset.sanitizedContent, size: size))
+            shape = CanvasShapeModel.defaultSvg(centerX: centerX, centerY: centerY, svgContent: preset.sanitizedContent, size: size)
 
         case .device:
-            var shape: CanvasShapeModel
             if let category = try args.enumValue("device_category", DeviceCategory.self) {
                 shape = CanvasShapeModel.defaultDevice(centerX: centerX, centerY: centerY, templateHeight: row.templateHeight, category: category)
             } else {
@@ -48,41 +50,33 @@ extension MCPToolExecutor {
             if let frame = try deviceFrame(args) {
                 shape.selectRealFrame(frame)
             }
-            state.addShape(shape)
 
         default:
-            guard let shape = CanvasShapeModel.defaultShape(for: type, row: row, centerX: centerX, centerY: centerY) else {
+            guard let made = CanvasShapeModel.defaultShape(for: type, row: row, centerX: centerX, centerY: centerY) else {
                 throw MCPToolError.invalidArgument("type", "cannot create \(type.rawValue) via add_shape")
             }
-            state.addShape(shape)
+            shape = made
         }
 
-        guard let newShape = state.rows[rowIndex].shapes.first(where: { !existingIds.contains($0.id) }) else {
-            throw MCPToolError.failed("Shape was not added")
-        }
-
-        var patch = newShape
         var restyled: [RichTextUtils.ShapeStyleProperty] = []
-        try applyCommonPatch(&patch, args: args, restyled: &restyled)
+        try applyCommonPatch(&shape, args: args, restyled: &restyled)
         if let text = args.string("text") {
-            patch.text = text
+            shape.text = text
         }
-        if patch != newShape {
-            state.updateShape(patch, forLocaleCode: state.localeState.baseLocaleCode)
-        }
-        return try shapeResult(rowIndex: rowIndex, shapeId: newShape.id)
+        document.rows[rowIndex].shapes.append(shape)
+        return .shape(shape.id)
     }
 
-    func updateShape(_ args: MCPArguments) throws -> CallTool.Result {
-        let location = try requireShapeLocation(args)
-        try validateShapeArgs(args)
+    func updateShape(_ args: MCPArguments, _ document: inout ProjectDocument, _ context: inout MCPEditContext) throws -> MCPEditResult {
+        let location = try requireShapeLocation(args, in: document)
+        try validateShapeArgs(args, fonts: context.availableFontFamilies)
         let textRuns = try args.strictObjectArray("text_runs")
         let clearsFormatting = args.bool("clear_text_formatting") == true
         // The shapes array holds the base-locale model; patch and commit against the base
         // explicitly so agent edits never land in whichever locale the UI happens to view.
-        let base = state.rows[location.rowIndex].shapes[location.shapeIndex]
+        let base = document.rows[location.rowIndex].shapes[location.shapeIndex]
         if textRuns != nil || clearsFormatting {
-            try validateTextFormattingArgs(args, shape: base)
+            try validateTextFormattingArgs(args, shape: base, fonts: context.availableFontFamilies)
         }
 
         var patch = base
@@ -94,7 +88,7 @@ extension MCPToolExecutor {
         }
         // Encoded against the patched shape, so runs inherit shape-level style set in the same call.
         if let textRuns {
-            let encoded = try MCPRichText.encode(textRuns, onto: patch, availableFontFamilies: state.availableFontFamilySet)
+            let encoded = try MCPRichText.encode(textRuns, onto: patch, availableFontFamilies: context.availableFontFamilies)
             patch.text = encoded.text
             patch.richText = encoded.richText
         } else if clearsFormatting {
@@ -104,32 +98,34 @@ extension MCPToolExecutor {
             patch.richText = nil
         }
 
-        // Everything that can throw has run; one transaction keeps the call a single undo step.
-        state.withUndo("Edit Shape") {
-            if patch != base {
-                state.updateShape(patch, forLocaleCode: state.localeState.baseLocaleCode)
-            }
-            if base.translationKey != nil, let text = patch.text, text != base.text {
-                state.setSharedBaseText(key: base.textTranslationKey, text: text)
-            }
-            restyleTranslations(of: patch, properties: restyled, clearingFormatting: clearsFormatting)
-            switch args.string("z_order") {
-            case "front": state.bringShapeToFront(location.shapeId)
-            case "back": state.sendShapeToBack(location.shapeId)
-            default: break
-            }
+        if patch != base {
+            document.rows[location.rowIndex].shapes[location.shapeIndex] = LocaleService.splitUpdate(
+                base: base, updated: patch, localeState: &document.localeState,
+                forLocaleCode: document.localeState.baseLocaleCode
+            )
         }
-
-        return try shapeResult(rowIndex: location.rowIndex, shapeId: location.shapeId)
+        if base.translationKey != nil, let text = patch.text, text != base.text {
+            DocumentEditing.setSharedBaseText(key: base.textTranslationKey, text: text, rows: &document.rows)
+        }
+        restyleTranslations(of: patch, properties: restyled, clearingFormatting: clearsFormatting, localeState: &document.localeState)
+        if let order = args.string("z_order") {
+            DocumentEditing.reorderShape(at: (location.rowIndex, location.shapeIndex), toFront: order == "front", rows: &document.rows)
+        }
+        return .shape(location.shapeId)
     }
 
     /// Carries a shape-level restyle (or a formatting clear) into every translation that has its
     /// own rich text, which the base shape's richText doesn't reach.
-    private func restyleTranslations(of shape: CanvasShapeModel, properties: [RichTextUtils.ShapeStyleProperty], clearingFormatting: Bool) {
+    private func restyleTranslations(
+        of shape: CanvasShapeModel,
+        properties: [RichTextUtils.ShapeStyleProperty],
+        clearingFormatting: Bool,
+        localeState: inout LocaleState
+    ) {
         guard clearingFormatting || !properties.isEmpty else { return }
         let key = shape.textTranslationKey
-        for (code, overrides) in state.localeState.overrides where overrides[key]?.richText != nil {
-            var resolved = LocaleService.resolveShape(shape, localeCode: code, localeState: state.localeState)
+        for (code, overrides) in localeState.overrides where overrides[key]?.richText != nil {
+            var resolved = LocaleService.resolveShape(shape, localeCode: code, localeState: localeState)
             if clearingFormatting {
                 resolved.richText = nil
             } else {
@@ -137,23 +133,22 @@ extension MCPToolExecutor {
                     RichTextUtils.syncShapeStyle(in: &resolved, property: property)
                 }
             }
-            state.localeState.overrides[code]?[key]?.text = resolved.text
-            state.localeState.overrides[code]?[key]?.richText = resolved.richText
+            localeState.overrides[code]?[key]?.text = resolved.text
+            localeState.overrides[code]?[key]?.richText = resolved.richText
         }
     }
 
-    /// All throwing argument parses up front, so a bad argument can't leave a tool call
-    /// half-applied (e.g. add_shape inserting a shape and then failing font validation).
-    private func validateShapeArgs(_ args: MCPArguments) throws {
+    /// Checks what the schema can't: colors, a known frame, a font this project can render.
+    private func validateShapeArgs(_ args: MCPArguments, fonts: Set<String>) throws {
         _ = try args.color("color")
         _ = try args.color("outline_color")
         _ = try args.enumValue("text_align", TextAlign.self)
         _ = try args.enumValue("device_category", DeviceCategory.self)
         _ = try deviceFrame(args)
-        try validateFontName(args)
+        try validateFontName(args, fonts: fonts)
     }
 
-    func validateTextFormattingArgs(_ args: MCPArguments, shape: CanvasShapeModel) throws {
+    func validateTextFormattingArgs(_ args: MCPArguments, shape: CanvasShapeModel, fonts: Set<String>) throws {
         guard shape.type == .text else {
             throw MCPToolError.invalidArgument("shape_id", "not a text shape")
         }
@@ -161,7 +156,7 @@ extension MCPToolExecutor {
             throw MCPToolError.invalidArgument("text_runs", "pass either text or text_runs, not both")
         }
         if let runs = try args.strictObjectArray("text_runs") {
-            try MCPRichText.validate(runs, availableFontFamilies: state.availableFontFamilySet)
+            try MCPRichText.validate(runs, availableFontFamilies: fonts)
         }
     }
 
@@ -179,7 +174,7 @@ extension MCPToolExecutor {
         return TextLayoutStyle.effectiveLineHeightMultiple(lineHeightMultiple: nil, legacyLineSpacing: CGFloat(spacing), font: font)
     }
 
-    private func deviceFrame(_ args: MCPArguments) throws -> DeviceFrame? {
+    func deviceFrame(_ args: MCPArguments) throws -> DeviceFrame? {
         guard let id = args.string("device_frame_id") else { return nil }
         guard let frame = DeviceFrameCatalog.frame(for: id) else {
             throw MCPToolError.invalidArgument("device_frame_id", "unknown device frame \(id)")
@@ -187,27 +182,20 @@ extension MCPToolExecutor {
         return frame
     }
 
-    private func validateFontName(_ args: MCPArguments) throws {
+    private func validateFontName(_ args: MCPArguments, fonts: Set<String>) throws {
         guard let fontName = args.string("font_name") else { return }
-        guard state.availableFontFamilySet.contains(fontName) else {
-            let custom = state.customFaces.map(\.displayName).joined(separator: ", ")
-            let hint = custom.isEmpty ? "no custom fonts are imported in this project" : "imported custom fonts: \(custom)"
-            throw MCPToolError.invalidArgument("font_name", "font \(fontName) is not available — it would silently render as the system font. Use a system font family or import the font into this project first (\(hint))")
+        guard fonts.contains(fontName) else {
+            throw MCPToolError.invalidArgument("font_name", "font \(fontName) is not available — it would silently render as the system font. Use a system font family or one imported into this project (list_catalog kind fonts lists them)")
         }
     }
 
-    struct DeleteShapeResult: Encodable {
-        let deletedShapeId: String
-        let remainingShapes: Int
-    }
-
-    func deleteShape(_ args: MCPArguments) throws -> CallTool.Result {
-        let location = try requireShapeLocation(args)
-        state.deleteShape(location.shapeId)
-        return try MCPResultEncoding.result(DeleteShapeResult(
-            deletedShapeId: location.shapeId.uuidString,
-            remainingShapes: state.rows[location.rowIndex].shapes.count
-        ))
+    func deleteShape(_ args: MCPArguments, _ document: inout ProjectDocument) throws -> MCPEditResult {
+        let location = try requireShapeLocation(args, in: document)
+        let rowId = document.rows[location.rowIndex].id
+        guard DocumentEditing.deleteShape(at: (location.rowIndex, location.shapeIndex), rows: &document.rows, localeState: &document.localeState) != nil else {
+            throw MCPToolError.expected("The shape is locked — unlock it with update_shape locked: false first")
+        }
+        return .deletedShape(location.shapeId, rowId: rowId)
     }
 
     /// Fields shared by add_shape and update_shape. `restyled` collects the text-style properties

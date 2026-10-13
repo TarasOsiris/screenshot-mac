@@ -44,6 +44,20 @@ enum MCPToolError: Error, LocalizedError {
         case .failed: false
         }
     }
+
+    /// The same error, attributed to one operation of a batch.
+    func inOperation(_ index: Int, _ tool: String) -> MCPToolError {
+        let prefix = "operations[\(index)]"
+        switch self {
+        case .unknownTool(let name): return .invalidArgument("\(prefix).tool", "\(name) is not an editing tool")
+        case .missingArgument(let key): return .missingArgument("\(prefix).arguments.\(key)")
+        case .invalidArgument(let key, let why): return .invalidArgument("\(prefix).arguments.\(key)", why)
+        case .notFound(let what): return .notFound("\(what) (\(prefix), \(tool))")
+        case .unreadableFiles(let message): return .unreadableFiles("\(prefix) (\(tool)): \(message)")
+        case .expected(let message): return .expected("\(prefix) (\(tool)): \(message)")
+        case .failed(let message): return .failed("\(prefix) (\(tool)): \(message)")
+        }
+    }
 }
 
 /// Typed access to a tool call's `arguments` dictionary.
@@ -68,6 +82,15 @@ struct MCPArguments {
             throw MCPToolError.missingArgument(key)
         }
         return uuid
+    }
+
+    func uuidArray(_ key: String) throws -> [UUID]? {
+        try stringArray(key)?.map { value in
+            guard let uuid = UUID(uuidString: value) else {
+                throw MCPToolError.invalidArgument(key, "not a UUID: \(value)")
+            }
+            return uuid
+        }
     }
 
     func optionalUUID(_ key: String) throws -> UUID? {
@@ -123,6 +146,8 @@ struct MCPArguments {
     func object(_ key: String) -> MCPArguments? {
         raw[key]?.objectValue.map(MCPArguments.init)
     }
+
+    var rawValues: [String: Value] { raw }
 
     func has(_ key: String) -> Bool {
         raw[key] != nil && raw[key] != .null
@@ -257,7 +282,8 @@ nonisolated enum MCPSchema {
 enum MCPResultEncoding {
     private static let encoder: JSONEncoder = {
         let encoder = JSONEncoder()
-        encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
+        // Compact: the payload also goes out as structuredContent.
+        encoder.outputFormatting = [.sortedKeys]
         encoder.keyEncodingStrategy = .convertToSnakeCase
         return encoder
     }()
@@ -268,7 +294,7 @@ enum MCPResultEncoding {
         try JSONDecoder().decode(Value.self, from: encoder.encode(payload))
     }
 
-    /// Standard success result: pretty JSON text plus the same payload as structured content.
+    /// Standard success result: JSON text plus the same payload as structured content.
     /// Payloads must encode as JSON objects — the spec requires structuredContent to be one,
     /// so list results are wrapped in envelopes (e.g. `["projects": …]`) at the call site.
     static func result<T: Encodable>(_ payload: T) throws -> CallTool.Result {

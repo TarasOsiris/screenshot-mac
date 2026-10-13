@@ -12,11 +12,7 @@ extension AppState {
     /// Set `text` as the base text of every text shape sharing `key` — the members of a reused
     /// string. Owns the cross-row fan-out for both the table and inline canvas base edits.
     func setSharedBaseText(key: String, text: String) {
-        for r in rows.indices {
-            for s in rows[r].shapes.indices where rows[r].shapes[s].type == .text && rows[r].shapes[s].textTranslationKey == key {
-                rows[r].shapes[s].text = text
-            }
-        }
+        DocumentEditing.setSharedBaseText(key: key, text: text, rows: &rows)
     }
 
     /// Cheap existence check for `reusableTranslationTargets` — early-exits on the first match and

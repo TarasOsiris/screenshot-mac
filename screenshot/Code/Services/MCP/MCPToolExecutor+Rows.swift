@@ -4,182 +4,128 @@ import MCP
 
 extension MCPToolExecutor {
 
-    func addRow(_ args: MCPArguments) throws -> CallTool.Result {
+    func addRow(_ args: MCPArguments, _ document: inout ProjectDocument) throws -> MCPEditResult {
         let size = try args.string("size").map { size in
             guard let parsed = parseSizeString(size) else {
                 throw MCPToolError.invalidArgument("size", "expected \"WIDTHxHEIGHT\", got \(size)")
             }
             return parsed
         }
-        let beforeIndex = args.has("before_row_id") ? try requireRowIndex(args, key: "before_row_id") : nil
-        let afterIndex = args.has("after_row_id") ? try requireRowIndex(args, key: "after_row_id") : nil
+        let beforeIndex = args.has("before_row_id") ? try requireRowIndex(args, key: "before_row_id", in: document) : nil
+        let afterIndex = args.has("after_row_id") ? try requireRowIndex(args, key: "after_row_id", in: document) : nil
 
-        let existingIds = Set(state.rows.map(\.id))
-        var newIndex: Int?
-        // One transaction for the create + label + resize; the nested withUndo calls join it.
-        state.withUndo("Add Row") {
-            if let beforeIndex {
-                state.addRowAbove(state.rows[beforeIndex].id)
-            } else if let afterIndex {
-                state.addRowBelow(state.rows[afterIndex].id)
-            } else {
-                state.addRow()
-            }
-            guard let index = state.rows.firstIndex(where: { !existingIds.contains($0.id) }) else { return }
-            newIndex = index
-            if let label = args.string("label") {
-                state.updateRowLabel(state.rows[index].id, text: label)
-            }
-            if let size {
-                state.resizeRow(at: index, newWidth: size.width, newHeight: size.height)
-            }
+        let row = DocumentEditing.newRow(
+            inVariant: (beforeIndex ?? afterIndex).flatMap { document.rows[$0].activeVariantId },
+            rows: document.rows,
+            defaults: AppState.storedNewRowDefaults()
+        )
+        let index = beforeIndex ?? afterIndex.map { $0 + 1 } ?? document.rows.count
+        document.rows.insert(row, at: index)
+        if let label = args.string("label") {
+            DocumentEditing.setLabel(label, ofRowAt: index, in: &document.rows)
         }
-
-        guard let newIndex else {
-            throw MCPToolError.failed("Row was not added")
+        if let size {
+            DocumentEditing.resize(&document.rows[index], width: size.width, height: size.height)
         }
-        return try rowResult(newIndex)
+        return .row(row.id)
     }
 
-    func updateRow(_ args: MCPArguments) throws -> CallTool.Result {
-        let rowIndex = try requireRowIndex(args)
-        let row = state.rows[rowIndex]
-        let rowId = row.id
+    func updateRow(_ args: MCPArguments, _ document: inout ProjectDocument) throws -> MCPEditResult {
+        let rowIndex = try requireRowIndex(args, in: document)
+        let row = document.rows[rowIndex]
 
-        // Parse and validate every argument before the first mutation, so an invalid call
-        // can't partially apply (e.g. commit the label and then reject the width).
-        let size: (width: CGFloat, height: CGFloat)?
         if args.has("width") || args.has("height") {
             let width = args.double("width").map { CGFloat($0) } ?? row.templateWidth
             let height = args.double("height").map { CGFloat($0) } ?? row.templateHeight
             guard width >= 100, height >= 100 else {
                 throw MCPToolError.invalidArgument("width/height", "must be at least 100 pixels")
             }
-            size = (width, height)
-        } else {
-            size = nil
+            DocumentEditing.resize(&document.rows[rowIndex], width: width, height: height)
         }
-        let color = try args.color("background_color")
-        let gradient = try args.object("background_gradient").map(Self.parseGradient)
-        let span = args.bool("span_background")
-        let defaultDevice: (category: DeviceCategory?, frameId: String?)?
-        if args.has("device_category") || args.has("device_frame_id") {
-            defaultDevice = (
-                try args.enumValue("device_category", DeviceCategory.self) ?? row.defaultDeviceCategory,
-                args.string("device_frame_id") ?? row.defaultDeviceFrameId
-            )
-        } else {
-            defaultDevice = nil
-        }
-        let label = args.string("label")
-        if label != nil, let source = state.labelSource(of: row) {
-            throw MCPToolError.invalidArgument("label", "this variant row follows the label of row \(source.id.uuidString); rename that row instead")
-        }
-        let showDevice = args.bool("show_device")
-
-        if label != nil || size != nil || showDevice != nil || defaultDevice != nil {
-            // One transaction for the discrete edits; the nested withUndo calls join it.
-            state.withUndo("Update Row") {
-                if let label {
-                    state.updateRowLabel(rowId, text: label)
-                }
-                if let size {
-                    state.resizeRow(at: rowIndex, newWidth: size.width, newHeight: size.height)
-                }
-                if let showDevice, state.rows[rowIndex].showDevice != showDevice {
-                    state.toggleShowDevice(for: rowId)
-                }
-                if let defaultDevice {
-                    state.setDefaultDevice(for: rowId, category: defaultDevice.category, frameId: defaultDevice.frameId)
-                }
+        if let label = args.string("label") {
+            if let source = DocumentEditing.labelSource(of: row, in: document.rows) {
+                throw MCPToolError.invalidArgument("label", "this variant row follows the label of row \(source.id.uuidString); rename that row instead")
             }
+            DocumentEditing.setLabel(label, ofRowAt: rowIndex, in: &document.rows)
         }
-
-        if color != nil || gradient != nil || span != nil {
-            state.updateRowContinuous(rowId) { row in
-                if let color {
-                    row.backgroundStyle = .color
-                    row.backgroundColorData = color
-                }
-                if let gradient {
-                    row.backgroundStyle = .gradient
-                    row.gradientConfig = gradient
-                }
-                if let span {
-                    row.spanBackgroundAcrossRow = span
-                }
-            }
-            state.finishContinuousRowEditIfNeeded()
+        if let showDevice = args.bool("show_device") {
+            document.rows[rowIndex].showDevice = showDevice
         }
-
-        return try rowResult(rowIndex)
+        if let frame = try deviceFrame(args) {
+            document.rows[rowIndex].defaultDeviceCategory = frame.fallbackCategory
+            document.rows[rowIndex].defaultDeviceFrameId = frame.id
+        } else if let category = try args.enumValue("device_category", DeviceCategory.self) {
+            // The old frame belongs to the old category.
+            document.rows[rowIndex].defaultDeviceCategory = category
+            document.rows[rowIndex].defaultDeviceFrameId = nil
+        }
+        if let color = try args.color("background_color") {
+            document.rows[rowIndex].backgroundStyle = .color
+            document.rows[rowIndex].backgroundColorData = color
+        }
+        if let gradient = try args.object("background_gradient").map(Self.parseGradient) {
+            document.rows[rowIndex].backgroundStyle = .gradient
+            document.rows[rowIndex].gradientConfig = gradient
+        }
+        if let span = args.bool("span_background") {
+            document.rows[rowIndex].spanBackgroundAcrossRow = span
+        }
+        return .row(row.id)
     }
 
-    func moveRow(_ args: MCPArguments) throws -> CallTool.Result {
-        let rowIndex = try requireRowIndex(args)
-        let rowId = state.rows[rowIndex].id
+    func moveRow(_ args: MCPArguments, _ document: inout ProjectDocument) throws -> MCPEditResult {
+        let rowIndex = try requireRowIndex(args, in: document)
+        let rowId = document.rows[rowIndex].id
         switch try args.requiredString("direction") {
-        case "up": state.moveRowUp(rowId)
-        case "down": state.moveRowDown(rowId)
-        default: throw MCPToolError.invalidArgument("direction", "expected up or down")
+        case "up" where rowIndex > 0:
+            document.rows.swapAt(rowIndex, rowIndex - 1)
+        case "down" where rowIndex < document.rows.count - 1:
+            document.rows.swapAt(rowIndex, rowIndex + 1)
+        default:
+            break
         }
-        guard let newIndex = state.rowIndex(for: rowId) else {
-            throw MCPToolError.notFound("Row \(rowId.uuidString)")
-        }
-        return try rowResult(newIndex)
+        return .row(rowId)
     }
 
-    struct DeleteRowResult: Encodable {
-        let deletedRowId: String
-        let remainingRows: Int
-    }
-
-    func deleteRow(_ args: MCPArguments) throws -> CallTool.Result {
-        let rowIndex = try requireRowIndex(args)
-        // AppState.deleteRow silently no-ops on the last row — surface that instead of
-        // acking a delete that never happened.
-        guard state.rows.count > 1 else {
+    func deleteRow(_ args: MCPArguments, _ document: inout ProjectDocument) throws -> MCPEditResult {
+        let rowId = document.rows[try requireRowIndex(args, in: document)].id
+        guard DocumentEditing.deleteRows([rowId], rows: &document.rows, localeState: &document.localeState) != nil else {
             throw MCPToolError.expected("Cannot delete the last row of a project")
         }
-        let rowId = state.rows[rowIndex].id
-        state.deleteRow(rowId)
-        return try MCPResultEncoding.result(DeleteRowResult(
-            deletedRowId: rowId.uuidString,
-            remainingRows: state.rows.count
-        ))
+        return .deletedRow(rowId)
     }
 
-    func addTemplate(_ args: MCPArguments) throws -> CallTool.Result {
-        let rowIndex = try requireRowIndex(args)
-        let rowId = state.rows[rowIndex].id
-
+    func addTemplate(_ args: MCPArguments, _ document: inout ProjectDocument) throws -> MCPEditResult {
+        let rowIndex = try requireRowIndex(args, in: document)
+        let row = document.rows[rowIndex]
+        let insertIndex: Int
         if let beforeId = try args.optionalUUID("before_template_id") {
-            guard state.rows[rowIndex].templates.contains(where: { $0.id == beforeId }) else {
-                throw MCPToolError.notFound("Template \(beforeId.uuidString)")
-            }
-            state.insertTemplateBefore(beforeId, in: rowId)
+            insertIndex = try templateIndex(of: beforeId, in: row)
         } else if let afterId = try args.optionalUUID("after_template_id") {
-            guard state.rows[rowIndex].templates.contains(where: { $0.id == afterId }) else {
-                throw MCPToolError.notFound("Template \(afterId.uuidString)")
-            }
-            state.insertTemplateAfter(afterId, in: rowId)
+            insertIndex = try templateIndex(of: afterId, in: row) + 1
         } else {
-            state.addTemplate(to: rowId)
+            insertIndex = row.templates.count
         }
-        return try rowResult(rowIndex)
+        DocumentEditing.insertTemplate(in: &document.rows[rowIndex], at: insertIndex)
+        return .row(row.id)
     }
 
-    func removeTemplate(_ args: MCPArguments) throws -> CallTool.Result {
-        let rowIndex = try requireRowIndex(args)
-        let templateId = try args.uuid("template_id")
-        guard state.rows[rowIndex].templates.contains(where: { $0.id == templateId }) else {
-            throw MCPToolError.notFound("Template \(templateId.uuidString)")
-        }
-        guard state.rows[rowIndex].templates.count > 1 else {
+    func removeTemplate(_ args: MCPArguments, _ document: inout ProjectDocument) throws -> MCPEditResult {
+        let rowIndex = try requireRowIndex(args, in: document)
+        let row = document.rows[rowIndex]
+        let index = try templateIndex(of: try args.uuid("template_id"), in: row)
+        guard row.templates.count > 1 else {
             throw MCPToolError.expected("Cannot remove the last template column of a row")
         }
-        state.removeTemplate(templateId, from: state.rows[rowIndex].id)
-        return try rowResult(rowIndex)
+        _ = DocumentEditing.removeTemplate(at: index, fromRowAt: rowIndex, rows: &document.rows, localeState: &document.localeState)
+        return .row(row.id)
+    }
+
+    func templateIndex(of templateId: UUID, in row: ScreenshotRow) throws -> Int {
+        guard let index = row.templates.firstIndex(where: { $0.id == templateId }) else {
+            throw MCPToolError.notFound("Template \(templateId.uuidString)")
+        }
+        return index
     }
 
     static func parseGradient(_ args: MCPArguments) throws -> GradientConfig {

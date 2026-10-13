@@ -254,14 +254,9 @@ extension AppState {
 
     func deleteShape(_ id: UUID) {
         guard let location = shapeLocation(for: id) else { return }
-        guard !rows[location.rowIndex].shapes[location.shapeIndex].resolvedIsLocked else { return }
         withRowUndo("Delete Shape", rowId: rows[location.rowIndex].id) {
-            let removedShape = rows[location.rowIndex].shapes.remove(at: location.shapeIndex)
-            let localeImageFiles = localeOverrideImageFileNames(for: id)
-            LocaleService.removeShapeOverrides(&localeState, shapeId: id)
-            cleanupOrphanedTranslationOverrides()
-            let allCandidates: [String?] = removedShape.allImageFileNames + localeImageFiles
-            cleanupUnreferencedImages(allCandidates)
+            guard let freed = DocumentEditing.deleteShape(at: location, rows: &rows, localeState: &localeState) else { return }
+            cleanupUnreferencedImages(freed)
             selectedShapeIds.remove(id)
         }
     }
@@ -333,46 +328,28 @@ extension AppState {
         let shapes = row.shapes.filter { shapeIds.contains($0.id) }
         guard !shapes.isEmpty else { return }
         withRowUndo("Duplicate to Screenshots", rowId: row.id) {
-            for shape in shapes {
-                let sourceIndex = row.owningTemplateIndex(for: shape)
-                let sourceCenterX = row.templateCenterX(at: sourceIndex)
-                let targetIndices: Range<Int>
-                switch direction {
-                case .all: targetIndices = 0..<row.templates.count
-                case .left: targetIndices = 0..<sourceIndex
-                case .right: targetIndices = (sourceIndex + 1)..<row.templates.count
-                }
-                for targetIndex in targetIndices where targetIndex != sourceIndex {
-                    let targetCenterX = row.templateCenterX(at: targetIndex)
-                    let offset = targetCenterX - sourceCenterX
-                    var copy = shape.duplicated(offsetX: offset)
-                    LocaleService.copyShapeOverrides(&localeState, fromId: shape.id, toId: copy.id)
-                    copyImageFiles(for: &copy, originalId: shape.id)
-                    rows[rowIdx].shapes.append(copy)
-                }
-            }
+            DocumentEditing.duplicateShapesToTemplates(
+                shapes, direction: direction, in: &rows[rowIdx],
+                localeState: &localeState, resources: self
+            )
         }
     }
 
     func bringShapeToFront(_ id: UUID) {
-        guard let rowIdx = selectedRowIndex,
-              let shapeIdx = rows[rowIdx].shapes.firstIndex(where: { $0.id == id }),
-              shapeIdx < rows[rowIdx].shapes.count - 1 else { return }
-        withRowUndo("Bring to Front", rowId: rows[rowIdx].id) {
-            let shape = rows[rowIdx].shapes.remove(at: shapeIdx)
-            rows[rowIdx].shapes.append(shape)
-            selectShape(id, in: rows[rowIdx].id)
+        guard let location = shapeLocation(for: id), location.shapeIndex < rows[location.rowIndex].shapes.count - 1 else { return }
+        let rowId = rows[location.rowIndex].id
+        withRowUndo("Bring to Front", rowId: rowId) {
+            DocumentEditing.reorderShape(at: location, toFront: true, rows: &rows)
+            selectShape(id, in: rowId)
         }
     }
 
     func sendShapeToBack(_ id: UUID) {
-        guard let rowIdx = selectedRowIndex,
-              let shapeIdx = rows[rowIdx].shapes.firstIndex(where: { $0.id == id }),
-              shapeIdx > 0 else { return }
-        withRowUndo("Send to Back", rowId: rows[rowIdx].id) {
-            let shape = rows[rowIdx].shapes.remove(at: shapeIdx)
-            rows[rowIdx].shapes.insert(shape, at: 0)
-            selectShape(id, in: rows[rowIdx].id)
+        guard let location = shapeLocation(for: id), location.shapeIndex > 0 else { return }
+        let rowId = rows[location.rowIndex].id
+        withRowUndo("Send to Back", rowId: rowId) {
+            DocumentEditing.reorderShape(at: location, toFront: false, rows: &rows)
+            selectShape(id, in: rowId)
         }
     }
 

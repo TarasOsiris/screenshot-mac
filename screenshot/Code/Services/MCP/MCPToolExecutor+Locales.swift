@@ -4,62 +4,59 @@ import MCP
 
 extension MCPToolExecutor {
 
-    func addLocale(_ args: MCPArguments) throws -> CallTool.Result {
+    func addLocale(_ args: MCPArguments, _ document: inout ProjectDocument, _ context: inout MCPEditContext) throws -> MCPEditResult {
         let code = try args.requiredString("code")
-        guard !state.localeState.locales.contains(where: { $0.code == code }) else {
+        guard !document.localeState.hasLocale(code) else {
             throw MCPToolError.expected("Locale \(code) already exists")
         }
         let preset = LocalePresets.all.first { $0.code == code }
         let label = args.string("label") ?? preset?.label ?? code
-        state.addLocale(LocaleDefinition(code: code, label: label))
-        return try MCPResultEncoding.result(["locales": MCPSnapshotBuilder.locales(state.localeState)])
+        LocaleService.addLocale(&document.localeState, locale: LocaleDefinition(code: code, label: label))
+        // Count, not code: which languages a user targets says what they are building.
+        let count = document.localeState.locales.count
+        context.afterCommit.append { AnalyticsService.capture(.localeAdded, [.localeCount: count]) }
+        return .locales
     }
 
-    func removeLocale(_ args: MCPArguments) throws -> CallTool.Result {
+    func removeLocale(_ args: MCPArguments, _ document: inout ProjectDocument) throws -> MCPEditResult {
         let code = try args.requiredString("code")
-        guard state.localeState.locales.contains(where: { $0.code == code }) else {
+        guard document.localeState.hasLocale(code) else {
             throw MCPToolError.notFound("Locale \(code)")
         }
-        guard code != state.localeState.baseLocaleCode else {
+        guard code != document.localeState.baseLocaleCode else {
             throw MCPToolError.expected("Cannot remove the base locale")
         }
-        state.removeLocale(code)
-        return try MCPResultEncoding.result(["locales": MCPSnapshotBuilder.locales(state.localeState)])
+        _ = DocumentEditing.removeLocale(code, rows: &document.rows, localeState: &document.localeState)
+        return .locales
     }
 
-    func setTranslation(_ args: MCPArguments) throws -> CallTool.Result {
-        let location = try requireShapeLocation(args)
+    func setTranslation(_ args: MCPArguments, _ document: inout ProjectDocument, _ context: inout MCPEditContext) throws -> MCPEditResult {
+        let location = try requireShapeLocation(args, in: document)
         let code = try args.requiredString("locale_code")
         let textRuns = try args.strictObjectArray("text_runs")
         if textRuns == nil { _ = try args.requiredString("text") }
 
-        guard state.localeState.locales.contains(where: { $0.code == code }) else {
+        guard document.localeState.hasLocale(code) else {
             throw MCPToolError.notFound("Locale \(code)")
         }
-        guard code != state.localeState.baseLocaleCode else {
+        guard code != document.localeState.baseLocaleCode else {
             throw MCPToolError.expected("\(code) is the base locale — use update_shape's text field instead")
         }
-        let shape = state.rows[location.rowIndex].shapes[location.shapeIndex]
-        try validateTextFormattingArgs(args, shape: shape)
+        let shape = document.rows[location.rowIndex].shapes[location.shapeIndex]
+        try validateTextFormattingArgs(args, shape: shape, fonts: context.availableFontFamilies)
 
         let encoded = try textRuns.map { runs in
-            let resolved = LocaleService.resolveShape(shape, localeCode: code, localeState: state.localeState)
-            return try MCPRichText.encode(runs, onto: resolved, availableFontFamilies: state.availableFontFamilySet)
+            let resolved = LocaleService.resolveShape(shape, localeCode: code, localeState: document.localeState)
+            return try MCPRichText.encode(runs, onto: resolved, availableFontFamilies: context.availableFontFamilies)
         }
-        let fits = state.setTranslation(
-            shapeId: location.shapeId, localeCode: code,
+        let fits = DocumentEditing.setTranslation(
+            textKey: shape.textTranslationKey, localeCode: code,
             text: encoded?.text ?? args.string("text") ?? "", richText: encoded?.richText,
-            autoFits: args.bool("auto_fit") ?? true
+            autoFits: args.bool("auto_fit") ?? true,
+            rows: document.rows, localeState: &document.localeState,
+            availableFontFamilies: context.availableFontFamilies
         )
-        let alsoFitted = fits
-            .filter { $0.key != location.shapeId && ($0.value.action != .none || $0.value.stillOverflows) }
-            .map { MCPAutoFitSnapshot($0.value, shapeId: $0.key) }
-            .sorted { $0.shapeId ?? "" < $1.shapeId ?? "" }
-        return try MCPResultEncoding.result(MCPSetTranslationResult(
-            shape: try shapeSnapshot(rowIndex: location.rowIndex, shapeId: location.shapeId),
-            autoFit: fits[location.shapeId].map { MCPAutoFitSnapshot($0) },
-            alsoFitted: alsoFitted.isEmpty ? nil : alsoFitted
-        ))
+        return .translation(shapeId: location.shapeId, fits: fits)
     }
 }
 
