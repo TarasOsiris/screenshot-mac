@@ -70715,6 +70715,12 @@
             "value" : "%1$lld proyek"
           }
         },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld progetti"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -70787,6 +70793,12 @@
             "value" : "%1$lld proiecte"
           }
         },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld проектов"
+          }
+        },
         "sk" : {
           "stringUnit" : {
             "state" : "translated",
@@ -70823,6 +70835,18 @@
             "value" : "%1$lld โครงการ"
           }
         },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld proje"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld проєктів"
+          }
+        },
         "ur" : {
           "stringUnit" : {
             "state" : "translated",
@@ -70839,6 +70863,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "%lld 项目"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld 個專案"
           }
         }
       }
@@ -155148,6 +155178,12 @@
             "value" : "Tangkap dari iOS Simulator"
           }
         },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cattura da simulatore iOS"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -155220,6 +155256,12 @@
             "value" : "Captură din iOS Simulator"
           }
         },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Снимок из симулятора iOS"
+          }
+        },
         "sk" : {
           "stringUnit" : {
             "state" : "translated",
@@ -155256,6 +155298,18 @@
             "value" : "จับภาพจากเครื่องจำลอง iOS"
           }
         },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iOS Simülatöründen Yakala"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Знімок із симулятора iOS"
+          }
+        },
         "ur" : {
           "stringUnit" : {
             "state" : "translated",
@@ -155272,6 +155326,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "从 iOS 模拟器捕获"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "從 iOS 模擬器截圖"
           }
         }
       }
@@ -155381,6 +155441,12 @@
             "value" : "Mengambil dari iOS Simulator memerlukan penyiapan satu kali: skrip kecil yang meminta tangkapan layar ke Simulator dan tidak melakukan apa pun.\n\nKarena keamanan macOS, hanya Anda yang dapat menginstalnya. Klik Instal… untuk menyimpan skrip — Anda hanya perlu melakukannya sekali."
           }
         },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La cattura dal simulatore iOS richiede una configurazione iniziale: un piccolo script che richiede uno screenshot al simulatore e non fa altro.\n\nA causa della sicurezza di macOS, solo tu puoi installarlo. Fai clic su Installa… per salvare lo script: dovrai farlo solo una volta."
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -155453,6 +155519,12 @@
             "value" : "Capturarea din simulatorul iOS necesită o configurare unică: un script mic care cere simulatorului o captură de ecran și nu face nimic altceva.\n\nDin cauza securității macOS, numai dvs. îl puteți instala. Faceți clic pe Instalare... pentru a salva scriptul - va trebui să faceți acest lucru o singură dată."
           }
         },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Для захвата из симулятора iOS требуется однократная настройка: небольшой скрипт, который запрашивает скриншот у симулятора и больше ничего не делает.\n\nИз соображений безопасности macOS установить его можете только вы. Нажмите «Установить…», чтобы сохранить скрипт — это нужно сделать всего один раз."
+          }
+        },
         "sk" : {
           "stringUnit" : {
             "state" : "translated",
@@ -155489,6 +155561,18 @@
             "value" : "การจับภาพจาก iOS เครื่องจำลองต้องมีการตั้งค่าเพียงครั้งเดียว: สคริปต์ขนาดเล็กที่ขอให้เครื่องจำลองจับภาพหน้าจอและไม่ทำอะไรอย่างอื่นอีก\n\nเนื่องจากการรักษาความปลอดภัย macOS มีเพียงคุณเท่านั้นที่สามารถติดตั้งได้ คลิกติดตั้ง… เพื่อบันทึกสคริปต์ คุณจะต้องดำเนินการเพียงครั้งเดียวเท่านั้น"
           }
         },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iOS Simülatöründen görüntü yakalamak tek seferlik bir kurulum gerektirir: Simülatörden ekran görüntüsü isteyen ve başka hiçbir şey yapmayan küçük bir betik.\n\nmacOS güvenliği nedeniyle bunu yalnızca siz yükleyebilirsiniz. Betiği kaydetmek için Yükle… düğmesine tıklayın — bunu yalnızca bir kez yapmanız gerekir."
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Для знімків із симулятора iOS потрібне одноразове налаштування: невеликий скрипт, який запитує знімок екрана в симулятора і більше нічого не робить.\n\nЗ міркувань безпеки macOS установити його можете лише ви. Натисніть «Встановити…», щоб зберегти скрипт — це потрібно зробити лише один раз."
+          }
+        },
         "ur" : {
           "stringUnit" : {
             "state" : "translated",
@@ -155505,6 +155589,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "从 iOS 模拟器捕获需要一次性设置：一个小脚本，要求模拟器提供屏幕截图，而不执行任何其他操作。\n\n由于 macOS 安全性，只有您可以安装它。单击“安装...”保存脚本 - 您只需执行一次。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "從 iOS 模擬器截圖需要進行一次性設定：一個僅向模擬器要求螢幕截圖且不做其他事情的小指令碼。\n\n由於 macOS 安全機制，只有你能安裝它。按一下「安裝…」以儲存指令碼 — 你只需要執行一次。"
           }
         }
       }
@@ -189297,6 +189387,12 @@
             "value" : "Tidak dapat membaca tangkapan layar yang diambil."
           }
         },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Impossibile leggere lo screenshot acquisito."
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -189369,6 +189465,12 @@
             "value" : "Nu s-a putut citi captura de ecran capturată."
           }
         },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Не удалось прочитать полученный скриншот."
+          }
+        },
         "sk" : {
           "stringUnit" : {
             "state" : "translated",
@@ -189405,6 +189507,18 @@
             "value" : "ไม่สามารถอ่านภาพหน้าจอที่จับภาพได้"
           }
         },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yakalanan ekran görüntüsü okunamadı."
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Не вдалося прочитати знятий знімок екрана."
+          }
+        },
         "ur" : {
           "stringUnit" : {
             "state" : "translated",
@@ -189421,6 +189535,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "无法读取捕获的屏幕截图。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "無法讀取截取的螢幕截圖。"
           }
         }
       }
@@ -192418,6 +192538,12 @@
             "value" : "Tidak dapat memasang skrip: %1$@"
           }
         },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Impossibile installare lo script: %1$@"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -192490,6 +192616,12 @@
             "value" : "Nu s-a putut instala scriptul: %1$@"
           }
         },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Не удалось установить скрипт: %1$@"
+          }
+        },
         "sk" : {
           "stringUnit" : {
             "state" : "translated",
@@ -192526,6 +192658,18 @@
             "value" : "ไม่สามารถติดตั้งสคริปต์: %1$@"
           }
         },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Betik yüklenemedi: %1$@"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Не вдалося встановити скрипт: %1$@"
+          }
+        },
         "ur" : {
           "stringUnit" : {
             "state" : "translated",
@@ -192542,6 +192686,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "无法安装脚本：%1$@"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "無法安裝指令碼：%1$@"
           }
         }
       }
@@ -205008,7 +205158,7 @@
         "da" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Debug"
+            "value" : "Fejlfinding"
           }
         },
         "de" : {
@@ -205038,7 +205188,7 @@
         "fi" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Debug"
+            "value" : "Virheenkorjaus"
           }
         },
         "fr" : {
@@ -205068,7 +205218,7 @@
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Debug"
+            "value" : "Otklanjanje pogrešaka"
           }
         },
         "hu" : {
@@ -205081,6 +205231,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Men-debug"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Depurazione"
           }
         },
         "ja" : {
@@ -205155,10 +205311,16 @@
             "value" : "Depanați"
           }
         },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Отладка"
+          }
+        },
         "sk" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Debug"
+            "value" : "Ladenie"
           }
         },
         "sl" : {
@@ -205191,6 +205353,18 @@
             "value" : "ดีบัก"
           }
         },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hata Ayıklama"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Налагодження"
+          }
+        },
         "ur" : {
           "stringUnit" : {
             "state" : "translated",
@@ -205207,6 +205381,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "调试"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "除錯"
           }
         }
       }
@@ -207850,7 +208030,7 @@
         "ca" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Vols suprimir el projecte %1$lld [FMT_1]]?"
+            "value" : "Vols suprimir %1$lld projecte%2$@?"
           }
         },
         "cs" : {
@@ -207937,6 +208117,12 @@
             "value" : "Hapus proyek %1$lld%2$@?"
           }
         },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Eliminare %1$lld progett%2$@?"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -208009,6 +208195,12 @@
             "value" : "Ștergeți proiectul %1$lld %2$@?"
           }
         },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Удалить %1$lld проект%2$@?"
+          }
+        },
         "sk" : {
           "stringUnit" : {
             "state" : "translated",
@@ -208045,6 +208237,18 @@
             "value" : "ลบโครงการ %1$lld%2$@ หรือไม่"
           }
         },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld proje%2$@ silinsin mi?"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Видалити %1$lld проєкт%2$@?"
+          }
+        },
         "ur" : {
           "stringUnit" : {
             "state" : "translated",
@@ -208061,6 +208265,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "删除 %lld 项目 %@？"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "要刪除 %1$lld 個專案%2$@嗎？"
           }
         }
       }
@@ -208170,6 +208380,12 @@
             "value" : "Hapus %1$lld yang dipilih"
           }
         },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Elimina %lld selezionati"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -208242,6 +208458,12 @@
             "value" : "Ștergeți %1$lld selectat"
           }
         },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Удалить %lld выбранных"
+          }
+        },
         "sk" : {
           "stringUnit" : {
             "state" : "translated",
@@ -208278,6 +208500,18 @@
             "value" : "ลบ %1$lld ที่เลือก"
           }
         },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Seçilen %lld öğeyi sil"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Видалити %lld вибраних"
+          }
+        },
         "ur" : {
           "stringUnit" : {
             "state" : "translated",
@@ -208294,6 +208528,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "删除所选的 %lld"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "刪除已選取的 %lld 個"
           }
         }
       }
@@ -244671,13 +244911,19 @@
         "hu" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Enable iOS Simulator Capture"
+            "value" : "iOS-szimulátoros rögzítés engedélyezése"
           }
         },
         "id" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Aktifkan iOS Pengambilan Simulator"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abilita cattura da simulatore iOS"
           }
         },
         "ja" : {
@@ -244752,6 +244998,12 @@
             "value" : "Activați iOS Simulator Capture"
           }
         },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Включить захват из симулятора iOS"
+          }
+        },
         "sk" : {
           "stringUnit" : {
             "state" : "translated",
@@ -244788,6 +245040,18 @@
             "value" : "เปิดใช้งาน iOS การจับภาพจำลอง"
           }
         },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iOS Simülatör Yakalamayı Etkinleştir"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Увімкнути знімки з симулятора iOS"
+          }
+        },
         "ur" : {
           "stringUnit" : {
             "state" : "translated",
@@ -244804,6 +245068,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "启用 iOS 模拟器捕获"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "啟用 iOS 模擬器截圖"
           }
         }
       }
@@ -246485,6 +246755,12 @@
             "value" : "Masukkan nama direktori untuk templat tersebut (misalnya, templat_saya)."
           }
         },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Inserisci un nome di directory per il modello (es. my_template)."
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -246557,6 +246833,12 @@
             "value" : "Introduceți un nume de director pentru șablon (de exemplu, șablonul_meu)."
           }
         },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Введите имя папки для шаблона (например, my_template)."
+          }
+        },
         "sk" : {
           "stringUnit" : {
             "state" : "translated",
@@ -246593,6 +246875,18 @@
             "value" : "ป้อนชื่อไดเรกทอรีสำหรับเทมเพลต (เช่น my_template)"
           }
         },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Şablon için bir dizin adı girin (örn. my_template)."
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Введіть назву папки для шаблону (наприклад, my_template)."
+          }
+        },
         "ur" : {
           "stringUnit" : {
             "state" : "translated",
@@ -246609,6 +246903,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "输入模板的目录名称（例如 my_template）。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "輸入範本的目錄名稱（例如 my_template）。"
           }
         }
       }
@@ -282150,6 +282450,12 @@
             "value" : "Hasilkan Pratinjau yang Hilang"
           }
         },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Genera anteprime mancanti"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -282222,6 +282528,12 @@
             "value" : "Generați previzualizări lipsă"
           }
         },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Создать недостающие превью"
+          }
+        },
         "sk" : {
           "stringUnit" : {
             "state" : "translated",
@@ -282258,6 +282570,18 @@
             "value" : "สร้างตัวอย่างที่ขาดหายไป"
           }
         },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Eksik Önizlemeleri Oluştur"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Створити відсутні прев’ю"
+          }
+        },
         "ur" : {
           "stringUnit" : {
             "state" : "translated",
@@ -282274,6 +282598,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "生成缺失的预览"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "產生缺少的預覽"
           }
         }
       }
@@ -313477,6 +313807,12 @@
             "value" : "Instal…"
           }
         },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Installa…"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -313549,6 +313885,12 @@
             "value" : "Instalați…"
           }
         },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Установить…"
+          }
+        },
         "sk" : {
           "stringUnit" : {
             "state" : "translated",
@@ -313585,6 +313927,18 @@
             "value" : "ติดตั้ง..."
           }
         },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yükle…"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Встановити…"
+          }
+        },
         "ur" : {
           "stringUnit" : {
             "state" : "translated",
@@ -313601,6 +313955,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "安装..."
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "安裝…"
           }
         }
       }
@@ -314496,6 +314856,12 @@
             "value" : "iOS Pengambilan Simulator Gagal"
           }
         },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cattura dal simulatore iOS non riuscita"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -314568,6 +314934,12 @@
             "value" : "iOS Capturarea simulatorului a eșuat"
           }
         },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ошибка захвата из симулятора iOS"
+          }
+        },
         "sk" : {
           "stringUnit" : {
             "state" : "translated",
@@ -314604,6 +314976,18 @@
             "value" : "iOS การจับภาพจำลองล้มเหลว"
           }
         },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iOS Simülatöründen Yakalama Başarısız Oldu"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Помилка знімка з симулятора iOS"
+          }
+        },
         "ur" : {
           "stringUnit" : {
             "state" : "translated",
@@ -314620,6 +315004,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "iOS 模拟器捕获失败"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iOS 模擬器截圖失敗"
           }
         }
       }
@@ -314729,6 +315119,12 @@
             "value" : "iOS Pengambilan simulator gagal: %1$@"
           }
         },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cattura dal simulatore iOS non riuscita: %1$@"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -314801,6 +315197,12 @@
             "value" : "iOS Capturarea simulatorului nu a reușit: %1$@"
           }
         },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ошибка захвата из симулятора iOS: %1$@"
+          }
+        },
         "sk" : {
           "stringUnit" : {
             "state" : "translated",
@@ -314837,6 +315239,18 @@
             "value" : "iOS การจับภาพจำลองล้มเหลว: %1$@"
           }
         },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iOS Simülatöründen yakalama başarısız oldu: %1$@"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Помилка знімка з симулятора iOS: %1$@"
+          }
+        },
         "ur" : {
           "stringUnit" : {
             "state" : "translated",
@@ -314853,6 +315267,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "iOS 模拟器捕获失败：%1$@"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iOS 模擬器截圖失敗：%1$@"
           }
         }
       }
@@ -314962,6 +315382,12 @@
             "value" : "iOS Pengambilan simulator gagal."
           }
         },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cattura dal simulatore iOS non riuscita."
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -315034,6 +315460,12 @@
             "value" : "iOS Captura cu simulatorul nu a reușit."
           }
         },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Не удалось выполнить захват из симулятора iOS."
+          }
+        },
         "sk" : {
           "stringUnit" : {
             "state" : "translated",
@@ -315070,6 +315502,18 @@
             "value" : "iOS การจับภาพจำลองล้มเหลว"
           }
         },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iOS Simülatöründen yakalama başarısız oldu."
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Не вдалося виконати знімок із симулятора iOS."
+          }
+        },
         "ur" : {
           "stringUnit" : {
             "state" : "translated",
@@ -315086,6 +315530,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "iOS 模拟器捕获失败。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iOS 模擬器截圖失敗。"
           }
         }
       }
@@ -315195,6 +315645,12 @@
             "value" : "iOS Pengambilan gambar simulator belum disiapkan."
           }
         },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La cattura dal simulatore iOS non è ancora configurata."
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -315267,6 +315723,12 @@
             "value" : "iOS Captura cu simulator nu este încă configurată."
           }
         },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Захват из симулятора iOS ещё не настроен."
+          }
+        },
         "sk" : {
           "stringUnit" : {
             "state" : "translated",
@@ -315303,6 +315765,18 @@
             "value" : "iOS ยังไม่ได้ตั้งค่าการจับภาพจำลอง"
           }
         },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iOS Simülatöründen yakalama henüz ayarlanmadı."
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Зйомку з симулятора iOS ще не налаштовано."
+          }
+        },
         "ur" : {
           "stringUnit" : {
             "state" : "translated",
@@ -315319,6 +315793,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "iOS 模拟器捕获尚未设置。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "尚未設定 iOS 模擬器截圖。"
           }
         }
       }
@@ -319591,6 +320071,12 @@
             "value" : "Simpan nama skrip (%1$@) dan simpan di dalam folder Application Scripts."
           }
         },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mantieni il nome dello script (%1$@) e salvalo nella cartella Application Scripts."
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -319663,6 +320149,12 @@
             "value" : "Păstrați numele scriptului (%1$@) și salvați-l în folderul Scripturi de aplicație."
           }
         },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Сохраните имя скрипта (%1$@) и поместите его в папку Application Scripts."
+          }
+        },
         "sk" : {
           "stringUnit" : {
             "state" : "translated",
@@ -319699,6 +320191,18 @@
             "value" : "เก็บชื่อของสคริปต์ (%1$@) และบันทึกไว้ในโฟลเดอร์ Application Scripts"
           }
         },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Betiğin adını koruyun (%1$@) ve Application Scripts klasörünün içine kaydedin."
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Збережіть назву скрипта (%1$@) та помістіть його в папку Application Scripts."
+          }
+        },
         "ur" : {
           "stringUnit" : {
             "state" : "translated",
@@ -319715,6 +320219,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "保留脚本的名称 (%1$@) 并将其保存在应用程序脚本文件夹中。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "保留指令碼名稱 (%1$@) 並將其儲存在 Application Scripts 資料夾內。"
           }
         }
       }
@@ -338371,6 +338881,12 @@
             "value" : "Kelola Proyek..."
           }
         },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gestisci progetti…"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -338443,6 +338959,12 @@
             "value" : "Gestionați proiecte..."
           }
         },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Управление проектами…"
+          }
+        },
         "sk" : {
           "stringUnit" : {
             "state" : "translated",
@@ -338479,6 +339001,18 @@
             "value" : "จัดการโครงการ..."
           }
         },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Projeleri Yönet…"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Керування проєктами…"
+          }
+        },
         "ur" : {
           "stringUnit" : {
             "state" : "translated",
@@ -338495,6 +339029,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "管理项目..."
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "管理專案…"
           }
         }
       }
@@ -339060,7 +339600,7 @@
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Mark This Install as Internal"
+            "value" : "Marquer cette installation comme interne"
           }
         },
         "gu" : {
@@ -339097,6 +339637,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Tandai Penginstalan Ini sebagai Internal"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Contrassegna questa installazione come interna"
           }
         },
         "ja" : {
@@ -339171,6 +339717,12 @@
             "value" : "Marcați această instalare ca internă"
           }
         },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Пометить эту установку как внутреннюю"
+          }
+        },
         "sk" : {
           "stringUnit" : {
             "state" : "translated",
@@ -339207,6 +339759,18 @@
             "value" : "ทำเครื่องหมายการติดตั้งนี้เป็นแบบภายใน"
           }
         },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bu Yüklemeyi Dahili Olarak İşaretle"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Позначити це встановлення як внутрішнє"
+          }
+        },
         "ur" : {
           "stringUnit" : {
             "state" : "translated",
@@ -339223,6 +339787,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "将此安装标记为内部安装"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "將此安裝標記為內部版本"
           }
         }
       }
@@ -351632,6 +352202,12 @@
             "value" : "Templat Baru..."
           }
         },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nuovo modello…"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -351704,6 +352280,12 @@
             "value" : "Șablon nou..."
           }
         },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Новый шаблон…"
+          }
+        },
         "sk" : {
           "stringUnit" : {
             "state" : "translated",
@@ -351740,6 +352322,18 @@
             "value" : "เทมเพลตใหม่..."
           }
         },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yeni Şablon…"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Новий шаблон…"
+          }
+        },
         "ur" : {
           "stringUnit" : {
             "state" : "translated",
@@ -351756,6 +352350,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "新模板..."
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "新增範本…"
           }
         }
       }
@@ -358389,6 +358989,12 @@
             "value" : "Tidak ada iOS Simulator yang berjalan. Buka perangkat di aplikasi Simulator dan coba lagi."
           }
         },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nessun simulatore iOS in esecuzione. Apri un dispositivo nell'app Simulator e riprova."
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -358461,6 +359067,12 @@
             "value" : "Nu rulează niciun simulator iOS. Deschideți un dispozitiv în aplicația Simulator și încercați din nou."
           }
         },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Симулятор iOS не запущен. Откройте устройство в приложении Simulator и повторите попытку."
+          }
+        },
         "sk" : {
           "stringUnit" : {
             "state" : "translated",
@@ -358497,6 +359109,18 @@
             "value" : "ไม่มี iOS โปรแกรมจำลองกำลังทำงานอยู่ เปิดอุปกรณ์ในแอป Simulator แล้วลองอีกครั้ง"
           }
         },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Çalışan bir iOS Simülatörü yok. Simulator uygulamasında bir aygıt açın ve tekrar deneyin."
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Симулятор iOS не запущено. Відкрийте пристрій у програмі Simulator і спробуйте знову."
+          }
+        },
         "ur" : {
           "stringUnit" : {
             "state" : "translated",
@@ -358513,6 +359137,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "没有 iOS 模拟器正在运行。在模拟器应用程序中打开设备并重试。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "沒有正在執行的 iOS 模擬器。請在「模擬器」App 中開啟裝置並重試。"
           }
         }
       }
@@ -378915,6 +379545,12 @@
             "value" : "Buka Templat"
           }
         },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Apri modello"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -378987,6 +379623,12 @@
             "value" : "Deschideți șablonul"
           }
         },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Открыть шаблон"
+          }
+        },
         "sk" : {
           "stringUnit" : {
             "state" : "translated",
@@ -379023,6 +379665,18 @@
             "value" : "เปิดเทมเพลต"
           }
         },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Şablonu Aç"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Відкрити шаблон"
+          }
+        },
         "ur" : {
           "stringUnit" : {
             "state" : "translated",
@@ -379039,6 +379693,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "打开模板"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "開啟範本"
           }
         }
       }
@@ -383020,6 +383680,12 @@
             "value" : "Templat yang diuraikan disertakan dalam build non-debug."
           }
         },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "I modelli con contorno sono inclusi nelle build non di debug."
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -383092,6 +383758,12 @@
             "value" : "Șabloanele subliniate sunt incluse în versiunile non-debug."
           }
         },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Шаблоны с контуром включены в не-debug сборки."
+          }
+        },
         "sk" : {
           "stringUnit" : {
             "state" : "translated",
@@ -383128,6 +383800,18 @@
             "value" : "เทมเพลตที่สรุปไว้จะรวมอยู่ในบิลด์ที่ไม่มีการดีบัก"
           }
         },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Anahatlı şablonlar hata ayıklama dışı derlemelere dahil edilir."
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Шаблони з контуром включено в не-debug збірки."
+          }
+        },
         "ur" : {
           "stringUnit" : {
             "state" : "translated",
@@ -383144,6 +383828,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "概述的模板包含在非调试版本中。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "有外框的範本會包含在非除錯組建中。"
           }
         }
       }
@@ -384540,6 +385230,12 @@
             "value" : "Timpa Yang Ada"
           }
         },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sostituisci esistente"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -384612,6 +385308,12 @@
             "value" : "Suprascrierea existentă"
           }
         },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Перезаписать существующий"
+          }
+        },
         "sk" : {
           "stringUnit" : {
             "state" : "translated",
@@ -384648,6 +385350,18 @@
             "value" : "แทนที่ที่มีอยู่"
           }
         },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mevcut Olanın Üzerine Yaz"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Перезаписати наявний"
+          }
+        },
         "ur" : {
           "stringUnit" : {
             "state" : "translated",
@@ -384664,6 +385378,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "覆盖现有的"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "覆寫現有項目"
           }
         }
       }
@@ -421432,6 +422152,12 @@
             "value" : "Buat Ulang Semua Pratinjau"
           }
         },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rigenera tutte le anteprime"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -421504,6 +422230,12 @@
             "value" : "Regenerați toate previzualizările"
           }
         },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Пересоздать все превью"
+          }
+        },
         "sk" : {
           "stringUnit" : {
             "state" : "translated",
@@ -421540,6 +422272,18 @@
             "value" : "สร้างการแสดงตัวอย่างทั้งหมดใหม่"
           }
         },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tüm Önizlemeleri Yeniden Oluştur"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Перестворити всі прев’ю"
+          }
+        },
         "ur" : {
           "stringUnit" : {
             "state" : "translated",
@@ -421556,6 +422300,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "重新生成所有预览"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "重新產生所有預覽"
           }
         }
       }
@@ -433893,6 +434643,12 @@
             "value" : "Minta Peninjauan Aplikasi Sekarang"
           }
         },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Richiedi recensione app adesso"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -433965,6 +434721,12 @@
             "value" : "Solicitați acum revizuirea aplicației"
           }
         },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Запросить отзыв о приложении сейчас"
+          }
+        },
         "sk" : {
           "stringUnit" : {
             "state" : "translated",
@@ -434001,6 +434763,18 @@
             "value" : "ขอรับการตรวจสอบแอปทันที"
           }
         },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Şimdi Uygulama İncelemesi İste"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Запитати відгук про програму зараз"
+          }
+        },
         "ur" : {
           "stringUnit" : {
             "state" : "translated",
@@ -434017,6 +434791,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "立即请求应用程序审核"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "立即要求 App 評分與評論"
           }
         }
       }
@@ -437183,6 +437963,12 @@
             "value" : "Setel Ulang Status Tinjauan Aplikasi"
           }
         },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reimposta stato recensione app"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -437255,6 +438041,12 @@
             "value" : "Resetați starea de examinare a aplicației"
           }
         },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Сбросить состояние запроса отзыва"
+          }
+        },
         "sk" : {
           "stringUnit" : {
             "state" : "translated",
@@ -437291,6 +438083,18 @@
             "value" : "รีเซ็ตสถานะการตรวจสอบแอป"
           }
         },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Uygulama İnceleme Durumunu Sıfırla"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Скинути стан відгуку про програму"
+          }
+        },
         "ur" : {
           "stringUnit" : {
             "state" : "translated",
@@ -437307,6 +438111,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "重置应用程序审核状态"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "重設 App 評論狀態"
           }
         }
       }
@@ -454978,13 +455788,13 @@
         "ca" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Run Coach Tour"
+            "value" : "Inicia la visita guiada"
           }
         },
         "cs" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Run Coach Tour"
+            "value" : "Spustit komentovanou prohlídku"
           }
         },
         "da" : {
@@ -455065,6 +455875,12 @@
             "value" : "Jalankan Tur Pelatih"
           }
         },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Avvia tour guidato"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -455134,19 +455950,25 @@
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Run Coach Tour"
+            "value" : "Porniți turul ghidat"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Запустить обучающий тур"
           }
         },
         "sk" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Run Coach Tour"
+            "value" : "Spustiť sprievodcu"
           }
         },
         "sl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Run Coach Tour"
+            "value" : "Zaženi vodeni ogled"
           }
         },
         "sv" : {
@@ -455173,6 +455995,18 @@
             "value" : "รันโค้ชทัวร์"
           }
         },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rehberli Turu Başlat"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Запустити ознайомчий тур"
+          }
+        },
         "ur" : {
           "stringUnit" : {
             "state" : "translated",
@@ -455189,6 +456023,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "跑步教练之旅"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "執行功能導覽"
           }
         }
       }
@@ -457365,6 +458205,12 @@
             "value" : "Simpan sebagai Templat Baru"
           }
         },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Salva come nuovo modello"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -457437,6 +458283,12 @@
             "value" : "Salvați ca șablon nou"
           }
         },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Сохранить как новый шаблон"
+          }
+        },
         "sk" : {
           "stringUnit" : {
             "state" : "translated",
@@ -457473,6 +458325,18 @@
             "value" : "บันทึกเป็นเทมเพลตใหม่"
           }
         },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yeni Şablon Olarak Kaydet"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Зберегти як новий шаблон"
+          }
+        },
         "ur" : {
           "stringUnit" : {
             "state" : "translated",
@@ -457489,6 +458353,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "另存为新模板"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "另存為新範本"
           }
         }
       }
@@ -458122,6 +458992,12 @@
             "value" : "Simpan Proyek Saat Ini sebagai Templat"
           }
         },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Salva progetto corrente come modello"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -458194,6 +459070,12 @@
             "value" : "Salvați proiectul curent ca șablon"
           }
         },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Сохранить текущий проект как шаблон"
+          }
+        },
         "sk" : {
           "stringUnit" : {
             "state" : "translated",
@@ -458230,6 +459112,18 @@
             "value" : "บันทึกโครงการปัจจุบันเป็นเทมเพลต"
           }
         },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Geçerli Projeyi Şablon Olarak Kaydet"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Зберегти поточний проєкт як шаблон"
+          }
+        },
         "ur" : {
           "stringUnit" : {
             "state" : "translated",
@@ -458246,6 +459140,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "将当前项目另存为模板"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "將目前專案儲存為範本"
           }
         }
       }
@@ -458879,6 +459779,12 @@
             "value" : "Simpan iOS Skrip Pengambilan Simulator"
           }
         },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Salva script di cattura simulatore iOS"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -458951,6 +459857,12 @@
             "value" : "Salvați iOS Simulator Capture Script"
           }
         },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Сохранить скрипт захвата из симулятора iOS"
+          }
+        },
         "sk" : {
           "stringUnit" : {
             "state" : "translated",
@@ -458987,6 +459899,18 @@
             "value" : "บันทึก iOS สคริปต์จับภาพจำลอง"
           }
         },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iOS Simülatörü Yakalama Betiğini Kaydet"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Зберегти скрипт знімків із симулятора iOS"
+          }
+        },
         "ur" : {
           "stringUnit" : {
             "state" : "translated",
@@ -459003,6 +459927,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "保存 iOS 模拟器捕获脚本"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "儲存 iOS 模擬器截圖指令碼"
           }
         }
       }
@@ -459374,6 +460304,12 @@
             "value" : "Simpan skrip di folder ini. Screenshot Bro akan menggunakannya untuk meminta tangkapan layar pada simulator iOS."
           }
         },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Salva lo script in questa cartella. Screenshot Bro lo utilizzerà per richiedere screenshot al simulatore iOS."
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -459446,6 +460382,12 @@
             "value" : "Salvați scriptul în acest folder. Screenshot Bro îl va folosi pentru a solicita iOS Simulator capturi de ecran."
           }
         },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Сохраните скрипт в эту папку. Screenshot Bro будет использовать его для запроса скриншотов у симулятора iOS."
+          }
+        },
         "sk" : {
           "stringUnit" : {
             "state" : "translated",
@@ -459482,6 +460424,18 @@
             "value" : "บันทึกสคริปต์ในโฟลเดอร์นี้ Screenshot Bro จะใช้มันเพื่อถามเครื่องจำลอง iOS เพื่อจับภาพหน้าจอ"
           }
         },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Betiği bu klasöre kaydedin. Screenshot Bro bunu iOS Simülatöründen ekran görüntüsü istemek için kullanacaktır."
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Збережіть скрипт у цій папці. Screenshot Bro використовуватиме його для запиту знімків екрана в симулятора iOS."
+          }
+        },
         "ur" : {
           "stringUnit" : {
             "state" : "translated",
@@ -459498,6 +460452,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "将脚本保存在此文件夹中。 Screenshot Bro 将使用它向 iOS 模拟器询问屏幕截图。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "將指令碼儲存在此資料夾中。Screenshot Bro 將使用它向 iOS 模擬器要求螢幕截圖。"
           }
         }
       }
@@ -519562,6 +520522,12 @@
             "value" : "Kesalahan Templat"
           }
         },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Errore modello"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -519634,6 +520600,12 @@
             "value" : "Eroare de șablon"
           }
         },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ошибка шаблона"
+          }
+        },
         "sk" : {
           "stringUnit" : {
             "state" : "translated",
@@ -519670,6 +520642,18 @@
             "value" : "ข้อผิดพลาดของเทมเพลต"
           }
         },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Şablon Hatası"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Помилка шаблону"
+          }
+        },
         "ur" : {
           "stringUnit" : {
             "state" : "translated",
@@ -519686,6 +520670,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "模板错误"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "範本錯誤"
           }
         }
       }
@@ -519795,6 +520785,12 @@
             "value" : "Nama templat"
           }
         },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nome modello"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -519867,6 +520863,12 @@
             "value" : "Numele șablonului"
           }
         },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Имя шаблона"
+          }
+        },
         "sk" : {
           "stringUnit" : {
             "state" : "translated",
@@ -519903,6 +520905,18 @@
             "value" : "ชื่อเทมเพลต"
           }
         },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Şablon adı"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Назва шаблону"
+          }
+        },
         "ur" : {
           "stringUnit" : {
             "state" : "translated",
@@ -519919,6 +520933,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "模板名称"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "範本名稱"
           }
         }
       }
@@ -544394,6 +545414,12 @@
             "value" : "Hal ini tidak dapat dibatalkan."
           }
         },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Questa operazione non può essere annullata."
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -544466,6 +545492,12 @@
             "value" : "Acest lucru nu poate fi anulat."
           }
         },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Это действие нельзя отменить."
+          }
+        },
         "sk" : {
           "stringUnit" : {
             "state" : "translated",
@@ -544502,6 +545534,18 @@
             "value" : "สิ่งนี้ไม่สามารถยกเลิกได้"
           }
         },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bu işlem geri alınamaz."
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Цю дію не можна скасувати."
+          }
+        },
         "ur" : {
           "stringUnit" : {
             "state" : "translated",
@@ -544518,6 +545562,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "此操作无法撤消。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "此動作無法復原。"
           }
         }
       }
