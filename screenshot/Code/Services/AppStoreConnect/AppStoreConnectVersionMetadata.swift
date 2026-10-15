@@ -42,9 +42,7 @@ enum AppStoreConnectVersionMetadata {
     /// documents, but App Store Connect refuses it for an app whose listing already requires
     /// copy per language; retry once, supplying exactly the attributes the rejection named that
     /// `fallbackAttributes` can cover, so the user isn't bounced to the website to paste
-    /// placeholder text. Sending the named subset rather than a fixed pair matters because a
-    /// shipped app's version is rejected for `whatsNew` alongside `description`, and a retry
-    /// that answers only part of the complaint fails again.
+    /// placeholder text. Only attributes the rejection names are sent.
     static func createLocalization(
         _ api: some ASCUploadAPI,
         versionId: String,

@@ -22,30 +22,22 @@ extension ASCUploadFlowModel {
         }
     }
 
-    static let defaultWhatsNew = "New features and bug fixes"
-
     func buildMetadataDrafts(appInfoLocalizations: [ASCAppInfoLocalization]) {
         var allVersionDrafts: [ASCVersionLocaleDraft] = []
         var copyrights: [String: String] = [:]
         for version in selectedVersions {
             let sorted = (localizationsByVersionId[version.id] ?? [])
                 .sorted { $0.attributes.locale < $1.attributes.locale }
-            let englishWhatsNew = sorted
-                .first { $0.attributes.locale.lowercased().hasPrefix("en") }
-                .flatMap { $0.attributes.whatsNew?.trimmingCharacters(in: .whitespacesAndNewlines) }
-                .flatMap { $0.isEmpty ? nil : $0 }
-                ?? Self.defaultWhatsNew
+            // Never prefill empty release notes: the save would PATCH them and silence ASC's "What's New" check.
             allVersionDrafts += sorted.map { loc in
-                let existing = loc.attributes.whatsNew?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
-                let whatsNew = existing.isEmpty ? englishWhatsNew : existing
-                return ASCVersionLocaleDraft(
+                ASCVersionLocaleDraft(
                     id: loc.id,
                     versionId: version.id,
                     locale: loc.attributes.locale,
                     description: loc.attributes.description ?? "",
                     keywords: loc.attributes.keywords ?? "",
                     promotionalText: loc.attributes.promotionalText ?? "",
-                    whatsNew: whatsNew,
+                    whatsNew: loc.attributes.whatsNew ?? "",
                     marketingUrl: loc.attributes.marketingUrl ?? "",
                     supportUrl: loc.attributes.supportUrl ?? "",
                     original: loc.attributes

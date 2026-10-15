@@ -61,17 +61,15 @@ extension ASCUploadFlowModel {
         }
     }
 
-    /// The attributes `createLocalization` may retry with, taken from the version's own base
-    /// locale so copied text is at least the user's own. Release notes are the exception: the
-    /// base language's notes on a foreign storefront read worse than the neutral default.
+    /// Retry copy from the base locale — never release notes, which would silence ASC's "What's New" check.
     private func fallbackCopy(versionId: String) -> [String: AnyEncodable] {
         let localizations = localizationsByVersionId[versionId] ?? []
         let codes = localizations.map(\.attributes.locale).sorted()
         guard let baseCode = baseLocaleCode(among: codes),
               let base = localizations.first(where: { $0.attributes.locale == baseCode })
-        else { return ["whatsNew": AnyEncodable(Self.defaultWhatsNew)] }
+        else { return [:] }
 
-        var attributes: [String: AnyEncodable] = ["whatsNew": AnyEncodable(Self.defaultWhatsNew)]
+        var attributes: [String: AnyEncodable] = [:]
         if let description = base.attributes.description, !description.isEmpty {
             attributes["description"] = AnyEncodable(description)
         }

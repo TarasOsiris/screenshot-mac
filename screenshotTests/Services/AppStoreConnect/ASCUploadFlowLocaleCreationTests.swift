@@ -209,23 +209,25 @@ struct ASCUploadFlowLocaleCreationTests {
         #expect(h.model.localeCreationErrors.isEmpty)
     }
 
-    /// A shipped app's version is rejected for release notes as well as a description. Answering
-    /// only half the complaint would fail again, so the retry carries every attribute named.
-    @Test func aRejectionNamingSeveralAttributesRetriesWithAllOfThem() async {
+    /// A shipped app's version is rejected for release notes as well as a description. Release
+    /// notes are never invented — a placeholder would silence App Store Connect's own missing
+    /// "What's New" check — so the retry carries only the copy it has, and the rejection that
+    /// follows lands on the row.
+    @Test func aRejectionDemandingReleaseNotesNeverGetsPlaceholderNotes() async {
         let h = Harness(projectLocales: ["en", "de"])
         h.buildPlans(existing: ["en-US"])
-        h.api.createResults = [
-            .failure(AppStoreConnectAPIError.httpError(
-                status: 400,
-                message: "ENTITY_ERROR.ATTRIBUTE.REQUIRED: description\nENTITY_ERROR.ATTRIBUTE.REQUIRED: whatsNew"
-            )),
-            .success(ASCAppStoreVersionLocalization(id: "new-de", attributes: .init(locale: "de-DE")))
-        ]
+        let rejection = AppStoreConnectAPIError.httpError(
+            status: 400,
+            message: "ENTITY_ERROR.ATTRIBUTE.REQUIRED: description\nENTITY_ERROR.ATTRIBUTE.REQUIRED: whatsNew"
+        )
+        h.api.createResults = [.failure(rejection), .failure(rejection)]
 
         await h.model.createAppStoreLocalization(projectLocaleCode: "de", versionId: "ios-version")
 
         #expect(h.api.createCalls.count == 2)
-        #expect(h.api.createCalls.last?.attributeKeys == ["description", "whatsNew"])
+        #expect(h.api.createCalls.last?.attributeKeys == ["description"])
+        let key = ASCUploadFlowModel.localeCreationKey(versionId: "ios-version", projectLocaleCode: "de")
+        #expect(h.model.localeCreationErrors[key] != nil)
     }
 
     @Test func anUnrelatedRejectionIsNotRetried() async {
