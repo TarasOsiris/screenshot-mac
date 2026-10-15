@@ -42,126 +42,8 @@ protocol ProjectMutationHost: AnyObject, ImageResourceCopying {
     func commitPendingEdits()
     /// Hands the editor a freshly written image. Only the open document has an editor to show it.
     func publishThumbnail(_ thumbnail: NSImage, named fileName: String)
-}
-
-/// The editor already has this project open, so it is the authoritative in-memory copy.
-///
-/// Writing around it would discard the user's unsaved edits — their composing drag and undebounced
-/// typing live only in memory — and adopting a file afterwards would call
-/// `undoManager?.removeAllActions()`, wiping their undo stack on every agent edit.
-@MainActor
-final class OpenProjectHost: ProjectMutationHost {
-    private let state: AppState
-
-    init(state: AppState) { self.state = state }
-
-    var document: ProjectDocument { state.document }
-    var modifiedAt: Date? { state.documentStamp?.modifiedAt }
-    var availableFontFamilySet: Set<String> { state.availableFontFamilySet }
-
-    func mutate<R>(_ actionName: String, _ body: (inout ProjectDocument) throws -> R) rethrows -> R {
-        try state.withDocument(actionName, body)
-    }
-
-    /// `withDocument` already scheduled the debounced save.
-    func commit() throws {}
-
-    func commitPendingEdits() { state.commitAllPendingEdits() }
-
-    func copyImageResource(_ fileName: String, to newFileName: String) -> Bool {
-        state.copyImageResource(fileName, to: newFileName)
-    }
-
-    func publishThumbnail(_ thumbnail: NSImage, named fileName: String) {
-        state.screenshotImages[fileName] = thumbnail
-    }
-}
-
-/// The editor does not have this project open, so the checkout owns it outright.
-@MainActor
-final class DetachedProjectHost: ProjectMutationHost {
-    private let projectId: UUID
-    private let state: AppState
-    private(set) var document: ProjectDocument
-    private(set) var modifiedAt: Date?
-    private var isDirty = false
-    private let fontScope: ProjectFontScope
-
-    init(projectId: UUID, state: AppState, data: ProjectData, fontScope: ProjectFontScope) {
-        self.projectId = projectId
-        self.state = state
-        self.document = ProjectDocument(data)
-        self.modifiedAt = data.modifiedAt
-        self.fontScope = fontScope
-    }
-
-    /// Non-optional: a detached host that could not resolve its own fonts is refused at `open`
-    /// rather than silently rendering with whichever project the editor happens to have open.
-    var availableFontFamilySet: Set<String> { fontScope.availableFamilySet }
-
-    func mutate<R>(_ actionName: String, _ body: (inout ProjectDocument) throws -> R) rethrows -> R {
-        var updated = document
-        let result = try body(&updated)
-        if updated != document {
-            document = updated
-            isDirty = true
-        }
-        return result
-    }
-
-    func commitPendingEdits() {}
-
-    func copyImageResource(_ fileName: String, to newFileName: String) -> Bool {
-        PersistenceService.copyImageResource(fileName, to: newFileName, inProject: projectId)
-    }
-
-    func publishThumbnail(_ thumbnail: NSImage, named fileName: String) {}
-
-    func commit() throws {
-        guard isDirty else { return }
-        // Re-checked with no `await` since the gate was taken: if the user opened this project
-        // under us, that copy is now authoritative and writing the file would lose their edits.
-        if state.activeProjectId == projectId {
-            // Our snapshot predates the awaits, so writing it over their document — in memory or on
-            // disk — discards whatever they did in that window. There is no merge available here:
-            // the caller has to redo the edit against the now-open project.
-            throw ProjectCheckoutError.openedConcurrently(name: state.activeProject?.name ?? "")
-        }
-
-        // `ProjectData.name` is the only copy an index rebuild can recover from, so a write that
-        // drops it silently loses the project's name.
-        let name = state.projects.first { $0.id == projectId }?.name
-        let data = document.projectData(name: name)
-        modifiedAt = data.modifiedAt
-
-        // Without the mtime stamp the project card sorts stale and `diskCachedImage` keeps
-        // serving the pre-edit thumbnail forever.
-        state.recordProjectModified(projectId, at: data.modifiedAt)
-        // Without this the monitor reads our own write as a remote change and reloads the *open*
-        // project, costing the user their undo stack over an edit to a different project.
-        state.iCloudMonitor?.recordOwnWrite([
-            PersistenceService.projectDataURL(projectId),
-            PersistenceService.translationCatalogURL(projectId),
-        ])
-
-        let monitor = state.iCloudMonitor
-        let id = projectId
-        let owner = state
-        // The shared save queue, not a private one: `readProjectAfterQueuedWrites` puts its
-        // barrier here too, so an open enqueued after this write reads these bytes.
-        AppState.saveQueue.async {
-            do {
-                try PersistenceService.saveProject(id, data: data)
-                monitor?.snapshotAfterWrite()
-            } catch {
-                // Through the shared reporter, so a failed detached write raises `saveError` like
-                // every other save path instead of reaching Sentry and nobody else.
-                Task { @MainActor in owner.reportProjectSaveFailure(error) }
-            }
-        }
-        state.saveIndexAsync()
-        isDirty = false
-    }
+    /// The document now points at images the editor never decoded (a new base language's screenshots).
+    func didRepointImages()
 }
 
 /// A project checked out for editing, whether or not the editor has it open.
@@ -219,6 +101,7 @@ final class ProjectCheckout: RowRenderSource, ImageResourceCopying {
 
     // MARK: - Editing
 
+    /// A closed project's checkout is a snapshot: callers must serialize edits to it (`MCPToolExecutor.serializingEdits`).
     func mutate<R>(_ actionName: String, _ body: (inout ProjectDocument) throws -> R) rethrows -> R {
         try host.mutate(actionName, body)
     }
@@ -231,6 +114,8 @@ final class ProjectCheckout: RowRenderSource, ImageResourceCopying {
 
     /// Call before rendering: the open document's undebounced typing lives only in memory.
     func commitPendingEdits() { host.commitPendingEdits() }
+
+    func didRepointImages() { host.didRepointImages() }
 
     func dispose() { fontScope?.dispose() }
 

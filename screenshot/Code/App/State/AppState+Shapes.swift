@@ -93,20 +93,13 @@ extension AppState {
         guard shapeLocation(for: shapeId) != nil else { return }
         withUndo("Edit Text") {
             guard let loc = shapeLocation(for: shapeId) else { return }
-            let baseShape = rows[loc.rowIndex].shapes[loc.shapeIndex]
-            var resolved = LocaleService.resolveShape(baseShape, localeCode: code, localeState: localeState)
+            var resolved = LocaleService.resolveShape(rows[loc.rowIndex].shapes[loc.shapeIndex], localeCode: code, localeState: localeState)
             resolved.text = text
             resolved.richText = richText
             if resolved.text?.isEmpty != false {
                 resolved.richText = nil
             }
-            rows[loc.rowIndex].shapes[loc.shapeIndex] = LocaleService.splitUpdate(
-                base: baseShape, updated: resolved, localeState: &localeState, forLocaleCode: code
-            )
-            // A reused string's base text is shared: propagate a base-locale edit to every member.
-            if baseShape.translationKey != nil, code == localeState.baseLocaleCode {
-                setSharedBaseText(key: baseShape.textTranslationKey, text: text)
-            }
+            DocumentEditing.commitShapeEdit(resolved, at: loc, forLocaleCode: code, rows: &rows, localeState: &localeState)
         }
     }
 
@@ -173,18 +166,11 @@ extension AppState {
 
     func deleteAllShapes(ofType type: ShapeType, in rowId: UUID) {
         guard let idx = rowIndex(for: rowId) else { return }
-        let matching = rows[idx].shapes.filter { $0.type == type }
-        guard !matching.isEmpty else { return }
+        guard rows[idx].shapes.contains(where: { $0.type == type }) else { return }
         withRowUndo("Delete All \(type.rawValue) shapes", rowId: rowId) {
-            let allCandidates = imageFileNames(for: matching)
-            let matchingIds = Set(matching.map(\.id))
-            for shape in matching {
-                LocaleService.removeShapeOverrides(&localeState, shapeId: shape.id)
-            }
-            selectedShapeIds.subtract(matchingIds)
-            rows[idx].shapes.removeAll { $0.type == type }
-            cleanupOrphanedTranslationOverrides()
-            cleanupUnreferencedImages(allCandidates)
+            let removed = DocumentEditing.deleteShapes(ofType: type, inRowAt: idx, rows: &rows, localeState: &localeState)
+            selectedShapeIds.subtract(removed.removedIds)
+            cleanupUnreferencedImages(removed.imageCandidates)
         }
     }
 

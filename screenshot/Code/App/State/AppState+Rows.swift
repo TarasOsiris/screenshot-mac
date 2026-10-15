@@ -30,35 +30,14 @@ extension AppState {
         }
     }
 
-    /// A default row for `variantId`, or for the Original when the variant already holds that size.
     func makeDefaultRow(
         id: UUID = UUID(),
         label: String? = nil,
         width: CGFloat? = nil,
         height: CGFloat? = nil,
-        variantId: UUID? = nil
-    ) -> ScreenshotRow {
-        var row = makeDefaultRow(
-            id: id,
-            label: label,
-            width: width,
-            height: height,
-            templateCount: nil,
-            defaultDeviceCategory: nil,
-            defaultDeviceFrameId: nil
-        )
-        row.variantId = variantId
-        return row
-    }
-
-    func makeDefaultRow(
-        id: UUID = UUID(),
-        label: String? = nil,
-        width: CGFloat? = nil,
-        height: CGFloat? = nil,
-        templateCount: Int?,
-        defaultDeviceCategory: DeviceCategory?,
-        defaultDeviceFrameId: String?
+        templateCount: Int? = nil,
+        defaultDeviceCategory: DeviceCategory? = nil,
+        defaultDeviceFrameId: String? = nil
     ) -> ScreenshotRow {
         ScreenshotRow.makeDefault(
             id: id,
@@ -144,35 +123,11 @@ extension AppState {
     func resetRow(_ id: UUID) {
         guard let idx = rows.firstIndex(where: { $0.id == id }) else { return }
         withUndo("Reset Row") {
-            let oldRow = rows[idx]
-
-            let shapeImageCandidates = imageFileNames(for: oldRow.shapes)
-            let backgroundImages = oldRow.allBackgroundImageFileNames
-
-            for shape in oldRow.shapes {
-                LocaleService.removeShapeOverrides(&localeState, shapeId: shape.id)
-            }
-
-            // Replace with a fresh default row, preserving id and dimensions
-            rows[idx] = makeDefaultRow(
-                id: oldRow.id,
-                label: oldRow.isLabelManuallySet ? oldRow.label : nil,
-                width: oldRow.templateWidth,
-                height: oldRow.templateHeight,
-                variantId: oldRow.variantId
+            let imageCandidates = DocumentEditing.resetRow(
+                at: idx, rows: &rows, localeState: &localeState, defaults: Self.storedNewRowDefaults()
             )
-            rows[idx].originRowId = oldRow.originRowId
-            rows[idx].excludeFromAppStoreConnect = oldRow.excludeFromAppStoreConnect
-            if let source = labelSource(of: rows[idx]) {
-                rows[idx].label = source.label
-                rows[idx].isLabelManuallySet = source.isLabelManuallySet
-            }
-            cleanupOrphanedTranslationOverrides()
-
             selectedShapeIds = []
-
-            let allCandidates: [String?] = shapeImageCandidates + backgroundImages
-            cleanupUnreferencedImages(allCandidates)
+            cleanupUnreferencedImages(imageCandidates)
         }
     }
 
@@ -255,17 +210,17 @@ extension AppState {
 
     /// Swaps with the nearest row `isVisible` accepts, so a filtered editor never moves a row past hidden ones.
     func moveRowUp(_ id: UUID, among isVisible: (ScreenshotRow) -> Bool = { _ in true }) {
-        guard let idx = rows.firstIndex(where: { $0.id == id }),
-              let target = rows[..<idx].lastIndex(where: isVisible) else { return }
-        withUndo("Move Row Up") {
-            rows.swapAt(idx, target)
-        }
+        moveRow(id, up: true, among: isVisible)
     }
 
     func moveRowDown(_ id: UUID, among isVisible: (ScreenshotRow) -> Bool = { _ in true }) {
-        guard let idx = rows.firstIndex(where: { $0.id == id }),
-              let target = rows[(idx + 1)...].firstIndex(where: isVisible) else { return }
-        withUndo("Move Row Down") {
+        moveRow(id, up: false, among: isVisible)
+    }
+
+    private func moveRow(_ id: UUID, up: Bool, among isVisible: (ScreenshotRow) -> Bool) {
+        guard let idx = rowIndex(for: id),
+              let target = DocumentEditing.rowMoveTarget(from: idx, up: up, in: rows, among: isVisible) else { return }
+        withUndo(up ? "Move Row Up" : "Move Row Down") {
             rows.swapAt(idx, target)
         }
     }

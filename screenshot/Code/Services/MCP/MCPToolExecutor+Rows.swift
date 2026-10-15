@@ -73,13 +73,9 @@ extension MCPToolExecutor {
     func moveRow(_ args: MCPArguments, _ document: inout ProjectDocument) throws -> MCPEditResult {
         let rowIndex = try requireRowIndex(args, in: document)
         let rowId = document.rows[rowIndex].id
-        switch try args.requiredString("direction") {
-        case "up" where rowIndex > 0:
-            document.rows.swapAt(rowIndex, rowIndex - 1)
-        case "down" where rowIndex < document.rows.count - 1:
-            document.rows.swapAt(rowIndex, rowIndex + 1)
-        default:
-            break
+        let up = try args.requiredString("direction") == "up"
+        if let target = DocumentEditing.rowMoveTarget(from: rowIndex, up: up, in: document.rows) {
+            document.rows.swapAt(rowIndex, target)
         }
         return .row(rowId)
     }

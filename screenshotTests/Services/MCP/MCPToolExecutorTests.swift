@@ -1526,6 +1526,72 @@ struct MCPToolExecutorTests {
         #expect(FileManager.default.fileExists(atPath: written.path))
     }
 
+    /// With no undo stack to bring it back, the file a closed project's edit replaced goes once the write lands.
+    @Test func aClosedProjectEditDeletesTheImageItReplaced() async throws {
+        let (executor, state, tempDir) = makeExecutor()
+        defer { cleanupTestState(tempDir) }
+        let (_, closedId) = try await makeClosedProject(state)
+        let closedRowId = try await readProject(closedId).rows[0].id
+        let imageURL = tempDir.appendingPathComponent("shot.png")
+        try #require(ExportService.pngData(from: makeTestImage(width: 1290, height: 2796))).write(to: imageURL)
+        let importArgs: [String: Value] = [
+            "project_id": .string(closedId.uuidString),
+            "row_id": .string(closedRowId.uuidString),
+            "paths": [.string(imageURL.path)],
+        ]
+
+        expectSuccess(await executor.call(name: "import_screenshots", arguments: importArgs))
+        let first = try #require(try await readProject(closedId).rows[0].shapes.compactMap(\.displayImageFileName).first)
+        expectSuccess(await executor.call(name: "import_screenshots", arguments: importArgs))
+        let savedData = try #require(await AppState.readProjectAfterQueuedWrites(closedId)?.data)
+        let second = try #require(ProjectDocument(savedData).rows[0].shapes.compactMap(\.displayImageFileName).first)
+
+        #expect(first != second)
+        let resources = PersistenceService.resourcesDir(closedId)
+        #expect(!FileManager.default.fileExists(atPath: resources.appendingPathComponent(first).path))
+        #expect(FileManager.default.fileExists(atPath: resources.appendingPathComponent(second).path))
+        #expect(state.projects.first { $0.id == closedId }?.modifiedAt == savedData.modifiedAt, "the project card sorts by the write")
+    }
+
+    /// Both calls read the project before either saves; unserialized, the second save drops the first edit.
+    @Test func concurrentEditsToAClosedProjectBothLand() async throws {
+        let (executor, state, tempDir) = makeExecutor()
+        defer { cleanupTestState(tempDir) }
+        let (_, closedId) = try await makeClosedProject(state)
+        let closedRowId = try await readProject(closedId).rows[0].id
+        func addText(_ text: String) async -> CallTool.Result {
+            await executor.call(name: "add_shape", arguments: [
+                "project_id": .string(closedId.uuidString),
+                "row_id": .string(closedRowId.uuidString),
+                "type": "text",
+                "text": .string(text),
+            ])
+        }
+
+        async let first = addText("First")
+        async let second = addText("Second")
+        expectSuccess(await first)
+        expectSuccess(await second)
+
+        let texts = Set(try await readProject(closedId).rows[0].shapes.compactMap(\.text))
+        #expect(texts.isSuperset(of: ["First", "Second"]))
+    }
+
+    @Test func aClosedCheckoutRefusesToCommitOnceTheProjectIsOpened() async throws {
+        let (_, state, tempDir) = makeExecutor()
+        defer { cleanupTestState(tempDir) }
+        let (_, closedId) = try await makeClosedProject(state)
+        let checkout = try await ProjectCheckout.open(projectId: closedId, state: state)
+        defer { checkout.dispose() }
+        checkout.mutate("Edit") { $0.rows[0].label = "Agent" }
+
+        state.selectProject(closedId)
+        await state.projectOpenTask?.value
+
+        #expect(throws: ProjectCheckoutError.self) { try checkout.commit() }
+        #expect(state.rows[0].label != "Agent")
+    }
+
     @Test func previewRendersTheNamedProjectNotTheOpenOne() async throws {
         let (state, tempDir) = makeTestState()
         defer { cleanupTestState(tempDir) }

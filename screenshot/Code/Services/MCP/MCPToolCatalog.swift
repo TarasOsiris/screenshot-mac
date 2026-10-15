@@ -236,6 +236,14 @@ nonisolated enum MCPToolCatalog {
         schemasByName[tool.rawValue]
     }
 
+    /// A tool without a schema would skip argument validation entirely, so it is an error.
+    static func requireInputSchema(for tool: MCPToolName) throws -> Value {
+        guard let schema = inputSchema(for: tool) else {
+            throw MCPToolError.failed("\(tool.rawValue) has no input schema")
+        }
+        return schema
+    }
+
     private static let allTools: [Tool] = [
         Tool(
             name: MCPToolName.listTemplates.rawValue,

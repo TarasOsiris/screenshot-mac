@@ -78,3 +78,18 @@ nonisolated extension PersistenceService {
         }
     }
 }
+
+extension PersistenceService {
+    static func copyImageResource(_ fileName: String, to newFileName: String, inProject projectId: UUID) -> Bool {
+        let resources = resourcesDir(projectId)
+        let source = resources.appendingPathComponent(fileName)
+        guard FileManager.default.fileExists(atPath: source.path) else { return false }
+        do {
+            try FileManager.default.copyItem(at: source, to: resources.appendingPathComponent(newFileName))
+            return true
+        } catch {
+            CrashReportingService.report(.imageResourceCopyFailed, error: error, extra: ["kind": "duplicate"])
+            return false
+        }
+    }
+}

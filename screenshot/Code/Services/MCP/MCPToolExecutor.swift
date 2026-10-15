@@ -14,6 +14,8 @@ final class MCPToolExecutor {
     let jobs: MCPJobStore
     /// Injected so the idempotent-retry path can be driven against a fake App Store Connect.
     let screenshotSync: AppStoreConnectScreenshotSyncService
+    /// The last edit queued per project; see `serializingEdits`.
+    var editChains: [UUID: Task<Void, Never>] = [:]
 
     init(
         state: AppState,
@@ -38,11 +40,12 @@ final class MCPToolExecutor {
             guard let tool else {
                 throw MCPToolError.unknownTool(name)
             }
-            if let schema = MCPToolCatalog.inputSchema(for: tool) {
-                try MCPArgumentValidator.validate(arguments, against: schema)
+            let schema = try MCPToolCatalog.requireInputSchema(for: tool)
+            try MCPArgumentValidator.validate(arguments, against: schema)
+            guard let handler = handler(for: tool) else {
+                throw MCPToolError.failed("\(tool.rawValue) has no handler")
             }
-            let args = MCPArguments(arguments)
-            let result = try await dispatch(tool, args)
+            let result = try await handler(MCPArguments(arguments, schema: schema))
             AnalyticsService.capture(.mcpToolCalled, [.tool: tool.rawValue, .ok: true, .mcpSessionId: sessionId])
             return result
         } catch {
@@ -64,39 +67,41 @@ final class MCPToolExecutor {
         }
     }
 
-    private func dispatch(_ tool: MCPToolName, _ args: MCPArguments) async throws -> CallTool.Result {
+    typealias Handler = @MainActor (MCPArguments) async throws -> CallTool.Result
+
+    /// Nil only for a tool nobody wired up, which `MCPToolCatalogTests` catches.
+    func handler(for tool: MCPToolName) -> Handler? {
+        if tool.isEditing {
+            return { try await self.runEdit(tool, $0) }
+        }
         switch tool {
-        case .addRow, .updateRow, .moveRow, .deleteRow, .addTemplate, .removeTemplate, .addShape, .updateShape,
-             .deleteShape, .importScreenshots, .addLocale, .removeLocale, .setTranslation, .createVariant,
-             .setRowVariant, .deleteVariant, .updateTemplate, .duplicateShape, .duplicateRow, .duplicateTemplate,
-             .moveTemplate, .replaceImage, .setAllDevices, .arrangeShapes, .setBaseLocale, .setLocaleLayout:
-            return try await runEdit(tool, args)
-        case .listTemplates: return try await listTemplates()
-        case .listProjects: return try listProjects()
-        case .getProject: return try await getProject(args)
-        case .createProject: return try await createProject(args)
-        case .renameProject: return try renameProject(args)
-        case .deleteProject: return try deleteProject(args)
-        case .switchProject: return try await switchProject(args)
-        case .exportProject: return try await exportProject(args)
-        case .renderPreview: return try await renderPreview(args)
-        case .getAppStoreMetadata: return try await getAppStoreMetadata(args)
-        case .updateAppStoreDescription: return try await updateAppStoreDescription(args)
-        case .previewAppStoreScreenshotSync: return try await previewAppStoreScreenshotSync(args)
-        case .applyAppStoreScreenshotSync: return try await applyAppStoreScreenshotSync(args)
-        case .getSyncJobStatus: return try getSyncJobStatus(args)
-        case .cancelSyncJob: return try cancelSyncJob(args)
-        case .listVariants: return try await listVariants(args)
-        case .batch: return try await batch(args)
-        case .setTranslations: return try await setTranslations(args)
-        case .listCatalog: return try await listCatalog(args)
-        case .undo: return try undo(args, redo: false)
-        case .redo: return try undo(args, redo: true)
-        case .updateAppStoreMetadata: return try await updateAppStoreMetadata(args)
-        case .listAppStoreApps: return try await listAppStoreApps()
-        case .linkProjectStores: return try linkProjectStores(args)
-        case .previewPlayUpload: return try await previewPlayUpload(args)
-        case .uploadPlayScreenshots: return try await uploadPlayScreenshots(args)
+        case .listTemplates: return { _ in try await self.listTemplates() }
+        case .listProjects: return { _ in try self.listProjects() }
+        case .getProject: return getProject
+        case .createProject: return createProject
+        case .renameProject: return renameProject
+        case .deleteProject: return deleteProject
+        case .switchProject: return switchProject
+        case .exportProject: return exportProject
+        case .renderPreview: return renderPreview
+        case .getAppStoreMetadata: return getAppStoreMetadata
+        case .updateAppStoreDescription: return updateAppStoreDescription
+        case .previewAppStoreScreenshotSync: return previewAppStoreScreenshotSync
+        case .applyAppStoreScreenshotSync: return applyAppStoreScreenshotSync
+        case .getSyncJobStatus: return getSyncJobStatus
+        case .cancelSyncJob: return cancelSyncJob
+        case .listVariants: return listVariants
+        case .batch: return batch
+        case .setTranslations: return setTranslations
+        case .listCatalog: return listCatalog
+        case .undo: return { try self.undo($0, redo: false) }
+        case .redo: return { try self.undo($0, redo: true) }
+        case .updateAppStoreMetadata: return updateAppStoreMetadata
+        case .listAppStoreApps: return { _ in try await self.listAppStoreApps() }
+        case .linkProjectStores: return linkProjectStores
+        case .previewPlayUpload: return previewPlayUpload
+        case .uploadPlayScreenshots: return uploadPlayScreenshots
+        default: return nil
         }
     }
 

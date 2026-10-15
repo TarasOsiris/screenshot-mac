@@ -5,12 +5,12 @@ import MCP
 /// What an editing tool may use and leave behind inside `ProjectCheckout.mutate`, where nothing can be awaited.
 @MainActor
 struct MCPEditContext {
-    let projectId: UUID
     let availableFontFamilies: Set<String>
     let resources: ImageResourceCopying
     var staged: [StagedImageWrite] = []
     /// Side effects (analytics) that must not happen for an edit that is rolled back.
     var afterCommit: [@MainActor () -> Void] = []
+    var repointsImages = false
 }
 
 /// An editing tool's answer, rendered against the final document once the edit has landed.
@@ -79,16 +79,39 @@ extension MCPToolExecutor {
         return checkout
     }
 
+    /// One edit per project at a time, from checkout to commit: two closed-project edits read together
+    /// would each save over the other, and the later one could point at an image the earlier deleted.
+    func serializingEdits<R: Sendable>(_ args: MCPArguments, _ body: @escaping @MainActor () async throws -> R) async throws -> R {
+        guard let projectId = try args.optionalUUID("project_id") ?? state.activeProjectId else {
+            return try await body()
+        }
+        let previous = editChains[projectId]
+        let edit = Task { @MainActor in
+            await previous?.value
+            return try await body()
+        }
+        let tail = Task<Void, Never> { _ = try? await edit.value }
+        editChains[projectId] = tail
+        defer { if editChains[projectId] == tail { editChains[projectId] = nil } }
+        return try await withTaskCancellationHandler {
+            try await edit.value
+        } onCancel: {
+            edit.cancel()
+        }
+    }
+
     /// One editing tool, as one undo step in the open project or one save of a closed one.
     func runEdit(_ tool: MCPToolName, _ args: MCPArguments) async throws -> CallTool.Result {
-        let checkout = try await editCheckout(args)
-        defer { checkout.dispose() }
-        var context = MCPEditContext(projectId: checkout.projectId, availableFontFamilies: checkout.availableFontFamilySet, resources: checkout)
-        let result = try checkout.mutate(tool.editActionName ?? "") { document in
-            try applyEdit(tool, args, to: &document, context: &context)
+        try await serializingEdits(args) { [self] in
+            let checkout = try await editCheckout(args)
+            defer { checkout.dispose() }
+            var context = MCPEditContext(availableFontFamilies: checkout.availableFontFamilySet, resources: checkout)
+            let result = try checkout.mutate(tool.editActionName ?? "") { document in
+                try applyEdit(tool, args, to: &document, context: &context)
+            }
+            let writeFailures = try await land(context, in: checkout)
+            return try MCPResultEncoding.result(render(result, in: checkout, writeFailures: writeFailures))
         }
-        let writeFailures = try await land(context, in: checkout)
-        return try MCPResultEncoding.result(render(result, in: checkout, writeFailures: writeFailures))
     }
 
     /// Saves the edit, then writes the images it points at. Returns the writes that failed.
@@ -99,6 +122,7 @@ extension MCPToolExecutor {
             throw MCPToolError.expected("\(name) was opened in the app while this edit was in progress. Retry it.")
         }
         context.afterCommit.forEach { $0() }
+        if context.repointsImages { checkout.didRepointImages() }
         return await checkout.flush(context.staged)
     }
 

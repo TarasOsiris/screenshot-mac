@@ -48,10 +48,9 @@ extension MCPToolExecutor {
                 guard arguments["project_id"] == nil else {
                     throw MCPToolError.invalidArgument("project_id", "set project_id on the batch, not on an operation")
                 }
-                if let schema = MCPToolCatalog.inputSchema(for: tool) {
-                    try MCPArgumentValidator.validate(arguments, against: schema)
-                }
-                return (tool: tool, arguments: arguments)
+                let schema = try MCPToolCatalog.requireInputSchema(for: tool)
+                try MCPArgumentValidator.validate(arguments, against: schema)
+                return (tool: tool, arguments: arguments, schema: schema)
             } catch let error as MCPToolError {
                 throw error.inOperation(index, name)
             }
@@ -64,7 +63,7 @@ extension MCPToolExecutor {
             throw MCPToolError.missingArgument("entries")
         }
         return try await runEdits(
-            entries.map { (tool: MCPToolName.setTranslation, arguments: $0.rawValues) },
+            entries.map { (tool: MCPToolName.setTranslation, arguments: $0.rawValues, schema: MCPToolCatalog.inputSchema(for: .setTranslation)) },
             actionName: "Edit Translations",
             args: args
         )
@@ -72,33 +71,35 @@ extension MCPToolExecutor {
 
     /// Applies `operations` in order inside one mutation — one undo step, and nothing applied if any throws.
     private func runEdits(
-        _ operations: [(tool: MCPToolName, arguments: [String: Value])],
+        _ operations: [(tool: MCPToolName, arguments: [String: Value], schema: Value?)],
         actionName: String,
         args: MCPArguments
     ) async throws -> CallTool.Result {
-        let checkout = try await editCheckout(args)
-        defer { checkout.dispose() }
-        var context = MCPEditContext(projectId: checkout.projectId, availableFontFamilies: checkout.availableFontFamilySet, resources: checkout)
-        let results = try checkout.mutate(actionName) { document in
-            var results: [MCPEditResult] = []
-            var producedIds: [UUID?] = []
-            for (index, operation) in operations.enumerated() {
-                do {
-                    let arguments = try Self.resolvingReferences(in: operation.arguments, to: producedIds)
-                    let result = try applyEdit(operation.tool, MCPArguments(arguments), to: &document, context: &context)
-                    results.append(result)
-                    producedIds.append(result.producedId)
-                } catch let error as MCPToolError {
-                    throw error.inOperation(index, operation.tool.rawValue)
+        try await serializingEdits(args) { [self] in
+            let checkout = try await editCheckout(args)
+            defer { checkout.dispose() }
+            var context = MCPEditContext(availableFontFamilies: checkout.availableFontFamilySet, resources: checkout)
+            let results = try checkout.mutate(actionName) { document in
+                var results: [MCPEditResult] = []
+                var producedIds: [UUID?] = []
+                for (index, operation) in operations.enumerated() {
+                    do {
+                        let arguments = try Self.resolvingReferences(in: operation.arguments, to: producedIds)
+                        let result = try applyEdit(operation.tool, MCPArguments(arguments, schema: operation.schema), to: &document, context: &context)
+                        results.append(result)
+                        producedIds.append(result.producedId)
+                    } catch let error as MCPToolError {
+                        throw error.inOperation(index, operation.tool.rawValue)
+                    }
                 }
+                return results
             }
-            return results
+            let writeFailures = try await land(context, in: checkout)
+            return try MCPResultEncoding.result(MCPBatchResult(
+                results: try results.map { try record(of: $0, in: checkout) },
+                imageWriteFailures: writeFailures.isEmpty ? nil : writeFailures
+            ))
         }
-        let writeFailures = try await land(context, in: checkout)
-        return try MCPResultEncoding.result(MCPBatchResult(
-            results: try results.map { try record(of: $0, in: checkout) },
-            imageWriteFailures: writeFailures.isEmpty ? nil : writeFailures
-        ))
     }
 
     /// Ids and outcomes only: a full snapshot per operation would repeat the same row many times over.

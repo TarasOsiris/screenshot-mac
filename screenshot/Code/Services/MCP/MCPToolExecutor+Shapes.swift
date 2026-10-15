@@ -73,43 +73,16 @@ extension MCPToolExecutor {
         let (restyled, clearsFormatting) = try applyPatch(&patch, args: args, fonts: context.availableFontFamilies)
 
         if patch != base {
-            document.rows[location.rowIndex].shapes[location.shapeIndex] = LocaleService.splitUpdate(
-                base: base, updated: patch, localeState: &document.localeState,
-                forLocaleCode: document.localeState.baseLocaleCode
+            DocumentEditing.commitShapeEdit(
+                patch, at: (location.rowIndex, location.shapeIndex), forLocaleCode: document.localeState.baseLocaleCode,
+                rows: &document.rows, localeState: &document.localeState
             )
         }
-        if base.translationKey != nil, let text = patch.text, text != base.text {
-            DocumentEditing.setSharedBaseText(key: base.textTranslationKey, text: text, rows: &document.rows)
-        }
-        restyleTranslations(of: patch, properties: restyled, clearingFormatting: clearsFormatting, localeState: &document.localeState)
+        DocumentEditing.restyleTranslations(of: patch, properties: restyled, clearingFormatting: clearsFormatting, localeState: &document.localeState)
         if let order = args.string("z_order") {
             DocumentEditing.reorderShape(at: (location.rowIndex, location.shapeIndex), toFront: order == "front", rows: &document.rows)
         }
         return .shape(location.shapeId)
-    }
-
-    /// Carries a shape-level restyle (or a formatting clear) into every translation that has its
-    /// own rich text, which the base shape's richText doesn't reach.
-    private func restyleTranslations(
-        of shape: CanvasShapeModel,
-        properties: [RichTextUtils.ShapeStyleProperty],
-        clearingFormatting: Bool,
-        localeState: inout LocaleState
-    ) {
-        guard clearingFormatting || !properties.isEmpty else { return }
-        let key = shape.textTranslationKey
-        for (code, overrides) in localeState.overrides where overrides[key]?.richText != nil {
-            var resolved = LocaleService.resolveShape(shape, localeCode: code, localeState: localeState)
-            if clearingFormatting {
-                resolved.richText = nil
-            } else {
-                for property in properties {
-                    RichTextUtils.syncShapeStyle(in: &resolved, property: property)
-                }
-            }
-            localeState.overrides[code]?[key]?.text = resolved.text
-            localeState.overrides[code]?[key]?.richText = resolved.richText
-        }
     }
 
     /// Checks what the schema can't: colors, a known frame, a font this project can render.

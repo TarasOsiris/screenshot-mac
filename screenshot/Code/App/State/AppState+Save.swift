@@ -255,13 +255,19 @@ extension AppState {
             commitAllPendingEdits()
         }
         guard let (activeId, data) = activeProjectSnapshotForSave() else { return }
-        writeStamps.beginWrite(activeId, modifiedAt: data.modifiedAt)
-        let monitor = iCloudMonitor
-        monitor?.recordOwnWrite([PersistenceService.projectDataURL(activeId), PersistenceService.translationCatalogURL(activeId)])
+        enqueueProjectWrite(activeId, data: data)
+    }
+
+    /// `onLanded` runs on the save queue, and only if the write succeeded.
+    func enqueueProjectWrite(_ id: UUID, data: ProjectData, onLanded: (@Sendable () -> Void)? = nil) {
+        writeStamps.beginWrite(id, modifiedAt: data.modifiedAt)
+        // Otherwise the monitor reads our own write as remote and reloads, wiping the undo stack.
+        iCloudMonitor?.recordOwnWrite([PersistenceService.projectDataURL(id), PersistenceService.translationCatalogURL(id)])
         Self.saveQueue.async { [weak self] in
-            let result = Self.writeProject(activeId, data: data)
+            let result = Self.writeProject(id, data: data)
+            if case .success = result { onLanded?() }
             DispatchQueue.main.async {
-                self?.finishProjectWrite(activeId, modifiedAt: data.modifiedAt, result: result)
+                self?.finishProjectWrite(id, modifiedAt: data.modifiedAt, result: result)
             }
         }
     }

@@ -3,13 +3,6 @@ import os
 import SwiftUI
 
 extension AppState {
-    // MARK: - Image Helpers
-
-    /// Collects all image filenames (base + locale overrides) for a set of shapes.
-    func imageFileNames(for shapes: [CanvasShapeModel]) -> [String] {
-        DocumentEditing.imageFileNames(for: shapes, localeState: localeState)
-    }
-
     // MARK: - Image Cleanup
 
     /// The extensions the app itself writes as image resources.
@@ -153,12 +146,14 @@ extension AppState {
             try? FileManager.default.removeItem(at: fileURL)
             return
         }
-        Self.saveQueue.async {
-            do {
-                try PersistenceService.removeItemIfExists(at: fileURL)
-            } catch {
-                CrashReportingService.report(.imageResourceDeleteFailed, error: error, extra: ["kind": "unreferenced"])
-            }
+        Self.saveQueue.async { Self.removeUnreferencedImageResource(at: fileURL) }
+    }
+
+    nonisolated static func removeUnreferencedImageResource(at url: URL) {
+        do {
+            try PersistenceService.removeItemIfExists(at: url)
+        } catch {
+            CrashReportingService.report(.imageResourceDeleteFailed, error: error, extra: ["kind": "unreferenced"])
         }
     }
 

@@ -226,10 +226,7 @@ extension MCPToolExecutor {
         guard code != document.localeState.baseLocaleCode else { return .locales }
         LocaleService.setBaseLocale(code, rows: &document.rows, state: &document.localeState)
         // The new base points at what were per-language screenshots, which the editor hasn't decoded.
-        let projectId = context.projectId
-        context.afterCommit.append { [state] in
-            if state.activeProjectId == projectId { state.loadScreenshotImages() }
-        }
+        context.repointsImages = true
         return .locales
     }
 

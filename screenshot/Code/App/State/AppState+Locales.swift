@@ -324,10 +324,7 @@ extension AppState {
         guard activeLocaleHasAnyOverrides else { return }
 
         withUndo("Reset Language to Base") {
-            var overrideImages = localeState.overrides[code]?.values.compactMap(\.overrideImageFileName) ?? []
-            localeState.overrides.removeValue(forKey: code)
-            overrideImages += DocumentEditing.removeBackgroundImageOverrides(forLocale: code, in: &rows)
-            cleanupUnreferencedImages(overrideImages)
+            cleanupUnreferencedImages(DocumentEditing.resetLocale(code, rows: &rows, localeState: &localeState))
         }
     }
 

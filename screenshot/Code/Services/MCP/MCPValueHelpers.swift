@@ -63,13 +63,26 @@ enum MCPToolError: Error, LocalizedError {
 /// Typed access to a tool call's `arguments` dictionary.
 struct MCPArguments {
     private let raw: [String: Value]
+    /// A handler reading a key outside the schema is a silent no-op for every client, so DEBUG traps on it.
+    private let declared: [String: Value]?
 
-    init(_ raw: [String: Value]?) {
+    init(_ raw: [String: Value]?, schema: Value? = nil) {
         self.raw = raw ?? [:]
+        self.declared = schema?.schemaProperties
+    }
+
+    private func value(_ key: String) -> Value? {
+        assert(declared == nil || declared?[key] != nil, "MCP handler reads \"\(key)\", which its schema does not declare")
+        return raw[key]
+    }
+
+    /// The schema of `key`'s elements, for arguments nested in an array.
+    private func itemSchema(_ key: String) -> Value? {
+        declared?[key]?.schemaItems
     }
 
     func string(_ key: String) -> String? {
-        raw[key]?.stringValue
+        value(key)?.stringValue
     }
 
     func requiredString(_ key: String) throws -> String {
@@ -102,7 +115,7 @@ struct MCPArguments {
     }
 
     func double(_ key: String) -> Double? {
-        switch raw[key] {
+        switch value(key) {
         case .double(let d): d
         case .int(let i): Double(i)
         default: nil
@@ -110,7 +123,7 @@ struct MCPArguments {
     }
 
     func int(_ key: String) -> Int? {
-        switch raw[key] {
+        switch value(key) {
         case .int(let i): i
         case .double(let d): Int(exactly: d)
         default: nil
@@ -118,49 +131,50 @@ struct MCPArguments {
     }
 
     func bool(_ key: String) -> Bool? {
-        raw[key]?.boolValue
+        value(key)?.boolValue
     }
 
     func stringArray(_ key: String) -> [String]? {
-        raw[key]?.arrayValue.map { $0.compactMap(\.stringValue) }
+        value(key)?.arrayValue.map { $0.compactMap(\.stringValue) }
     }
 
     func objectArray(_ key: String) -> [MCPArguments]? {
-        raw[key]?.arrayValue.map { $0.compactMap { $0.objectValue.map(MCPArguments.init) } }
+        let schema = itemSchema(key)
+        return value(key)?.arrayValue.map { $0.compactMap { $0.objectValue.map { MCPArguments($0, schema: schema) } } }
     }
 
     /// Unlike `objectArray`, rejects a non-array value or any non-object element instead of dropping it.
     func strictObjectArray(_ key: String) throws -> [MCPArguments]? {
         guard has(key) else { return nil }
-        guard let elements = raw[key]?.arrayValue else {
+        guard let elements = value(key)?.arrayValue else {
             throw MCPToolError.invalidArgument(key, "expected an array of objects")
         }
         return try elements.map { element in
             guard let object = element.objectValue else {
                 throw MCPToolError.invalidArgument(key, "every element must be an object")
             }
-            return MCPArguments(object)
+            return MCPArguments(object, schema: itemSchema(key))
         }
     }
 
     func object(_ key: String) -> MCPArguments? {
-        raw[key]?.objectValue.map(MCPArguments.init)
+        value(key)?.objectValue.map { MCPArguments($0, schema: declared?[key]) }
     }
 
     var rawValues: [String: Value] { raw }
 
     /// Given at all, a value or an explicit `null`.
     func isPresent(_ key: String) -> Bool {
-        raw[key] != nil
+        value(key) != nil
     }
 
     /// An explicit `null`, which some fields take to mean "remove".
     func isNull(_ key: String) -> Bool {
-        raw[key] == .null
+        value(key) == .null
     }
 
     func has(_ key: String) -> Bool {
-        raw[key] != nil && raw[key] != .null
+        value(key).map { $0 != .null } ?? false
     }
 
     func color(_ key: String) throws -> CodableColor? {
@@ -180,6 +194,14 @@ struct MCPArguments {
     }
 }
 
+extension Value {
+    /// A JSON-Schema object's declared properties; nil for a free-form object.
+    nonisolated var schemaProperties: [String: Value]? { objectValue?["properties"]?.objectValue }
+
+    /// A JSON-Schema array's element schema.
+    nonisolated var schemaItems: Value? { objectValue?["items"] }
+}
+
 /// Checks a call's arguments against the tool's own input schema before any handler runs, so a
 /// misspelled key or a wrong-typed value is an error rather than a silently skipped edit.
 /// `null` always passes: handlers treat it as "not provided" (`MCPArguments.has`).
@@ -189,7 +211,7 @@ nonisolated enum MCPArgumentValidator {
     }
 
     private static func validateObject(_ object: [String: Value], schema: Value, path: String) throws {
-        guard let properties = schema.objectValue?["properties"]?.objectValue else { return }
+        guard let properties = schema.schemaProperties else { return }
         for key in object.keys.sorted() {
             let keyPath = path.isEmpty ? key : "\(path).\(key)"
             guard let property = properties[key] else {
@@ -225,7 +247,7 @@ nonisolated enum MCPArgumentValidator {
             guard value.boolValue != nil else { throw mismatch(path, "a boolean") }
         case "array":
             guard let elements = value.arrayValue else { throw mismatch(path, "an array") }
-            if let items = spec["items"] {
+            if let items = schema.schemaItems {
                 for (index, element) in elements.enumerated() {
                     try validateValue(element, schema: items, path: "\(path)[\(index)]")
                 }
