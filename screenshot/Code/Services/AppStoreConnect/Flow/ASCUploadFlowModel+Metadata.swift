@@ -60,10 +60,59 @@ extension ASCUploadFlowModel {
                     original: loc.attributes
                 )
             }
+        keepSelectedMetadataLocaleValid()
+    }
+
+    /// After a version tab switch, the selected locale may not exist on the new version.
+    func keepSelectedMetadataLocaleValid() {
         let codes = metadataLocaleCodes
-        let currentStillValid = selectedMetadataLocale.map(codes.contains) ?? false
-        if !currentStillValid {
+        if !(selectedMetadataLocale.map(codes.contains) ?? false) {
             selectedMetadataLocale = codes.first
+        }
+    }
+
+    // MARK: - Change tracking
+
+    var changedCopyrights: [String: String] {
+        copyrightByVersion.filter { $0.value != (originalCopyrightByVersion[$0.key] ?? "") }
+    }
+
+    var hasMetadataChanges: Bool {
+        copyrightByVersion.contains { $0.value != (originalCopyrightByVersion[$0.key] ?? "") }
+            || versionDrafts.contains(where: \.isChanged) || appInfoDrafts.contains(where: \.isChanged)
+    }
+
+    var activeVersionCopyrightChanged: Bool {
+        let id = metadataVersionId ?? ""
+        return (copyrightByVersion[id] ?? "") != (originalCopyrightByVersion[id] ?? "")
+    }
+
+    /// The active version's locales with unsaved edits, for the locale list's change dots.
+    var metadataLocalesWithChanges: Set<String> {
+        Set(versionDrafts.filter { $0.versionId == metadataVersionId && $0.isChanged }.map(\.locale))
+            .union(appInfoDrafts.filter(\.isChanged).map(\.locale))
+    }
+
+    /// App Store Connect rejects an over-long field, so saving waits until the counters are back in range.
+    var metadataWithinLimits: Bool {
+        !versionDrafts.contains { $0.isChanged && $0.exceedsLimits }
+            && !appInfoDrafts.contains { $0.isChanged && $0.exceedsLimits }
+    }
+
+    /// Offered from an English locale with release notes, when the version has other locales.
+    func canCopyWhatsNewToOtherLocales(from index: Int) -> Bool {
+        guard versionDrafts.indices.contains(index) else { return false }
+        let draft = versionDrafts[index]
+        guard draft.locale.lowercased().hasPrefix("en"),
+              !draft.whatsNew.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return false }
+        return versionDrafts.contains { $0.versionId == draft.versionId && $0.locale != draft.locale }
+    }
+
+    func copyWhatsNewToOtherLocales(from index: Int) {
+        guard versionDrafts.indices.contains(index) else { return }
+        let source = versionDrafts[index]
+        for i in versionDrafts.indices where versionDrafts[i].versionId == source.versionId && versionDrafts[i].locale != source.locale {
+            versionDrafts[i].whatsNew = source.whatsNew
         }
     }
 
@@ -114,7 +163,7 @@ extension ASCUploadFlowModel {
     /// few at a time, then re-baselines the drafts so the change dots clear. Returns what was
     /// written.
     func saveMetadataChanges() async throws -> ASCMetadataSaveSummary {
-        let changedCopyrights = copyrightByVersion.filter { $0.value != (originalCopyrightByVersion[$0.key] ?? "") }
+        let changedCopyrights = changedCopyrights
         let versionSnapshot = versionDrafts
         let appInfoSnapshot = appInfoDrafts
         let api = api
@@ -146,17 +195,7 @@ extension ASCUploadFlowModel {
             }
         }
 
-        try await withThrowingTaskGroup(of: Void.self) { group in
-            var pending = writes.makeIterator()
-            for _ in 0..<AppStoreConnectVersionMetadata.writeConcurrency {
-                guard let write = pending.next() else { break }
-                group.addTask { try await write() }
-            }
-            while try await group.next() != nil {
-                guard let write = pending.next() else { continue }
-                group.addTask { try await write() }
-            }
-        }
+        try await StoreConcurrency.forEach(writes, limit: AppStoreConnectVersionMetadata.writeConcurrency)
 
         let changedVersionDrafts = versionSnapshot.filter(\.isChanged)
         let changedAppInfoDrafts = appInfoSnapshot.filter(\.isChanged)
@@ -164,11 +203,22 @@ extension ASCUploadFlowModel {
         for (versionId, copyrightValue) in changedCopyrights {
             originalCopyrightByVersion[versionId] = copyrightValue
         }
-        for i in versionDrafts.indices where versionDrafts[i].isChanged {
-            versionDrafts[i].markSaved()
+        // Re-baseline to what was written, so an edit typed while the save was in flight stays changed.
+        let savedVersions = Dictionary(changedVersionDrafts.map { draft in
+            var saved = draft
+            saved.markSaved()
+            return (draft.id, saved.original)
+        }) { $1 }
+        for i in versionDrafts.indices {
+            if let original = savedVersions[versionDrafts[i].id] { versionDrafts[i].original = original }
         }
-        for i in appInfoDrafts.indices where appInfoDrafts[i].isChanged {
-            appInfoDrafts[i].markSaved()
+        let savedAppInfos = Dictionary(changedAppInfoDrafts.map { draft in
+            var saved = draft
+            saved.markSaved()
+            return (draft.id, saved.original)
+        }) { $1 }
+        for i in appInfoDrafts.indices {
+            if let original = savedAppInfos[appInfoDrafts[i].id] { appInfoDrafts[i].original = original }
         }
 
         let locales = Set(changedVersionDrafts.map(\.locale)).union(changedAppInfoDrafts.map(\.locale))

@@ -555,7 +555,7 @@ struct BackgroundImageEditor: View {
         // main-isolated and run on the wrong executor. It only decodes and hops back.
         let report = reportDropFailure
         provider.loadFileRepresentation(forTypeIdentifier: type.identifier) { @Sendable url, error in
-            let decoded = url.flatMap { DroppedFile.decode(at: $0, confirmingImageType: mustConfirmImageType) }
+            let decoded = url.flatMap { DroppedMediaLoader.media(at: $0, confirmingImageType: mustConfirmImageType) }
             let failure = decoded == nil ? DropFailure.imageOrSvg(error) : nil
             Task { @MainActor in
                 switch decoded {
@@ -569,22 +569,5 @@ struct BackgroundImageEditor: View {
             }
         }
         return true
-    }
-}
-
-/// What a dropped file turned out to be. Decoded inside the item provider's completion
-/// handler because the temporary URL it hands over is deleted as soon as that returns.
-private enum DroppedFile {
-    case svg(String)
-    case image(NSImage)
-
-    nonisolated static func decode(at url: URL, confirmingImageType: Bool) -> DroppedFile? {
-        if let sanitized = SvgHelper.loadAndSanitize(from: url) { return .svg(sanitized) }
-        if confirmingImageType {
-            guard let typeId = try? url.resourceValues(forKeys: [.typeIdentifierKey]).typeIdentifier,
-                  let type = UTType(typeId),
-                  type.conforms(to: .image) else { return nil }
-        }
-        return NSImage(contentsOf: url).map(DroppedFile.image)
     }
 }

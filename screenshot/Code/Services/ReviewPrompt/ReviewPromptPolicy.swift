@@ -33,6 +33,13 @@ struct ReviewPromptPolicy {
         self.now = now
     }
 
+    /// Forgets every export and prompt, as on a fresh install.
+    func reset() {
+        for key in [Key.exportCount, Key.lastPromptedVersion, Key.firstExportDate, Key.lastPromptDate] {
+            defaults.removeObject(forKey: key)
+        }
+    }
+
     /// Counts this export and reports whether the prompt should be shown. Records the prompt when
     /// it returns true, so a caller that ignores the result silently burns the opportunity.
     @discardableResult

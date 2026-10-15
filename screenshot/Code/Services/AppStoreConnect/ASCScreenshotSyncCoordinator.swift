@@ -146,6 +146,40 @@ final class ASCScreenshotSyncCoordinator {
         }
     }
 
+    /// How `buildAndApply` ended. On `.buildFailed` and `.applyFailed`, `errorMessage`,
+    /// `wasCancelled` and `failure` say why.
+    enum Outcome {
+        case applied(ASCScreenshotSyncPlan, sets: [ASCScreenshotSetDiff])
+        case nothingToChange(ASCScreenshotSyncPlan)
+        case blocked([ASCScreenshotSetDiff])
+        case buildFailed
+        case applyFailed
+    }
+
+    /// Builds a plan and applies every change it can, for the flows that upload without a review step.
+    func buildAndApply(
+        appId: String,
+        targets: [ASCUploadTarget],
+        rows: [ScreenshotRow],
+        source: some RowRenderSource,
+        document: DocumentStamp?,
+        strategy: ASCSyncStrategy = .reconcile,
+        progress: @escaping (UploadProgress) -> Void
+    ) async -> Outcome {
+        await build(
+            appId: appId, targets: targets, rows: rows, source: source, document: document,
+            strategy: strategy, progress: { progress($0.uploadProgress) }
+        )
+        guard let plan else { return .buildFailed }
+        let blocked = plan.changedSets.filter { !$0.canApply }
+        guard blocked.isEmpty else { return .blocked(blocked) }
+        let sets = selectedSets
+        guard !sets.isEmpty else { return .nothingToChange(plan) }
+        progress(UploadProgress(totalSteps: 0, completedSteps: 0, currentLabel: String(localized: "Starting upload…")))
+        await apply(document: document, progress: progress)
+        return result?.succeeded == true ? .applied(plan, sets: sets) : .applyFailed
+    }
+
     func apply(document: DocumentStamp?, progress: @escaping (UploadProgress) -> Void) async {
         guard let plan else { return }
         if isExpired {
@@ -187,6 +221,7 @@ final class ASCScreenshotSyncCoordinator {
             errorMessage = error.localizedDescription
             failure = StoreUploadFailure.classify(error)
         }
+        wasCancelled = failure?.kind == .cancelled
     }
 
     func toggle(_ set: ASCScreenshotSetDiff, included: Bool) {

@@ -237,6 +237,53 @@ struct ASCScreenshotSyncIdempotencyTests {
         return (plan, stamp)
     }
 
+    // MARK: - Build and apply
+
+    private func buildAndApply(_ coordinator: ASCScreenshotSyncCoordinator, rowId: UUID, stamp: DocumentStamp) async -> ASCScreenshotSyncCoordinator.Outcome {
+        await coordinator.buildAndApply(
+            appId: "123",
+            targets: [makeTarget(rowId: rowId)],
+            rows: [makeTestRow(id: rowId, width: 60, height: 120)],
+            source: StubRenderSource(),
+            document: stamp,
+            progress: { _ in }
+        )
+    }
+
+    /// The wizard's direct path and the A/B upload share this, so each outcome is pinned once.
+    @Test func buildAndApplyUploadsThenFindsNothingToChange() async {
+        let coordinator = ASCScreenshotSyncCoordinator(
+            service: AppStoreConnectScreenshotSyncService(api: FakeScreenshotSyncAPI(), isDemoMode: { false })
+        )
+        let rowId = UUID()
+        let stamp = DocumentStamp(projectId: UUID(), modifiedAt: Date())
+
+        guard case .applied(_, let sets) = await buildAndApply(coordinator, rowId: rowId, stamp: stamp) else {
+            Issue.record("the first run should upload")
+            return
+        }
+        #expect(sets.count == 1)
+        guard case .nothingToChange = await buildAndApply(coordinator, rowId: rowId, stamp: stamp) else {
+            Issue.record("a second run against the same store should find nothing to change")
+            return
+        }
+    }
+
+    @Test func buildAndApplyReportsAFailedApplyWithItsFailure() async {
+        let api = FakeScreenshotSyncAPI()
+        api.failUploadsForLocalization = "loc-1"
+        let coordinator = ASCScreenshotSyncCoordinator(
+            service: AppStoreConnectScreenshotSyncService(api: api, isDemoMode: { false })
+        )
+
+        guard case .applyFailed = await buildAndApply(coordinator, rowId: UUID(), stamp: DocumentStamp(projectId: UUID(), modifiedAt: Date())) else {
+            Issue.record("a rejected upload should end as applyFailed")
+            return
+        }
+        #expect(coordinator.failure != nil)
+        #expect(coordinator.errorMessage != nil)
+    }
+
     // MARK: - Set parent
 
     /// An experiment treatment reuses the whole engine; only the set's parent differs.

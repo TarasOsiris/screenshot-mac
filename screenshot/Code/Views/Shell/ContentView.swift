@@ -113,13 +113,8 @@ struct ContentView: View {
         }
 
         AddRowButton {
-            store.requirePro(
-                allowed: store.canAddRow(currentCount: state.rows.count),
-                context: .rowLimit
-            ) {
-                withAnimation(.easeInOut(duration: 0.2)) {
-                    state.addRow(variantId: variantFilter.newRowVariantId)
-                }
+            store.addRowIfAllowed(currentCount: state.rows.count) {
+                state.addRow(variantId: variantFilter.newRowVariantId)
             }
         }
     }

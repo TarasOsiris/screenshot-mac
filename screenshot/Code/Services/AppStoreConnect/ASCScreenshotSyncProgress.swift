@@ -30,6 +30,15 @@ nonisolated struct ASCSyncBuildProgress: Sendable {
     let totalRenders: Int
     /// Row · locale, user-written. Fine in the UI and in a tool result; never in a breadcrumb.
     let label: String
+
+    /// The build's own render counter, as the wizards show it while the plan is being prepared.
+    var uploadProgress: UploadProgress {
+        let label = switch stage {
+        case .rendering: String(localized: "Rendering \(self.label)")
+        case .comparing: String(localized: "Comparing \(self.label)")
+        }
+        return UploadProgress(totalSteps: totalRenders, completedSteps: completedRenders, currentLabel: label)
+    }
 }
 
 /// Per-set transitions from `apply`. Deliberately separate from `UploadProgress`, which carries the

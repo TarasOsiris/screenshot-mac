@@ -19,7 +19,7 @@ struct ASCUploadProgressTests {
     }
 
     @Test func buildProgressCarriesTheRenderCounts() {
-        let progress = ASCUploadFlowModel.buildProgress(update(.rendering, completed: 74, total: 180))
+        let progress = update(.rendering, completed: 74, total: 180).uploadProgress
         #expect(progress.totalSteps == 180)
         #expect(progress.completedSteps == 74)
         #expect(progress.currentLabel.contains("Row · en-US"))
@@ -28,8 +28,8 @@ struct ASCUploadProgressTests {
     /// The two stages have to be distinguishable, because "comparing" is when the network round
     /// trips happen and the renders counter stops moving.
     @Test func theStageIsVisibleInTheLabel() {
-        let rendering = ASCUploadFlowModel.buildProgress(update(.rendering, completed: 1, total: 2)).currentLabel
-        let comparing = ASCUploadFlowModel.buildProgress(update(.comparing, completed: 2, total: 2)).currentLabel
+        let rendering = update(.rendering, completed: 1, total: 2).uploadProgress.currentLabel
+        let comparing = update(.comparing, completed: 2, total: 2).uploadProgress.currentLabel
         #expect(rendering != comparing)
     }
 
@@ -38,7 +38,7 @@ struct ASCUploadProgressTests {
     /// empty build honest instead of showing a bar that cannot move.
     @Test func theDenominatorIsAlwaysTheBuildsOwn() {
         for total in [0, 1, 12, 180] {
-            let progress = ASCUploadFlowModel.buildProgress(update(.rendering, completed: 0, total: total))
+            let progress = update(.rendering, completed: 0, total: total).uploadProgress
             #expect(progress.totalSteps == total)
         }
     }

@@ -40,7 +40,7 @@ extension EditorRowView {
         let dropX = displayLocation.x / ds
         let dropY = displayLocation.y / ds
         if routeFolderDrop(providers, fallback: { provider in
-            ItemProviderImageLoader.loadImage(from: provider) { image in
+            DroppedMediaLoader.loadImage(from: provider) { image in
                 guard let image else { return }
                 self.createImageShape(image: image, modelX: dropX, modelY: dropY, source: .dropCanvas)
             }
@@ -68,24 +68,20 @@ extension EditorRowView {
             // closure literal would be inferred main-isolated under this target's default
             // actor isolation. The URL dies with the callback, so parse here and hop after.
             let report = reportDropFailure
-            provider.loadFileRepresentation(forTypeIdentifier: UTType.svg.identifier) { @Sendable url, error in
-                guard let url = url,
-                      let content = try? String(contentsOf: url, encoding: .utf8) else {
-                    let failure = DropFailure.svg(error)
+            provider.loadFileRepresentation(forTypeIdentifier: UTType.svg.identifier) { @Sendable url, providerError in
+                let svg: (content: String, naturalSize: CGSize)
+                do throws(DroppedMediaLoader.SvgFailure) {
+                    guard let url else { throw .unreadable }
+                    svg = try DroppedMediaLoader.renderableSvg(at: url)
+                } catch {
+                    let failure: DropFailure = error == .unreadable ? .svg(providerError) : .unrenderableSvg
                     Task { @MainActor in report(failure) }
                     return
                 }
-                let sanitized = SvgHelper.sanitize(content)
-                guard let data = sanitized.data(using: .utf8),
-                      let image = NSImage(data: data) else {
-                    Task { @MainActor in report(.unrenderableSvg) }
-                    return
-                }
-                let size = SvgHelper.parseSize(sanitized, fallbackImage: image)
                 Task { @MainActor in
                     state.insertSvgShape(
-                        content: sanitized,
-                        naturalSize: size,
+                        content: svg.content,
+                        naturalSize: svg.naturalSize,
                         inRow: row.id,
                         at: CGPoint(x: modelX, y: modelY)
                     )
@@ -101,7 +97,7 @@ extension EditorRowView {
         } else if let provider = imageProviders.first {
             let modelX = baseX
             let modelY = baseY
-            ItemProviderImageLoader.loadImage(from: provider) { image in
+            DroppedMediaLoader.loadImage(from: provider) { image in
                 guard let image else { return }
                 self.createImageShape(image: image, modelX: modelX, modelY: modelY, source: .dropCanvas)
             }
@@ -118,7 +114,7 @@ extension EditorRowView {
 
         for (i, provider) in providers.enumerated() {
             group.enter()
-            ItemProviderImageLoader.loadImage(from: provider) { image in
+            DroppedMediaLoader.loadImage(from: provider) { image in
                 if let image {
                     lock.lock()
                     loadedImages.append((i, image))

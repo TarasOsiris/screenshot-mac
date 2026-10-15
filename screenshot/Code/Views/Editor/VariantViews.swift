@@ -170,9 +170,7 @@ struct RowVariantMenuItems: View {
     }
 
     private func requireRowSlot(_ action: @escaping () -> Void) {
-        store.requirePro(allowed: store.canAddRow(currentCount: state.rows.count), context: .rowLimit) {
-            withAnimation(.easeInOut(duration: 0.2)) { action() }
-        }
+        store.addRowIfAllowed(currentCount: state.rows.count, action)
     }
 }
 
@@ -251,9 +249,7 @@ struct VariantsToolbarMenu: View {
             }
             Button("New Variant from Selected Row", systemImage: "plus") {
                 guard let rowId = state.selectedRowId else { return }
-                store.requirePro(allowed: store.canAddRow(currentCount: state.rows.count), context: .rowLimit) {
-                    withAnimation(.easeInOut(duration: 0.2)) { state.createVariant(fromRow: rowId) }
-                }
+                store.addRowIfAllowed(currentCount: state.rows.count) { state.createVariant(fromRow: rowId) }
             }
             .disabled(state.selectedRowId == nil)
             if !variants.isEmpty {

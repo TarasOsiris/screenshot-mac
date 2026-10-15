@@ -47,11 +47,8 @@ extension EditorRowView {
     }
 
     func duplicateRow() {
-        store.requirePro(
-            allowed: store.canAddRow(currentCount: state.rows.count),
-            context: .rowLimit
-        ) {
-            withAnimation(Self.rowAnimation) { state.duplicateRow(row.id) }
+        store.addRowIfAllowed(currentCount: state.rows.count) {
+            state.duplicateRow(row.id)
         }
     }
 
@@ -202,18 +199,8 @@ extension EditorRowView {
                     cache: &cache
                 )
 
-                try await withThrowingTaskGroup(of: Void.self) { group in
-                    try await context.forEachTemplate { index, image in
-                        let padded = String(format: "%02d", index + 1)
-                        let fileURL = folder.appendingPathComponent("\(padded)_screenshot.png")
-                        group.addTask {
-                            guard let data = ExportService.encodeImage(image, format: .png) else {
-                                throw ExportError.renderFailed
-                            }
-                            try data.write(to: fileURL)
-                        }
-                    }
-                    try await group.waitForAll()
+                _ = try await RowImageExporter.writePNGs(context, to: folder) {
+                    "\(String(format: "%02d", $0 + 1))_screenshot.png"
                 }
                 #if os(iOS)
                 PlatformShare.present(urls: [folder]) { _ in

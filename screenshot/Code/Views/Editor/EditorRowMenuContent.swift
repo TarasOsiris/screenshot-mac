@@ -66,20 +66,10 @@ struct EditorRowMenuContent: View {
             RowVariantMenuItems(state: state, row: row, context: variantContext)
         }
         Button("Add New Row Above", systemImage: "arrow.up.to.line.compact") {
-            store.requirePro(
-                allowed: store.canAddRow(currentCount: state.rows.count),
-                context: .rowLimit
-            ) {
-                withAnimation(.easeInOut(duration: 0.2)) { state.addRowAbove(row.id) }
-            }
+            store.addRowIfAllowed(currentCount: state.rows.count) { state.addRowAbove(row.id) }
         }
         Button("Add New Row Below", systemImage: "arrow.down.to.line.compact") {
-            store.requirePro(
-                allowed: store.canAddRow(currentCount: state.rows.count),
-                context: .rowLimit
-            ) {
-                withAnimation(.easeInOut(duration: 0.2)) { state.addRowBelow(row.id) }
-            }
+            store.addRowIfAllowed(currentCount: state.rows.count) { state.addRowBelow(row.id) }
         }
         Button("Move Row Up", systemImage: "arrow.up", action: moveRowUp)
             .disabled(!canMoveUp)

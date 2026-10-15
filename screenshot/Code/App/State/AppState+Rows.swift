@@ -72,7 +72,7 @@ extension AppState {
         guard let idx = rows.firstIndex(where: { $0.id == id }), rows[idx].isOriginal else { return }
         withUndo("Duplicate Row") {
             let copy = DocumentEditing.copyRow(
-                at: idx, label: String(localized: "\(rows[idx].label) copy"),
+                at: idx, label: Self.defaultDuplicateName(for: rows[idx].label),
                 rows: &rows, localeState: &localeState, resources: self
             )
             if let copy { selectRow(copy.id) }

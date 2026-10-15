@@ -121,7 +121,7 @@ extension UploadToAppStoreConnectView {
     var dismissButton: some View {
         switch model.step {
         case .uploading:
-            Button("Cancel Sync", role: .cancel) { cancelUpload() }
+            Button("Cancel Sync", role: .cancel) { model.cancelUpload() }
         case .done:
             Button("Close") { dismiss() }
                 .keyboardShortcut(.defaultAction)
@@ -145,7 +145,7 @@ extension UploadToAppStoreConnectView {
         case .editingMetadata:
             UploadForwardPrimary(titleKey: metadataPrimaryTitle,
                                  action: { Task { await model.saveMetadataAndContinue() } },
-                                 isEnabled: !model.isBusy)
+                                 isEnabled: !model.isBusy && model.metadataWithinLimits)
         case .configuringPlan:
             UploadForwardPrimary(titleKey: "Upload", action: { requestDirectUpload() },
                                  isEnabled: model.canStartUpload && !model.isBusy)
@@ -186,7 +186,7 @@ extension UploadToAppStoreConnectView {
     }
 
     var metadataPrimaryTitle: LocalizedStringKey {
-        switch (model.mode, hasMetadataChanges) {
+        switch (model.mode, model.hasMetadataChanges) {
         case (.metadata, true): "Save"
         case (.metadata, false): "Done"
         case (.screenshots, true): "Save & Continue"
@@ -194,19 +194,7 @@ extension UploadToAppStoreConnectView {
         }
     }
 
-    var hasMetadataChanges: Bool {
-        if model.copyrightByVersion.contains(where: { $0.value != (model.originalCopyrightByVersion[$0.key] ?? "") }) { return true }
-        if model.versionDrafts.contains(where: \.isChanged) { return true }
-        if model.appInfoDrafts.contains(where: \.isChanged) { return true }
-        return false
-    }
-
     var canAdvanceFromVersion: Bool {
         !model.selectedVersions.isEmpty && model.selectedVersions.allSatisfy { $0.isSelectable(for: model.mode) }
     }
-
-    func cancelUpload() {
-        model.uploadTask?.cancel()
-    }
-
 }

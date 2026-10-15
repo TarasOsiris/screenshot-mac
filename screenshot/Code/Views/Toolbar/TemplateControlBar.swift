@@ -424,33 +424,21 @@ struct TemplateControlBar: View {
             )
             // A folder per preview, handed to QuickLook to delete on dismiss. Writing into the
             // bare temp directory left every preview's PNGs behind for the whole session.
-            let folder: URL
+            var folder: URL?
             do {
-                folder = try ExportService.makeTempExportFolder()
+                let created = try ExportService.makeTempExportFolder()
+                folder = created
+                let code = localeState.activeLocaleCode
+                let urls = try await RowImageExporter.writePNGs(context, to: created) { "screenshot-\($0 + 1)-\(code).png" }
+                QuickLookCoordinator.shared.preview(imagesAt: urls, startingAt: index, temporaryFolder: created)
             } catch {
-                renderError = String(localized: "Could not write preview file: \(error.localizedDescription)")
-                return
-            }
-            var urls: [URL] = []
-            for i in context.templateIndices {
-                let image = context.templateImage(at: i)
-                let tempURL = folder.appendingPathComponent("screenshot-\(i + 1)-\(localeState.activeLocaleCode).png")
-                do {
-                    guard let pngData = await ExportImageEncoder.opaquePNGDataOffMain(from: image) else {
-                        try? FileManager.default.removeItem(at: folder)
-                        renderError = String(localized: "Could not render screenshot for preview.")
-                        return
-                    }
-                    try pngData.write(to: tempURL)
-                    urls.append(tempURL)
-                    await Task.yield()
-                } catch {
-                    try? FileManager.default.removeItem(at: folder)
-                    renderError = String(localized: "Could not write preview file: \(error.localizedDescription)")
-                    return
+                if let folder { try? FileManager.default.removeItem(at: folder) }
+                renderError = if case ExportError.renderFailed = error {
+                    String(localized: "Could not render screenshot for preview.")
+                } else {
+                    String(localized: "Could not write preview file: \(error.localizedDescription)")
                 }
             }
-            QuickLookCoordinator.shared.preview(imagesAt: urls, startingAt: index, temporaryFolder: folder)
         }
     }
 

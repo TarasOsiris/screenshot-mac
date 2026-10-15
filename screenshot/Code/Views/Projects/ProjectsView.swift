@@ -289,14 +289,11 @@ struct ProjectsView: View {
         }
 
         Button("Duplicate…", systemImage: "plus.square.on.square") {
-            store.requirePro(
-                allowed: store.canCreateProject(currentCount: state.visibleProjects.count),
-                context: .projectLimit
-            ) {
+            store.createProjectIfAllowed(currentCount: state.visibleProjects.count) {
                 renamePrompt = ProjectNamePrompt(
                     title: String(localized: "Duplicate Project"),
                     confirmTitle: String(localized: "Duplicate"),
-                    initialValue: project.name + " Copy"
+                    initialValue: AppState.defaultDuplicateName(for: project.name)
                 ) { newName in
                     state.duplicateProject(project.id, name: newName)
                 }
@@ -313,10 +310,7 @@ struct ProjectsView: View {
     private var deletionBinding: Binding<Bool> { $projectPendingDeletion.isPresent() }
 
     private func newProject() {
-        store.requirePro(
-            allowed: store.canCreateProject(currentCount: state.visibleProjects.count),
-            context: .projectLimit
-        ) {
+        store.createProjectIfAllowed(currentCount: state.visibleProjects.count) {
             activeIdBeforeCreate = state.activeProjectId
             showNewProject = true
         }

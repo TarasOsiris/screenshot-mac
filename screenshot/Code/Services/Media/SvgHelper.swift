@@ -90,6 +90,12 @@ nonisolated enum SvgHelper {
         return CGSize(width: max(parts[2], 20), height: max(parts[3], 20))
     }
 
+    /// The size `svg` draws at; nil when the system image decoder can't draw it.
+    static func renderableSize(of svg: String) -> CGSize? {
+        guard let data = svg.data(using: .utf8), let image = NSImage(data: data) else { return nil }
+        return parseSize(svg, fallbackImage: image)
+    }
+
     static func parseSize(_ svg: String, fallbackImage: NSImage) -> CGSize {
         if let size = parseViewBoxSize(svg) { return size }
         let rep = fallbackImage.representations.first

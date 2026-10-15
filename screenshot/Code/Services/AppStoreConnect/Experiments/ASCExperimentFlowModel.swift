@@ -222,6 +222,9 @@ final class ASCExperimentFlowModel {
         }
     }
 
+    /// Its own `store` value, so A/B uploads don't count toward the product-page funnel.
+    private static let analyticsStore = "asc_experiment"
+
     func startUpload() {
         task = Task { await upload() }
     }
@@ -239,6 +242,7 @@ final class ASCExperimentFlowModel {
         isBusy = true
         defer { isBusy = false; task = nil }
         CrashReportingService.breadcrumb(.upload, "asc experiment upload", data: ["variants": testableVariants.count])
+        var applyFailure: StoreUploadFailure?
         do {
             let (experiment, isNew) = try await ensureExperiment(appId: app.id)
             let entries = try await ensureTreatments(for: experiment, isNew: isNew)
@@ -250,41 +254,50 @@ final class ASCExperimentFlowModel {
             )
             guard !targets.isEmpty else { throw ASCExperimentFlowError.nothingToUpload }
 
-            await screenshotSync.build(
+            let outcome = await screenshotSync.buildAndApply(
                 appId: app.id,
                 targets: targets,
                 rows: rows,
                 source: document,
                 document: document.documentStamp,
-                progress: { [weak self] update in self?.uploadProgress = ASCUploadFlowModel.buildProgress(update) }
+                progress: { [weak self] in self?.uploadProgress = $0 }
             )
-            try Task.checkCancellation()
-            guard let plan = screenshotSync.plan else {
-                throw ASCExperimentFlowError.message(screenshotSync.errorMessage ?? String(localized: "Could not prepare the screenshot sync."))
-            }
-            let blocked = plan.changedSets.filter { !$0.canApply }
-            guard blocked.isEmpty else {
+            if screenshotSync.wasCancelled { throw CancellationError() }
+            let plan: ASCScreenshotSyncPlan
+            switch outcome {
+            case .applied(let applied, _), .nothingToChange(let applied):
+                plan = applied
+            case .blocked(let blocked):
                 errorDetailsText = blocked.flatMap { set in
                     set.issues.map { "\(set.versionLabel) · \(set.localeLabel) · \(set.displayType.label): \($0)" }
                 }.joined(separator: "\n")
                 throw ASCExperimentFlowError.blocked(sets: blocked.count)
-            }
-            if !screenshotSync.selectedSets.isEmpty {
-                await screenshotSync.apply(document: document.documentStamp) { [weak self] in self?.uploadProgress = $0 }
-                guard screenshotSync.result?.succeeded == true else {
-                    throw ASCExperimentFlowError.message(screenshotSync.errorMessage ?? String(localized: "Screenshot sync did not complete."))
-                }
+            case .buildFailed:
+                throw ASCExperimentFlowError.message(screenshotSync.errorMessage ?? String(localized: "Could not prepare the screenshot sync."))
+            case .applyFailed:
+                applyFailure = screenshotSync.failure
+                throw ASCExperimentFlowError.message(screenshotSync.errorMessage ?? String(localized: "Screenshot sync did not complete."))
             }
             uploadedScreenshotCount = plan.sets.reduce(0) { $0 + $1.proposedAssets.count }
             leftoverNotes = await leftovers(in: entries, targets: targets)
             await refreshSelectedExperiment()
             step = .done
+            StoreUploadFailure.reportSuccess(
+                store: Self.analyticsStore,
+                imageCount: uploadedScreenshotCount,
+                localeCount: Set(plan.sets.map(\.localizationId)).count
+            )
+            NotificationService.notify(title: String(localized: "Screenshot sync complete"), body: experiment.name)
         } catch is CancellationError {
             errorMessage = String(localized: "Upload cancelled. Changes already made in App Store Connect were not reverted.")
             step = .configuring
+            StoreUploadFailure(kind: .cancelled, errorCode: nil).report(store: Self.analyticsStore, cancelled: true)
         } catch {
             errorMessage = error.localizedDescription
             step = .configuring
+            if (error as? ASCExperimentFlowError)?.isPreflight == true { return }
+            (applyFailure ?? StoreUploadFailure.classify(error)).report(store: Self.analyticsStore, cancelled: false)
+            NotificationService.notify(title: String(localized: "Screenshot sync stopped"), body: error.localizedDescription)
         }
     }
 
@@ -357,17 +370,16 @@ final class ASCExperimentFlowModel {
             let uploadedTypes = Set(targets.filter { $0.versionId == entry.treatment.id }.map(\.displayType.appStoreConnectValue))
             var stale: Set<String> = []
             // A few at a time: the upload that just ran has already spent much of the rate limit.
-            let localizations = entry.preexistingLocalizations
-            for start in stride(from: 0, to: localizations.count, by: 4) {
-                if Task.isCancelled { return notes }
-                await withTaskGroup(of: [String].self) { group in
-                    for localization in localizations[start..<min(start + 4, localizations.count)] {
-                        let wasUploaded = uploadedIds.contains(localization.id)
-                        group.addTask { await self.staleLabels(in: localization, wasUploaded: wasUploaded, uploadedTypes: uploadedTypes) }
-                    }
-                    for await labels in group { stale.formUnion(labels) }
-                }
+            var checks: [@MainActor () async -> [String]] = []
+            for localization in entry.preexistingLocalizations {
+                let wasUploaded = uploadedIds.contains(localization.id)
+                checks.append { await self.staleLabels(in: localization, wasUploaded: wasUploaded, uploadedTypes: uploadedTypes) }
             }
+            await StoreConcurrency.forEach(checks, limit: 4) { labels in
+                stale.formUnion(labels)
+                return !Task.isCancelled
+            }
+            if Task.isCancelled { return notes }
             if !stale.isEmpty {
                 notes.append(String(localized: "“\(entry.treatment.name)” still has \(stale.sorted().joined(separator: ", ")) screenshots from an earlier upload."))
             }
@@ -455,6 +467,14 @@ enum ASCExperimentFlowError: LocalizedError {
     case nothingToUpload
     case blocked(sets: Int)
     case message(String)
+
+    /// Found before anything was sent, so not an upload failure.
+    var isPreflight: Bool {
+        switch self {
+        case .nothingToUpload, .blocked: true
+        case .noVersion, .message: false
+        }
+    }
 
     var errorDescription: String? {
         switch self {

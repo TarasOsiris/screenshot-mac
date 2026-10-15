@@ -14,19 +14,44 @@ struct ASCVersionLocaleDraft: Identifiable {
     var supportUrl: String
     var original: ASCAppStoreVersionLocalization.Attributes
 
-    /// Derived from `changedAttributes()` so the field list lives in exactly one place —
-    /// adding a field to one and not the other is otherwise silent.
-    var isChanged: Bool { !changedAttributes().isEmpty }
+    static let fields = ASCMetadataField.allCases.filter { !$0.isAppInfo }
+
+    subscript(field: ASCMetadataField) -> String {
+        get { self[keyPath: Self.path(field)] }
+        set { self[keyPath: Self.path(field)] = newValue }
+    }
+
+    private static func path(_ field: ASCMetadataField) -> WritableKeyPath<Self, String> {
+        switch field {
+        case .description: \.description
+        case .keywords: \.keywords
+        case .promotionalText: \.promotionalText
+        case .whatsNew: \.whatsNew
+        case .marketingUrl: \.marketingUrl
+        case .supportUrl: \.supportUrl
+        case .name, .subtitle, .privacyPolicyUrl: preconditionFailure("\(field) is an app info field")
+        }
+    }
+
+    private func originalValue(_ field: ASCMetadataField) -> String {
+        switch field {
+        case .description: original.description ?? ""
+        case .keywords: original.keywords ?? ""
+        case .promotionalText: original.promotionalText ?? ""
+        case .whatsNew: original.whatsNew ?? ""
+        case .marketingUrl: original.marketingUrl ?? ""
+        case .supportUrl: original.supportUrl ?? ""
+        case .name, .subtitle, .privacyPolicyUrl: ""
+        }
+    }
+
+    var isChanged: Bool { Self.fields.contains { self[$0] != originalValue($0) } }
+    var exceedsLimits: Bool { Self.fields.contains { $0.exceedsLimit(self[$0]) } }
 
     func changedAttributes() -> [String: AnyEncodable] {
-        var changes: [String: AnyEncodable] = [:]
-        if description != (original.description ?? "") { changes["description"] = AnyEncodable(description) }
-        if keywords != (original.keywords ?? "") { changes["keywords"] = AnyEncodable(keywords) }
-        if promotionalText != (original.promotionalText ?? "") { changes["promotionalText"] = AnyEncodable(promotionalText) }
-        if whatsNew != (original.whatsNew ?? "") { changes["whatsNew"] = AnyEncodable(whatsNew) }
-        if marketingUrl != (original.marketingUrl ?? "") { changes["marketingUrl"] = AnyEncodable(marketingUrl) }
-        if supportUrl != (original.supportUrl ?? "") { changes["supportUrl"] = AnyEncodable(supportUrl) }
-        return changes
+        Self.fields.reduce(into: [:]) { changes, field in
+            if self[field] != originalValue(field) { changes[field.attribute] = AnyEncodable(self[field]) }
+        }
     }
 
     mutating func markSaved() {
@@ -50,14 +75,38 @@ struct ASCAppInfoLocaleDraft: Identifiable {
     var privacyPolicyUrl: String
     var original: ASCAppInfoLocalization.Attributes
 
-    var isChanged: Bool { !changedAttributes().isEmpty }
+    static let fields = ASCMetadataField.allCases.filter(\.isAppInfo)
+
+    subscript(field: ASCMetadataField) -> String {
+        get { self[keyPath: Self.path(field)] }
+        set { self[keyPath: Self.path(field)] = newValue }
+    }
+
+    private static func path(_ field: ASCMetadataField) -> WritableKeyPath<Self, String> {
+        switch field {
+        case .name: \.name
+        case .subtitle: \.subtitle
+        case .privacyPolicyUrl: \.privacyPolicyUrl
+        default: preconditionFailure("\(field) is a version field")
+        }
+    }
+
+    private func originalValue(_ field: ASCMetadataField) -> String {
+        switch field {
+        case .name: original.name ?? ""
+        case .subtitle: original.subtitle ?? ""
+        case .privacyPolicyUrl: original.privacyPolicyUrl ?? ""
+        default: ""
+        }
+    }
+
+    var isChanged: Bool { Self.fields.contains { self[$0] != originalValue($0) } }
+    var exceedsLimits: Bool { Self.fields.contains { $0.exceedsLimit(self[$0]) } }
 
     func changedAttributes() -> [String: AnyEncodable] {
-        var changes: [String: AnyEncodable] = [:]
-        if name != (original.name ?? "") { changes["name"] = AnyEncodable(name) }
-        if subtitle != (original.subtitle ?? "") { changes["subtitle"] = AnyEncodable(subtitle) }
-        if privacyPolicyUrl != (original.privacyPolicyUrl ?? "") { changes["privacyPolicyUrl"] = AnyEncodable(privacyPolicyUrl) }
-        return changes
+        Self.fields.reduce(into: [:]) { changes, field in
+            if self[field] != originalValue(field) { changes[field.attribute] = AnyEncodable(self[field]) }
+        }
     }
 
     mutating func markSaved() {

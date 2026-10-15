@@ -192,6 +192,10 @@ final class ASCUploadFlowModel {
         }
     }
 
+    func cancelUpload() {
+        uploadTask?.cancel()
+    }
+
     /// Cancels an in-flight upload and releases the sync plan's temp folder. The view calls this
     /// from `.onDisappear`; without the discard the rendered screenshots leak.
     func tearDown() {

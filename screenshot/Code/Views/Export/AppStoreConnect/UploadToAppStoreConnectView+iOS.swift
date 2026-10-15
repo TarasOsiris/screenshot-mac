@@ -76,7 +76,7 @@ extension UploadToAppStoreConnectView {
         } else if model.step == .done {
             Button("Close") { dismiss() }
         } else {
-            Button("Cancel Sync", role: .cancel) { cancelUpload() }
+            Button("Cancel Sync", role: .cancel) { model.cancelUpload() }
         }
     }
 }

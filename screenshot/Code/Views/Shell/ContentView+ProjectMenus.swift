@@ -57,12 +57,9 @@ extension ContentView {
             .disabled(state.activeProjectId == nil)
 
             Button("Duplicate Project…", systemImage: "plus.square.on.square") {
-                store.requirePro(
-                    allowed: store.canCreateProject(currentCount: state.visibleProjects.count),
-                    context: .projectLimit
-                ) {
+                store.createProjectIfAllowed(currentCount: state.visibleProjects.count) {
                     guard let id = state.activeProjectId else { return }
-                    let initialName = (state.activeProject?.name ?? "") + " Copy"
+                    let initialName = AppState.defaultDuplicateName(for: state.activeProject?.name ?? "")
                     Task { @MainActor in
                         presentProjectNameAlert(
                             title: String(localized: "Duplicate Project"),
@@ -200,10 +197,7 @@ extension ContentView {
     var projectActionsToolbarMenu: some View {
         Menu {
             Button("New Project…", systemImage: "plus") {
-                store.requirePro(
-                    allowed: store.canCreateProject(currentCount: state.visibleProjects.count),
-                    context: .projectLimit
-                ) {
+                store.createProjectIfAllowed(currentCount: state.visibleProjects.count) {
                     openWindow(id: NewProjectWindowView.windowID)
                 }
             }

@@ -107,4 +107,9 @@ nonisolated struct StoreUploadFailure: Equatable {
         if let errorCode { properties[.errorCode] = errorCode }
         AnalyticsService.capture(.storeUploadFailed, properties)
     }
+
+    /// `store_upload_failed`'s counterpart, kept beside it for the same reason.
+    static func reportSuccess(store: String, imageCount: Int, localeCount: Int) {
+        AnalyticsService.capture(.storeUploadFinished, [.store: store, .imageCount: imageCount, .localeCount: localeCount])
+    }
 }

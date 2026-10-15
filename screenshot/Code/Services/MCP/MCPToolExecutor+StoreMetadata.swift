@@ -24,19 +24,6 @@ struct MCPStoreAppItem: Encodable {
 
 extension MCPToolExecutor {
 
-    /// Checked up front so one over-long locale can't half-apply an update.
-    private static let metadataFields: [(key: String, attribute: String, limit: Int?, appInfo: Bool)] = [
-        ("description", "description", 4000, false),
-        ("keywords", "keywords", 100, false),
-        ("promotional_text", "promotionalText", 170, false),
-        ("whats_new", "whatsNew", 4000, false),
-        ("marketing_url", "marketingUrl", nil, false),
-        ("support_url", "supportUrl", nil, false),
-        ("name", "name", 30, true),
-        ("subtitle", "subtitle", 30, true),
-        ("privacy_policy_url", "privacyPolicyUrl", nil, true),
-    ]
-
     func updateAppStoreMetadata(_ args: MCPArguments) async throws -> CallTool.Result {
         try requireASCConfigured()
         guard let entries = try args.strictObjectArray("locales"), !entries.isEmpty else {
@@ -46,12 +33,13 @@ extension MCPToolExecutor {
         var appInfoChanges: [String: [String: AnyEncodable]] = [:]
         for (index, entry) in entries.enumerated() {
             let locale = try entry.requiredString("locale")
-            for field in Self.metadataFields {
-                guard let value = entry.string(field.key) else { continue }
+            // Checked up front so one over-long locale can't half-apply an update.
+            for field in ASCMetadataField.allCases {
+                guard let value = entry.string(field.argumentKey) else { continue }
                 if let limit = field.limit, value.count > limit {
-                    throw MCPToolError.invalidArgument("locales[\(index)].\(field.key)", "\(locale) is \(value.count) characters; App Store Connect allows \(limit)")
+                    throw MCPToolError.invalidArgument("locales[\(index)].\(field.argumentKey)", "\(locale) is \(value.count) characters; App Store Connect allows \(limit)")
                 }
-                if field.appInfo {
+                if field.isAppInfo {
                     appInfoChanges[locale, default: [:]][field.attribute] = AnyEncodable(value)
                 } else {
                     versionChanges[locale, default: [:]][field.attribute] = AnyEncodable(value)
@@ -118,21 +106,13 @@ extension MCPToolExecutor {
                 }
             }
         }
-        await withTaskGroup(of: (locale: String, error: String?).self) { group in
-            var pending = writes.makeIterator()
-            for _ in 0..<AppStoreConnectVersionMetadata.writeConcurrency {
-                guard let write = pending.next() else { break }
-                group.addTask { await write() }
+        await StoreConcurrency.forEach(writes, limit: AppStoreConnectVersionMetadata.writeConcurrency) { finished in
+            if let error = finished.error {
+                result.skipped.append(.init(locale: finished.locale, reason: error))
+            } else {
+                result.updated.append(finished.locale)
             }
-            while let finished = await group.next() {
-                if let error = finished.error {
-                    result.skipped.append(.init(locale: finished.locale, reason: error))
-                } else {
-                    result.updated.append(finished.locale)
-                }
-                guard let write = pending.next() else { continue }
-                group.addTask { await write() }
-            }
+            return true
         }
         result.updated.sort()
         result.skipped.sort { $0.locale < $1.locale }

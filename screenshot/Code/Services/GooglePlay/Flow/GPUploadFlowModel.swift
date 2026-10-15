@@ -340,11 +340,7 @@ final class GPUploadFlowModel {
                     sentForReview: didSendForReview
                 )
                 uploadSummary = summary
-                AnalyticsService.capture(.storeUploadFinished, [
-                    .store: "play",
-                    .imageCount: counts.screenshots,
-                    .localeCount: counts.languages,
-                ])
+                StoreUploadFailure.reportSuccess(store: "play", imageCount: counts.screenshots, localeCount: counts.languages)
                 step = .done
                 NotificationService.notify(
                     title: String(localized: "Upload complete"),

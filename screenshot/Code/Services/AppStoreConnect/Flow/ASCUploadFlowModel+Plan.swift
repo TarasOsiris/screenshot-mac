@@ -164,25 +164,17 @@ extension ASCUploadFlowModel {
         let api = api
         var pending: [String: [String: Int]] = [:]
         var failures = 0
-        await withTaskGroup(of: (String, [String: Int]?).self) { group in
-            var queue = localizationIds.makeIterator()
-            func startNext() {
-                guard let id = queue.next() else { return }
-                group.addTask { (id, try? await api.screenshotCountsByDisplayType(localizationId: id)) }
+        let lookups: [@MainActor () async -> (String, [String: Int]?)] = localizationIds.map { id in
+            { (id, try? await api.screenshotCountsByDisplayType(localizationId: id)) }
+        }
+        await StoreConcurrency.forEach(lookups, limit: Self.screenshotCountConcurrency) { id, counts in
+            guard generation == remoteScreenshotCountsGeneration else { return false }
+            if let counts { pending[id] = counts } else { failures += 1 }
+            if pending.count >= Self.screenshotCountBatchSize {
+                remoteScreenshotCounts.merge(pending) { $1 }
+                pending = [:]
             }
-            for _ in 0..<Self.screenshotCountConcurrency { startNext() }
-            for await (id, counts) in group {
-                guard generation == remoteScreenshotCountsGeneration else {
-                    group.cancelAll()
-                    return
-                }
-                if let counts { pending[id] = counts } else { failures += 1 }
-                if pending.count >= Self.screenshotCountBatchSize {
-                    remoteScreenshotCounts.merge(pending) { $1 }
-                    pending = [:]
-                }
-                startNext()
-            }
+            return true
         }
         guard generation == remoteScreenshotCountsGeneration else { return }
         if !pending.isEmpty { remoteScreenshotCounts.merge(pending) { $1 } }

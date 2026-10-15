@@ -249,13 +249,8 @@ struct ScreenshotBroApp: App {
                         if appState.hasSelection {
                             appState.duplicateSelectedShapes()
                         } else if let rowId = appState.selectedRowId {
-                            purchaseService.requirePro(
-                                allowed: purchaseService.canAddRow(currentCount: appState.rows.count),
-                                context: .rowLimit
-                            ) {
-                                withAnimation(.easeInOut(duration: 0.2)) {
-                                    appState.duplicateRow(rowId)
-                                }
+                            purchaseService.addRowIfAllowed(currentCount: appState.rows.count) {
+                                appState.duplicateRow(rowId)
                             }
                         }
                     }
@@ -458,9 +453,7 @@ struct ScreenshotBroApp: App {
                 DebugRequestReviewButton()
 
                 Button("Reset App Review State") {
-                    for key in ["reviewExportCount", "reviewLastPromptedVersion", "reviewFirstExportDate", "reviewLastPromptDate"] {
-                        UserDefaults.standard.removeObject(forKey: key)
-                    }
+                    ReviewPromptPolicy().reset()
                 }
             }
             #endif

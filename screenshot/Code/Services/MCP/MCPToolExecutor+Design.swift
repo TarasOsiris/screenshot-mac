@@ -118,7 +118,7 @@ extension MCPToolExecutor {
 
     func duplicateRow(_ args: MCPArguments, _ document: inout ProjectDocument, _ context: inout MCPEditContext) throws -> MCPEditResult {
         let rowIndex = try requireRowIndex(args, in: document)
-        let label = args.string("label") ?? String(localized: "\(document.rows[rowIndex].label) copy")
+        let label = args.string("label") ?? AppState.defaultDuplicateName(for: document.rows[rowIndex].label)
         guard let copy = DocumentEditing.copyRow(
             at: rowIndex, label: label, rows: &document.rows,
             localeState: &document.localeState, resources: context.resources

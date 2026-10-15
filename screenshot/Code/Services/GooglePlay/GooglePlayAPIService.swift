@@ -109,20 +109,16 @@ final class GooglePlayAPIService: StoreDemoPacing {
         let requests = languages.flatMap { language in GPImageType.userSelectableCases.map { (language, $0.apiValue) } }
         var counts: [String: [String: Int]] = [:]
         var failedLanguages = Set<String>()
-        await withTaskGroup(of: (String, String, Int?).self) { group in
-            var queue = requests.makeIterator()
-            func startNext() {
-                guard let (language, imageType) = queue.next() else { return }
-                group.addTask {
-                    let count = try? await self.imageCount(packageName: packageName, editId: edit.id, language: language, imageType: imageType)
-                    return (language, imageType, count)
-                }
+        let editId = edit.id
+        let lookups: [@MainActor () async -> (String, String, Int?)] = requests.map { language, imageType in
+            {
+                let count = try? await self.imageCount(packageName: packageName, editId: editId, language: language, imageType: imageType)
+                return (language, imageType, count)
             }
-            for _ in 0..<Self.screenshotCountConcurrency { startNext() }
-            for await (language, imageType, count) in group {
-                if let count { counts[language, default: [:]][imageType] = count } else { failedLanguages.insert(language) }
-                startNext()
-            }
+        }
+        await StoreConcurrency.forEach(lookups, limit: Self.screenshotCountConcurrency) { language, imageType, count in
+            if let count { counts[language, default: [:]][imageType] = count } else { failedLanguages.insert(language) }
+            return true
         }
         try? await deleteEdit(packageName: packageName, editId: edit.id)
         for language in failedLanguages { counts[language] = nil }

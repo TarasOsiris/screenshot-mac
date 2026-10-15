@@ -186,12 +186,17 @@ extension AppState {
         }
     }
 
+    /// The name a duplicated project or row starts with.
+    static func defaultDuplicateName(for name: String) -> String {
+        String(localized: "\(name) copy")
+    }
+
     func duplicateProject(_ id: UUID, name: String? = nil) {
         saveCurrentProject()
 
         guard let source = projects.first(where: { $0.id == id }) else { return }
         let trimmed = name.map { String($0.trimmingCharacters(in: .whitespacesAndNewlines).prefix(Self.maxProjectNameLength)) } ?? ""
-        let chosenName = trimmed.isEmpty ? source.name + " Copy" : trimmed
+        let chosenName = trimmed.isEmpty ? Self.defaultDuplicateName(for: source.name) : trimmed
         let newProject = Project(name: uniqueProjectName(chosenName))
         CrashReportingService.breadcrumb(.project, "Duplicating project", data: ["rows": rows.count])
         AnalyticsService.capture(.projectCreated, [.source: "duplicate", .rowCount: rows.count])

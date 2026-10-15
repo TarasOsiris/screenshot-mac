@@ -82,17 +82,18 @@ extension AppStateTests {
         defer { cleanup(tempDir) }
 
         let sourceId = try #require(state.activeProjectId)
+        let copyName = AppState.defaultDuplicateName(for: try #require(state.activeProject?.name))
         state.duplicateProject(sourceId)
 
         for _ in 0..<10 {
-            if state.activeProject?.name.hasSuffix("Copy") == true {
+            if state.activeProject?.name == copyName {
                 break
             }
             await Task.yield()
         }
 
         #expect(state.projects.count == 2)
-        #expect(state.activeProject?.name.hasSuffix("Copy") == true)
+        #expect(state.activeProject?.name == copyName)
     }
 
     @Test func renameProjectUpdatesName() throws {

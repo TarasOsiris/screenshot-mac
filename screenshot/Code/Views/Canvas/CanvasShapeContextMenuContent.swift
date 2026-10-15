@@ -376,9 +376,6 @@ struct CanvasShapeContextMenuContent: View {
     }
 
     private var svgOriginalSize: CGSize? {
-        guard let svgContent = shape.svgContent,
-              let data = svgContent.data(using: .utf8),
-              let image = NSImage(data: data) else { return nil }
-        return SvgHelper.parseSize(svgContent, fallbackImage: image)
+        shape.svgContent.flatMap(SvgHelper.renderableSize(of:))
     }
 }

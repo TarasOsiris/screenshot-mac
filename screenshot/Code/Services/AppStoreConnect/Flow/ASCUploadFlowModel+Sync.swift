@@ -61,29 +61,23 @@ extension ASCUploadFlowModel {
     }
 
     func buildAndApplyDirectScreenshotSync(strategy: ASCSyncStrategy) async {
+        defer { uploadTask = nil }
         errorMessage = nil
         errorDetailsText = nil
         guard reconcileDestinationPlansWithDocument() else {
             errorMessage = StoreUploadFailureText.rowsRemoved
-            uploadTask = nil
             return
         }
-        let issues = validationIssues
-        guard !issues.hasErrors else {
+        guard !validationIssues.hasErrors else {
             errorMessage = String(localized: "Fix the preflight errors before uploading.")
-            uploadTask = nil
             return
         }
         let targets = buildUploadTargets()
         guard !targets.isEmpty else {
             errorMessage = String(localized: "No rows × locales are selected.")
-            uploadTask = nil
             return
         }
-        guard let appId = selectedApp?.id, let document else {
-            uploadTask = nil
-            return
-        }
+        guard let appId = selectedApp?.id, let document else { return }
 
         // `totalSteps: 0` on purpose: the view draws a determinate bar whenever it is positive,
         // and a bar pinned at 0/1 for the whole build reads as a hang. Real counts arrive with
@@ -95,74 +89,45 @@ extension ASCUploadFlowModel {
         )
         advance(to: .uploading)
         isBusy = true
-        await screenshotSync.build(
+        defer { isBusy = false }
+        let outcome = await screenshotSync.buildAndApply(
             appId: appId,
             targets: targets,
             rows: rows,
             source: document,
             document: document.documentStamp,
             strategy: strategy,
-            progress: { [weak self] update in self?.uploadProgress = Self.buildProgress(update) }
+            progress: { [weak self] in self?.uploadProgress = $0 }
         )
-        isBusy = false
 
-        guard let plan = screenshotSync.plan else {
+        switch outcome {
+        case .applied(_, let sets):
+            finishScreenshotSync(using: sets)
+        case .nothingToChange(let plan):
+            finishScreenshotSync(using: plan.sets)
+            screenshotSync.discard()
+        case .blocked(let blockedSets):
+            errorMessage = String(localized: "Some screenshot sets require review before they can be synced.")
+            errorDetailsText = blockedSets.flatMap(\.issues).joined(separator: "\n")
+            retreatAfterScreenshotSync(to: .configuringPlan)
+        case .buildFailed:
             if !screenshotSync.wasCancelled {
                 errorMessage = screenshotSync.errorMessage ?? String(localized: "Could not prepare the screenshot sync.")
                 errorDetailsText = errorMessage
             }
-            uploadTask = nil
             retreatAfterScreenshotSync(to: .configuringPlan)
-            return
+        case .applyFailed:
+            reportFailedApply(returnTo: .configuringPlan)
         }
-
-        let blockedSets = plan.changedSets.filter { !$0.canApply }
-        guard blockedSets.isEmpty else {
-            errorMessage = String(localized: "Some screenshot sets require review before they can be synced.")
-            errorDetailsText = blockedSets.flatMap(\.issues).joined(separator: "\n")
-            uploadTask = nil
-            retreatAfterScreenshotSync(to: .configuringPlan)
-            return
-        }
-
-        let selectedSets = screenshotSync.selectedSets
-        if selectedSets.isEmpty {
-            finishScreenshotSync(using: plan.sets)
-            screenshotSync.discard()
-            uploadTask = nil
-            return
-        }
-        await applyPreparedScreenshotSync(
-            returnOnFailure: .configuringPlan,
-            advanceToUploading: false
-        )
     }
 
-    /// The build's own render counter, shown while the plan is being prepared. The label is
-    /// "row · locale" — user content, which `UploadProgress.currentLabel` already carries.
-    static func buildProgress(_ update: ASCSyncBuildProgress) -> UploadProgress {
-        let label: String
-        switch update.stage {
-        case .rendering: label = String(localized: "Rendering \(update.label)")
-        case .comparing: label = String(localized: "Comparing \(update.label)")
-        }
-        return UploadProgress(
-            totalSteps: update.totalRenders,
-            completedSteps: update.completedRenders,
-            currentLabel: label
-        )
-    }
-
-    func applyPreparedScreenshotSync(
-        returnOnFailure: ASCUploadStep,
-        advanceToUploading: Bool = true
-    ) async {
+    func applyPreparedScreenshotSync(returnOnFailure: ASCUploadStep) async {
+        defer { uploadTask = nil }
         errorMessage = nil
         errorDetailsText = nil
         let selectedSets = screenshotSync.selectedSets
         guard !selectedSets.isEmpty else {
             errorMessage = ASCScreenshotSyncError.noSetsSelected.localizedDescription
-            uploadTask = nil
             return
         }
 
@@ -171,27 +136,29 @@ extension ASCUploadFlowModel {
             completedSteps: 0,
             currentLabel: String(localized: "Starting upload…")
         )
-        if advanceToUploading {
-            advance(to: .uploading)
-        }
+        advance(to: .uploading)
         isBusy = true
-        defer { isBusy = false; uploadTask = nil }
+        defer { isBusy = false }
 
         await screenshotSync.apply(document: document?.documentStamp, progress: { p in self.uploadProgress = p })
         if screenshotSync.result?.succeeded == true {
             finishScreenshotSync(using: selectedSets)
         } else {
-            let message = screenshotSync.errorMessage
-                ?? screenshotSync.result?.sets.compactMap(\.error).first
-                ?? String(localized: "Screenshot sync did not complete.")
-            errorMessage = message
-            errorDetailsText = message
-            retreatAfterScreenshotSync(to: returnOnFailure)
-            // A failed apply can still have changed some sets; nothing else on this path sends.
-            reloadRemoteScreenshotCounts()
-            (screenshotSync.failure ?? .unknown).report(store: "asc", cancelled: screenshotSync.wasCancelled)
-            NotificationService.notify(title: String(localized: "Screenshot sync stopped"), body: message)
+            reportFailedApply(returnTo: returnOnFailure)
         }
+    }
+
+    private func reportFailedApply(returnTo step: ASCUploadStep) {
+        let message = screenshotSync.errorMessage
+            ?? screenshotSync.result?.sets.compactMap(\.error).first
+            ?? String(localized: "Screenshot sync did not complete.")
+        errorMessage = message
+        errorDetailsText = message
+        retreatAfterScreenshotSync(to: step)
+        // A failed apply can still have changed some sets; nothing else on this path sends.
+        reloadRemoteScreenshotCounts()
+        (screenshotSync.failure ?? .unknown).report(store: "asc", cancelled: screenshotSync.wasCancelled)
+        NotificationService.notify(title: String(localized: "Screenshot sync stopped"), body: message)
     }
 
     func finishScreenshotSync(using sets: [ASCScreenshotSetDiff]) {
@@ -203,11 +170,7 @@ extension ASCUploadFlowModel {
             versionCount: Set(sets.map(\.versionId)).count
         )
         uploadSummary = summary
-        AnalyticsService.capture(.storeUploadFinished, [
-            .store: "asc",
-            .imageCount: summary.totalScreenshots,
-            .localeCount: summary.localizationCount,
-        ])
+        StoreUploadFailure.reportSuccess(store: "asc", imageCount: summary.totalScreenshots, localeCount: summary.localizationCount)
         completeTerminalStep(.done)
         let body = summary.appName.isEmpty
             ? syncCompleteBody(
