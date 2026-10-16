@@ -104,6 +104,8 @@ final class PurchaseService {
 
     private var delegate: CustomerInfoDelegate?
     private var didStart = false
+    /// The deferred configure of a Direct build; anything needing RevenueCat at launch awaits it.
+    @ObservationIgnored private var configuring: Task<Void, Never>?
 
     // MARK: - Free tier limits
 
@@ -189,6 +191,18 @@ final class PurchaseService {
             return
         }
 
+        #if DIRECT_DISTRIBUTION
+        // No App Store receipt, so RevenueCat validates our signature on main (SCREENSHOT-BRO-2G); warm it off main first.
+        configuring = Task {
+            await Self.validateOwnSignatureOffMain()
+            configure(apiKey: apiKey)
+        }
+        #else
+        configure(apiKey: apiKey)
+        #endif
+    }
+
+    private func configure(apiKey: String) {
         Purchases.configure(withAPIKey: apiKey)
         #if os(iOS)
         // Apple Search Ads exists only on iOS; on macOS this call just logs an ATT warning.
@@ -208,6 +222,21 @@ final class PurchaseService {
 
         Task { await refreshEntitlementStatus() }
     }
+
+    #if DIRECT_DISTRIBUTION
+    /// The same check RevenueCat's `DefaultMacAppStoreDetector` runs; the result is discarded.
+    @concurrent private static func validateOwnSignatureOffMain() async {
+        let span = PerfSignpost.begin("PurchaseService.signatureWarmup")
+        defer { PerfSignpost.end("PurchaseService.signatureWarmup", span) }
+        var code: SecStaticCode?
+        var requirement: SecRequirement?
+        guard SecStaticCodeCreateWithPath(Bundle.main.bundleURL as CFURL, [], &code) == errSecSuccess, let code,
+              SecRequirementCreateWithString(
+                  "anchor apple generic and certificate leaf[field.1.2.840.113635.100.6.1.9]" as CFString, [], &requirement
+              ) == errSecSuccess, let requirement else { return }
+        _ = SecStaticCodeCheckValidity(code, [], requirement)
+    }
+    #endif
 
     // MARK: - Entitlement
 
@@ -309,6 +338,7 @@ final class PurchaseService {
     func restore() async {
         guard Self.isStoreEnabled else { return }
         clearPurchaseStatus()
+        await configuring?.value
 
         guard Purchases.isConfigured else {
             let message = configurationIssue ?? String(localized: "RevenueCat is not configured.")
@@ -349,13 +379,15 @@ final class PurchaseService {
     func redeem(_ url: URL) async -> Bool {
         guard let redemption = url.asWebPurchaseRedemption else { return false }
         guard Self.isStoreEnabled else { return true }
+        guard !isRedeeming else { return true }
+        isRedeeming = true
+        defer { isRedeeming = false }
+        // A checkout return can open the app, so the link may arrive before RevenueCat is configured.
+        await configuring?.value
         guard Purchases.isConfigured else {
             presentRedemptionFailure(configurationIssue ?? String(localized: "RevenueCat is not configured."))
             return true
         }
-        guard !isRedeeming else { return true }
-        isRedeeming = true
-        defer { isRedeeming = false }
         CrashReportingService.breadcrumb(.store, "Web purchase redemption started")
 
         switch await Purchases.shared.redeemWebPurchase(redemption) {
