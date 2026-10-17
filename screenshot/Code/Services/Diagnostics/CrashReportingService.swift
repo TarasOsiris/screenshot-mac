@@ -10,7 +10,16 @@ nonisolated enum CrashReportingService {
 
     /// Cached once: `isRunningUnderXCTest` rebuilds the process environment on every read, and
     /// breadcrumbs sit on the edit path. Its inputs are fixed for the process lifetime.
-    static let isReportingEnabled = !PersistenceService.isRunningUnderXCTest
+    /// Simulator runs are always ours (UI automation hangs, no dSYMs), never a user's.
+    static let isReportingEnabled = !isSimulator && !PersistenceService.isRunningUnderXCTest
+
+    private static var isSimulator: Bool {
+        #if targetEnvironment(simulator)
+        true
+        #else
+        false
+        #endif
+    }
 
     /// Whether the SDK actually started. `screenshotTests` is a hosted target, so the app launches
     /// and calls `start()` for real during a test run — this is what proves nothing can be
