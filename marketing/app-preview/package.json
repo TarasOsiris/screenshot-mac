@@ -5,7 +5,8 @@
   "scripts": {
     "assets": "sh scripts/prepare-assets.sh && node scripts/make-soundtrack.mjs",
     "studio": "remotion studio",
-    "render": "sh scripts/render.sh"
+    "render": "sh scripts/render.sh",
+    "render:capture": "sh scripts/render-capture.sh"
   },
   "dependencies": {
     "@remotion/cli": "^4.0.529",
