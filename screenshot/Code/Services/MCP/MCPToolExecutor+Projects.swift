@@ -52,12 +52,14 @@ extension MCPToolExecutor {
             }
         } else {
             let configurations = try (args.objectArray("rows") ?? []).map { row in
-                BlankProjectRowConfiguration(
+                _ = try row.screenshotSize("size") // reject a malformed size rather than silently using the default
+                let device = try rowDevice(row)
+                return BlankProjectRowConfiguration(
                     label: row.string("label"),
                     sizePreset: row.string("size"),
                     templateCount: row.int("template_count"),
-                    deviceCategory: try row.enumValue("device_category", DeviceCategory.self),
-                    deviceFrameId: row.string("device_frame_id")
+                    deviceCategory: device?.category,
+                    deviceFrameId: device?.frameId
                 )
             }
             state.createBlankProject(name: name, rowConfigurations: configurations)

@@ -108,6 +108,39 @@ struct MCPToolExecutorTests {
         #expect(state.rows[0].templates.count == 2)
     }
 
+    @Test func createProjectRejectsAnUnknownRowFrame() async {
+        let (executor, state, tempDir) = makeExecutor()
+        defer { cleanupTestState(tempDir) }
+        let projectCount = state.projects.count
+
+        let result = await executor.call(name: "create_project", arguments: [
+            "name": "Typo",
+            "rows": .array([.object(["size": "2007x2853", "device_frame_id": "iphoneduo-nightsky"])]),
+        ])
+        #expect(result.isError == true)
+        #expect(state.projects.count == projectCount)
+
+        let malformedSize = await executor.call(name: "create_project", arguments: [
+            "name": "Typo",
+            "rows": .array([.object(["size": "big"])]),
+        ])
+        #expect(malformedSize.isError == true)
+        #expect(state.projects.count == projectCount)
+    }
+
+    @Test func createProjectTakesTheRowCategoryFromItsFrame() async {
+        let (executor, state, tempDir) = makeExecutor()
+        defer { cleanupTestState(tempDir) }
+
+        let result = await executor.call(name: "create_project", arguments: [
+            "name": "Tablet",
+            "rows": .array([.object(["size": "2064x2752", "device_category": "iphone", "device_frame_id": "ipadpro13-silver-portrait"])]),
+        ])
+        expectSuccess(result)
+        #expect(state.rows[0].defaultDeviceCategory == .ipadPro13)
+        #expect(state.rows[0].defaultDeviceFrameId == "ipadpro13-silver-portrait")
+    }
+
     // MARK: - Rows
 
     @Test func addUpdateMoveDeleteRow() async {
@@ -1169,6 +1202,27 @@ struct MCPToolExecutorTests {
 
         let fonts = try decodeEnvelope(await executor.call(name: "list_catalog", arguments: ["kind": "fonts"]))
         #expect((fonts["system"] as? [String])?.contains("Helvetica") == true)
+    }
+
+    @Test func listCatalogFindsTheFramesBuiltForAScreenshotSize() async throws {
+        let (executor, _, tempDir) = makeExecutor()
+        defer { cleanupTestState(tempDir) }
+
+        func frames(_ arguments: [String: Value]) async throws -> [[String: Any]] {
+            let result = try decodeEnvelope(await executor.call(name: "list_catalog", arguments: arguments))
+            return try #require(result["device_frames"] as? [[String: Any]])
+        }
+        let innerLandscape = try await frames(["kind": "device_frames", "size": "2853x2007"])
+        #expect(Set(innerLandscape.compactMap { $0["id"] as? String }) == ["iphoneduo-nightsky-landscape", "iphoneduo-starwhite-landscape"])
+        let outer = try await frames(["kind": "device_frames", "size": "1398x2034"]).compactMap { $0["id"] as? String }
+        #expect(outer.contains("iphoneduoclosed-starwhite-portrait"))
+
+        let openBack = try #require(try await frames(["kind": "device_frames"]).first { $0["id"] as? String == "iphoneduoopen-nightsky-landscape" })
+        #expect(openBack["orientation"] as? String == "landscape")
+        #expect(openBack["screen_orientation"] as? String == "portrait")
+
+        let malformed = await executor.call(name: "list_catalog", arguments: ["kind": "device_frames", "size": "big"])
+        #expect(malformed.isError == true)
     }
 
     @Test func undoAndRedoToolsDriveTheEditorStack() async throws {

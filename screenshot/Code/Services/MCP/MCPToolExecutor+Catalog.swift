@@ -9,6 +9,9 @@ struct MCPDeviceFrameItem: Encodable {
     let orientation: String
     let category: String
     let is3D: Bool
+    let screenOrientation: String
+    /// The screenshot size the frame is built for, when it has one.
+    let screenshotSize: String?
 }
 
 struct MCPLocalePresetItem: Encodable {
@@ -47,8 +50,13 @@ extension MCPToolExecutor {
         switch try args.requiredString("kind") {
         case "device_frames":
             let category = try args.enumValue("category", DeviceCategory.self)
+            let size = try args.screenshotSize("size")
             let frames = DeviceFrameCatalog.allFrames
                 .filter { category == nil || $0.fallbackCategory == category }
+                .filter { frame in
+                    guard let size else { return true }
+                    return DeviceFrameCatalog.suggestedSizePreset(forFrameId: frame.id).flatMap(parseSizeString).map { $0 == size } ?? false
+                }
                 .map { frame in
                     MCPDeviceFrameItem(
                         id: frame.id,
@@ -56,7 +64,9 @@ extension MCPToolExecutor {
                         color: frame.colorName,
                         orientation: frame.isLandscape ? "landscape" : "portrait",
                         category: frame.fallbackCategory.rawValue,
-                        is3D: frame.isModelBacked
+                        is3D: frame.isModelBacked,
+                        screenOrientation: frame.spec.isScreenLandscape ? "landscape" : "portrait",
+                        screenshotSize: DeviceFrameCatalog.suggestedSizePreset(forFrameId: frame.id)
                     )
                 }
             return try MCPResultEncoding.result(["device_frames": frames])

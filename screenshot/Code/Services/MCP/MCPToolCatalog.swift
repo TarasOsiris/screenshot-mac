@@ -95,6 +95,10 @@ enum MCPToolName: String, CaseIterable {
 
 nonisolated enum MCPToolCatalog {
     static let deviceCategories = DeviceCategory.allCases.map(\.rawValue)
+    /// Agents read the category enum as the list of supported devices; it is only the generic fallback.
+    static let deviceCategoryNote = "a generic frame, not the list of supported devices — specific models "
+        + "(iPhone Duo, iPhone 17 Pro, Pixel, …) are chosen with device_frame_id"
+    static let deviceFrameIdNote = "list_catalog kind device_frames lists them; pass size to get the frames built for a screenshot size"
 
     /// One authoritative phrasing for the tool description and the load-failure error — divergent
     /// copies contradicted each other about whether "temp" is readable (system /tmp is not; the
@@ -201,8 +205,8 @@ nonisolated enum MCPToolCatalog {
         "outline_width": MCPSchema.number("Outline width (0 removes the outline)"),
         "shadow": shadowSchema,
         "text_background": textBackgroundSchema,
-        "device_category": MCPSchema.string("Device category (device shapes)", oneOf: deviceCategories),
-        "device_frame_id": MCPSchema.string("Device frame id (device shapes) — list_catalog kind device_frames; also sets the matching category and aspect ratio"),
+        "device_category": MCPSchema.string("Device category (device shapes): \(deviceCategoryNote)", oneOf: deviceCategories),
+        "device_frame_id": MCPSchema.string("Device frame id (device shapes) — \(deviceFrameIdNote); also sets the matching category and aspect ratio"),
         "star_points": MCPSchema.integer("Number of points (star shapes)"),
         "clip_to_template": MCPSchema.boolean("Clip the shape to its template column"),
         "fill_style": MCPSchema.string("Fill style for rectangles, circles, stars and text", oneOf: ["color", "gradient"]),
@@ -275,8 +279,8 @@ nonisolated enum MCPToolCatalog {
                         "label": MCPSchema.string("Row label"),
                         "size": MCPSchema.string("Screenshot size like \"1242x2688\" (width x height in pixels)"),
                         "template_count": MCPSchema.integer("Number of screenshot columns (default 3)"),
-                        "device_category": MCPSchema.string("Default device frame category", oneOf: deviceCategories),
-                        "device_frame_id": MCPSchema.string("Specific device frame id (optional)"),
+                        "device_category": MCPSchema.string("Default device frame category: \(deviceCategoryNote)", oneOf: deviceCategories),
+                        "device_frame_id": MCPSchema.string("Specific device frame id (optional) — \(deviceFrameIdNote)"),
                     ]),
                     "Row configurations for a blank project (ignored when template_id is set)"
                 ),
@@ -326,8 +330,8 @@ nonisolated enum MCPToolCatalog {
                 "height": MCPSchema.number("Template height in pixels"),
                 "span_background": MCPSchema.boolean("Render the background once across all columns instead of per column"),
                 "show_device": MCPSchema.boolean("Show or hide device frames in this row"),
-                "device_category": MCPSchema.string("Default device category for the row", oneOf: deviceCategories),
-                "device_frame_id": MCPSchema.string("Default device frame id for the row"),
+                "device_category": MCPSchema.string("Default device category for the row: \(deviceCategoryNote)", oneOf: deviceCategories),
+                "device_frame_id": MCPSchema.string("Default device frame id for the row — \(deviceFrameIdNote)"),
                 "exclude_from_upload": MCPSchema.boolean("Leave this row out of App Store Connect uploads"),
             ]) { $1 }, required: ["row_id"])
         ),
@@ -578,11 +582,12 @@ nonisolated enum MCPToolCatalog {
         ),
         Tool(
             name: MCPToolName.listCatalog.rawValue,
-            description: "List the values other tools accept: device_frames (ids for device_frame_id, with category, color and orientation), svg_presets (names for svg_preset), fonts (families usable as font_name in a project, including its imported fonts), locale_presets (locale codes and labels for add_locale), screenshot_sizes (App Store / Play sizes for add_row's size).",
+            description: "List the values other tools accept: device_frames (ids for device_frame_id, with model, category, color, orientation, screen orientation and the screenshot size each is built for — e.g. iPhone Duo inner display 2007x2853, closed 1398x2034), svg_presets (names for svg_preset), fonts (families usable as font_name in a project, including its imported fonts), locale_presets (locale codes and labels for add_locale), screenshot_sizes (App Store / Play sizes for add_row's size).",
             inputSchema: MCPSchema.object([
                 "kind": MCPSchema.string("What to list", oneOf: ["device_frames", "svg_presets", "fonts", "locale_presets", "screenshot_sizes"]),
                 "project_id": MCPSchema.string("For fonts: the project whose imported fonts to include (default: the open project)"),
                 "category": MCPSchema.string("For device_frames: only this device category", oneOf: deviceCategories),
+                "size": MCPSchema.string("For device_frames: only frames built for this screenshot size, like \"2007x2853\" (orientation matters)"),
             ], required: ["kind"])
         ),
         Tool(
@@ -664,8 +669,8 @@ nonisolated enum MCPToolCatalog {
             inputSchema: MCPSchema.object([
                 "project_id": projectIdSchema,
                 "row_id": MCPSchema.string("Row UUID (default: every row)"),
-                "device_frame_id": MCPSchema.string("Device frame id — list_catalog kind device_frames"),
-                "device_category": MCPSchema.string("Abstract device category, when no specific frame is wanted", oneOf: deviceCategories),
+                "device_frame_id": MCPSchema.string("Device frame id — \(deviceFrameIdNote)"),
+                "device_category": MCPSchema.string("Abstract device category, when no specific frame is wanted: \(deviceCategoryNote)", oneOf: deviceCategories),
             ])
         ),
         Tool(

@@ -192,6 +192,14 @@ struct MCPArguments {
         }
         return parsed
     }
+
+    func screenshotSize(_ key: String) throws -> (width: CGFloat, height: CGFloat)? {
+        guard let value = string(key) else { return nil }
+        guard let parsed = parseSizeString(value), parsed.width > 0, parsed.height > 0 else {
+            throw MCPToolError.invalidArgument(key, "expected \"WIDTHxHEIGHT\" like \"1242x2688\", got \(value)")
+        }
+        return parsed
+    }
 }
 
 extension Value {

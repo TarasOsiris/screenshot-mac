@@ -5,12 +5,7 @@ import MCP
 extension MCPToolExecutor {
 
     func addRow(_ args: MCPArguments, _ document: inout ProjectDocument) throws -> MCPEditResult {
-        let size = try args.string("size").map { size in
-            guard let parsed = parseSizeString(size) else {
-                throw MCPToolError.invalidArgument("size", "expected \"WIDTHxHEIGHT\", got \(size)")
-            }
-            return parsed
-        }
+        let size = try args.screenshotSize("size")
         let beforeIndex = args.has("before_row_id") ? try requireRowIndex(args, key: "before_row_id", in: document) : nil
         let afterIndex = args.has("after_row_id") ? try requireRowIndex(args, key: "after_row_id", in: document) : nil
 
@@ -51,13 +46,9 @@ extension MCPToolExecutor {
         if let showDevice = args.bool("show_device") {
             document.rows[rowIndex].showDevice = showDevice
         }
-        if let frame = try deviceFrame(args) {
-            document.rows[rowIndex].defaultDeviceCategory = frame.fallbackCategory
-            document.rows[rowIndex].defaultDeviceFrameId = frame.id
-        } else if let category = try args.enumValue("device_category", DeviceCategory.self) {
-            // The old frame belongs to the old category.
-            document.rows[rowIndex].defaultDeviceCategory = category
-            document.rows[rowIndex].defaultDeviceFrameId = nil
+        if let device = try rowDevice(args) {
+            document.rows[rowIndex].defaultDeviceCategory = device.category
+            document.rows[rowIndex].defaultDeviceFrameId = device.frameId
         }
         let localeState = document.localeState
         try applyBackground(args, to: &document.rows[rowIndex], localeState: localeState, context: &context)
@@ -68,6 +59,13 @@ extension MCPToolExecutor {
             document.rows[rowIndex].spanBackgroundAcrossRow = span
         }
         return .row(row.id)
+    }
+
+    /// A row's default device: a frame decides the category, so the two never disagree; a bare category drops the old frame.
+    func rowDevice(_ args: MCPArguments) throws -> (category: DeviceCategory, frameId: String?)? {
+        let category = try args.enumValue("device_category", DeviceCategory.self)
+        if let frame = try deviceFrame(args) { return (frame.fallbackCategory, frame.id) }
+        return category.map { ($0, nil) }
     }
 
     func moveRow(_ args: MCPArguments, _ document: inout ProjectDocument) throws -> MCPEditResult {

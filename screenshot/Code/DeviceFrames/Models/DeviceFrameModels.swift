@@ -59,6 +59,8 @@ nonisolated struct DeviceFrameImageSpec {
     var topFraction: CGFloat { screenTop / frameHeight }
     var rightFraction: CGFloat { screenRight / frameWidth }
     var bottomFraction: CGFloat { screenBottom / frameHeight }
+    /// Not always the frame's orientation: the open iPhone Duo seen from the back is a landscape frame around a portrait screen.
+    var isScreenLandscape: Bool { frameWidth - screenLeft - screenRight > frameHeight - screenTop - screenBottom }
 
     /// The screen area of a frame drawn into `size`.
     func screenRect(in size: CGSize) -> CGRect {
