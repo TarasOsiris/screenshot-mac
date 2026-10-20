@@ -114,6 +114,10 @@ struct MCPArguments {
         return uuid
     }
 
+    func cgFloat(_ key: String) -> CGFloat? {
+        double(key).map { CGFloat($0) }
+    }
+
     func double(_ key: String) -> Double? {
         switch value(key) {
         case .double(let d): d

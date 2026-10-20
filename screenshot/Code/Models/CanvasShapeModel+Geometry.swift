@@ -96,6 +96,27 @@ extension CanvasShapeModel {
         applyAspectLocked(target: newHeight, drivenBy: height)
     }
 
+    /// Both sides at once (MCP): a device fits the requested box about its center, keeping its frame's aspect.
+    mutating func applyManualSize(width newWidth: CGFloat?, height newHeight: CGFloat?) {
+        guard newWidth != nil || newHeight != nil else { return }
+        guard locksAspectRatioOnResize else {
+            if let newWidth { width = newWidth }
+            if let newHeight { height = newHeight }
+            return
+        }
+        // The frame's own aspect rather than the box's, so a box an earlier edit stretched is repaired.
+        let aspect = flexesToImageAspect ? frameRect.size : CGSize(width: resolvedBaseDimensions.width, height: resolvedBaseDimensions.height)
+        if let newWidth, let newHeight {
+            (width, height) = (max(newWidth, minResizeSize), max(newHeight, minResizeSize))
+            fitFrame(toAspectOf: aspect)
+            applyAspectLocked(target: width, drivenBy: width)
+        } else {
+            height = width * aspect.height / aspect.width
+            if let newWidth { applyManualWidth(newWidth) }
+            if let newHeight { applyManualHeight(newHeight) }
+        }
+    }
+
     private mutating func applyAspectLocked(target: CGFloat, drivenBy driving: CGFloat) {
         let size = aspectLockedSize(target: target, drivenBy: driving)
         width = size.width

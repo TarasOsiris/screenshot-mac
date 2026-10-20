@@ -178,10 +178,14 @@ extension MCPToolExecutor {
     }
 
     private func applyGeometryAndStyle(_ shape: inout CanvasShapeModel, args: MCPArguments, restyled: inout [RichTextUtils.ShapeStyleProperty]) throws {
+        // First, so a frame switched in the same call takes the requested position and size in its own aspect.
+        if let category = try args.enumValue("device_category", DeviceCategory.self), category != shape.deviceCategory {
+            shape.selectAbstractDevice(category)
+        }
+        if let frame = try deviceFrame(args) { shape.selectRealFrame(frame) }
         if let x = args.double("x") { shape.x = x }
         if let y = args.double("y") { shape.y = y }
-        if let width = args.double("width") { shape.width = width }
-        if let height = args.double("height") { shape.height = height }
+        shape.applyManualSize(width: args.cgFloat("width"), height: args.cgFloat("height"))
         if let rotation = args.double("rotation") { shape.rotation = rotation }
         if let opacity = args.double("opacity") { shape.opacity = opacity }
         if let radius = args.double("border_radius") { shape.borderRadius = radius }
@@ -189,7 +193,7 @@ extension MCPToolExecutor {
             RichTextUtils.applyColorUpdate(to: &shape, color: color)
             restyled.append(.color)
         }
-        if let fontSize = args.double("font_size").map({ CGFloat($0) }), fontSize != shape.fontSize {
+        if let fontSize = args.cgFloat("font_size"), fontSize != shape.fontSize {
             shape.fontSize = fontSize
             RichTextUtils.syncShapeStyleIfNeeded(in: &shape, property: .fontSize)
             restyled.append(.fontSize)
@@ -214,7 +218,7 @@ extension MCPToolExecutor {
             restyled.append(.alignment)
         }
         if let align = try args.enumValue("vertical_align", TextVerticalAlign.self) { shape.textVerticalAlign = align }
-        if let spacing = args.double("letter_spacing").map({ CGFloat($0) }), spacing != shape.letterSpacing {
+        if let spacing = args.cgFloat("letter_spacing"), spacing != shape.letterSpacing {
             shape.letterSpacing = spacing
             RichTextUtils.syncShapeStyleIfNeeded(in: &shape, property: .letterSpacing)
             restyled.append(.letterSpacing)
@@ -226,10 +230,6 @@ extension MCPToolExecutor {
             RichTextUtils.syncShapeStyleIfNeeded(in: &shape, property: .lineHeight)
             restyled.append(.lineHeight)
         }
-        if let category = try args.enumValue("device_category", DeviceCategory.self), category != shape.deviceCategory {
-            shape.selectAbstractDevice(category)
-        }
-        if let frame = try deviceFrame(args) { shape.selectRealFrame(frame) }
         if let points = args.int("star_points") { shape.starPointCount = points }
         if let clip = args.bool("clip_to_template") { shape.clipToTemplate = clip }
         if let shrink = args.bool("shrink_to_fit") { shape.shrinkToFit = shrink }

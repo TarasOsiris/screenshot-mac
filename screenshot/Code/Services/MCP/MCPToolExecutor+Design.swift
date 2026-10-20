@@ -107,8 +107,8 @@ extension MCPToolExecutor {
         }
         let copy = DocumentEditing.duplicateShape(
             shape,
-            offsetX: args.double("offset_x").map { CGFloat($0) } ?? 50,
-            offsetY: args.double("offset_y").map { CGFloat($0) } ?? 50,
+            offsetX: args.cgFloat("offset_x") ?? 50,
+            offsetY: args.cgFloat("offset_y") ?? 50,
             in: &document.rows[location.rowIndex],
             localeState: &document.localeState,
             resources: context.resources
@@ -254,8 +254,7 @@ extension MCPToolExecutor {
         let before = resolved
         if let x = args.double("x") { resolved.x = x }
         if let y = args.double("y") { resolved.y = y }
-        if let width = args.double("width") { resolved.width = width }
-        if let height = args.double("height") { resolved.height = height }
+        resolved.applyManualSize(width: args.cgFloat("width"), height: args.cgFloat("height"))
         if let size = args.double("font_size") { resolved.fontSize = size }
         if let name = args.string("font_name") { resolved.fontName = name }
         if let weight = args.int("font_weight") { resolved.fontWeight = weight }

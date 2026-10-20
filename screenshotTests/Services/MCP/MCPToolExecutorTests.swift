@@ -1420,6 +1420,52 @@ struct MCPToolExecutorTests {
         #expect(tooFew.isError == true)
     }
 
+    @Test func resizingADeviceKeepsItsFrameAspect() async throws {
+        let (executor, state, tempDir) = makeExecutor()
+        defer { cleanupTestState(tempDir) }
+        let frame = try #require(DeviceFrameCatalog.frame(for: "iphoneduo-nightsky-landscape"))
+        let aspect = frame.spec.frameWidth / frame.spec.frameHeight
+        _ = await executor.call(name: "add_shape", arguments: [
+            "row_id": .string(state.rows[0].id.uuidString), "type": "device", "device_frame_id": .string(frame.id),
+        ])
+        let shapeId = Value.string(state.rows[0].shapes.last!.id.uuidString)
+        func device() -> CanvasShapeModel { state.rows[0].shapes.last! }
+
+        expectSuccess(await executor.call(name: "update_shape", arguments: ["shape_id": shapeId, "width": 1000]))
+        #expect(device().width == 1000)
+        #expect(abs(device().width / device().height - aspect) < 0.001)
+
+        // A box of the wrong shape fits the frame inside it instead of stretching the bezel and cropping the screenshot.
+        expectSuccess(await executor.call(name: "update_shape", arguments: ["shape_id": shapeId, "x": 0, "y": 0, "width": 2000, "height": 1000]))
+        #expect(abs(device().width / device().height - aspect) < 0.001)
+        #expect(device().height == 1000 && device().width < 2000)
+        #expect(abs(device().x + device().width / 2 - 1000) < 0.5, "centered in the requested box")
+
+        // A box an earlier edit stretched is repaired by the next resize.
+        state.rows[0].shapes[state.rows[0].shapes.count - 1].width = 3000
+        expectSuccess(await executor.call(name: "update_shape", arguments: ["shape_id": shapeId, "height": 800]))
+        #expect(device().height == 800)
+        #expect(abs(device().width / device().height - aspect) < 0.001)
+
+        // The repair keeps an x the same call set.
+        state.rows[0].shapes[state.rows[0].shapes.count - 1].width = 3000
+        expectSuccess(await executor.call(name: "update_shape", arguments: ["shape_id": shapeId, "x": 0, "width": 800]))
+        #expect(device().x == 0 && device().width == 800)
+        #expect(abs(device().width / device().height - aspect) < 0.001)
+
+        let portrait = try #require(DeviceFrameCatalog.frame(for: "iphone17-black-portrait"))
+        expectSuccess(await executor.call(name: "update_shape", arguments: [
+            "shape_id": shapeId, "device_frame_id": .string(portrait.id), "width": 600,
+        ]))
+        #expect(device().width == 600, "a frame switched in the same call is sized to its own aspect")
+        #expect(abs(device().width / device().height - portrait.spec.frameWidth / portrait.spec.frameHeight) < 0.001)
+
+        _ = await executor.call(name: "add_shape", arguments: ["row_id": .string(state.rows[0].id.uuidString), "type": "rectangle"])
+        let rectId = Value.string(state.rows[0].shapes.last!.id.uuidString)
+        expectSuccess(await executor.call(name: "update_shape", arguments: ["shape_id": rectId, "width": 300, "height": 100]))
+        #expect(state.rows[0].shapes.last!.width == 300 && state.rows[0].shapes.last!.height == 100, "other shapes size freely")
+    }
+
     @Test func localeLayoutAndBaseLocale() async throws {
         let (executor, state, tempDir) = makeExecutor()
         defer { cleanupTestState(tempDir) }

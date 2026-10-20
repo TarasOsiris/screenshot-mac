@@ -30,8 +30,8 @@ extension MCPToolExecutor {
         let row = document.rows[rowIndex]
 
         if args.has("width") || args.has("height") {
-            let width = args.double("width").map { CGFloat($0) } ?? row.templateWidth
-            let height = args.double("height").map { CGFloat($0) } ?? row.templateHeight
+            let width = args.cgFloat("width") ?? row.templateWidth
+            let height = args.cgFloat("height") ?? row.templateHeight
             guard width >= 100, height >= 100 else {
                 throw MCPToolError.invalidArgument("width/height", "must be at least 100 pixels")
             }
