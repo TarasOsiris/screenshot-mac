@@ -447,7 +447,7 @@ struct TemplateControlBar: View {
             if let message = await ExportService.savePNGDataViaPanel(
                 defaultName: "screenshot-\(index + 1)",
                 data: renderExportPNG
-            ) {
+            ).failureMessage {
                 renderError = message
             }
         }

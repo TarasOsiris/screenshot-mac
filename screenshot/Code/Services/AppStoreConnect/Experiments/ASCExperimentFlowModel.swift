@@ -93,6 +93,9 @@ final class ASCExperimentFlowModel {
     var variants: [ScreenshotVariant] { document?.activeVariants ?? [] }
     var localeState: LocaleState { document?.localeState ?? .default }
 
+    /// Left on the done screen of a real treatment upload — a success moment for the review prompt.
+    var endedWithUpload: Bool { step == .done && !credentials.isDemoMode }
+
     var selectedApp: ASCApp? { apps.first { $0.app.id == selectedAppId }?.app }
 
     var availablePlatforms: [ASCPlatform] {

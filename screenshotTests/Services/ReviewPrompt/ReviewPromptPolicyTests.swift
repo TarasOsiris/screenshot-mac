@@ -17,18 +17,27 @@ struct ReviewPromptPolicyTests {
         ReviewPromptPolicy(defaults: defaults, currentVersion: version, now: now)
     }
 
-    @Test func doesNotPromptBeforeThreeExports() {
+    /// One success moment, then the check — and the prompt, when the check passes, the way
+    /// `ReviewPromptScheduler` spends it.
+    private func succeed(_ p: ReviewPromptPolicy) -> Bool {
+        p.recordSuccess()
+        guard p.isPromptDue else { return false }
+        p.markPrompted()
+        return true
+    }
+
+    @Test func doesNotPromptBeforeThreeSuccesses() {
         let defaults = makeIsolatedDefaults("count")
         let start = Date(timeIntervalSinceReferenceDate: 0)
         var now = start
         let p = policy(defaults) { now }
 
-        #expect(p.recordExportAndCheck() == false)
+        #expect(succeed(p) == false)
         now = start.addingTimeInterval(20 * day)
-        #expect(p.recordExportAndCheck() == false, "second export, still under the minimum")
+        #expect(succeed(p) == false, "second success, still under the minimum")
     }
 
-    @Test func doesNotPromptWithinTwoWeeksOfTheFirstExport() {
+    @Test func doesNotPromptWithinTwoWeeksOfTheFirstSuccess() {
         let defaults = makeIsolatedDefaults("young")
         let start = Date(timeIntervalSinceReferenceDate: 0)
         var now = start
@@ -36,20 +45,20 @@ struct ReviewPromptPolicyTests {
 
         for offset in [0.0, 1.0, 13.0] {
             now = start.addingTimeInterval(offset * day)
-            #expect(p.recordExportAndCheck() == false)
+            #expect(succeed(p) == false)
         }
     }
 
-    @Test func promptsAfterThreeExportsAndTwoWeeks() {
+    @Test func promptsAfterThreeSuccessesAndTwoWeeks() {
         let defaults = makeIsolatedDefaults("ready")
         let start = Date(timeIntervalSinceReferenceDate: 0)
         var now = start
         let p = policy(defaults) { now }
 
-        #expect(p.recordExportAndCheck() == false)
+        #expect(succeed(p) == false)
         now = start.addingTimeInterval(15 * day)
-        #expect(p.recordExportAndCheck() == false, "only the second export")
-        #expect(p.recordExportAndCheck() == true, "third export, past the 14-day window")
+        #expect(succeed(p) == false, "only the second success")
+        #expect(succeed(p) == true, "third success, past the 14-day window")
     }
 
     @Test func promptsAtMostOncePerVersion() {
@@ -58,32 +67,70 @@ struct ReviewPromptPolicyTests {
         var now = start
         let p = policy(defaults) { now }
 
-        _ = p.recordExportAndCheck()
+        _ = succeed(p)
         now = start.addingTimeInterval(15 * day)
-        _ = p.recordExportAndCheck()
-        #expect(p.recordExportAndCheck() == true)
+        _ = succeed(p)
+        #expect(succeed(p) == true)
 
         now = start.addingTimeInterval(400 * day)
-        #expect(p.recordExportAndCheck() == false, "same version, already prompted")
+        #expect(succeed(p) == false, "same version, already prompted")
 
         // A new version reopens the door, but the 120-day gap still applies. The prompt landed on
         // day 15, so day 100 is 85 days later — too soon — and day 200 is 185 days later.
         let tooSoon = policy(defaults, version: "1.1") { start.addingTimeInterval(100 * day) }
-        #expect(tooSoon.recordExportAndCheck() == false, "only 85 days since the last prompt")
+        #expect(succeed(tooSoon) == false, "only 85 days since the last prompt")
 
         let farEnough = policy(defaults, version: "1.1") { start.addingTimeInterval(200 * day) }
-        #expect(farEnough.recordExportAndCheck() == true, "new version, past the 120-day gap")
+        #expect(succeed(farEnough) == true, "new version, past the 120-day gap")
+    }
+
+    /// The check is what a delayed ask re-runs at fire time; if it spent the turn, an ask that
+    /// never reached the screen would retire the whole version.
+    @Test func checkingDoesNotSpendThePrompt() {
+        let defaults = makeIsolatedDefaults("pure")
+        let start = Date(timeIntervalSinceReferenceDate: 0)
+        var now = start
+        let p = policy(defaults) { now }
+
+        p.recordSuccess()
+        now = start.addingTimeInterval(15 * day)
+        p.recordSuccess()
+        p.recordSuccess()
+
+        #expect(p.isPromptDue)
+        #expect(p.isPromptDue, "a second check must see the same answer")
+        p.markPrompted()
+        #expect(!p.isPromptDue)
     }
 
     /// An unset version (which is what `Bundle.main.shortVersion` returns under test) would
-    /// otherwise match the empty stored value and prompt on the very first export.
+    /// otherwise match the empty stored value and prompt on the very first success.
     @Test func neverPromptsWithoutAVersion() {
         let defaults = makeIsolatedDefaults("noversion")
         let start = Date(timeIntervalSinceReferenceDate: 0)
         let p = policy(defaults, version: "") { start.addingTimeInterval(400 * day) }
 
         for _ in 0..<5 {
-            #expect(p.recordExportAndCheck() == false)
+            #expect(succeed(p) == false)
+        }
+    }
+
+    @Test func resetForgetsEverything() {
+        let defaults = makeIsolatedDefaults("reset")
+        let start = Date(timeIntervalSinceReferenceDate: 0)
+        var now = start
+        let p = policy(defaults) { now }
+        _ = succeed(p)
+        now = start.addingTimeInterval(15 * day)
+        _ = succeed(p)
+        #expect(succeed(p) == true)
+
+        p.reset()
+
+        #expect(p.successCount == 0)
+        for key in [ReviewPromptPolicy.Key.lastPromptedVersion, ReviewPromptPolicy.Key.firstSuccessDate,
+                    ReviewPromptPolicy.Key.lastPromptDate] {
+            #expect(defaults.object(forKey: key) == nil)
         }
     }
 }

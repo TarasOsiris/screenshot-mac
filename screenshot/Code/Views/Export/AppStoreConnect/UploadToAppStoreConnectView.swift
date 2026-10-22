@@ -68,6 +68,7 @@ struct UploadToAppStoreConnectView: View {
                 await model.loadAppsIfNeeded()
             }
             .onDisappear { model.tearDown() }
+            .reportsUploadSuccess { model.endedWithUpload }
             .sheet(item: $presentedErrorDetails) { details in
                 UploadFailureDetailsSheet(details: details.message)
             }

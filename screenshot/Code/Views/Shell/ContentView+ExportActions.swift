@@ -204,7 +204,7 @@ extension ContentView {
             else { return }
             let localeCode = state.localeState.activeLocaleCode
             Task {
-                if let message = await ExportService.saveRowImageViaPanel(defaultName: row.label, render: {
+                let outcome = await ExportService.saveRowImageViaPanel(defaultName: row.label, render: {
                     var cache: [String: NSImage] = [:]
                     let context = await RowRenderContext.load(
                         row: row,
@@ -215,8 +215,14 @@ extension ContentView {
                         seedImages: seedCache
                     )
                     return await context.showcaseImage(config: config)
-                }) {
+                })
+                switch outcome {
+                case .saved:
+                    exportFlow.reviewPrompt.recordSuccess(.export)
+                case .failed(let message):
                     exportFlow.errorMessage = String(localized: "Could not export row image: \(message)")
+                case .cancelled:
+                    break
                 }
             }
         }

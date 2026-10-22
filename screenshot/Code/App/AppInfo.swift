@@ -11,8 +11,13 @@ enum AppLinks {
     static let support = URL(string: "mailto:leskiv.taras@gmail.com?subject=Screenshot%20Bro")!
     /// Deep-links straight to the write-a-review box on the app's own App Store page (Apple ID
     /// `6760177675`), rather than the app's storefront page or the system-controlled
-    /// `SKStoreReviewController` sheet `ReviewPromptPolicy` triggers.
+    /// `SKStoreReviewController` sheet `ReviewPromptPolicy` triggers. On macOS `https` would open
+    /// the default browser, which ignores `action=write-review`.
+    #if os(macOS)
+    static let rateOnAppStore = URL(string: "macappstore://apps.apple.com/app/id\(appStoreID)?action=write-review")!
+    #else
     static let rateOnAppStore = URL(string: "https://apps.apple.com/app/id\(appStoreID)?action=write-review")!
+    #endif
     static let appStoreID = "6760177675"
     /// Opens the store app directly rather than the web page.
     #if os(macOS)

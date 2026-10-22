@@ -99448,268 +99448,6 @@
         }
       }
     },
-    "A quick favor?" : {
-      "localizations" : {
-        "ar" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "خدمة سريعة؟"
-          }
-        },
-        "bn" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "একটি দ্রুত সুবিধা?"
-          }
-        },
-        "ca" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Un favor ràpid?"
-          }
-        },
-        "cs" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Rychlá laskavost?"
-          }
-        },
-        "da" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "En hurtig tjeneste?"
-          }
-        },
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Ein kleiner Gefallen?"
-          }
-        },
-        "el" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Μια γρήγορη χάρη;"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "¿Un pequeño favor?"
-          }
-        },
-        "fa" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "یک لطف کوچک؟"
-          }
-        },
-        "fi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Nopea palvelus?"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Un petit service ?"
-          }
-        },
-        "gu" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "એક ઝડપી તરફેણ?"
-          }
-        },
-        "he" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "טובה מהירה?"
-          }
-        },
-        "hi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "एक त्वरित उपकार?"
-          }
-        },
-        "hr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Brza usluga?"
-          }
-        },
-        "hu" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Gyors szívesség?"
-          }
-        },
-        "id" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Bantuan cepat?"
-          }
-        },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Un piccolo favore?"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "ちょっとお願いが"
-          }
-        },
-        "kn" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "ತ್ವರಿತ ಉಪಕಾರ?"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "부탁 하나 드려도 될까요?"
-          }
-        },
-        "ml" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "പെട്ടെന്നുള്ള ഒരു ഉപകാരം?"
-          }
-        },
-        "mr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "एक द्रुत अनुकूलता?"
-          }
-        },
-        "ms" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Satu nikmat cepat?"
-          }
-        },
-        "nl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Een snelle gunst?"
-          }
-        },
-        "no" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "En rask tjeneste?"
-          }
-        },
-        "pl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Szybka przysługa?"
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Um favorzinho?"
-          }
-        },
-        "pt-PT" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Um favor rápido?"
-          }
-        },
-        "ro" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "O favoare rapidă?"
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Можно небольшую просьбу?"
-          }
-        },
-        "sk" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Rýchla láskavosť?"
-          }
-        },
-        "sl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Hitra usluga?"
-          }
-        },
-        "sv" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "En snabb tjänst?"
-          }
-        },
-        "ta" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "விரைவான உதவி?"
-          }
-        },
-        "te" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "త్వరిత ఉపకారం?"
-          }
-        },
-        "th" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "ความช่วยเหลือด่วน?"
-          }
-        },
-        "tr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Küçük bir ricam var"
-          }
-        },
-        "uk" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Невелика послуга?"
-          }
-        },
-        "ur" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "ایک فوری احسان؟"
-          }
-        },
-        "vi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Một ân huệ nhanh chóng?"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "帮个小忙？"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "能幫個小忙嗎？"
-          }
-        }
-      }
-    },
     "A sample app and a simulated experiment. Nothing is sent to App Store Connect." : {
       "localizations" : {
         "ar" : {
@@ -295183,268 +294921,6 @@
         }
       }
     },
-    "I built Screenshot Bro and use it myself every day to ship App Store screenshots for my other apps. If it's helping you too, a quick rating on the App Store keeps this app alive." : {
-      "localizations" : {
-        "ar" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "لقد قمت بتصميم Screenshot Bro واستخدمه بنفسي يوميًا لإرسال لقطات شاشة App Store لتطبيقاتي الأخرى. إذا كان هذا يساعدك أيضًا، فإن التقييم السريع على App Store يبقي هذا التطبيق على قيد الحياة."
-          }
-        },
-        "bn" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "আমি Screenshot Bro তৈরি করি এবং আমার অন্যান্য অ্যাপের জন্য App Store স্ক্রিনশট পাঠানোর জন্য প্রতিদিন নিজে ব্যবহার করি। যদি এটি আপনাকেও সাহায্য করে, App Store এ একটি দ্রুত রেটিং এই অ্যাপটিকে বাঁচিয়ে রাখে৷"
-          }
-        },
-        "ca" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Vaig crear Screenshot Bro i l'utilitzo jo mateix cada dia per enviar App Store captures de pantalla per a les meves altres aplicacions. Si també us està ajudant, una puntuació ràpida al App Store manté aquesta aplicació activa."
-          }
-        },
-        "cs" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Vytvořil jsem Screenshot Bro a sám jej každý den používám k odesílání App Store snímků obrazovky pro mé další aplikace. Pokud to pomáhá i vám, rychlé hodnocení na App Store udržuje tuto aplikaci při životě."
-          }
-        },
-        "da" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Jeg byggede Screenshot Bro og bruger det selv hver dag til at sende App Store skærmbilleder til mine andre apps. Hvis det også hjælper dig, holder en hurtig vurdering på App Store denne app i live."
-          }
-        },
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Ich habe Screenshot Bro gebaut und nutze es selbst jeden Tag, um App Store-Screenshots für meine anderen Apps zu erstellen. Wenn es dir auch hilft, hält eine kurze Bewertung im App Store diese App am Leben."
-          }
-        },
-        "el" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Δημιούργησα το Screenshot Bro και το χρησιμοποιώ ο ίδιος καθημερινά για να στέλνω App Store στιγμιότυπα οθόνης για τις άλλες εφαρμογές μου. Αν σας βοηθάει κι εσάς, μια γρήγορη αξιολόγηση στο App Store κρατά αυτήν την εφαρμογή ζωντανή."
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Creé Screenshot Bro y lo uso a diario para publicar las capturas del App Store de mis otras apps. Si a ti también te ayuda, una valoración rápida en el App Store mantiene viva esta app."
-          }
-        },
-        "fa" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "من Screenshot Bro را ساختم و هر روز خودم از آن برای آماده کردن اسکرین‌شات‌های App Store برنامه‌های دیگرم استفاده می‌کنم. اگر به شما هم کمک می‌کند، یک امتیاز کوتاه در App Store این برنامه را زنده نگه می‌دارد."
-          }
-        },
-        "fi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Rakensin Screenshot Bro ja käytän sitä itse päivittäin lähettääkseni App Store kuvakaappauksia muille sovelluksilleni. Jos se auttaa sinuakin, nopea arvio App Store pitää tämän sovelluksen hengissä."
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "J’ai créé Screenshot Bro et je l’utilise tous les jours pour publier les captures App Store de mes autres apps. S’il vous aide aussi, une note rapide sur l’App Store fait vivre cette app."
-          }
-        },
-        "gu" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "મેં Screenshot Bro બનાવ્યું છે અને મારી અન્ય એપ્લિકેશનો માટે App Store સ્ક્રીનશૉટ્સ મોકલવા માટે દરરોજ તેનો ઉપયોગ કરું છું. જો તે તમને પણ મદદ કરી રહ્યું છે, તો App Store પર ઝડપી રેટિંગ આ એપ્લિકેશનને જીવંત રાખે છે."
-          }
-        },
-        "he" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "בניתי Screenshot Bro ומשתמש בו בעצמי כל יום כדי לשלוח צילומי מסך של App Store עבור האפליקציות האחרות שלי. אם זה עוזר גם לך, דירוג מהיר ב-App Store שומר על האפליקציה הזו בחיים."
-          }
-        },
-        "hi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "मैंने Screenshot Bro बनाया और अपने अन्य ऐप्स के लिए App Store स्क्रीनशॉट भेजने के लिए स्वयं इसका उपयोग करता हूं। यदि यह आपकी भी मदद कर रहा है, तो App Store पर एक त्वरित रेटिंग इस ऐप को जीवित रखती है।"
-          }
-        },
-        "hr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Napravio sam Screenshot Bro i osobno ga koristim svaki dan za slanje App Store snimaka zaslona za svoje druge aplikacije. Ako i vama pomaže, brza ocjena na App Store održava ovu aplikaciju na životu."
-          }
-        },
-        "hu" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Megépítettem a Screenshot Bro-ot, és magam használom minden nap, hogy App Store képernyőképeket küldjek a többi alkalmazásaimhoz. Ha ez neked is segít, a App Store gyors értékelése életben tartja ezt az alkalmazást."
-          }
-        },
-        "id" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Saya membuat Screenshot Bro dan menggunakannya sendiri setiap hari untuk mengirimkan App Store tangkapan layar untuk aplikasi saya yang lain. Jika ini juga membantu Anda, rating cepat di App Store membuat aplikasi ini tetap hidup."
-          }
-        },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Ho creato Screenshot Bro e lo uso ogni giorno per pubblicare gli screenshot App Store delle mie altre app. Se aiuta anche te, una valutazione veloce sull'App Store mantiene viva questa app."
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Screenshot Bro は私が開発し、ほかのアプリの App Store スクリーンショット作りに毎日使っています。お役に立っていれば、App Store で評価していただけるとこのアプリの励みになります。"
-          }
-        },
-        "kn" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "ನಾನು Screenshot Bro ಅನ್ನು ನಿರ್ಮಿಸಿದ್ದೇನೆ ಮತ್ತು ನನ್ನ ಇತರ ಅಪ್ಲಿಕೇಶನ್‌ಗಳಿಗೆ App Store ಸ್ಕ್ರೀನ್‌ಶಾಟ್‌ಗಳನ್ನು ರವಾನಿಸಲು ಪ್ರತಿ ದಿನವೂ ಅದನ್ನು ನಾನೇ ಬಳಸುತ್ತೇನೆ. ಇದು ನಿಮಗೆ ಸಹ ಸಹಾಯ ಮಾಡುತ್ತಿದ್ದರೆ, App Store ನಲ್ಲಿ ತ್ವರಿತ ರೇಟಿಂಗ್ ಈ ಅಪ್ಲಿಕೇಶನ್ ಅನ್ನು ಜೀವಂತವಾಗಿರಿಸುತ್ತದೆ."
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Screenshot Bro는 제가 직접 만들었고, 다른 앱의 App Store 스크린샷을 만들 때 매일 사용합니다. 도움이 되셨다면 App Store에서 간단히 평가해 주세요. 앱을 계속 이어가는 힘이 됩니다."
-          }
-        },
-        "ml" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "ഞാൻ Screenshot Bro നിർമ്മിക്കുകയും എൻ്റെ മറ്റ് ആപ്പുകൾക്കായി App Store സ്‌ക്രീൻഷോട്ടുകൾ ഷിപ്പുചെയ്യാൻ എല്ലാ ദിവസവും അത് സ്വയം ഉപയോഗിക്കുകയും ചെയ്യുന്നു. ഇത് നിങ്ങളെയും സഹായിക്കുന്നുവെങ്കിൽ, App Store എന്നതിലെ പെട്ടെന്നുള്ള റേറ്റിംഗ് ഈ ആപ്പിനെ സജീവമാക്കുന്നു."
-          }
-        },
-        "mr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "मी Screenshot Bro तयार केला आहे आणि माझ्या इतर ॲप्ससाठी App Store स्क्रीनशॉट पाठवण्यासाठी मी ते दररोज स्वतः वापरतो. जर ते तुम्हालाही मदत करत असेल, तर App Store वरील द्रुत रेटिंग या ॲपला जिवंत ठेवते."
-          }
-        },
-        "ms" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Saya membina Screenshot Bro dan menggunakannya sendiri setiap hari untuk menghantar tangkapan skrin App Store untuk apl saya yang lain. Jika ia membantu anda juga, penilaian pantas pada App Store memastikan apl ini terus hidup."
-          }
-        },
-        "nl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Ik heb Screenshot Bro gebouwd en gebruik het zelf elke dag om App Store screenshots voor mijn andere apps te verzenden. Als het jou ook helpt, houdt een snelle beoordeling op de App Store deze app levend."
-          }
-        },
-        "no" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Jeg bygde Screenshot Bro og bruker den selv hver dag for å sende App Store skjermbilder for de andre appene mine. Hvis det hjelper deg også, holder en rask vurdering på App Store denne appen i live."
-          }
-        },
-        "pl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Stworzyłem Screenshot Bro i sam używam go codziennie do wysyłania zrzutów ekranu App Store do innych moich aplikacji. Jeśli Tobie też to pomaga, szybka ocena w App Store podtrzymuje tę aplikację przy życiu."
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Eu criei o Screenshot Bro e uso todos os dias para publicar as capturas da App Store dos meus outros apps. Se ele também ajuda você, uma avaliação rápida na App Store mantém este app vivo."
-          }
-        },
-        "pt-PT" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Eu criei o Screenshot Bro e o uso todos os dias para enviar App Store capturas de ecrã para meus outros aplicativos. Se também estiver ajudando você, uma avaliação rápida no App Store mantém este aplicativo ativo."
-          }
-        },
-        "ro" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Am creat Screenshot Bro și îl folosesc în fiecare zi pentru a expedia App Store capturi de ecran pentru celelalte aplicații ale mele. Dacă și pe dvs. vă ajută, o evaluare rapidă pe App Store menține această aplicație în viață."
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Я создал Screenshot Bro и сам каждый день делаю в нем скриншоты для App Store для других своих приложений. Если он помогает и вам, быстрая оценка в App Store поможет приложению жить дальше."
-          }
-        },
-        "sk" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Vytvoril som Screenshot Bro a sám ho používam každý deň na odosielanie App Store snímok obrazovky pre moje ďalšie aplikácie. Ak to pomáha aj vám, rýchle hodnotenie na App Store udržuje túto aplikáciu pri živote."
-          }
-        },
-        "sl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Zgradil sem Screenshot Bro in ga sam uporabljam vsak dan za pošiljanje App Store posnetkov zaslona za svoje druge aplikacije. Če tudi vam pomaga, hitra ocena na App Store ohranja to aplikacijo pri življenju."
-          }
-        },
-        "sv" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Jag byggde Screenshot Bro och använder den själv varje dag för att skicka App Store skärmdumpar för mina andra appar. Om det också hjälper dig, håller ett snabbt betyg på App Store den här appen vid liv."
-          }
-        },
-        "ta" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "நான் Screenshot Bro ஐ உருவாக்கி, எனது பிற பயன்பாடுகளுக்கான ஸ்கிரீன் ஷாட்களை App Store அனுப்ப ஒவ்வொரு நாளும் நானே பயன்படுத்துகிறேன். இது உங்களுக்கும் உதவியாக இருந்தால், App Storeக்கான விரைவான மதிப்பீடு இந்தப் பயன்பாட்டை உயிர்ப்புடன் வைத்திருக்கும்."
-          }
-        },
-        "te" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "నేను Screenshot Broని నిర్మించాను మరియు నా ఇతర యాప్‌ల కోసం App Store స్క్రీన్‌షాట్‌లను షిప్ చేయడానికి ప్రతిరోజూ నేనే ఉపయోగిస్తాను. ఇది మీకు కూడా సహాయపడుతున్నట్లయితే, App Storeపై శీఘ్ర రేటింగ్ ఈ అనువర్తనాన్ని సజీవంగా ఉంచుతుంది."
-          }
-        },
-        "th" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "ฉันสร้าง Screenshot Bro และใช้มันเองทุกวันเพื่อส่งภาพหน้าจอ App Store สำหรับแอปอื่นๆ ของฉัน ถ้ามันช่วยคุณได้เช่นกัน การให้คะแนนอย่างรวดเร็วใน App Store จะทำให้แอปนี้คงอยู่ต่อไป"
-          }
-        },
-        "tr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Screenshot Bro'yu ben geliştirdim ve diğer uygulamalarımın App Store ekran görüntülerini hazırlamak için her gün kendim kullanıyorum. Size de yardımcı oluyorsa, App Store'da kısa bir puanlama bu uygulamanın yaşamasını sağlar."
-          }
-        },
-        "uk" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Я створив Screenshot Bro і щодня сам використовую її, щоб готувати знімки екрана для App Store для інших своїх програм. Якщо вона допомагає й вам, коротка оцінка в App Store підтримає життя цієї програми."
-          }
-        },
-        "ur" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "میں نے Screenshot Bro بنایا اور اپنی دوسری ایپس کے لیے App Store اسکرین شاٹس بھیجنے کے لیے اسے ہر روز خود استعمال کرتا ہوں۔ اگر یہ آپ کی بھی مدد کر رہا ہے تو App Store پر ایک فوری درجہ بندی اس ایپ کو زندہ رکھتی ہے۔"
-          }
-        },
-        "vi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Tôi đã xây dựng Screenshot Bro và sử dụng nó hàng ngày để gửi App Store ảnh chụp màn hình cho các ứng dụng khác của mình. Nếu điều đó cũng giúp ích cho bạn thì xếp hạng nhanh trên App Store sẽ giúp ứng dụng này tồn tại."
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Screenshot Bro 是我开发的，我每天都用它为自己的其他 App 制作 App Store 截图。如果它也帮到了你，在 App Store 上快速评个分就能让这个 App 继续下去。"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "我打造了 Screenshot Bro，每天都親自用它為我的其他 App 製作 App Store 螢幕截圖。如果它對你也有幫助，在 App Store 上快速評分就能讓這個 App 持續下去。"
-          }
-        }
-      }
-    },
     "iCloud container is not available. Make sure you're signed into iCloud." : {
       "localizations" : {
         "ar" : {
@@ -341366,268 +340842,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "霧面"
-          }
-        }
-      }
-    },
-    "Maybe Later" : {
-      "localizations" : {
-        "ar" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "ربما في وقت لاحق"
-          }
-        },
-        "bn" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "হয়তো পরে"
-          }
-        },
-        "ca" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Potser més tard"
-          }
-        },
-        "cs" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Možná později"
-          }
-        },
-        "da" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Måske senere"
-          }
-        },
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Vielleicht später"
-          }
-        },
-        "el" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Ίσως Αργότερα"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Quizás más tarde"
-          }
-        },
-        "fa" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "شاید بعداً"
-          }
-        },
-        "fi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Ehkä myöhemmin"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Plus tard"
-          }
-        },
-        "gu" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "કદાચ પછીથી"
-          }
-        },
-        "he" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "אולי מאוחר יותר"
-          }
-        },
-        "hi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "शायद बाद में"
-          }
-        },
-        "hr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Možda Kasnije"
-          }
-        },
-        "hu" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Talán később"
-          }
-        },
-        "id" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Mungkin Nanti"
-          }
-        },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Forse più tardi"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "後で"
-          }
-        },
-        "kn" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "ಬಹುಶಃ ನಂತರ"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "나중에"
-          }
-        },
-        "ml" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "ഒരുപക്ഷേ പിന്നീട്"
-          }
-        },
-        "mr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "कदाचित नंतर"
-          }
-        },
-        "ms" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Mungkin Nanti"
-          }
-        },
-        "nl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Misschien later"
-          }
-        },
-        "no" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Kanskje senere"
-          }
-        },
-        "pl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Może później"
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Talvez mais tarde"
-          }
-        },
-        "pt-PT" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Talvez mais tarde"
-          }
-        },
-        "ro" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Poate Mai târziu"
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Может быть, позже"
-          }
-        },
-        "sk" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Možno neskôr"
-          }
-        },
-        "sl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Mogoče kasneje"
-          }
-        },
-        "sv" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Kanske senare"
-          }
-        },
-        "ta" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "ஒருவேளை பின்னர்"
-          }
-        },
-        "te" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "బహుశా తరువాత"
-          }
-        },
-        "th" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "อาจจะภายหลัง"
-          }
-        },
-        "tr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Belki Daha Sonra"
-          }
-        },
-        "uk" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Можливо, пізніше"
-          }
-        },
-        "ur" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "شاید بعد میں"
-          }
-        },
-        "vi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Có lẽ sau này"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "以后再说"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "稍後再說"
           }
         }
       }
@@ -416812,7 +416026,7 @@
         "ar" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "السعر في App Store"
+            "value" : "قيّم على App Store"
           }
         },
         "bn" : {
@@ -416824,7 +416038,7 @@
         "ca" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Tarifa el App Store"
+            "value" : "Valora a l’App Store"
           }
         },
         "cs" : {
@@ -416848,7 +416062,7 @@
         "el" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Βαθμολογήστε το App Store"
+            "value" : "Αξιολογήστε στο App Store"
           }
         },
         "es" : {
@@ -416866,7 +416080,7 @@
         "fi" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Arvioi App Store"
+            "value" : "Arvioi App Storessa"
           }
         },
         "fr" : {
@@ -416902,7 +416116,7 @@
         "hu" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Értékelés a következőn: App Store"
+            "value" : "Értékelés az App Store-ban"
           }
         },
         "id" : {
@@ -416938,7 +416152,7 @@
         "ml" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "App Store എന്നതിൽ റേറ്റുചെയ്യുക"
+            "value" : "App Store-ൽ റേറ്റ് ചെയ്യുക"
           }
         },
         "mr" : {
@@ -416968,7 +416182,7 @@
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Kurs na App Store"
+            "value" : "Oceń w App Store"
           }
         },
         "pt-BR" : {
@@ -416980,7 +416194,7 @@
         "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Taxa no App Store"
+            "value" : "Avaliar na App Store"
           }
         },
         "ro" : {
@@ -417028,7 +416242,7 @@
         "th" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "อัตราในวันที่ App Store"
+            "value" : "ให้คะแนนบน App Store"
           }
         },
         "tr" : {
@@ -417046,7 +416260,7 @@
         "ur" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "App Store پر شرح"
+            "value" : "App Store پر ریٹنگ دیں"
           }
         },
         "vi" : {
@@ -417065,268 +416279,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "在 App Store 上評分"
-          }
-        }
-      }
-    },
-    "Rate Screenshot Bro" : {
-      "localizations" : {
-        "ar" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "معدل Screenshot Bro"
-          }
-        },
-        "bn" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "রেট Screenshot Bro"
-          }
-        },
-        "ca" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Valora Screenshot Bro"
-          }
-        },
-        "cs" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Hodnotit Screenshot Bro"
-          }
-        },
-        "da" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Bedøm Screenshot Bro"
-          }
-        },
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Screenshot Bro bewerten"
-          }
-        },
-        "el" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Αξιολόγηση Screenshot Bro"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Valorar Screenshot Bro"
-          }
-        },
-        "fa" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "امتیاز دادن به Screenshot Bro"
-          }
-        },
-        "fi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Arvioi Screenshot Bro"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Noter Screenshot Bro"
-          }
-        },
-        "gu" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "રેટ Screenshot Bro"
-          }
-        },
-        "he" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "דרג Screenshot Bro"
-          }
-        },
-        "hi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Screenshot Bro को रेट करें"
-          }
-        },
-        "hr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Ocijenite Screenshot Bro"
-          }
-        },
-        "hu" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Értékelés Screenshot Bro"
-          }
-        },
-        "id" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Nilai Screenshot Bro"
-          }
-        },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Valuta Screenshot Bro"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Screenshot Bro を評価"
-          }
-        },
-        "kn" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "ದರ Screenshot Bro"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Screenshot Bro 평가하기"
-          }
-        },
-        "ml" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "നിരക്ക് Screenshot Bro"
-          }
-        },
-        "mr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "रेट Screenshot Bro"
-          }
-        },
-        "ms" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Nilaikan Screenshot Bro"
-          }
-        },
-        "nl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Beoordeel Screenshot Bro"
-          }
-        },
-        "no" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Vurder Screenshot Bro"
-          }
-        },
-        "pl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Oceń Screenshot Bro"
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Avaliar o Screenshot Bro"
-          }
-        },
-        "pt-PT" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Taxa Screenshot Bro"
-          }
-        },
-        "ro" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Evaluați Screenshot Bro"
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Оценить Screenshot Bro"
-          }
-        },
-        "sk" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Hodnotiť Screenshot Bro"
-          }
-        },
-        "sl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Ocenite Screenshot Bro"
-          }
-        },
-        "sv" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Betygsätt Screenshot Bro"
-          }
-        },
-        "ta" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "மதிப்பிடவும் Screenshot Bro"
-          }
-        },
-        "te" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "రేట్ Screenshot Bro"
-          }
-        },
-        "th" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "ให้คะแนน Screenshot Bro"
-          }
-        },
-        "tr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Screenshot Bro'yu Puanla"
-          }
-        },
-        "uk" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Оцінити Screenshot Bro"
-          }
-        },
-        "ur" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "شرح Screenshot Bro"
-          }
-        },
-        "vi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Xếp hạng Screenshot Bro"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "为 Screenshot Bro 评分"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "為 Screenshot Bro 評分"
           }
         }
       }
@@ -623761,6 +622713,268 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "除非所選的 App 版本包含 Apple Watch App，否則 App Store Connect 會拒絕此項目。"
+          }
+        }
+      }
+    },
+    "Rate Screenshot Bro on the App Store…" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "قيّم Screenshot Bro على App Store…"
+          }
+        },
+        "bn" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "App Store-এ Screenshot Bro রেট করুন…"
+          }
+        },
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Valora Screenshot Bro a l’App Store…"
+          }
+        },
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ohodnotit Screenshot Bro v App Storu…"
+          }
+        },
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bedøm Screenshot Bro i App Store…"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Screenshot Bro im App Store bewerten…"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Αξιολογήστε το Screenshot Bro στο App Store…"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Valorar Screenshot Bro en el App Store…"
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "امتیاز دادن به Screenshot Bro در App Store…"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Arvioi Screenshot Bro App Storessa…"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Noter Screenshot Bro sur l’App Store…"
+          }
+        },
+        "gu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "App Store પર Screenshot Bro ને રેટ કરો…"
+          }
+        },
+        "he" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "דרגו את Screenshot Bro ב-App Store…"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "App Store पर Screenshot Bro को रेट करें…"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ocijeni Screenshot Bro u App Storeu…"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Screenshot Bro értékelése az App Store-ban…"
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Beri Nilai Screenshot Bro di App Store…"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Valuta Screenshot Bro sull'App Store…"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "App Store で Screenshot Bro を評価…"
+          }
+        },
+        "kn" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "App Store ನಲ್ಲಿ Screenshot Bro ಅನ್ನು ರೇಟ್ ಮಾಡಿ…"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "App Store에서 Screenshot Bro 평가하기…"
+          }
+        },
+        "ml" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "App Store-ൽ Screenshot Bro റേറ്റ് ചെയ്യുക…"
+          }
+        },
+        "mr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "App Store वर Screenshot Bro ला रेट करा…"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nilaikan Screenshot Bro di App Store…"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Beoordeel Screenshot Bro in de App Store…"
+          }
+        },
+        "no" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vurder Screenshot Bro i App Store…"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Oceń Screenshot Bro w App Store…"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Avaliar o Screenshot Bro na App Store…"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Avaliar o Screenshot Bro na App Store…"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Evaluați Screenshot Bro în App Store…"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Оценить Screenshot Bro в App Store…"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ohodnotiť Screenshot Bro v App Store…"
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ocenite Screenshot Bro v trgovini App Store…"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Betygsätt Screenshot Bro på App Store…"
+          }
+        },
+        "ta" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "App Store-இல் Screenshot Bro-ஐ மதிப்பிடுக…"
+          }
+        },
+        "te" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "App Store లో Screenshot Bro ను రేట్ చేయండి…"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ให้คะแนน Screenshot Bro บน App Store…"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Screenshot Bro'yu App Store'da Puanla…"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Оцінити Screenshot Bro в App Store…"
+          }
+        },
+        "ur" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "App Store پر Screenshot Bro کی ریٹنگ دیں…"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Xếp hạng Screenshot Bro trên App Store…"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在 App Store 中为 Screenshot Bro 评分…"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在 App Store 上為 Screenshot Bro 評分…"
           }
         }
       }

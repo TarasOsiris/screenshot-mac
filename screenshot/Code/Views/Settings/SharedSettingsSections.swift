@@ -382,6 +382,10 @@ struct AboutLinkRows: View {
         Link(destination: AppLinks.rateOnAppStore) {
             Label("Rate on the App Store", systemImage: "star")
         }
+        .environment(\.openURL, OpenURLAction { _ in
+            AnalyticsService.capture(.rateAppTapped, [.source: "settings"])
+            return .systemAction
+        })
         #endif
         Link(destination: AppLinks.support) {
             Label("Contact Support", systemImage: "envelope")

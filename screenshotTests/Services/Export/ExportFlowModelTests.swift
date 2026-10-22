@@ -131,7 +131,7 @@ struct ExportFlowModelTests {
     @Test func showingSuccessSetsTheTransientFlag() {
         let model = ExportFlowModel(defaults: makeIsolatedDefaults("success"))
         #expect(!model.exportSuccess)
-        model.showSuccess(projectName: "Fixture", destination: "folder")
+        model.showSuccess(projectName: "Fixture", destination: "folder", fileCount: 1)
         #expect(model.exportSuccess)
         #expect(model.incompleteMessage == nil)
     }
@@ -176,5 +176,104 @@ struct ExportFlowModelTests {
         try await waitForIdle(model)
 
         #expect(model.incompleteMessage == nil, "the previous run's alert must not survive a clean one")
+    }
+
+    // MARK: - Review prompt
+
+    private func primedModel(_ label: String, delay: TimeInterval = 0)
+        -> (model: ExportFlowModel, policy: ReviewPromptPolicy, requests: () -> Int) {
+        let defaults = makeIsolatedDefaults(label)
+        let primed = makePrimedReviewPrompt(defaults: defaults, delay: delay)
+        return (ExportFlowModel(defaults: defaults, reviewPrompt: primed.scheduler), primed.policy, primed.requests)
+    }
+
+    private func exportOneRow(_ model: ExportFlowModel, document: StubDocument, label: String) async throws {
+        let base = makeTemporaryDataDirectory(label: label)
+        defer { try? FileManager.default.removeItem(at: base) }
+        model.exportRows(document: document, into: base, folderName: "rows", delivery: .revealInPlace) {
+            context in await context.stitchedRowImage()
+        }
+        try await waitForIdle(model)
+    }
+
+    private func oneRowDocument() -> StubDocument {
+        StubDocument(rows: [makeTestRow(label: "Alpha", width: 80, height: 120, bgColor: .white)])
+    }
+
+    @Test func aCleanExportAsksForAReview() async throws {
+        let (model, policy, requests) = primedModel("review-clean")
+
+        try await exportOneRow(model, document: oneRowDocument(), label: "review-clean")
+        try await settleReviewPrompt(requests: requests, expecting: 1)
+
+        #expect(requests() == 1)
+        #expect(policy.successCount == 3)
+    }
+
+    /// "Some Images Are Missing" is on screen; that is no moment to ask for five stars.
+    @Test func anExportThatDrewHolesNeitherCountsNorAsks() async throws {
+        let (model, policy, requests) = primedModel("review-holes")
+        let document = oneRowDocument()
+        document.unreadableResourceNames = ["gone.png"]
+
+        try await exportOneRow(model, document: document, label: "review-holes")
+        try await settleReviewPrompt(requests: requests, expecting: 0)
+
+        #expect(requests() == 0)
+        #expect(policy.successCount == 2)
+    }
+
+    @Test func aRunThatWroteNoFilesNeitherCountsNorAsks() async throws {
+        let (model, policy, requests) = primedModel("review-empty")
+
+        model.showSuccess(projectName: "Fixture", destination: "folder", fileCount: 0)
+        try await settleReviewPrompt(requests: requests, expecting: 0)
+
+        #expect(requests() == 0)
+        #expect(policy.successCount == 2)
+    }
+
+    @Test func aNewExportCancelsAPendingAsk() async throws {
+        let (model, policy, requests) = primedModel("review-cancel", delay: 0.3)
+
+        try await exportOneRow(model, document: oneRowDocument(), label: "review-cancel-1")
+        #expect(model.reviewPrompt.hasPendingAsk)
+        // Its holes keep this run from re-arming the ask, so only the cancellation is observed.
+        let holed = oneRowDocument()
+        holed.unreadableResourceNames = ["gone.png"]
+        try await exportOneRow(model, document: holed, label: "review-cancel-2")
+        try await Task.sleep(for: .milliseconds(500))
+
+        #expect(requests() == 0)
+        #expect(!model.reviewPrompt.hasPendingAsk)
+        #expect(policy.isPromptDue, "a cancelled ask must leave the turn unspent")
+    }
+
+    @Test func theTurnIsSpentOnlyWhenRequestReviewRuns() async throws {
+        let (model, policy, requests) = primedModel("review-blocked")
+        var isClear = false
+        model.reviewPrompt.isClearToAsk = { isClear }
+
+        try await exportOneRow(model, document: oneRowDocument(), label: "review-blocked")
+        try await settleReviewPrompt(requests: requests, expecting: 0)
+        #expect(requests() == 0)
+        #expect(policy.isPromptDue)
+
+        isClear = true
+        model.reviewPrompt.resume()
+        try await settleReviewPrompt(requests: requests, expecting: 1)
+        #expect(requests() == 1)
+        #expect(!policy.isPromptDue)
+    }
+
+    /// The upload wizards report through the same scheduler the export flow owns.
+    @Test func aStoreUploadCountsAsASuccess() async throws {
+        let (model, policy, requests) = primedModel("review-upload")
+
+        model.reviewPrompt.recordSuccess(.upload)
+        try await settleReviewPrompt(requests: requests, expecting: 1)
+
+        #expect(requests() == 1)
+        #expect(policy.successCount == 3)
     }
 }

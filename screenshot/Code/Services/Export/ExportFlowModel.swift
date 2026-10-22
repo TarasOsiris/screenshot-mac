@@ -53,28 +53,15 @@ final class ExportFlowModel {
     /// picks the folder up front).
     var pendingExport: PendingExport?
 
-    /// Set when `DeveloperRatingPromptPolicy` fires — the personal, one-time ask, separate from
-    /// the native review prompt below.
-    var showDeveloperRatingSheet = false
-
     @ObservationIgnored private var successTimer: Task<Void, Never>?
     @ObservationIgnored private var task: Task<Void, Never>?
     @ObservationIgnored private let defaults: UserDefaults
-    @ObservationIgnored private let review: ReviewPromptPolicy
-    @ObservationIgnored private let developerRating: DeveloperRatingPromptPolicy
+    /// Where every success moment — this flow's exports and the editor's store uploads — reports.
+    @ObservationIgnored let reviewPrompt: ReviewPromptScheduler
 
-    /// Presents the system review prompt. Injected because it comes from a SwiftUI environment
-    /// value the model can't read, and because a test must be able to observe it without one.
-    @ObservationIgnored var requestReview: () -> Void = {}
-
-    init(
-        defaults: UserDefaults = .standard,
-        review: ReviewPromptPolicy? = nil,
-        developerRating: DeveloperRatingPromptPolicy? = nil
-    ) {
+    init(defaults: UserDefaults = .standard, reviewPrompt: ReviewPromptScheduler? = nil) {
         self.defaults = defaults
-        self.review = review ?? ReviewPromptPolicy(defaults: defaults)
-        self.developerRating = developerRating ?? DeveloperRatingPromptPolicy(defaults: defaults)
+        self.reviewPrompt = reviewPrompt ?? ReviewPromptScheduler(policy: ReviewPromptPolicy(defaults: defaults))
     }
 
     // MARK: - Settings
@@ -104,6 +91,7 @@ final class ExportFlowModel {
     /// progress and task handle.
     private func beginRun(total: Int) {
         successTimer?.cancel()
+        reviewPrompt.cancel()
         isExporting = true
         exportSuccess = false
         errorMessage = nil
@@ -135,15 +123,15 @@ final class ExportFlowModel {
         }
     }
 
-    /// `destination` is the only thing the render layer never learns — `ExportService` knows what
-    /// was rendered, this is the one place that knows where it went.
     /// Records what a finished run could not draw. The producers (`ExportService.exportAll`,
     /// `ExportCoordinator.renderRows`) do the logging, so this only holds it for the UI.
     private func note(unrenderable: [String]) {
         unrenderableFileNames = unrenderable
     }
 
-    func showSuccess(projectName: String, destination: String) {
+    /// `destination` is the only thing the render layer never learns — `ExportService` knows what
+    /// was rendered, this is the one place that knows where it went.
+    func showSuccess(projectName: String, destination: String, fileCount: Int) {
         AnalyticsService.capture(.exportRouted, [.destination: destination])
         successTimer?.cancel()
         exportSuccess = true
@@ -154,33 +142,14 @@ final class ExportFlowModel {
                 ? exportCompleteBody(total)
                 : exportCompleteBody(total, projectName: projectName)
             NotificationService.notify(title: String(localized: "Export complete"), body: body)
+            // Only a run that wrote files and drew no holes earns a review ask.
+            if fileCount > 0 { reviewPrompt.recordSuccess(.export) }
         } else {
             let count = unrenderableFileNames.count
             incompleteMessage = unreadableExportMessage(count)
             NotificationService.notify(title: String(localized: "Export finished with blank frames"),
                                        body: unreadableExportNotificationBody(count))
         }
-
-        // Both policies count every export — `recordExportAndCheck` is what advances their
-        // counters, so short-circuiting either one would permanently skew its threshold.
-        let wantsDeveloperAsk = developerRating.recordExportAndCheck()
-        let wantsSystemPrompt = review.recordExportAndCheck()
-
-        // The developer's personal ask takes priority when both land on the same export — asking
-        // twice in one moment is worse than spending the system prompt's turn on nothing.
-        if wantsDeveloperAsk {
-            Task.delayed(2.5) { [weak self] in self?.showDeveloperRatingSheet = true }
-        } else if wantsSystemPrompt {
-            Task.delayed(2.5) { [requestReview] in requestReview() }
-        }
-    }
-
-    /// Spends the one-time developer ask, at the moment its sheet actually appears rather than
-    /// when it was scheduled. A window closed inside the 2.5s delay — or a sheet SwiftUI declined
-    /// to present over an open cover — must leave the ask for the next export.
-    func markDeveloperRatingShown() {
-        guard developerRating.markShown() else { return }
-        AnalyticsService.capture(.developerRatingShown)
     }
 
     private func exportCompleteBody(_ screenshotCount: Int) -> String {
@@ -232,7 +201,7 @@ final class ExportFlowModel {
             defer { url.stopAccessingSecurityScopedResource() }
             let export = try await self.renderAll(document: document, to: url, localeFilter: localeFilter)
             self.note(unrenderable: export.unrenderable)
-            self.showSuccess(projectName: document.activeProjectName, destination: "folder")
+            self.showSuccess(projectName: document.activeProjectName, destination: "folder", fileCount: export.fileURLs.count)
             if self.revealAfterExport {
                 PlatformReveal.inFileViewer([export.folderURL])
             }
@@ -315,7 +284,7 @@ final class ExportFlowModel {
                 if self.revealAfterExport {
                     PlatformReveal.inFileViewer([destDir])
                 }
-                self.showSuccess(projectName: document.activeProjectName, destination: "folder")
+                self.showSuccess(projectName: document.activeProjectName, destination: "folder", fileCount: rendered.fileURLs.count)
             case .stageDestination:
                 self.stage(staged)
             #if os(iOS)
@@ -384,7 +353,9 @@ final class ExportFlowModel {
     private func routeStaged(_ pending: PendingExport, to destination: ExportDestination, projectName: String) {
         let finish: (Bool) -> Void = { [weak self] completed in
             try? FileManager.default.removeItem(at: pending.cleanupBaseURL)
-            if completed { self?.showSuccess(projectName: projectName, destination: destination.rawValue) }
+            if completed {
+                self?.showSuccess(projectName: projectName, destination: destination.rawValue, fileCount: pending.fileURLs.count)
+            }
         }
         switch destination {
         case .share:
@@ -397,7 +368,7 @@ final class ExportFlowModel {
                 if let error {
                     self?.errorMessage = error.localizedDescription
                 } else if success {
-                    self?.showSuccess(projectName: projectName, destination: destination.rawValue)
+                    self?.showSuccess(projectName: projectName, destination: destination.rawValue, fileCount: pending.fileURLs.count)
                 }
             }
         }

@@ -62,6 +62,7 @@ struct UploadToGooglePlayView: View {
                 model.prefillPackageName()
             }
             .onDisappear { model.tearDown() }
+            .reportsUploadSuccess { model.endedWithUpload }
             .sheet(item: $presentedErrorDetails) { details in
                 UploadFailureDetailsSheet(details: details.message)
             }

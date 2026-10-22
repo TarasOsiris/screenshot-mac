@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// A short signed note from the developer with two actions; the shared body of the review-prompt sheets.
+/// A short signed note from the developer with two actions; the body of `TestFlightGraduationSheet`.
 struct DeveloperNoteCard: View {
     let title: LocalizedStringKey
     let message: LocalizedStringKey
@@ -9,7 +9,7 @@ struct DeveloperNoteCard: View {
     let onSecondary: () -> Void
     let onPrimary: () -> Void
     /// Ignored on iOS, where the sheet sizes itself to the content.
-    var macHeight: CGFloat = 270
+    let macHeight: CGFloat
 
     var body: some View {
         VStack(alignment: .leading, spacing: 18) {

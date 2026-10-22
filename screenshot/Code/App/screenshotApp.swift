@@ -199,6 +199,8 @@ struct ScreenshotBroApp: App {
             SettingsCommands()
             #if DIRECT_DISTRIBUTION
             CheckForUpdatesCommands(updater: appDelegate.updater)
+            #else
+            RateAppCommands()
             #endif
 
             CommandGroup(replacing: .undoRedo) {

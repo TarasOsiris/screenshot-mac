@@ -228,7 +228,7 @@ extension EditorRowView {
                     row: row, localeCode: localeCode, from: state,
                     label: "row image export", cache: &cache
                 ).stitchedRowImage()
-            }) {
+            }).failureMessage {
                 activeAlert = .exportFailed(String(localized: "Could not export row image: \(message)"))
             }
         }

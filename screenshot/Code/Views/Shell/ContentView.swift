@@ -33,7 +33,6 @@ struct ContentView: View {
     @Environment(\.openWindow) var openWindow
     #endif
     @Environment(\.requestReview) var requestReview
-    @Environment(\.openURL) var openURL
     @AppStorage(AppSettingsKeys.exportFormat) var exportFormat = AppSettingsKeys.Default.exportFormat
     @AppStorage(AppSettingsKeys.exportCustomSuffix) var exportCustomSuffix = ""
     @AppStorage(AppSettingsKeys.openExportFolderOnSuccess) var openExportFolderOnSuccess = AppSettingsKeys.Default.openExportFolderOnSuccess
@@ -65,14 +64,13 @@ struct ContentView: View {
     @State var showingGooglePlayUploadSheet = false
     @State var showingASCExperimentSheet = false
     @State var showcasePresentation: ShowcasePresentation?
-    /// Which way the developer rating sheet was left, read once by `reportDeveloperRatingOutcome`.
-    @State var didRateFromDeveloperSheet = false
     @State var projectNamePrompt: ProjectNamePrompt?
 
     var body: some View {
         contentModals(coreContent)
             // One reporter for every drop handler in the tree, and in the sheets it presents.
             .environment(\.reportDropFailure, DropFailureReporter(state: state))
+            .environment(\.reviewPrompt, exportFlow.reviewPrompt)
     }
 
     /// Kept out of the tree until `.building`: `.id(state.activeProjectId)` on the ScrollView

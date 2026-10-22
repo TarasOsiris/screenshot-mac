@@ -1,8 +1,4 @@
-#if os(macOS)
-import AppKit
-#else
-import UIKit
-#endif
+import Foundation
 import UserNotifications
 
 @MainActor
@@ -12,11 +8,7 @@ enum NotificationService {
     /// Authorization is requested lazily the first time a notification would be shown.
     static func notify(title: String, body: String) {
         guard !PersistenceService.isRunningUnderXCTest else { return }
-        #if os(macOS)
-        guard !NSApp.isActive else { return }
-        #else
-        guard UIApplication.shared.applicationState != .active else { return }
-        #endif
+        guard !PlatformApp.isActive else { return }
 
         Task {
             let center = UNUserNotificationCenter.current()

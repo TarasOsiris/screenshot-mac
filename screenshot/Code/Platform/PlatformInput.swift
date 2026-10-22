@@ -37,6 +37,16 @@ enum PlatformProcess {
     }
 }
 
+enum PlatformApp {
+    #if os(macOS)
+    static var isActive: Bool { NSApp.isActive }
+    static let didBecomeActiveNotification = NSApplication.didBecomeActiveNotification
+    #else
+    static var isActive: Bool { UIApplication.shared.applicationState == .active }
+    static let didBecomeActiveNotification = UIApplication.didBecomeActiveNotification
+    #endif
+}
+
 enum PlatformReveal {
     /// Reveal files in Finder (macOS). No-op on iPad for this foundation pass.
     static func inFileViewer(_ urls: [URL]) {

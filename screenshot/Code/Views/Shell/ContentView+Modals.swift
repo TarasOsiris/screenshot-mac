@@ -7,11 +7,6 @@ extension ContentView {
         base
         .exportFailedAlert($exportFlow.errorMessage)
         .exportIncompleteAlert($exportFlow.incompleteMessage)
-        .sheet(isPresented: developerRatingPresented, onDismiss: reportDeveloperRatingOutcome) {
-            DeveloperRatingSheet(onMaybeLater: dismissDeveloperRatingSheet, onRate: rateOnAppStore)
-                .screenView(.developerRating, restoring: .editor)
-                .onAppear { exportFlow.markDeveloperRatingShown() }
-        }
         #if os(iOS)
         .sheet(item: $exportFlow.pendingExport, onDismiss: { discardPendingExport() }) { _ in
             ExportDestinationSheet(title: pendingExportTitle) { destination in
@@ -97,12 +92,17 @@ extension ContentView {
         .task {
             projectTemplates = await TemplateService.availableTemplatesAsync()
         }
+        .onChange(of: isReviewPromptBlocked) { _, blocked in
+            if !blocked { exportFlow.reviewPrompt.resume() }
+        }
+        // "Reveal in Finder after export" (or a switch to another app) leaves us behind just as the ask comes due.
+        .onReceive(NotificationCenter.default.publisher(for: PlatformApp.didBecomeActiveNotification)) { _ in
+            exportFlow.reviewPrompt.resume()
+        }
         .onAppear {
             // `requestReview` is an environment value, so only a view can hand it over.
-            // Outside the App Store the system review sheet has no listing to send a review to.
-            if !DistributionChannel.isDirect {
-                exportFlow.requestReview = { requestReview() }
-            }
+            exportFlow.reviewPrompt.requestReview = { [requestReview] in requestReview() }
+            exportFlow.reviewPrompt.isClearToAsk = { !isReviewPromptBlocked && PlatformApp.isActive }
             #if os(iOS)
             if state.selectedRowId == nil, let firstRow = state.rows.first {
                 state.selectRow(firstRow.id)
@@ -112,33 +112,16 @@ extension ContentView {
         }
         .onDisappear {
             scrollWheelZoom.remove()
+            exportFlow.reviewPrompt.tearDown()
         }
     }
 
-    /// Held back while the showcase cover owns the window: on iPad that cover deliberately stays
-    /// up across the export's success, and SwiftUI presents one modal at a time, so asking now
-    /// would drop the sheet silently. The getter re-opens it once the cover closes.
-    private var developerRatingPresented: Binding<Bool> {
-        // Direct-download installs can't review on the App Store.
-        Binding(get: { !DistributionChannel.isDirect && exportFlow.showDeveloperRatingSheet && showcasePresentation == nil },
-                set: { if !$0 { exportFlow.showDeveloperRatingSheet = false } })
-    }
-
-    private func dismissDeveloperRatingSheet() {
-        exportFlow.showDeveloperRatingSheet = false
-    }
-
-    private func rateOnAppStore() {
-        didRateFromDeveloperSheet = true
-        exportFlow.showDeveloperRatingSheet = false
-        openURL(AppLinks.rateOnAppStore)
-    }
-
-    /// Reported from `onDismiss` rather than the buttons so every way out of the sheet is counted
-    /// — Esc, a click outside, and the iPad swipe-down all leave by this path and none of them
-    /// touch a button.
-    private func reportDeveloperRatingOutcome() {
-        AnalyticsService.capture(didRateFromDeveloperSheet ? .developerRatingAccepted : .developerRatingDismissed)
-        didRateFromDeveloperSheet = false
+    /// Anything the system review prompt must not land on top of, or interrupt.
+    private var isReviewPromptBlocked: Bool {
+        exportFlow.isExporting || exportFlow.errorMessage != nil || exportFlow.incompleteMessage != nil
+            || exportFlow.pendingExport != nil || showcasePresentation != nil || projectNamePrompt != nil
+            || showingASCUploadSheet || showingASCMetadataSheet || showingASCExperimentSheet
+            || showingGooglePlayUploadSheet || isDeletingProject || isResettingProject
+            || store.showPaywall || store.purchaseCelebrationContext != nil || state.saveError != nil
     }
 }

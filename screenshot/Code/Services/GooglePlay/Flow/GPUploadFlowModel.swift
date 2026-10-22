@@ -82,6 +82,9 @@ final class GPUploadFlowModel {
     var variants: [ScreenshotVariant] { document?.activeVariants ?? [] }
     var localeState: LocaleState { document?.localeState ?? .default }
 
+    /// Left on the done screen of a real upload — a success moment for the review prompt.
+    var endedWithUpload: Bool { step == .done && !credentials.isDemoMode }
+
     /// A variant id that no longer exists falls back to the Original rather than planning nothing.
     var listingRows: [ScreenshotRow] {
         rows.inVariant(variants.variant(withId: listingVariantId)?.id)

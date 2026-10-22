@@ -81,7 +81,7 @@ final class ASCUploadFlowModel {
     @ObservationIgnored var uploadTask: Task<Void, Never>?
 
     /// Called after `step` advances. iPad pushes onto its `NavigationStack` path here; macOS does
-    /// nothing. Injected for the same reason `ExportFlowModel.requestReview` is: the model cannot
+    /// nothing. Injected for the same reason `ReviewPromptScheduler.requestReview` is: the model cannot
     /// perform it, and a test must be able to observe it without a view.
     @ObservationIgnored var navigationDidAdvance: (ASCUploadStep) -> Void = { _ in }
     /// Called after a retreat, so iPad can pop the terminal screen it pushed.
@@ -111,6 +111,9 @@ final class ASCUploadFlowModel {
     var rows: [ScreenshotRow] { document?.rows ?? [] }
 
     var localeState: LocaleState { document?.localeState ?? .default }
+
+    /// Left on the done screen of a real screenshot sync — a success moment for the review prompt.
+    var endedWithUpload: Bool { mode == .screenshots && step == .done && !credentials.isDemoMode }
 
     var apps: [ASCApp] { appsWithVersions.map(\.app) }
 

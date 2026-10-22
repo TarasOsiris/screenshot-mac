@@ -262,52 +262,69 @@ struct ExportService {
         return dir
     }
 
+    enum PanelSaveOutcome {
+        /// On iPad: written and a share action completed.
+        case saved
+        case cancelled
+        case failed(String)
+
+        var failureMessage: String? {
+            if case .failed(let message) = self { return message }
+            return nil
+        }
+    }
+
     /// Saves a single PNG. macOS uses a save panel; iPad writes to a temp file and presents the
     /// system share sheet (Save to Files / AirDrop), since there's no Finder or save panel.
-    /// Returns an error message on failure, nil on success or user cancellation. Async so the
-    /// `data` closure can render on the main actor but encode off it — these are the largest
-    /// bitmaps the app produces, and the deflate used to block the main thread.
+    /// Async so the `data` closure can render on the main actor but encode off it — these are the
+    /// largest bitmaps the app produces, and the deflate used to block the main thread.
     @MainActor
-    static func savePNGDataViaPanel(defaultName: String, data: @MainActor () async -> Data?) async -> String? {
+    static func savePNGDataViaPanel(defaultName: String, data: @MainActor () async -> Data?) async -> PanelSaveOutcome {
         let safeName = defaultName.isEmpty ? "image" : ExportFileNaming.sanitizedFileName(defaultName)
         #if os(macOS)
         let panel = NSSavePanel()
         panel.nameFieldStringValue = "\(safeName).png"
         panel.allowedContentTypes = [.png]
         let response = CrashReportingService.withAppHangTrackingPaused { panel.runModal() }
-        guard response == .OK, let url = panel.url else { return nil }
+        guard response == .OK, let url = panel.url else { return .cancelled }
         let didAccess = url.startAccessingSecurityScopedResource()
         defer { if didAccess { url.stopAccessingSecurityScopedResource() } }
 
         guard let pngData = await data() else {
-            return ExportError.renderFailed.localizedDescription
+            return .failed(ExportError.renderFailed.localizedDescription)
         }
         do {
             try pngData.write(to: url)
-            return nil
+            return .saved
         } catch {
-            return error.localizedDescription
+            return .failed(error.localizedDescription)
         }
         #else
         guard let pngData = await data() else {
-            return ExportError.renderFailed.localizedDescription
+            return .failed(ExportError.renderFailed.localizedDescription)
         }
         do {
             let folder = try makeTempExportFolder()
             let fileURL = folder.appendingPathComponent("\(safeName).png")
             try pngData.write(to: fileURL)
-            PlatformShare.present(urls: [fileURL]) { _ in
-                try? FileManager.default.removeItem(at: folder)
+            let shared = await withCheckedContinuation { continuation in
+                var resumed = false
+                PlatformShare.present(urls: [fileURL]) { completed in
+                    try? FileManager.default.removeItem(at: folder)
+                    guard !resumed else { return }
+                    resumed = true
+                    continuation.resume(returning: completed)
+                }
             }
-            return nil
+            return shared ? .saved : .cancelled
         } catch {
-            return error.localizedDescription
+            return .failed(error.localizedDescription)
         }
         #endif
     }
 
     @MainActor
-    static func saveRowImageViaPanel(defaultName: String, render: @MainActor () async -> NSImage) async -> String? {
+    static func saveRowImageViaPanel(defaultName: String, render: @MainActor () async -> NSImage) async -> PanelSaveOutcome {
         await savePNGDataViaPanel(defaultName: defaultName.isEmpty ? "row" : defaultName) {
             await ExportImageEncoder.opaquePNGDataOffMain(from: render())
         }

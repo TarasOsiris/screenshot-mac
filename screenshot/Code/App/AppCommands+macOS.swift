@@ -1,4 +1,5 @@
 #if os(macOS)
+import AppKit
 import SwiftUI
 
 struct NewProjectCommands: Commands {
@@ -41,6 +42,20 @@ struct SettingsCommands: Commands {
         }
     }
 }
+
+#if !DIRECT_DISTRIBUTION
+/// The passive way to rate the app: Guideline 5.6.1 rules out a custom review prompt.
+struct RateAppCommands: Commands {
+    var body: some Commands {
+        CommandGroup(after: .appInfo) {
+            Button("Rate Screenshot Bro on the App Store…") {
+                AnalyticsService.capture(.rateAppTapped, [.source: "menu"])
+                NSWorkspace.shared.open(AppLinks.rateOnAppStore)
+            }
+        }
+    }
+}
+#endif
 
 struct HelpCommands: Commands {
     @Environment(\.openWindow) private var openWindow
