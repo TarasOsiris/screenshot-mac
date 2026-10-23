@@ -14,7 +14,6 @@ final class LineMetricsLayoutDelegate: NSObject, NSLayoutManagerDelegate, NSText
     private static var metricsCache: [NSFont: LineMetrics] = [:]
 
     var lineHeightMultiple: CGFloat = 1.0
-    private var nextCompressedY: CGFloat = 0
 
     private struct LineMetrics {
         var ascent: CGFloat = 0
@@ -73,14 +72,22 @@ final class LineMetricsLayoutDelegate: NSObject, NSLayoutManagerDelegate, NSText
         let fullRange = NSRange(location: 0, length: attributed.length)
         var result: NSMutableAttributedString?
         attributed.enumerateAttribute(declaredFontKey, in: fullRange) { value, range, _ in
-            guard let declared = value as? NSFont else { return }
+            guard value != nil else { return }
             let restored = result ?? NSMutableAttributedString(attributedString: attributed)
             result = restored
-            let size = (attributed.attribute(.font, at: range.location, effectiveRange: nil) as? NSFont)?.pointSize ?? declared.pointSize
-            restored.addAttribute(.font, value: resized(declared, to: size), range: range)
-            restored.removeAttribute(declaredFontKey, range: range)
+            attributed.enumerateAttributes(in: range) { attributes, runRange, _ in
+                restored.setAttributes(restoringDeclaredFont(in: attributes), range: runRange)
+            }
         }
         return result ?? attributed
+    }
+
+    /// One run's attributes with its fallback font swapped back for the declared one, at the run's size.
+    nonisolated static func restoringDeclaredFont(in attributes: [NSAttributedString.Key: Any]) -> [NSAttributedString.Key: Any] {
+        var attributes = attributes
+        guard let declared = attributes.removeValue(forKey: declaredFontKey) as? NSFont else { return attributes }
+        attributes[.font] = resized(declared, to: (attributes[.font] as? NSFont)?.pointSize ?? declared.pointSize)
+        return attributes
     }
 
     private nonisolated static func resized(_ font: NSFont, to size: CGFloat) -> NSFont {
@@ -110,23 +117,19 @@ final class LineMetricsLayoutDelegate: NSObject, NSLayoutManagerDelegate, NSText
             baselineOffset: baselineOffset,
             glyphRange: glyphRange
         )
-        guard lineHeightMultiple < 1.0 else { return raised }
+        guard lineHeightMultiple < 1.0, glyphRange.location > 0 else { return raised }
 
-        let naturalHeight = lineFragmentRect.pointee.height
-        guard naturalHeight > 0 else { return raised }
+        // From the fragment above, not a running total: an edit re-lays out from the edited line only.
+        let previous = layoutManager.lineFragmentRect(
+            forGlyphAt: glyphRange.location - 1,
+            effectiveRange: nil,
+            withoutAdditionalLayout: true
+        )
+        guard previous.height > 0 else { return raised }
 
-        if lineFragmentRect.pointee.origin.y == 0 {
-            nextCompressedY = 0
-        }
-
-        let desiredSpacing = naturalHeight * lineHeightMultiple
-        let delta = nextCompressedY - lineFragmentRect.pointee.origin.y
-
+        let delta = previous.minY + previous.height * lineHeightMultiple - lineFragmentRect.pointee.origin.y
         lineFragmentRect.pointee.origin.y += delta
         lineFragmentUsedRect.pointee.origin.y += delta
-
-        nextCompressedY += desiredSpacing
-
         return true
     }
 
@@ -401,7 +404,6 @@ enum TextLayoutStyle {
         color: NSColor? = nil,
         alignment: NSTextAlignment,
         letterSpacing: CGFloat? = nil,
-        includeBaselineOffset: Bool = true,
         lineHeightMultiple: CGFloat?,
         legacyLineSpacing: CGFloat?
     ) -> [NSAttributedString.Key: Any] {
@@ -414,15 +416,13 @@ enum TextLayoutStyle {
         ]
         if let font {
             attributes[.font] = font
-            if includeBaselineOffset {
-                let baselineOffset = baselineOffset(
-                    lineHeightMultiple: lineHeightMultiple,
-                    legacyLineSpacing: legacyLineSpacing,
-                    font: font
-                )
-                if baselineOffset != 0 {
-                    attributes[.baselineOffset] = baselineOffset
-                }
+            let baselineOffset = baselineOffset(
+                lineHeightMultiple: lineHeightMultiple,
+                legacyLineSpacing: legacyLineSpacing,
+                font: font
+            )
+            if baselineOffset != 0 {
+                attributes[.baselineOffset] = baselineOffset
             }
         }
         if let color {

@@ -659,4 +659,105 @@ struct RichTextUtilsTests {
         #expect(decoded.string == "Hello world")
         #expect(distinctPointSizes(decoded) == [72, 120])
     }
+    private func headline() -> NSAttributedString {
+        let attributed = NSMutableAttributedString(string: "Webcam\n", attributes: [
+            .font: NSFont.systemFont(ofSize: 120, weight: .bold),
+            .foregroundColor: NSColor.orange
+        ])
+        attributed.append(NSAttributedString(string: "gallery", attributes: [
+            .font: NSFont.systemFont(ofSize: 72, weight: .semibold),
+            .foregroundColor: NSColor.white
+        ]))
+        return attributed
+    }
+
+    @Test func typingOverASelectionKeepsTheSelectedRunsStyle() throws {
+        let attributes = try #require(RichTextUtils.typingAttributes(in: headline(), selection: NSRange(location: 7, length: 7)))
+        #expect((attributes[.font] as? NSFont)?.pointSize == 72)
+        #expect(attributes[.foregroundColor] as? NSColor == .white)
+    }
+
+    @Test func aCaretTypesWithTheRunBeforeIt() throws {
+        let attributes = try #require(RichTextUtils.typingAttributes(in: headline(), selection: NSRange(location: 14, length: 0)))
+        #expect((attributes[.font] as? NSFont)?.pointSize == 72)
+        let midHeadline = try #require(RichTextUtils.typingAttributes(in: headline(), selection: NSRange(location: 3, length: 0)))
+        #expect((midHeadline[.font] as? NSFont)?.pointSize == 120)
+    }
+
+    @Test func aCaretAtALineStartTypesWithThatLine() throws {
+        let attributes = try #require(RichTextUtils.typingAttributes(in: headline(), selection: NSRange(location: 7, length: 0)))
+        #expect((attributes[.font] as? NSFont)?.pointSize == 72)
+        #expect(attributes[.foregroundColor] as? NSColor == .white)
+    }
+
+    @Test func aCaretAfterAParagraphSeparatorTypesWithThatLine() throws {
+        let attributed = NSMutableAttributedString(string: "Webcam\u{2029}", attributes: [.font: NSFont.systemFont(ofSize: 120)])
+        attributed.append(NSAttributedString(string: "gallery", attributes: [.font: NSFont.systemFont(ofSize: 72)]))
+        let attributes = try #require(RichTextUtils.typingAttributes(in: attributed, selection: NSRange(location: 7, length: 0)))
+        #expect((attributes[.font] as? NSFont)?.pointSize == 72)
+    }
+
+    @Test func emptyTextTypesWithTheShapeStyle() {
+        #expect(RichTextUtils.typingAttributes(in: NSAttributedString(), selection: NSRange(location: 0, length: 0)) == nil)
+    }
+
+    @Test func aFallbackFontRunTypesWithItsDeclaredFont() throws {
+        let declared = NSFont.systemFont(ofSize: 40, weight: .bold)
+        let attributed = NSAttributedString(string: "Hi", attributes: [
+            .font: NSFont(name: "Menlo", size: 40) ?? declared,
+            LineMetricsLayoutDelegate.declaredFontKey: declared
+        ])
+        let attributes = try #require(RichTextUtils.typingAttributes(in: attributed, selection: NSRange(location: 2, length: 0)))
+        #expect(attributes[.font] as? NSFont == declared)
+        #expect(attributes[LineMetricsLayoutDelegate.declaredFontKey] == nil)
+    }
+
+    private func rebuilt(_ attributed: NSAttributedString, lineHeightMultiple: CGFloat?, legacyLineSpacing: CGFloat?) -> NSAttributedString {
+        RichTextUtils.buildAttributedString(
+            richText: RichTextUtils.encode(attributed),
+            plainText: attributed.string,
+            font: NSFont.systemFont(ofSize: 72),
+            color: .white,
+            alignment: .center,
+            letterSpacing: nil,
+            lineHeightMultiple: lineHeightMultiple,
+            legacyLineSpacing: legacyLineSpacing,
+            uppercase: false
+        )
+    }
+
+    /// A paragraph typed in the editor carried the multiple; one loaded from storage didn't, so
+    /// their lines were spaced differently.
+    @Test func everyRichParagraphTakesTheShapeLineHeight() {
+        let attributed = NSMutableAttributedString(attributedString: headline())
+        let typed = NSMutableParagraphStyle()
+        typed.lineHeightMultiple = 1.6
+        attributed.addAttribute(.paragraphStyle, value: typed, range: NSRange(location: 7, length: 7))
+
+        let result = rebuilt(attributed, lineHeightMultiple: 1.3, legacyLineSpacing: nil)
+        #expect(distinctValues(of: .paragraphStyle, in: result) { ($0 as? NSParagraphStyle)?.lineHeightMultiple ?? 0 } == [1.3])
+    }
+
+    @Test func everyRichRunTakesTheShapeBaselineOffset() {
+        let attributed = NSMutableAttributedString(attributedString: headline())
+        attributed.addAttribute(.baselineOffset, value: -15, range: NSRange(location: 0, length: 7))
+
+        let legacy = rebuilt(attributed, lineHeightMultiple: nil, legacyLineSpacing: -20)
+        #expect(distinctValues(of: .baselineOffset, in: legacy) { $0 as? CGFloat ?? 0 } == [-15])
+
+        let multiple = rebuilt(attributed, lineHeightMultiple: 0.92, legacyLineSpacing: nil)
+        #expect(distinctValues(of: .baselineOffset, in: multiple) { $0 as? CGFloat ?? 0 } == [0])
+    }
+
+    private func distinctValues<Value: Hashable>(
+        of key: NSAttributedString.Key,
+        in attributed: NSAttributedString,
+        _ transform: (Any?) -> Value
+    ) -> Set<Value> {
+        var values = Set<Value>()
+        attributed.enumerateAttribute(key, in: NSRange(location: 0, length: attributed.length)) { value, _, _ in
+            values.insert(transform(value))
+        }
+        return values
+    }
 }

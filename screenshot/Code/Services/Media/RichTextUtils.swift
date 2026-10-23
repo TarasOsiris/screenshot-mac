@@ -174,7 +174,7 @@ enum RichTextUtils {
                 in: NSRange(location: 0, length: attributedString.length),
                 options: []
             ) { attrs, _, stop in
-                for (key, value) in attrs where key != .paragraphStyle && key != .kern {
+                for (key, value) in attrs where key != .paragraphStyle && key != .kern && key != .baselineOffset {
                     attributes[key] = value
                 }
                 stop.pointee = true
@@ -182,6 +182,18 @@ enum RichTextUtils {
         }
 
         return NSAttributedString(string: displayText, attributes: attributes)
+    }
+
+    /// AppKit's pick: the first selected character, else the one before the caret unless a paragraph starts there.
+    static func typingAttributes(in text: NSAttributedString, selection: NSRange) -> [NSAttributedString.Key: Any]? {
+        guard text.length > 0 else { return nil }
+        let string = text.string as NSString
+        var location = min(selection.location, text.length)
+        if selection.length == 0, location > 0,
+           string.paragraphRange(for: NSRange(location: location, length: 0)).location != location {
+            location -= 1
+        }
+        return LineMetricsLayoutDelegate.restoringDeclaredFont(in: text.attributes(at: min(location, text.length - 1), effectiveRange: nil))
     }
 
     /// Extract plain text from a Base64-encoded RTF string.
@@ -363,28 +375,34 @@ enum RichTextUtils {
         let fullRange = NSRange(location: 0, length: mutable.length)
         guard fullRange.length > 0 else { return mutable }
 
+        let defaultParagraph = TextLayoutStyle.paragraphStyle(
+            alignment: alignment,
+            lineHeightMultiple: lineHeightMultiple,
+            legacyLineSpacing: legacyLineSpacing
+        )
         mutable.enumerateAttribute(.paragraphStyle, in: fullRange) { value, range, _ in
             let paragraph = (value as? NSParagraphStyle)?.mutableCopy() as? NSMutableParagraphStyle ?? NSMutableParagraphStyle()
-            paragraph.alignment = alignment
-
-            let baseFont = mutable.attribute(.font, at: range.location, effectiveRange: nil) as? NSFont
-                ?? NSFont.systemFont(ofSize: CanvasShapeModel.defaultFontSize)
-            let defaultStyle = TextLayoutStyle.textAttributes(
-                font: baseFont,
-                color: defaultLabelColor,
-                alignment: alignment,
-                letterSpacing: letterSpacing,
-                lineHeightMultiple: lineHeightMultiple,
-                legacyLineSpacing: legacyLineSpacing
-            )
-            if let defaultParagraph = defaultStyle[.paragraphStyle] as? NSParagraphStyle {
-                paragraph.minimumLineHeight = defaultParagraph.minimumLineHeight
-                paragraph.maximumLineHeight = defaultParagraph.maximumLineHeight
-                paragraph.lineSpacing = defaultParagraph.lineSpacing
-                paragraph.paragraphSpacing = defaultParagraph.paragraphSpacing
-                paragraph.paragraphSpacingBefore = defaultParagraph.paragraphSpacingBefore
-            }
+            paragraph.alignment = defaultParagraph.alignment
+            paragraph.lineHeightMultiple = defaultParagraph.lineHeightMultiple
+            paragraph.minimumLineHeight = defaultParagraph.minimumLineHeight
+            paragraph.maximumLineHeight = defaultParagraph.maximumLineHeight
+            paragraph.lineSpacing = defaultParagraph.lineSpacing
+            paragraph.paragraphSpacing = defaultParagraph.paragraphSpacing
+            paragraph.paragraphSpacingBefore = defaultParagraph.paragraphSpacingBefore
             mutable.addAttribute(.paragraphStyle, value: paragraph, range: range)
+        }
+
+        // One offset for every run (it depends only on the spacing), or mixed runs sit at different heights.
+        let baselineOffset = TextLayoutStyle.baselineOffset(
+            lineHeightMultiple: lineHeightMultiple,
+            legacyLineSpacing: legacyLineSpacing,
+            font: mutable.attribute(.font, at: 0, effectiveRange: nil) as? NSFont
+                ?? NSFont.systemFont(ofSize: CanvasShapeModel.defaultFontSize)
+        )
+        if baselineOffset != 0 {
+            mutable.addAttribute(.baselineOffset, value: baselineOffset, range: fullRange)
+        } else {
+            mutable.removeAttribute(.baselineOffset, range: fullRange)
         }
 
         if let letterSpacing {
@@ -419,14 +437,6 @@ enum RichTextUtils {
         let familyName = font.familyName
         #endif
         return normalizedFontFamilyName(familyName)
-    }
-
-    private static var defaultLabelColor: NSColor {
-        #if os(macOS)
-        .labelColor
-        #else
-        .label
-        #endif
     }
 
     private static func fontManagerWeight(of font: NSFont) -> Int {

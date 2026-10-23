@@ -24,7 +24,6 @@ struct UITextViewEditor: UIViewRepresentable {
     }
 
     private var scaledFont: UIFont { renderScale == 1 ? font : font.withSize(font.pointSize * renderScale) }
-    private var scaledLetterSpacing: CGFloat? { letterSpacing.map { $0 * renderScale } }
     private var scaledLegacyLineSpacing: CGFloat? { legacyLineSpacing.map { $0 * renderScale } }
 
     func makeCoordinator() -> Coordinator { Coordinator(self) }
@@ -75,12 +74,18 @@ struct UITextViewEditor: UIViewRepresentable {
         }
 
         let newAttr = buildAttributedText()
-        if !textView.attributedText.isEqual(to: newAttr) {
+        let replacedText = !textView.attributedText.isEqual(to: newAttr)
+        if replacedText {
             let selection = textView.selectedRange
             textView.attributedText = newAttr
             textView.selectedRange = selection.clamped(toLength: textView.textStorage.length)
         }
-        textView.typingAttributes = baseTypingAttributes()
+        if replacedText || textView.textStorage.length == 0 {
+            textView.typingAttributes = RichTextUtils.typingAttributes(
+                in: textView.textStorage,
+                selection: textView.clampedSelectedRange
+            ) ?? baseTypingAttributes()
+        }
         applyVerticalLayout(to: textView, context: context)
     }
 
@@ -98,16 +103,19 @@ struct UITextViewEditor: UIViewRepresentable {
         ).scaledFontMetrics(by: renderScale)
     }
 
+    /// Scaled the way `buildAttributedText` scales, so text typed into an empty box matches it.
     private func baseTypingAttributes() -> [NSAttributedString.Key: Any] {
-        TextLayoutStyle.textAttributes(
-            font: scaledFont,
+        let attributes = TextLayoutStyle.textAttributes(
+            font: font,
             color: color,
             alignment: alignment,
-            letterSpacing: scaledLetterSpacing,
-            includeBaselineOffset: false,
+            letterSpacing: letterSpacing,
             lineHeightMultiple: lineHeightMultiple,
-            legacyLineSpacing: scaledLegacyLineSpacing
+            legacyLineSpacing: legacyLineSpacing
         )
+        return NSAttributedString(string: " ", attributes: attributes)
+            .scaledFontMetrics(by: renderScale)
+            .attributes(at: 0, effectiveRange: nil)
     }
 
     private func applyVerticalLayout(to textView: VerticalAlignTextView, context: Context) {

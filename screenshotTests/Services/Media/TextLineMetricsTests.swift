@@ -31,15 +31,19 @@ struct TextLineMetricsTests {
     }
 
     private func lineHeights(_ layoutManager: NSLayoutManager, _ container: NSTextContainer) -> [CGFloat] {
+        lineFragments(layoutManager, container).map(\.height)
+    }
+
+    private func lineFragments(_ layoutManager: NSLayoutManager, _ container: NSTextContainer) -> [CGRect] {
         layoutManager.ensureLayout(for: container)
-        var heights: [CGFloat] = []
+        var fragments: [CGRect] = []
         var glyphIndex = 0
         while glyphIndex < layoutManager.numberOfGlyphs {
             var range = NSRange()
-            heights.append(layoutManager.lineFragmentRect(forGlyphAt: glyphIndex, effectiveRange: &range).height)
+            fragments.append(layoutManager.lineFragmentRect(forGlyphAt: glyphIndex, effectiveRange: &range))
             glyphIndex = NSMaxRange(range)
         }
-        return heights
+        return fragments
     }
 
     private func plain(_ text: String, font: NSFont, multiple: CGFloat? = nil) -> NSAttributedString {
@@ -136,5 +140,29 @@ struct TextLineMetricsTests {
         let heights = lineHeights(attributed, width: 826)
         #expect(heights.count == 2)
         #expect(heights[1] > heights[0] * 2)
+    }
+    private func lineOrigins(_ stack: TextLayoutStack) -> [CGFloat] {
+        lineFragments(stack.layoutManager, stack.container).map(\.minY)
+    }
+
+    /// The inline editor re-lays out from the edited line, not the top; a compressed line must land
+    /// where a fresh layout of the same text puts it, keystroke after keystroke.
+    @Test func compressedLinesStayPutWhenALaterLineIsEdited() throws {
+        let font = try latinOnlyFont(size: 40)
+        let attributed = NSMutableAttributedString(attributedString: plain("Webcam\n", font: font.withSize(80), multiple: 0.92))
+        attributed.append(plain("widgets on your\nHome Screen", font: font, multiple: 0.92))
+        let edited = TextLayoutStack(containerSize: CGSize(width: 826, height: 10_000), lineHeightMultiple: 0.92)
+        edited.storage.setAttributedString(attributed)
+        _ = lineOrigins(edited)
+
+        for _ in 0..<3 {
+            edited.storage.replaceCharacters(in: NSRange(location: 7, length: 0), with: "g")
+            _ = lineOrigins(edited)
+        }
+        edited.storage.addAttribute(.foregroundColor, value: NSColor.red, range: NSRange(location: 26, length: 4))
+
+        let fresh = TextLayoutStack(containerSize: CGSize(width: 826, height: 10_000), lineHeightMultiple: 0.92)
+        fresh.storage.setAttributedString(edited.storage)
+        #expect(lineOrigins(edited) == lineOrigins(fresh))
     }
 }

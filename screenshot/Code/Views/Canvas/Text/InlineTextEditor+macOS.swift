@@ -132,21 +132,14 @@ struct InlineTextEditor: NSViewRepresentable {
             delegate.lineHeightMultiple = lineHeightMultiple ?? TextLayoutStyle.defaultLineHeightMultiple
         }
         let selectedRanges = textView.selectedRanges
-        let attributes = TextLayoutStyle.textAttributes(
-            font: font,
-            color: color,
-            alignment: alignment,
-            letterSpacing: letterSpacing,
-            includeBaselineOffset: false,
-            lineHeightMultiple: lineHeightMultiple,
-            legacyLineSpacing: legacyLineSpacing
-        )
+        let attributes = shapeTypingAttributes
         let glyphPadding = TextLayoutStyle.editorVerticalPadding(
             lineHeightMultiple: lineHeightMultiple,
             legacyLineSpacing: legacyLineSpacing,
             font: font
         )
 
+        var replacedText = true
         if let storage = textView.textStorage {
             let newString = RichTextUtils.buildAttributedString(
                 richText: richTextData,
@@ -162,7 +155,8 @@ struct InlineTextEditor: NSViewRepresentable {
             // Skip the disruptive replace when the rendered result is identical
             // (the common case while typing, since `text` is fed back from the
             // text view) — avoids needless cursor/IME churn on every update.
-            if !storage.isEqual(to: newString) {
+            replacedText = !storage.isEqual(to: newString)
+            if replacedText {
                 storage.setAttributedString(newString)
             }
         } else {
@@ -170,13 +164,30 @@ struct InlineTextEditor: NSViewRepresentable {
         }
 
         textView.defaultParagraphStyle = attributes[.paragraphStyle] as? NSParagraphStyle
-        textView.typingAttributes = attributes
         (textView as? CommitTextView)?.verticalGlyphPadding = glyphPadding
 
         if preserveSelection {
             let length = textView.textStorage?.length ?? 0
             textView.selectedRanges = selectedRanges.map { NSValue(range: $0.rangeValue.clamped(toLength: length)) }
         }
+        // Left alone otherwise: AppKit already took them from the selected run, which the shape's style would override.
+        if replacedText || textView.string.isEmpty {
+            textView.typingAttributes = textView.textStorage
+                .flatMap { RichTextUtils.typingAttributes(in: $0, selection: textView.clampedSelectedRange) }
+                ?? attributes
+        }
+    }
+
+    /// What the uniform (non-rich) text is built with, so typed text matches it exactly.
+    private var shapeTypingAttributes: [NSAttributedString.Key: Any] {
+        TextLayoutStyle.textAttributes(
+            font: font,
+            color: color,
+            alignment: alignment,
+            letterSpacing: letterSpacing,
+            lineHeightMultiple: lineHeightMultiple,
+            legacyLineSpacing: legacyLineSpacing
+        )
     }
 
     class Coordinator: NSObject, NSTextViewDelegate {
@@ -234,21 +245,21 @@ struct InlineTextEditor: NSViewRepresentable {
                     parent.onRichTextChange?(encoded, textView.string)
                 }
             } else {
-                textView.typingAttributes = TextLayoutStyle.textAttributes(
-                    font: parent.font,
-                    color: parent.color,
-                    alignment: parent.alignment,
-                    letterSpacing: parent.letterSpacing,
-                    includeBaselineOffset: false,
-                    lineHeightMultiple: parent.lineHeightMultiple,
-                    legacyLineSpacing: parent.legacyLineSpacing
-                )
+                textView.typingAttributes = parent.shapeTypingAttributes
             }
 
             if let scrollView = textView.enclosingScrollView as? CenteringScrollView {
                 if let tc = textView.textContainer { textView.layoutManager?.ensureLayout(for: tc) }
                 scrollView.centerDocumentView()
             }
+        }
+
+        func textView(
+            _ textView: NSTextView,
+            shouldChangeTypingAttributes oldTypingAttributes: [String: Any],
+            toAttributes newTypingAttributes: [NSAttributedString.Key: Any]
+        ) -> [NSAttributedString.Key: Any] {
+            LineMetricsLayoutDelegate.restoringDeclaredFont(in: newTypingAttributes)
         }
 
         func textViewDidChangeSelection(_ notification: Notification) {
