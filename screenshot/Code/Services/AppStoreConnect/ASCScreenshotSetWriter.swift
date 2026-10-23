@@ -11,6 +11,11 @@ struct ASCScreenshotSetWriter {
     /// Base interval between delivery/verify polls. Injectable only so a test exercising a
     /// refused poll doesn't have to sleep through the real backoff.
     let pollInterval: Duration
+    /// Injectable for the same reason as `pollInterval`.
+    var fullSetRetryPolicy = Self.defaultFullSetRetryPolicy
+
+    /// ~46 s in all: Apple keeps counting just-deleted screenshots against the 10-per-set limit for a while.
+    static let defaultFullSetRetryPolicy = StoreRetryPolicy(maxAttempts: 6, baseDelay: .seconds(2), maxDelay: .seconds(16))
 
     func upload(
         data: Data,
@@ -19,7 +24,7 @@ struct ASCScreenshotSetWriter {
         checksum: String,
         protectedRemoteIds: Set<String>
     ) async throws -> (id: String, delivery: ASCScreenshotDeliveryOutcome) {
-        let reserved = try await reserve(
+        let reserved = try await reserveWaitingForRoom(
             setId: setId,
             fileName: fileName,
             fileSize: data.count,
@@ -58,6 +63,23 @@ struct ASCScreenshotSetWriter {
         switch error as? ASCScreenshotSyncError {
         case .deliveryStillProcessing?, nil: return false
         case .some: return true
+        }
+    }
+
+    /// The plan never overfills a set, so a 409 is Apple still counting screenshots deleted moments ago.
+    private func reserveWaitingForRoom(
+        setId: String,
+        fileName: String,
+        fileSize: Int,
+        protectedRemoteIds: Set<String>
+    ) async throws -> ASCAppScreenshot {
+        try await fullSetRetryPolicy.attempting {
+            do {
+                return try await reserve(setId: setId, fileName: fileName, fileSize: fileSize, protectedRemoteIds: protectedRemoteIds)
+            } catch let error as AppStoreConnectAPIError where error.httpStatus == 409 {
+                CrashReportingService.breadcrumb(.upload, "ASC reserve refused as full", level: .warning)
+                throw StoreRetryPolicy.Retryable(underlying: error)
+            }
         }
     }
 

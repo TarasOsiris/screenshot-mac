@@ -45,12 +45,18 @@ final class AppStoreConnectScreenshotSyncService {
     init(
         api: (any ASCScreenshotSyncAPI)? = nil,
         isDemoMode: @escaping () -> Bool = { AppStoreConnectCredentialsStore.shared.isDemoMode },
-        pollInterval: Duration = .seconds(1)
+        pollInterval: Duration = .seconds(1),
+        fullSetRetryPolicy: StoreRetryPolicy = ASCScreenshotSetWriter.defaultFullSetRetryPolicy
     ) {
         let api = api ?? AppStoreConnectAPIService.shared
         self.api = api
         self.isDemoMode = isDemoMode
-        self.writer = ASCScreenshotSetWriter(api: api, isDemoMode: isDemoMode, pollInterval: pollInterval)
+        self.writer = ASCScreenshotSetWriter(
+            api: api,
+            isDemoMode: isDemoMode,
+            pollInterval: pollInterval,
+            fullSetRetryPolicy: fullSetRetryPolicy
+        )
     }
 
     func plan(id: String) -> ASCScreenshotSyncPlan? {

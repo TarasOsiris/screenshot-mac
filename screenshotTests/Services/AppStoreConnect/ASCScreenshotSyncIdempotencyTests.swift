@@ -25,6 +25,8 @@ private final class FakeScreenshotSyncAPI: ASCScreenshotSyncAPI {
     /// Localization whose uploads should fail, to model a set that stops halfway. Keyed by
     /// localization rather than set id because set ids are minted here, not by the test.
     var failUploadsForLocalization: String?
+    var failReserveTimes = 0
+    private(set) var refusedReserveCount = 0
     /// Rate-limit knobs: each fails its call the first N times, then behaves normally.
     var failCreateSetTimes = 0
     var failDeliveryPollTimes = 0
@@ -149,6 +151,11 @@ private final class FakeScreenshotSyncAPI: ASCScreenshotSyncAPI {
     func reserveScreenshot(setId: String, fileName: String, fileSize: Int) async throws -> ASCAppScreenshot {
         if let failing = failUploadsForLocalization, setLocalization[setId] == failing {
             throw AppStoreConnectAPIError.httpError(status: 500, message: "reserve exploded")
+        }
+        if failReserveTimes > 0 {
+            failReserveTimes -= 1
+            refusedReserveCount += 1
+            throw AppStoreConnectAPIError.httpError(status: failureStatus, message: "reserve refused")
         }
         reserveCount += 1
         nextShotId += 1
@@ -439,6 +446,46 @@ struct ASCScreenshotSyncIdempotencyTests {
         )
 
         #expect(lastTotal == AppStoreConnectScreenshotSyncService.applyStepCount([diff]))
+    }
+
+    /// A full set is trimmed to make room, and Apple refuses the next reserve until it counts the deletes.
+    @Test func replaceAllWaitsForTheDeletesItMadeRoomWith() async throws {
+        let api = FakeScreenshotSyncAPI()
+        api.seedExistingSet(localizationId: "loc-1", displayType: .iphone67, checksums: (0..<10).map { "old-\($0)" })
+        api.failureStatus = 409
+        api.failReserveTimes = 2
+        let service = AppStoreConnectScreenshotSyncService(
+            api: api, isDemoMode: { false }, pollInterval: .milliseconds(1),
+            fullSetRetryPolicy: Self.retryingPolicy
+        )
+        let (plan, stamp) = try await build(service, strategy: .replaceAll, needsPreviews: false)
+        let diff = try #require(plan.sets.first)
+        #expect(diff.capacityFirstDeletionCount == 1)
+
+        let result = try await service.apply(planId: plan.id, setIds: [diff.id], document: stamp)
+
+        #expect(result.succeeded)
+        #expect(api.refusedReserveCount == 2)
+        #expect(api.reserveCount == 1)
+        #expect(api.deleteCount == 10)
+    }
+
+    @Test func aSetThatStaysFullFailsOnceTheWaitRunsOut() async throws {
+        let api = FakeScreenshotSyncAPI()
+        api.failureStatus = 409
+        api.failReserveTimes = 10
+        let service = AppStoreConnectScreenshotSyncService(
+            api: api, isDemoMode: { false }, pollInterval: .milliseconds(1),
+            fullSetRetryPolicy: Self.retryingPolicy
+        )
+        let (plan, stamp) = try await build(service, needsPreviews: false)
+        let setId = try #require(plan.sets.first?.id)
+
+        let result = try await service.apply(planId: plan.id, setIds: [setId], document: stamp)
+
+        #expect(!result.succeeded)
+        #expect(api.refusedReserveCount == Self.retryingPolicy.attempts)
+        #expect(api.reserveCount == 0)
     }
 
     @Test func applyUploadsOnceAndVerifies() async throws {
